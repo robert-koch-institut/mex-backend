@@ -1,0 +1,224 @@
+import json
+from typing import Any
+
+from neo4j import GraphDatabase
+
+from mex.backend.extracted.models import (
+    EXTRACTED_MODEL_CLASSES_BY_NAME,
+    AnyExtractedModel,
+)
+from mex.backend.fields import TEXT_FIELDS_BY_CLASS_NAME
+from mex.backend.graph.models import GraphResult
+from mex.backend.graph.queries import (
+    CREATE_CONSTRAINTS_STATEMENT,
+    CREATE_INDEX_STATEMENT,
+    MERGE_EDGE_STATEMENT,
+    MERGE_NODE_STATEMENT,
+    QUERY_MAP,
+)
+from mex.backend.graph.transform import (
+    transform_model_to_edges,
+    transform_model_to_node,
+)
+from mex.backend.settings import BackendSettings
+from mex.common.connector import BaseConnector
+from mex.common.logging import logger
+from mex.common.types import Identifier
+
+
+class GraphConnector(BaseConnector):
+    """Connector to handle authentication and transactions with the graph database."""
+
+    def __init__(self) -> None:
+        """Create a new graph database connection."""
+        settings = BackendSettings.get()
+        self.driver = GraphDatabase.driver(
+            settings.graph_url,
+            auth=(
+                settings.graph_user.get_secret_value(),
+                settings.graph_password.get_secret_value(),
+            ),
+            database=settings.graph_db,
+        )
+        self._check_connectivity_and_authentication()
+        self._seed_constraints()
+        self._seed_indices()
+
+    def _check_connectivity_and_authentication(self) -> None:
+        """Check the connectivity and authentication to the graph."""
+        self.commit("RETURN 1;")
+
+    def close(self) -> None:
+        """Close the connector's underlying requests session."""
+        self.driver.close()
+
+    def _seed_constraints(self) -> list[GraphResult]:
+        """Ensure uniqueness constraints are enabled for all entity types."""
+        constraint_statements = [
+            (CREATE_CONSTRAINTS_STATEMENT.format(node_label=entity_type), None)
+            for entity_type in EXTRACTED_MODEL_CLASSES_BY_NAME
+        ]
+        return self.mcommit(*constraint_statements)
+
+    def _seed_indices(self) -> GraphResult:
+        """Ensure there are full text search indices for all text fields."""
+        node_labels = "|".join(TEXT_FIELDS_BY_CLASS_NAME.keys())
+        node_fields = ", ".join(
+            sorted(
+                {
+                    f"n.{f}"
+                    for fields in TEXT_FIELDS_BY_CLASS_NAME.values()
+                    for f in fields
+                }
+            )
+        )
+        return self.commit(
+            CREATE_INDEX_STATEMENT.format(
+                node_labels=node_labels, node_fields=node_fields
+            ),
+            config={
+                "fulltext.eventually_consistent": True,
+                "fulltext.analyzer": "german",
+            },
+        )
+
+    def mcommit(
+        self, *statements_with_parameters: tuple[str, dict[str, Any] | None]
+    ) -> list[GraphResult]:
+        """Send and commit a batch of graph transactions."""
+        with self.driver.session(database="neo4j") as session:
+            results = []
+            logger.info(
+                "\033[95m\n%s\n\033[0m",
+                json.dumps(
+                    {
+                        "statements": [
+                            {
+                                "statement": statement,
+                                **({"parameters": parameters} if parameters else {}),
+                            }
+                            for statement, parameters in statements_with_parameters
+                        ]
+                    },
+                    indent=2,
+                ),
+            )
+            for statement, parameters in statements_with_parameters:
+                result = session.run(statement, parameters)
+                results.append(GraphResult(data=result.data()))
+        return results
+
+    def commit(self, statement: str, **parameters: Any) -> GraphResult:
+        """Send and commit a single graph transaction."""
+        results = self.mcommit((statement, parameters))
+        return results[0]
+
+    def query_nodes(
+        self,
+        query: str | None,
+        stable_target_id: str | None,
+        entity_type: list[str] | None,
+        skip: int,
+        limit: int,
+    ) -> list[GraphResult]:
+        """Query the graph for nodes.
+
+        Args:
+            query: Fulltext search query term
+            stable_target_id: Optional stable target ID filter
+            entity_type: Optional entity type filter
+            skip: How many nodes to skip for pagination
+            limit: How many nodes to return at most
+
+        Returns:
+            Graph result instances
+        """
+        search_statement, count_statement = QUERY_MAP[
+            (bool(query), bool(stable_target_id), bool(entity_type))
+        ]
+        return self.mcommit(
+            (
+                search_statement,
+                dict(
+                    query=query,
+                    labels=entity_type,
+                    stable_target_id=stable_target_id,
+                    skip=skip,
+                    limit=limit,
+                ),
+            ),
+            (
+                count_statement,
+                dict(
+                    query=query,
+                    labels=entity_type,
+                    stable_target_id=stable_target_id,
+                ),
+            ),
+        )
+
+    def merge_node(self, model: AnyExtractedModel) -> GraphResult:
+        """Convert a model into a node and merge it into the graph.
+
+        Existing nodes will be updated, a new node will be created otherwise.
+
+        Args:
+            model: Model to merge into the graph as a node
+
+        Returns:
+            Graph result instance
+        """
+        entity_type = model.__class__.__name__
+        logger.info(
+            "MERGE (:%s {identifier:%s}) ",
+            entity_type,
+            model.identifier,
+        )
+        node = transform_model_to_node(model)
+        return self.commit(
+            MERGE_NODE_STATEMENT.format(node_label=entity_type),
+            identifier=model.identifier,
+            **node.dict(),
+        )
+
+    def merge_edges(self, model: AnyExtractedModel) -> list[GraphResult]:
+        """Merge edges into the graph for all relations in the given model.
+
+        All fields containing references will be iterated over. When the targeted node
+        is found and no such relation exists yet, it will be created.
+
+        Args:
+            model: Model to ensure all edges are created in the graph
+
+        Returns:
+            Graph result instances
+        """
+        edges = transform_model_to_edges(model)
+        edge_statements_with_parameters = [
+            (MERGE_EDGE_STATEMENT.format(edge_label=edge.label), edge.parameters)
+            for edge in edges
+        ]
+        results = self.mcommit(*edge_statements_with_parameters)
+        for result, edge in zip(results, edges):
+            if result.data:
+                logger.info(f"MERGED {edge.log_message}")
+            else:
+                logger.error(f"FAILED {edge.log_message}")
+        return results
+
+    def ingest(self, models: list[AnyExtractedModel]) -> list[Identifier]:
+        """Ingest a list of models into the graph as nodes and connect all edges.
+
+        Args:
+            models: List of extracted items
+
+        Returns:
+            List of identifiers from the ingested models
+        """
+        for model in models:
+            self.merge_node(model)
+
+        for model in models:
+            self.merge_edges(model)
+
+        return [m.identifier for m in models]
