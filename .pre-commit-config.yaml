@@ -3,12 +3,12 @@ default_language_version:
   python: python3.11
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.2
+    rev: v0.1.5
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
   - repo: https://github.com/psf/black
-    rev: 23.10.1
+    rev: 23.11.0
     hooks:
       - id: black
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -18,7 +18,7 @@ repos:
         name: json
         args: [--autofix]
   - repo: https://github.com/python-poetry/poetry
-    rev: 1.6.1
+    rev: 1.7.0
     hooks:
       - id: poetry-check
         name: poetry
@@ -31,7 +31,7 @@ repos:
         additional_dependencies:
           - "backoff>=2.2.1,<3"
           - "fastapi>=0.104.0,<1"
-          - "mex-common@git+https://github.com/robert-koch-institut/mex-common.git@0.13.7"
+          - "mex-common@git+https://github.com/robert-koch-institut/mex-common.git@0.14.1"
           - "pydantic[dotenv,email]>=1.10.12,<2"
           - "pytest>=7.4.3,<8"
           - "types-pytz>=2023.3.1.1,<2024"
