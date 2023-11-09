@@ -20,7 +20,6 @@ from mex.backend.graph.transform import (
     transform_model_to_edges,
     transform_model_to_node,
 )
-from mex.backend.settings import BackendSettings
 from mex.common.connector import BaseConnector
 from mex.common.logging import logger
 from mex.common.types import Identifier
@@ -31,6 +30,9 @@ class GraphConnector(BaseConnector):
 
     def __init__(self) -> None:
         """Create a new graph database connection."""
+        # break import cycle, sigh
+        from mex.backend.settings import BackendSettings
+
         settings = BackendSettings.get()
         self.driver = GraphDatabase.driver(
             settings.graph_url,
