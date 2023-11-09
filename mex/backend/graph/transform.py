@@ -9,6 +9,7 @@ from mex.backend.extracted.models import (
 from mex.backend.fields import REFERENCE_FIELDS_BY_CLASS_NAME
 from mex.backend.graph.hydrate import dehydrate, hydrate
 from mex.backend.transform import to_primitive
+from mex.common.identity import Identity
 from mex.common.models import BaseModel, MExModel
 
 
@@ -86,3 +87,8 @@ def transform_search_result_to_model(
         raw_model[key] = sorted(set(raw_model.get(key, [])) | set(value))  # type: ignore[arg-type,type-var]
 
     return model_class.parse_obj(raw_model)
+
+
+def transform_identity_result_to_identity(identity_result: dict[str, Any]) -> Identity:
+    """Transform the result from an identity query into an Identity instance."""
+    return Identity.parse_obj(identity_result["n"])
