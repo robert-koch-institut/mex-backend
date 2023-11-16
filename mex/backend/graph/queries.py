@@ -37,7 +37,7 @@ RETURN {
   hadPrimarySource: p.stableTargetId,
   identifierInPrimarySource: n.identifierInPrimarySource,
   identifier: n.identifier
-};
+} as i
 ORDER BY n.identifier ASC
 LIMIT $limit;
 """
@@ -51,7 +51,7 @@ RETURN {
   hadPrimarySource: p.stableTargetId,
   identifierInPrimarySource: n.identifierInPrimarySource,
   identifier: n.identifier
-};
+} as i
 ORDER BY n.identifier ASC
 LIMIT $limit;
 """

@@ -91,4 +91,4 @@ def transform_search_result_to_model(
 
 def transform_identity_result_to_identity(identity_result: dict[str, Any]) -> Identity:
     """Transform the result from an identity query into an Identity instance."""
-    return Identity.parse_obj(identity_result["n"])
+    return Identity.parse_obj(identity_result["i"])

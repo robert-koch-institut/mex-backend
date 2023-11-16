@@ -3,6 +3,11 @@ from unittest.mock import MagicMock, call
 import pytest
 
 from mex.backend.graph.connector import GraphConnector
+from mex.backend.graph.queries import (
+    HAD_PRIMARY_SOURCE_AND_IDENTIFIER_IN_PRIMARY_SOURCE_IDENTITY_QUERY,
+    STABLE_TARGET_ID_IDENTITY_QUERY,
+)
+from mex.common.exceptions import MExError
 from mex.common.models import ExtractedPerson
 from mex.common.types import Identifier
 
@@ -51,6 +56,37 @@ OPTIONS {indexConfig: $config};
             }
         },
     )
+
+
+def test_mocked_graph_fetch_identities(mocked_graph: MagicMock) -> None:
+    graph = GraphConnector.get()
+
+    graph.fetch_identities(stable_target_id=Identifier.generate(99))
+    assert mocked_graph.run.call_args.args == (
+        STABLE_TARGET_ID_IDENTITY_QUERY,
+        {
+            "had_primary_source": None,
+            "identifier_in_primary_source": None,
+            "stable_target_id": Identifier.generate(99),
+            "limit": 1000,
+        },
+    )
+
+    graph.fetch_identities(
+        had_primary_source=Identifier.generate(101), identifier_in_primary_source="one"
+    )
+    assert mocked_graph.run.call_args.args == (
+        HAD_PRIMARY_SOURCE_AND_IDENTIFIER_IN_PRIMARY_SOURCE_IDENTITY_QUERY,
+        {
+            "had_primary_source": Identifier.generate(101),
+            "identifier_in_primary_source": "one",
+            "stable_target_id": None,
+            "limit": 1000,
+        },
+    )
+
+    with pytest.raises(MExError, match="invalid identity query parameters"):
+        graph.fetch_identities(identifier_in_primary_source="two")
 
 
 def test_mocked_graph_merges_node(
