@@ -1,4 +1,5 @@
-from typing import Any
+from contextlib import asynccontextmanager
+from typing import Any, AsyncIterator
 
 import uvicorn
 from fastapi import APIRouter, Depends, FastAPI
@@ -56,6 +57,25 @@ def create_openapi_schema() -> dict[str, Any]:
     return app.openapi_schema
 
 
+def close_connectors() -> None:
+    """Try to close all connectors in the current context."""
+    context = ConnectorContext.get()
+    for connector_type, connector in context.items():
+        try:
+            connector.close()
+        except Exception:
+            logger.exception("Error closing %s", connector_type)
+        else:
+            logger.info("Closed %s", connector_type)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Async context manager to execute setup and teardown of the FastAPI app."""
+    yield None
+    close_connectors()
+
+
 app = FastAPI(
     title="mex-backend",
     summary="Robert Koch-Institut Metadata Exchange API",
@@ -68,6 +88,7 @@ app = FastAPI(
         email="mex@rki.de",
         url="https://github.com/robert-koch-institut/mex-backend",
     ),
+    lifespan=lifespan,
     version="v0",
 )
 router = APIRouter(prefix="/v0")
@@ -115,19 +136,6 @@ class SettingsMiddleware(BaseHTTPMiddleware):
         """Dispatch a new request with settings injected into its context."""
         SettingsContext.set(self.settings)
         return await call_next(request)
-
-
-@app.on_event("shutdown")
-def close_connectors() -> None:
-    """Try to close all connectors in the current context."""
-    context = ConnectorContext.get()
-    for connector_type, connector in context.items():
-        try:
-            connector.close()
-        except Exception:
-            logger.exception("Error closing %s", connector_type)
-        else:
-            logger.info("Closed %s", connector_type)
 
 
 app.include_router(router)
