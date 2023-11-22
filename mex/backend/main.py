@@ -1,4 +1,5 @@
-from typing import Any
+from contextlib import asynccontextmanager
+from typing import Any, AsyncIterator
 
 import uvicorn
 from fastapi import APIRouter, Depends, FastAPI
@@ -12,6 +13,7 @@ from starlette.responses import Response
 from starlette.types import ASGIApp
 
 from mex.backend.extracted.main import router as extracted_router
+from mex.backend.identity.main import router as identity_router
 from mex.backend.ingest.main import router as ingest_router
 from mex.backend.logging import UVICORN_LOGGING_CONFIG
 from mex.backend.merged.main import router as merged_router
@@ -55,6 +57,25 @@ def create_openapi_schema() -> dict[str, Any]:
     return app.openapi_schema
 
 
+def close_connectors() -> None:
+    """Try to close all connectors in the current context."""
+    context = ConnectorContext.get()
+    for connector_type, connector in context.items():
+        try:
+            connector.close()
+        except Exception:
+            logger.exception("Error closing %s", connector_type)
+        else:
+            logger.info("Closed %s", connector_type)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Async context manager to execute setup and teardown of the FastAPI app."""
+    yield None
+    close_connectors()
+
+
 app = FastAPI(
     title="mex-backend",
     summary="Robert Koch-Institut Metadata Exchange API",
@@ -67,11 +88,13 @@ app = FastAPI(
         email="mex@rki.de",
         url="https://github.com/robert-koch-institut/mex-backend",
     ),
+    lifespan=lifespan,
     version="v0",
 )
 router = APIRouter(prefix="/v0")
 app.openapi = create_openapi_schema  # type: ignore[method-assign]
 router.include_router(extracted_router, dependencies=[Depends(has_read_access)])
+router.include_router(identity_router, dependencies=[Depends(has_write_access)])
 router.include_router(ingest_router, dependencies=[Depends(has_write_access)])
 router.include_router(merged_router, dependencies=[Depends(has_read_access)])
 
@@ -113,19 +136,6 @@ class SettingsMiddleware(BaseHTTPMiddleware):
         """Dispatch a new request with settings injected into its context."""
         SettingsContext.set(self.settings)
         return await call_next(request)
-
-
-@app.on_event("shutdown")
-def close_connectors() -> None:
-    """Try to close all connectors in the current context."""
-    context = ConnectorContext.get()
-    for connector_type, connector in context.items():
-        try:
-            connector.close()
-        except Exception:
-            logger.exception("Error closing %s", connector_type)
-        else:
-            logger.info("Closed %s", connector_type)
 
 
 app.include_router(router)

@@ -12,15 +12,18 @@ from mex.backend.graph.models import GraphResult
 from mex.backend.graph.queries import (
     CREATE_CONSTRAINTS_STATEMENT,
     CREATE_INDEX_STATEMENT,
+    HAD_PRIMARY_SOURCE_AND_IDENTIFIER_IN_PRIMARY_SOURCE_IDENTITY_QUERY,
     MERGE_EDGE_STATEMENT,
     MERGE_NODE_STATEMENT,
     QUERY_MAP,
+    STABLE_TARGET_ID_IDENTITY_QUERY,
 )
 from mex.backend.graph.transform import (
     transform_model_to_edges,
     transform_model_to_node,
 )
 from mex.common.connector import BaseConnector
+from mex.common.exceptions import MExError
 from mex.common.logging import logger
 from mex.common.types import Identifier
 
@@ -157,6 +160,51 @@ class GraphConnector(BaseConnector):
                     stable_target_id=stable_target_id,
                 ),
             ),
+        )
+
+    def fetch_identities(
+        self,
+        had_primary_source: Identifier | None = None,
+        identifier_in_primary_source: str | None = None,
+        stable_target_id: Identifier | None = None,
+        limit: int = 1000,
+    ) -> GraphResult:
+        """Search the graph for nodes matching the given ID combination.
+
+        Identity queries can be filtered either with just a `stable_target_id`
+        or with both `had_primary_source` and identifier_in_primary_source`.
+
+        Args:
+            had_primary_source: The stableTargetId of a connected PrimarySource
+            identifier_in_primary_source: The id the item had in its primary source
+            stable_target_id: The stableTargetId of an item
+            limit: How many results to return, defaults to 1000
+
+        Raises:
+            MExError: When a wrong combination of IDs is given
+
+        Returns:
+            A graph result set containing identities
+        """
+        if (
+            not had_primary_source
+            and not identifier_in_primary_source
+            and stable_target_id
+        ):
+            query = STABLE_TARGET_ID_IDENTITY_QUERY
+        elif (
+            had_primary_source and identifier_in_primary_source and not stable_target_id
+        ):
+            query = HAD_PRIMARY_SOURCE_AND_IDENTIFIER_IN_PRIMARY_SOURCE_IDENTITY_QUERY
+        else:
+            raise MExError("invalid identity query parameters")
+
+        return self.commit(
+            query,
+            had_primary_source=had_primary_source,
+            identifier_in_primary_source=identifier_in_primary_source,
+            stable_target_id=stable_target_id,
+            limit=limit,
         )
 
     def merge_node(self, model: AnyExtractedModel) -> GraphResult:

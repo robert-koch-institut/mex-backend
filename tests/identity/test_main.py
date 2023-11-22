@@ -1,0 +1,271 @@
+from typing import Any
+from unittest.mock import MagicMock
+
+import pytest
+from fastapi.testclient import TestClient
+
+from mex.common.testing import Joker
+
+
+@pytest.mark.parametrize(
+    ("mocked_return", "post_body", "expected"),
+    [
+        (
+            [],
+            {
+                "hadPrimarySource": "psSti00000000001",
+                "identifierInPrimarySource": "new-item",
+            },
+            {
+                "hadPrimarySource": "psSti00000000001",
+                "identifier": Joker(),
+                "identifierInPrimarySource": "new-item",
+                "stableTargetId": Joker(),
+            },
+        ),
+        (
+            [
+                {
+                    "i": {
+                        "hadPrimarySource": "psSti00000000001",
+                        "identifier": "cpId000000000002",
+                        "identifierInPrimarySource": "cp-2",
+                        "stableTargetId": "cpSti00000000002",
+                    }
+                }
+            ],
+            {
+                "hadPrimarySource": "psSti00000000001",
+                "identifierInPrimarySource": "cp-2",
+            },
+            {
+                "hadPrimarySource": "psSti00000000001",
+                "identifier": "cpId000000000002",
+                "identifierInPrimarySource": "cp-2",
+                "stableTargetId": "cpSti00000000002",
+            },
+        ),
+    ],
+    ids=["new item", "existing contact point"],
+)
+def test_assign_identity_mocked(
+    client_with_write_permission: TestClient,
+    mocked_graph: MagicMock,
+    mocked_return: list[dict[str, str]],
+    post_body: dict[str, str],
+    expected: dict[str, Any],
+) -> None:
+    mocked_graph.return_value = mocked_return
+    response = client_with_write_permission.post("/v0/identity", json=post_body)
+    assert response.status_code == 200, response.text
+    assert response.json() == expected
+
+
+def test_assign_identity_inconsistency_mocked(
+    client_with_write_permission: TestClient,
+    mocked_graph: MagicMock,
+) -> None:
+    mocked_graph.return_value = [
+        {
+            "i": {
+                "hadPrimarySource": "psSti00000000001",
+                "identifier": "cpId000000000002",
+                "identifierInPrimarySource": "cp-2",
+                "stableTargetId": "cpSti00000000002",
+            }
+        },
+        {
+            "i": {
+                "hadPrimarySource": "psSti00000000001",
+                "identifier": "cpId000000000098",
+                "identifierInPrimarySource": "cp-2",
+                "stableTargetId": "cpSti00000000099",
+            }
+        },
+    ]
+    response = client_with_write_permission.post(
+        "/v0/identity",
+        json={
+            "hadPrimarySource": "psSti00000000001",
+            "identifierInPrimarySource": "cp-2",
+        },
+    )
+    assert response.status_code == 500
+    assert "graph inconsistency" in response.text
+
+
+@pytest.mark.parametrize(
+    ("post_body", "expected"),
+    [
+        (
+            {
+                "hadPrimarySource": "psSti00000000001",
+                "identifierInPrimarySource": "new-item",
+            },
+            {
+                "hadPrimarySource": "psSti00000000001",
+                "identifier": Joker(),
+                "identifierInPrimarySource": "new-item",
+                "stableTargetId": Joker(),
+            },
+        ),
+        (
+            {
+                "hadPrimarySource": "psSti00000000001",
+                "identifierInPrimarySource": "cp-2",
+            },
+            {
+                "hadPrimarySource": "psSti00000000001",
+                "identifier": "cpId000000000002",
+                "identifierInPrimarySource": "cp-2",
+                "stableTargetId": "cpSti00000000002",
+            },
+        ),
+    ],
+    ids=["new item", "existing contact point"],
+)
+@pytest.mark.usefixtures("load_dummy_data")
+@pytest.mark.integration
+def test_assign_identity(
+    client_with_write_permission: TestClient,
+    post_body: dict[str, str],
+    expected: dict[str, Any],
+) -> None:
+    response = client_with_write_permission.post("/v0/identity", json=post_body)
+    assert response.status_code == 200, response.text
+    assert response.json() == expected
+
+
+@pytest.mark.parametrize(
+    ("mocked_return", "query_string", "expected"),
+    [
+        ([], "?stableTargetId=thisDoesNotExist", {"items": [], "total": 0}),
+        (
+            [
+                {
+                    "i": {
+                        "hadPrimarySource": "28282828282828",
+                        "identifier": "7878787878787878777",
+                        "identifierInPrimarySource": "one",
+                        "stableTargetId": "949494949494949494",
+                    }
+                }
+            ],
+            "?hadPrimarySource=28282828282828&identifierInPrimarySource=one",
+            {
+                "items": [
+                    {
+                        "hadPrimarySource": "28282828282828",
+                        "identifier": "7878787878787878777",
+                        "identifierInPrimarySource": "one",
+                        "stableTargetId": "949494949494949494",
+                    },
+                ],
+                "total": 1,
+            },
+        ),
+        (
+            [
+                {
+                    "i": {
+                        "hadPrimarySource": "28282828282828",
+                        "identifier": "62626262626266262",
+                        "identifierInPrimarySource": "two",
+                        "stableTargetId": "949494949494949494",
+                    }
+                },
+                {
+                    "i": {
+                        "hadPrimarySource": "39393939393939",
+                        "identifier": "7878787878787878777",
+                        "identifierInPrimarySource": "duo",
+                        "stableTargetId": "949494949494949494",
+                    }
+                },
+            ],
+            "?stableTargetId=949494949494949494",
+            {
+                "items": [
+                    {
+                        "hadPrimarySource": "28282828282828",
+                        "identifier": "62626262626266262",
+                        "identifierInPrimarySource": "two",
+                        "stableTargetId": "949494949494949494",
+                    },
+                    {
+                        "hadPrimarySource": "39393939393939",
+                        "identifier": "7878787878787878777",
+                        "identifierInPrimarySource": "duo",
+                        "stableTargetId": "949494949494949494",
+                    },
+                ],
+                "total": 2,
+            },
+        ),
+    ],
+    ids=["nothing found", "one item", "two items"],
+)
+def test_fetch_identities_mocked(
+    client_with_write_permission: TestClient,
+    mocked_graph: MagicMock,
+    mocked_return: list[dict[str, str]],
+    query_string: str,
+    expected: dict[str, Any],
+) -> None:
+    mocked_graph.return_value = mocked_return
+    response = client_with_write_permission.get(f"/v0/identity{query_string}")
+    assert response.status_code == 200, response.text
+    assert response.json() == expected
+
+
+@pytest.mark.parametrize(
+    ("query_string", "expected"),
+    [
+        ("?stableTargetId=thisDoesNotExist", {"items": [], "total": 0}),
+        (
+            "?hadPrimarySource=psSti00000000001&identifierInPrimarySource=ps-1",
+            {
+                "items": [
+                    {
+                        "hadPrimarySource": "psSti00000000001",
+                        "identifier": "psId000000000001",
+                        "identifierInPrimarySource": "ps-1",
+                        "stableTargetId": "psSti00000000001",
+                    },
+                ],
+                "total": 1,
+            },
+        ),
+        (
+            "?stableTargetId=ouSti00000000001",
+            {
+                "items": [
+                    {
+                        "hadPrimarySource": "psSti00000000002",
+                        "identifier": "ouId000000000001",
+                        "identifierInPrimarySource": "ou-1",
+                        "stableTargetId": "ouSti00000000001",
+                    },
+                    {
+                        "hadPrimarySource": "psSti00000000001",
+                        "identifier": "ouId000000000002",
+                        "identifierInPrimarySource": "ou-2",
+                        "stableTargetId": "ouSti00000000001",
+                    },
+                ],
+                "total": 2,
+            },
+        ),
+    ],
+    ids=["nothing found", "one item", "two items"],
+)
+@pytest.mark.usefixtures("load_dummy_data")
+@pytest.mark.integration
+def test_fetch_identities(
+    client_with_write_permission: TestClient,
+    query_string: str,
+    expected: dict[str, Any],
+) -> None:
+    response = client_with_write_permission.get(f"/v0/identity{query_string}")
+    assert response.status_code == 200, response.text
+    assert response.json() == expected

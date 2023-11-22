@@ -29,6 +29,33 @@ MERGE (s)-[e:{edge_label}]->(t)
 RETURN e;
 """
 
+STABLE_TARGET_ID_IDENTITY_QUERY = r"""
+MATCH (n)-[:hadPrimarySource]->(p:PrimarySource)
+WHERE n.stableTargetId = $stable_target_id
+RETURN {
+  stableTargetId: n.stableTargetId,
+  hadPrimarySource: p.stableTargetId,
+  identifierInPrimarySource: n.identifierInPrimarySource,
+  identifier: n.identifier
+} as i
+ORDER BY n.identifier ASC
+LIMIT $limit;
+"""
+
+HAD_PRIMARY_SOURCE_AND_IDENTIFIER_IN_PRIMARY_SOURCE_IDENTITY_QUERY = r"""
+MATCH (n)-[:hadPrimarySource]->(p:PrimarySource)
+WHERE n.identifierInPrimarySource = $identifier_in_primary_source
+  AND p.stableTargetId = $had_primary_source
+RETURN {
+  stableTargetId: n.stableTargetId,
+  hadPrimarySource: p.stableTargetId,
+  identifierInPrimarySource: n.identifierInPrimarySource,
+  identifier: n.identifier
+} as i
+ORDER BY n.identifier ASC
+LIMIT $limit;
+"""
+
 FULL_TEXT_ID_AND_LABEL_FILTER_SEARCH_QUERY = r"""
 CALL db.index.fulltext.queryNodes('text_fields', $query)
 YIELD node AS hit, score

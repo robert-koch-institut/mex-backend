@@ -15,7 +15,7 @@ from mex.common.types import Identifier
 router = APIRouter()
 
 
-@router.get("/merged-item", tags=["editor"])
+@router.get("/merged-item", tags=["editor", "public"])
 def search_merged_items_facade(
     q: str = Query("", max_length=1000),
     stableTargetId: Identifier | None = Query(None),  # noqa: N803
