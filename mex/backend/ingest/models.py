@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from pydantic import create_model
+from pydantic import ConfigDict, create_model
 
 from mex.backend.extracted.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
@@ -13,8 +13,8 @@ from mex.common.types import Identifier
 class _BaseBulkIngestRequest(BaseModel):
     """Request body for the bulk ingestion endpoint."""
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "examples": [
                 {
                     "ExtractedPerson": [
@@ -41,6 +41,7 @@ class _BaseBulkIngestRequest(BaseModel):
                 }
             ]
         }
+    )
 
     def get_all(self) -> list[AnyExtractedModel]:
         return [data for name in self.__fields__ for data in getattr(self, name)]
