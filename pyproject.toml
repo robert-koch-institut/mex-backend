@@ -12,9 +12,9 @@ packages = [{ include = "mex" }]
 python = "^3.11"
 fastapi = "^0.104.1"
 httpx = "^0.25.1"
-mex-common = { git = "https://github.com/robert-koch-institut/mex-common.git", rev = "0.14.1" }
+mex-common = { git = "https://github.com/robert-koch-institut/mex-common.git", rev = "0.15.0" }
 neo4j = "^5.14.1"
-pydantic = { version = "^1.10.13", extras = ["dotenv", "email"] }
+pydantic = "^2.5.2"
 uvicorn = { version = "^0.24.0.post1", extras = ["standard"] }
 
 [tool.poetry.dev-dependencies]
