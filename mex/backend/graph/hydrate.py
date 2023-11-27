@@ -18,7 +18,7 @@ ModelT = TypeVar("ModelT", bound=BaseModel)
 
 
 def are_instances(value: Any, *types: type[AnyT]) -> TypeGuard[list[AnyT]]:
-    """Return whether value is a list of types or subclasses thereof."""
+    """Return whether value is a list whose elements are all in the provided types."""
     return isinstance(value, list) and all(isinstance(v, types) for v in value)
 
 
