@@ -136,7 +136,7 @@ def _initialize_branch_with_missing_expected_types(
 ):
     model_at_depth = model
     nested_value_of_current_branch_key = nested
-    for branch_key in branch_keys:
+    for key_id, branch_key in enumerate(branch_keys):
         nested_value_of_parent_branch_key = nested_value_of_current_branch_key
         nested_value_of_current_branch_key = _set_branch_node_default(
             nested_value_of_parent_branch_key,
@@ -145,12 +145,13 @@ def _initialize_branch_with_missing_expected_types(
             value_count,
             value_is_list,
         )
-        try:
-            model_at_depth = _get_base_model_from_field(
-                model_at_depth.__fields__[branch_key]
-            )
-        except KeyError:
-            raise TypeError("flat dict does not align with target model")
+        if len(branch_keys) - key_id > 1:
+            try:
+                model_at_depth = _get_base_model_from_field(
+                    model_at_depth.__fields__[branch_key]
+                )
+            except KeyError:
+                raise TypeError("flat dict does not align with target model")
     return nested_value_of_current_branch_key
 
 
