@@ -105,7 +105,7 @@ def dehydrate(nested: NestedDict) -> FlatDict:  # noqa: C901
     return flat
 
 
-def hydrate(flat: FlatDict, model: type[BaseModel]) -> NestedDict:  # noqa: C901
+def hydrate(flat: FlatDict, model: type[BaseModel]) -> NestedDict:
     """Convert a flattened and dehydrated graph node into a nested dict for pydantic.
 
     Args:
@@ -118,35 +118,60 @@ def hydrate(flat: FlatDict, model: type[BaseModel]) -> NestedDict:  # noqa: C901
     nested: NestedDict = {}
     for flat_key, value in flat.items():
         key_path = flat_key.split(KEY_SEPARATOR)
-        key_path_length = len(key_path)
+        (*branch_keys, leaf_key) = key_path
         value_count = len(value)
         value_is_list = isinstance(value, list)
         model_at_depth = model
-        target = nested
-        for depth, key in enumerate(key_path, start=1):
-            if depth < key_path_length:
-                if not issubclass(model_at_depth, BaseModel):
-                    raise TypeError("cannot hydrate paths with non base models")
-                if key in model_at_depth._get_list_field_names():
-                    if not value_is_list:
-                        raise TypeError("cannot hydrate non-list to list")
-                    if isinstance(target, list):
-                        raise TypeError("cannot handle multiple list branches")
-                    target = target.setdefault(key, [{} for _ in range(value_count)])  # type: ignore
-                elif isinstance(target, list):
-                    if len(target) != value_count:  # pragma: no cover
-                        raise RuntimeError("branch count must match our values")
-                    target = [t.setdefault(key, {}) for t in target]
-                else:
-                    target = target.setdefault(key, {})  # type: ignore
-            elif isinstance(target, list):
-                for t, v in zip(target, value):
-                    t[key] = hydrate_value(v)
-            else:
-                target[key] = hydrate_value(value)  # type: ignore
+        nested_value_of_current_branch_key = nested
+        for branch_key in branch_keys:
+            nested_value_of_parent_branch_key = nested_value_of_current_branch_key
+            nested_value_of_current_branch_key = _set_branch_node_default(
+                nested_value_of_parent_branch_key,
+                branch_key,
+                model_at_depth,
+                value_count,
+                value_is_list,
+            )
             try:
-                model_at_depth = model_at_depth.__fields__[key].type_
+                model_at_depth = model_at_depth.__fields__[branch_key].type_
             except KeyError:
                 raise TypeError("flat dict does not align with target model")
 
+        _set_values(leaf_key, nested_value_of_current_branch_key, value)
+
     return nested
+
+
+def _set_values(key, target, value) -> NestedDict | NestedValues:
+    if isinstance(target, list):
+        for t, v in zip(target, value):
+            t[key] = hydrate_value(v)
+    else:
+        target[key] = hydrate_value(value)  # type: ignore
+    return target
+
+
+def _set_branch_node_default(
+    target: NestedDict | NestedValues,
+    key: str,
+    model_at_depth: type[BaseModel],
+    value_count: int,
+    value_is_list: bool,
+) -> NestedDict | NestedValues:
+    if not issubclass(model_at_depth, BaseModel):
+        raise TypeError("cannot hydrate paths with non base models")
+    if key in model_at_depth._get_list_field_names():
+        if not value_is_list:
+            raise TypeError("cannot hydrate non-list to list")
+        if isinstance(target, list):
+            raise TypeError("cannot handle multiple list branches")
+        target = target.setdefault(
+            key, [{} for _ in range(value_count)]
+        )  # type: ignore
+    elif isinstance(target, list):
+        if len(target) != value_count:  # pragma: no cover
+            raise RuntimeError("branch count must match our values")
+        target = [t.setdefault(key, {}) for t in target]
+    else:
+        target = target.setdefault(key, {})  # type: ignore
+    return target
