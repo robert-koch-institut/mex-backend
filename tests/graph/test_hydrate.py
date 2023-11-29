@@ -5,6 +5,7 @@ from mex.backend.graph.hydrate import (
     NULL_VALUE,
     FlatDict,
     NestedDict,
+    _get_base_model_from_field,
     are_instances,
     dehydrate,
     dehydrate_value,
@@ -50,6 +51,26 @@ class Branch(BaseModel):
 class Tree(BaseModel):
     branch: Branch
     branches: list[Branch]
+
+
+@pytest.mark.parametrize(
+    ("model", "attribute", "expected"),
+    [
+        (Tree, "branch", Branch),
+        (Branch, "leaves", Leaf),
+        (Leaf, "color", "cannot hydrate paths with non base models"),
+        (Leaf, "veins", "cannot hydrate paths with non base models"),
+    ],
+)
+def test__get_base_model_from_field(
+    model: type[BaseModel], attribute: str, expected: type[BaseModel] | str
+) -> None:
+    field = model.__fields__[attribute]
+    if isinstance(expected, str):
+        with pytest.raises(TypeError, match=expected):
+            _get_base_model_from_field(field)
+    else:
+        assert _get_base_model_from_field(field) is expected
 
 
 @pytest.mark.parametrize(

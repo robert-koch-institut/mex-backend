@@ -1,6 +1,8 @@
 from types import NoneType
 from typing import Any, TypeGuard, TypeVar, cast
 
+from pydantic.fields import ModelField
+
 from mex.common.models import BaseModel
 
 KEY_SEPARATOR = "_"
@@ -117,38 +119,56 @@ def hydrate(flat: FlatDict, model: type[BaseModel]) -> NestedDict:
     """
     nested: NestedDict = {}
     for flat_key, value in flat.items():
-        key_path = flat_key.split(KEY_SEPARATOR)
-        (*branch_keys, leaf_key) = key_path
+        (*branch_keys, leaf_key) = flat_key.split(KEY_SEPARATOR)
         value_count = len(value)
         value_is_list = isinstance(value, list)
-        model_at_depth = model
-        nested_value_of_current_branch_key = nested
-        for branch_key in branch_keys:
-            nested_value_of_parent_branch_key = nested_value_of_current_branch_key
-            nested_value_of_current_branch_key = _set_branch_node_default(
-                nested_value_of_parent_branch_key,
-                branch_key,
-                model_at_depth,
-                value_count,
-                value_is_list,
-            )
-            try:
-                model_at_depth = model_at_depth.__fields__[branch_key].type_
-            except KeyError:
-                raise TypeError("flat dict does not align with target model")
+        empty_leaf_value = _initialize_branch_with_missing_expected_types(
+            branch_keys, model, nested, value_count, value_is_list
+        )
 
-        _set_values(leaf_key, nested_value_of_current_branch_key, value)
+        _set_leaf_values(empty_leaf_value, leaf_key, value)
 
     return nested
 
 
-def _set_values(key, target, value) -> NestedDict | NestedValues:
-    if isinstance(target, list):
-        for t, v in zip(target, value):
-            t[key] = hydrate_value(v)
+def _initialize_branch_with_missing_expected_types(
+    branch_keys, model, nested, value_count, value_is_list
+):
+    model_at_depth = model
+    nested_value_of_current_branch_key = nested
+    for branch_key in branch_keys:
+        nested_value_of_parent_branch_key = nested_value_of_current_branch_key
+        nested_value_of_current_branch_key = _set_branch_node_default(
+            nested_value_of_parent_branch_key,
+            branch_key,
+            model_at_depth,
+            value_count,
+            value_is_list,
+        )
+        try:
+            model_at_depth = _get_base_model_from_field(
+                model_at_depth.__fields__[branch_key]
+            )
+        except KeyError:
+            raise TypeError("flat dict does not align with target model")
+    return nested_value_of_current_branch_key
+
+
+def _get_base_model_from_field(field: ModelField) -> type[BaseModel]:
+    base_model = field.type_
+    if not isinstance(base_model, type) or not issubclass(base_model, BaseModel):
+        raise TypeError("cannot hydrate paths with non base models")
+    return base_model
+
+
+def _set_leaf_values(
+    empty_leaf_value: NestedDict | NestedValues, leaf_key: str, value: str | list[str]
+) -> None:
+    if isinstance(empty_leaf_value, list):
+        for t, v in zip(empty_leaf_value, value):
+            t[leaf_key] = hydrate_value(v)
     else:
-        target[key] = hydrate_value(value)  # type: ignore
-    return target
+        empty_leaf_value[leaf_key] = hydrate_value(value)  # type: ignore
 
 
 def _set_branch_node_default(
