@@ -26,10 +26,12 @@ repos:
         name: poetry
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.7.0
-    hooks:
+    hooks: # configured according to mypy maintainer: https://github.com/python/mypy/issues/13916
       - id: mypy
         name: mypy
         files: ^mex/
+        pass_filenames: false
+        args: [mex]
         additional_dependencies:
           - "backoff>=2.2.1,<3"
           - "fastapi>=0.104.1,<1"
