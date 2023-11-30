@@ -132,10 +132,14 @@ def hydrate(flat: FlatDict, model: type[BaseModel]) -> NestedDict:
 
 
 def _initialize_branch_with_missing_expected_types(
-    branch_keys, model, nested, value_count, value_is_list
-):
+    branch_keys: list[str],
+    model: type[BaseModel],
+    nested: NestedDict,
+    value_count: int,
+    value_is_list: bool,
+) -> NestedDict | list[NestedDict]:
     model_at_depth = model
-    nested_value_of_current_branch_key = nested
+    nested_value_of_current_branch_key: NestedDict | list[NestedDict] = nested
     for key_id, branch_key in enumerate(branch_keys):
         nested_value_of_parent_branch_key = nested_value_of_current_branch_key
         nested_value_of_current_branch_key = _set_branch_node_default(
@@ -145,7 +149,7 @@ def _initialize_branch_with_missing_expected_types(
             value_count,
             value_is_list,
         )
-        if len(branch_keys) - key_id > 1:
+        if len(branch_keys) - key_id > 1:  # if for loop has iterations left
             try:
                 model_at_depth = _get_base_model_from_field(
                     model_at_depth.__fields__[branch_key]
@@ -163,22 +167,24 @@ def _get_base_model_from_field(field: ModelField) -> type[BaseModel]:
 
 
 def _set_leaf_values(
-    empty_leaf_value: NestedDict | NestedValues, leaf_key: str, value: str | list[str]
+    empty_leaf_value: NestedDict | list[NestedDict],
+    leaf_key: str,
+    value: str | list[str],
 ) -> None:
     if isinstance(empty_leaf_value, list):
         for t, v in zip(empty_leaf_value, value):
-            t[leaf_key] = hydrate_value(v)
+            t[leaf_key] = hydrate_value(v)  # type: ignore
     else:
         empty_leaf_value[leaf_key] = hydrate_value(value)  # type: ignore
 
 
 def _set_branch_node_default(
-    target: NestedDict | NestedValues,
+    target: NestedDict | list[NestedDict],
     key: str,
     model_at_depth: type[BaseModel],
     value_count: int,
     value_is_list: bool,
-) -> NestedDict | NestedValues:
+) -> NestedDict | list[NestedDict]:
     if not issubclass(model_at_depth, BaseModel):
         raise TypeError("cannot hydrate paths with non base models")
     if key in model_at_depth._get_list_field_names():
@@ -186,13 +192,13 @@ def _set_branch_node_default(
             raise TypeError("cannot hydrate non-list to list")
         if isinstance(target, list):
             raise TypeError("cannot handle multiple list branches")
-        target = target.setdefault(
-            key, [{} for _ in range(value_count)]
-        )  # type: ignore
+        target = cast(
+            list[NestedDict], target.setdefault(key, [{} for _ in range(value_count)])
+        )
     elif isinstance(target, list):
         if len(target) != value_count:  # pragma: no cover
             raise RuntimeError("branch count must match our values")
-        target = [t.setdefault(key, {}) for t in target]
+        target = cast(list[NestedDict], [t.setdefault(key, {}) for t in target])
     else:
         target = target.setdefault(key, {})  # type: ignore
     return target
