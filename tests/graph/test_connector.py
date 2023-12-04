@@ -16,7 +16,7 @@ from mex.common.types import Identifier
 def test_mocked_graph_init() -> None:
     graph = GraphConnector.get()
     result = graph.commit("MATCH (this);")
-    assert result == {"data": []}
+    assert result.model_dump() == {"data": []}
 
 
 def test_mocked_graph_seed_constraints(mocked_graph: MagicMock) -> None:
