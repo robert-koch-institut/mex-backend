@@ -53,6 +53,10 @@ class Tree(BaseModel):
     branches: list[Branch]
 
 
+class Caterpillar(BaseModel):
+    home: Leaf | None
+
+
 @pytest.mark.parametrize(
     ("model", "attribute", "expected"),
     [
@@ -60,12 +64,13 @@ class Tree(BaseModel):
         (Branch, "leaves", Leaf),
         (Leaf, "color", "cannot hydrate paths with non base models"),
         (Leaf, "veins", "cannot hydrate paths with non base models"),
+        (Caterpillar, "home", Leaf),
     ],
 )
 def test__get_base_model_from_field(
     model: type[BaseModel], attribute: str, expected: type[BaseModel] | str
 ) -> None:
-    field = model.__fields__[attribute]
+    field = model.model_fields[attribute]
     if isinstance(expected, str):
         with pytest.raises(TypeError, match=expected):
             _get_base_model_from_field(field)

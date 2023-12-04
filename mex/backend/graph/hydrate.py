@@ -1,7 +1,7 @@
 from types import NoneType
-from typing import Any, TypeGuard, TypeVar, cast
+from typing import Any, TypeGuard, TypeVar, cast, get_args
 
-from pydantic.fields import ModelField
+from pydantic.fields import FieldInfo
 
 from mex.common.models import BaseModel
 
@@ -152,15 +152,21 @@ def _initialize_branch_with_missing_expected_types(
         if len(branch_keys) - key_id > 1:  # if for loop has iterations left
             try:
                 model_at_depth = _get_base_model_from_field(
-                    model_at_depth.__fields__[branch_key]
+                    model_at_depth.model_fields[branch_key]
                 )
             except KeyError:
                 raise TypeError("flat dict does not align with target model")
     return nested_value_of_current_branch_key
 
 
-def _get_base_model_from_field(field: ModelField) -> type[BaseModel]:
-    base_model = field.type_
+def _get_base_model_from_field(field: FieldInfo) -> type[BaseModel]:
+    if args := get_args(field.annotation):
+        args_wo_none = [arg for arg in args if arg is not type(None)]
+        if args_count := len(args_wo_none) != 1:
+            raise TypeError(f"Expected one non-None type, got {args_count}.")
+        base_model = args_wo_none[0]
+    else:
+        base_model = field.annotation
     if not isinstance(base_model, type) or not issubclass(base_model, BaseModel):
         raise TypeError("cannot hydrate paths with non base models")
     return base_model
