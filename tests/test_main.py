@@ -4,11 +4,11 @@ import logging
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, Mock
 
+import pydantic_core
 import pytest
 from fastapi.testclient import TestClient
 from neo4j import GraphDatabase
-from pydantic import BaseModel, ValidationError
-from pydantic.error_wrappers import ErrorWrapper
+from pydantic import ValidationError
 from pytest import LogCaptureFixture
 
 from mex.backend.main import (
@@ -51,12 +51,37 @@ def test_health_check(client: TestClient) -> None:
     ("exception", "expected"),
     [
         (
-            ValidationError([[ErrorWrapper(TypeError("foo"), "1")]], BaseModel),
+            TypeError("foo"),
+            {"debug": {"errors": [{"type": "TypeError"}]}, "message": "foo"},
+        ),
+        (
+            ValidationError.from_exception_data(
+                "foo",
+                [
+                    {
+                        "type": pydantic_core.PydanticCustomError(
+                            "TestError", "You messed up!"
+                        ),
+                        "loc": ("deep in the spaghetti code",),
+                        "input": "mumbojumbo",
+                    }
+                ],
+            ),
             {
-                "message": "1 validation error for BaseModel\n1\n  foo (type=type_error)",
                 "debug": {
-                    "errors": [{"loc": ["1"], "msg": "foo", "type": "type_error"}]
+                    "errors": [
+                        {
+                            "input": "mumbojumbo",
+                            "loc": ["deep in the spaghetti code"],
+                            "msg": "You messed up!",
+                            "type": "TestError",
+                        }
+                    ]
                 },
+                "message": "1 validation error for foo\n"
+                "deep in the spaghetti code\n"
+                "  You messed up! [type=TestError, input_value='mumbojumbo', "
+                "input_type=str]",
             },
         ),
         (
@@ -64,7 +89,7 @@ def test_health_check(client: TestClient) -> None:
             {"message": "MExError: bar ", "debug": {"errors": [{"type": "MExError"}]}},
         ),
     ],
-    ids=["ValidationError", "MExError"],
+    ids=["TypeError", "ValidationError", "MExError"],
 )
 def test_handle_uncaught_exception(
     exception: Exception, expected: dict[str, Any]
