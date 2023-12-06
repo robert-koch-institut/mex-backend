@@ -1,12 +1,10 @@
 from enum import Enum, EnumMeta, _EnumDict
-from typing import TYPE_CHECKING, Generator, Union, cast
+from typing import TYPE_CHECKING, Generator, Literal, Union, cast
 
-from pydantic import create_model
+from pydantic import Field, create_model
 
-from mex.backend.models import TypeSerializer
 from mex.common.models import BASE_MODEL_CLASSES, BaseExtractedData, BaseModel
 from mex.common.transform import dromedary_to_snake
-from mex.common.types import Identifier, PrimarySourceID
 
 
 def _collect_extracted_model_classes(
@@ -18,12 +16,8 @@ def _collect_extracted_model_classes(
         name = model.__name__.removeprefix("Base")
         extracted_model = create_model(
             name,
-            # pydantic 2 will have a simpler solution here
-            # it can simply use `__base__=(model, BaseExtractedData, TypeSerializer)`
-            __base__=(model, TypeSerializer),
-            identifier=(Identifier, ...),
-            hadPrimarySource=(PrimarySourceID, ...),
-            identifierInPrimarySource=(str, ...),
+            __base__=(model, BaseExtractedData),
+            entityType=(Literal[name], Field(name, alias="$type")),
         )
         yield name, cast(type[BaseExtractedData], extracted_model)
 
@@ -62,4 +56,4 @@ class ExtractedItemSearchResponse(BaseModel):
     """Response body for the extracted item search endpoint."""
 
     total: int
-    items: list[AnyExtractedModel]
+    items: list[AnyExtractedModel] = Field(discriminator="entityType")

@@ -24,7 +24,8 @@ def transform_model_to_node(model: BaseModel) -> MergableNode:
     """Transform a pydantic model into a node that can be merged into the graph."""
     raw_model = to_primitive(
         model,
-        exclude=REFERENCE_FIELDS_BY_CLASS_NAME[model.__class__.__name__] | {"$type"},
+        exclude=REFERENCE_FIELDS_BY_CLASS_NAME[model.__class__.__name__]
+        | {"entityType"},
     )
     on_create = dehydrate(raw_model)
 
@@ -47,7 +48,7 @@ def transform_model_to_edges(model: MExModel) -> list[MergableEdge]:
     """Transform a model to a list of edges."""
     raw_model = to_primitive(
         model,
-        exclude={"$type"},
+        exclude={"entityType"},
         include=REFERENCE_FIELDS_BY_CLASS_NAME[model.__class__.__name__],
     )
     # TODO: add support for link fields in nested dicts, eg. for rules
@@ -86,9 +87,9 @@ def transform_search_result_to_model(
             value = [value]
         raw_model[key] = sorted(set(raw_model.get(key, [])) | set(value))  # type: ignore[arg-type,type-var]
 
-    return model_class.parse_obj(raw_model)
+    return model_class.model_validate(raw_model)
 
 
 def transform_identity_result_to_identity(identity_result: dict[str, Any]) -> Identity:
     """Transform the result from an identity query into an Identity instance."""
-    return Identity.parse_obj(identity_result["i"])
+    return Identity.model_validate(identity_result["i"])

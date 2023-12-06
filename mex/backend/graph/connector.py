@@ -228,7 +228,7 @@ class GraphConnector(BaseConnector):
         return self.commit(
             MERGE_NODE_STATEMENT.format(node_label=entity_type),
             identifier=model.identifier,
-            **node.dict(),
+            **node.model_dump(),
         )
 
     def merge_edges(self, model: AnyExtractedModel) -> list[GraphResult]:

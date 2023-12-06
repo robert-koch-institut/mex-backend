@@ -22,12 +22,18 @@ def _get_inner_types(annotation: Any) -> Generator[type, None, None]:
 
 def is_reference_field(field: FieldInfo) -> bool:
     """Return whether the given field contains a stable target id."""
-    return any(issubclass(t, Identifier) for t in _get_inner_types(field.annotation))
+    return any(
+        isinstance(t, type) and issubclass(t, Identifier)
+        for t in _get_inner_types(field.annotation)
+    )
 
 
 def is_text_field(field: FieldInfo) -> bool:
     """Return whether the given field is holding text objects."""
-    return any(issubclass(t, Text) for t in _get_inner_types(field.annotation))
+    return any(
+        isinstance(t, type) and issubclass(t, Text)
+        for t in _get_inner_types(field.annotation)
+    )
 
 
 REFERENCE_FIELDS_BY_CLASS_NAME = {

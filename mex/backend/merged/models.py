@@ -1,9 +1,8 @@
 from enum import Enum, EnumMeta, _EnumDict
-from typing import TYPE_CHECKING, Generator, Union, cast
+from typing import TYPE_CHECKING, Generator, Literal, Union, cast
 
-from pydantic import create_model
+from pydantic import Field, create_model
 
-from mex.backend.models import TypeSerializer
 from mex.common.models import BASE_MODEL_CLASSES, MergedItem
 from mex.common.models.base import BaseModel
 from mex.common.transform import dromedary_to_snake
@@ -18,10 +17,9 @@ def _collect_merged_model_classes(
         name = model.__name__.replace("Base", "Merged")
         merged_model = create_model(
             name,
-            # pydantic 2 will have a simpler solution here
-            # it can simply use `__base__=(model, MergedItem, TypeSerializer)`
-            __base__=(model, TypeSerializer),
+            __base__=(model,),
             identifier=(Identifier, ...),
+            entityType=(Literal[name], Field(name, alias="$type")),
         )
         yield name, cast(type[MergedItem], merged_model)
 
@@ -57,4 +55,4 @@ class MergedItemSearchResponse(BaseModel):
     """Response body for the merged item search endpoint."""
 
     total: int
-    items: list[AnyMergedModel]
+    items: list[AnyMergedModel] = Field(discriminator="entityType")
