@@ -134,20 +134,22 @@ def test_mocked_graph_merges_edges(
 ) -> None:
     graph = GraphConnector.get()
     graph.merge_edges(extracted_person)
-
-    assert (
-        mocked_graph.run.call_args.args[0]
-        == """
+    mocked_graph.assert_has_calls(
+        [
+            call.run(
+                """
 MATCH (s {identifier:$fromID})
 MATCH (t {stableTargetId:$toSTI})
 MERGE (s)-[e:hadPrimarySource]->(t)
 RETURN e;
-"""
+""",
+                {
+                    "fromID": str(extracted_person.identifier),
+                    "toSTI": str(extracted_person.hadPrimarySource),
+                },
+            )
+        ]
     )
-    assert mocked_graph.run.call_args.args[1] == {
-        "fromID": str(extracted_person.identifier),
-        "toSTI": str(extracted_person.hadPrimarySource),
-    }
 
 
 def test_mocked_graph_ingests_models(
