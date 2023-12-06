@@ -197,12 +197,12 @@ RETURN n;
         """
 MATCH (s {identifier:$fromID})
 MATCH (t {stableTargetId:$toSTI})
-MERGE (s)-[e:affiliation]->(t)
+MERGE (s)-[e:hadPrimarySource]->(t)
 RETURN e;
 """,
         {
             "fromID": str(extracted_person.identifier),
-            "toSTI": str(extracted_person.affiliation[0]),
+            "toSTI": str(extracted_person.hadPrimarySource),
         },
     )
     assert mocked_graph.run.call_args_list[-5:][2][0] == (
@@ -214,10 +214,22 @@ RETURN e;
 """,
         {
             "fromID": str(extracted_person.identifier),
-            "toSTI": str(extracted_person.affiliation[1]),
+            "toSTI": str(extracted_person.affiliation[0]),
         },
     )
     assert mocked_graph.run.call_args_list[-5:][3][0] == (
+        """
+MATCH (s {identifier:$fromID})
+MATCH (t {stableTargetId:$toSTI})
+MERGE (s)-[e:affiliation]->(t)
+RETURN e;
+""",
+        {
+            "fromID": str(extracted_person.identifier),
+            "toSTI": str(extracted_person.affiliation[1]),
+        },
+    )
+    assert mocked_graph.run.call_args_list[-5:][4][0] == (
         """
 MATCH (s {identifier:$fromID})
 MATCH (t {stableTargetId:$toSTI})
@@ -227,17 +239,5 @@ RETURN e;
         {
             "fromID": str(extracted_person.identifier),
             "toSTI": str(extracted_person.memberOf[0]),
-        },
-    )
-    assert mocked_graph.run.call_args_list[-5:][4][0] == (
-        """
-MATCH (s {identifier:$fromID})
-MATCH (t {stableTargetId:$toSTI})
-MERGE (s)-[e:hadPrimarySource]->(t)
-RETURN e;
-""",
-        {
-            "fromID": str(extracted_person.identifier),
-            "toSTI": str(extracted_person.hadPrimarySource),
         },
     )
