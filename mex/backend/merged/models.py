@@ -19,7 +19,7 @@ def _collect_merged_model_classes(
             name,
             __base__=(model,),
             identifier=(Identifier, ...),
-            entityType=(Literal[name], Field(name, alias="$type")),
+            entityType=(Literal[name], Field(name, alias="$type", frozen=True)),
         )
         yield name, cast(type[MergedItem], merged_model)
 
