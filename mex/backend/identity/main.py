@@ -34,6 +34,9 @@ def assign_identity(request: IdentityAssignRequest) -> Identity:
         == MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE
         and request.hadPrimarySource == MEX_PRIMARY_SOURCE_STABLE_TARGET_ID
     ):
+        # This is to deal with the edge case where primary source is the parent of
+        # all primary sources and has no parents for itself,
+        # this will add itself as its parent.
         identity = Identity(
             hadPrimarySource=request.hadPrimarySource,
             identifier=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
