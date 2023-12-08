@@ -59,7 +59,11 @@ def fetch_identity(
     identifierInPrimarySource: str | None = None,  # noqa: N803
     stableTargetId: Identifier | None = None,  # noqa: N803
 ) -> IdentityFetchResponse:
-    """Find an Identity instance from the database if it can be found."""
+    """Find an Identity instance from the database if it can be found.
+
+    Either provide `stableTargetId` or `hadPrimarySource`
+    and `identifierInPrimarySource` together to get a unique result.
+    """
     connector = GraphConnector.get()
     try:
         graph_result = connector.fetch_identities(
