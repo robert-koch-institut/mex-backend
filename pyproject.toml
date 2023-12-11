@@ -11,7 +11,7 @@ packages = [{ include = "mex" }]
 [tool.poetry.dependencies]
 python = "^3.11"
 fastapi = "^0.104.1"
-httpx = "^0.25.1"
+httpx = "^0.25.2"
 mex-common = { git = "https://github.com/robert-koch-institut/mex-common.git", rev = "0.14.1" }
 neo4j = "^5.14.1"
 pydantic = { version = "^1.10.13", extras = ["dotenv", "email"] }
