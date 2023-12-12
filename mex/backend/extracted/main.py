@@ -1,14 +1,12 @@
 from typing import Sequence
 
 from fastapi import APIRouter, Query
-from fastapi.responses import JSONResponse
 
 from mex.backend.extracted.models import ExtractedItemSearchResponse, ExtractedType
 from mex.backend.extracted.transform import (
     transform_graph_results_to_extracted_item_search_response,
 )
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.transform import to_primitive
 from mex.common.types import Identifier
 
 router = APIRouter()
@@ -31,5 +29,4 @@ def search_extracted_items(
         skip,
         limit,
     )
-    response = transform_graph_results_to_extracted_item_search_response(query_results)
-    return JSONResponse(to_primitive(response), 200)  # type: ignore[return-value]
+    return transform_graph_results_to_extracted_item_search_response(query_results)

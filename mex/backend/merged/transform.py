@@ -42,4 +42,4 @@ def transform_graph_results_to_merged_item_search_response_facade(
                 exc_info=False,
             )
     # TODO merge extracted items with rule set
-    return MergedItemSearchResponse(items=items, total=total)
+    return MergedItemSearchResponse.model_validate({"items": items, "total": total})
