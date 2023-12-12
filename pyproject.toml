@@ -11,7 +11,7 @@ packages = [{ include = "mex" }]
 [tool.poetry.dependencies]
 python = "^3.11"
 fastapi = "^0.104.1"
-httpx = "^0.25.1"
+httpx = "^0.25.2"
 mex-common = { git = "https://github.com/robert-koch-institut/mex-common.git", rev = "0.15.0" }
 neo4j = "^5.14.1"
 pydantic = "^2.5.2"
@@ -32,6 +32,26 @@ backend = "mex.backend.main:main"
 
 [tool.ipdb]
 context = 5
+
+[tool.mypy]
+python_version = "3.11"
+show_error_codes = true
+strict = true
+
+[tool.pydantic-mypy]
+warn_untyped_fields = true
+
+[tool.pytest.ini_options]
+addopts = [
+    "--verbose",
+    "--cov",
+    "--no-cov-on-fail",
+    "--cov-report=term-missing:skip-covered",
+    "--cov-fail-under=99",
+    "--cov-branch",
+    "--pdbcls=IPython.terminal.debugger:TerminalPdb"
+]
+markers = "integration: mark a test as integration test allowing it to load real settings"
 
 [tool.ruff]
 fix = true
