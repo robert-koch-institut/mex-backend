@@ -77,11 +77,14 @@ def test_bulk_insert_malformed(client_with_write_permission: TestClient) -> None
     assert response.json() == {
         "detail": [
             {
+                "input": "FAIL!",
                 "loc": ["body", "ExtractedContactPoint", 0],
-                "msg": "value is not a valid dict",
-                "type": "type_error.dict",
+                "msg": "Input should be a valid dictionary or object to extract "
+                "fields from",
+                "type": "model_attributes_type",
+                "url": "https://errors.pydantic.dev/2.5/v/model_attributes_type",
             }
-        ],
+        ]
     }
 
 
