@@ -62,7 +62,7 @@ def test_health_check(client: TestClient) -> None:
                         "type": pydantic_core.PydanticCustomError(
                             "TestError", "You messed up!"
                         ),
-                        "loc": ("deep in the spaghetti code",),
+                        "loc": ("integerAttribute",),
                         "input": "mumbojumbo",
                     }
                 ],
@@ -72,14 +72,14 @@ def test_health_check(client: TestClient) -> None:
                     "errors": [
                         {
                             "input": "mumbojumbo",
-                            "loc": ["deep in the spaghetti code"],
+                            "loc": ["integerAttribute"],
                             "msg": "You messed up!",
                             "type": "TestError",
                         }
                     ]
                 },
                 "message": "1 validation error for foo\n"
-                "deep in the spaghetti code\n"
+                "integerAttribute\n"
                 "  You messed up! [type=TestError, input_value='mumbojumbo', "
                 "input_type=str]",
             },
