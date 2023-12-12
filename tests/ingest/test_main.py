@@ -20,8 +20,8 @@ def post_payload() -> dict[str, Any]:
         hadPrimarySource=primary_source.stableTargetId,
     )
     return {
-        "ExtractedPrimarySource": [primary_source.dict()],
-        "ExtractedContactPoint": [contact_point.dict()],
+        "ExtractedPrimarySource": [primary_source.model_dump()],
+        "ExtractedContactPoint": [contact_point.model_dump()],
     }
 
 

@@ -44,7 +44,7 @@ class _BaseBulkIngestRequest(BaseModel):
     )
 
     def get_all(self) -> list[AnyExtractedModel]:
-        return [data for name in self.__fields__ for data in getattr(self, name)]
+        return [data for name in self.model_fields for data in getattr(self, name)]
 
 
 if TYPE_CHECKING:  # pragma: no cover
