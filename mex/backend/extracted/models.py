@@ -1,5 +1,5 @@
 from enum import Enum, EnumMeta, _EnumDict
-from typing import TYPE_CHECKING, Generator, Literal, Union, cast
+from typing import TYPE_CHECKING, Iterator, Literal, Union, cast
 
 from pydantic import Field, create_model
 
@@ -9,7 +9,7 @@ from mex.common.transform import dromedary_to_snake
 
 def _collect_extracted_model_classes(
     base_models: list[type[BaseModel]],
-) -> Generator[tuple[str, type[BaseExtractedData]], None, None]:
+) -> Iterator[tuple[str, type[BaseExtractedData]]]:
     """Create extracted model classes with type for the given MEx models."""
     for model in base_models:
         # to satisfy current frontend, rename ExtractedThing -> Thing

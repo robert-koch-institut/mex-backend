@@ -1,5 +1,5 @@
 from types import UnionType
-from typing import Annotated, Any, Generator, Union, get_args, get_origin
+from typing import Annotated, Any, Iterator, Union, get_args, get_origin
 
 from pydantic.fields import FieldInfo
 
@@ -7,7 +7,7 @@ from mex.backend.extracted.models import EXTRACTED_MODEL_CLASSES_BY_NAME
 from mex.common.types import Identifier, Text
 
 
-def _get_inner_types(annotation: Any) -> Generator[type, None, None]:
+def _get_inner_types(annotation: Any) -> Iterator[type]:
     """Yield all inner types from Unions, lists and annotations."""
     if get_origin(annotation) == Annotated:
         yield from _get_inner_types(get_args(annotation)[0])
