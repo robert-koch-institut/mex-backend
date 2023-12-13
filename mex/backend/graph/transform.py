@@ -92,9 +92,11 @@ def transform_search_result_to_model(
     # rule-sets and extracted-items, not merged-items
     deduplicated_references: dict[str, set[str]] = defaultdict(set)
     for reference in references:
-        reference_ids = reference["value"]
-        if not isinstance(reference_ids, list):
-            reference_ids = [reference_ids]
+        reference_ids = (
+            reference["value"]
+            if isinstance(reference["value"], list)
+            else [reference["value"]]
+        )
         deduplicated_references[reference["key"]].update(reference_ids)
     sorted_deduplicated_reference_key_values = {
         reference_type: sorted(reference_ids)
