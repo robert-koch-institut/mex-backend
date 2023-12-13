@@ -4,6 +4,10 @@ from unittest.mock import MagicMock
 import pytest
 from fastapi.testclient import TestClient
 
+from mex.common.models import (
+    MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
+    MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+)
 from mex.common.testing import Joker
 
 
@@ -94,6 +98,17 @@ def test_assign_identity_inconsistency_mocked(
     assert "graph inconsistency" in response.text
 
 
+@pytest.mark.usefixtures("mocked_graph")
+def test_fetch_identity_invalid_query_params_mocked(
+    client_with_write_permission: TestClient,
+) -> None:
+    response = client_with_write_permission.get(
+        "/v0/identity",
+    )
+    assert response.status_code == 400
+    assert "invalid identity query parameters" in response.text
+
+
 @pytest.mark.parametrize(
     ("post_body", "expected"),
     [
@@ -121,8 +136,20 @@ def test_assign_identity_inconsistency_mocked(
                 "stableTargetId": "cpSti00000000002",
             },
         ),
+        (
+            {
+                "hadPrimarySource": MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+                "identifierInPrimarySource": MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
+            },
+            {
+                "hadPrimarySource": MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+                "identifier": MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+                "identifierInPrimarySource": MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
+                "stableTargetId": MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+            },
+        ),
     ],
-    ids=["new item", "existing contact point"],
+    ids=["new item", "existing contact point", "mex primary source"],
 )
 @pytest.mark.usefixtures("load_dummy_data")
 @pytest.mark.integration
