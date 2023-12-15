@@ -587,7 +587,7 @@ traitlets = "*"
 
 [[package]]
 name = "mex-common"
-version = "0.16.1"
+version = "0.16.2"
 description = "RKI MEx common library."
 optional = false
 python-versions = "^3.11"
@@ -608,8 +608,8 @@ requests = "^2.31.0"
 [package.source]
 type = "git"
 url = "https://github.com/robert-koch-institut/mex-common.git"
-reference = "feature/mx-1485-update-pydantic-in-backend"
-resolved_reference = "18fc255279eac156bd39b7b6f7082c0cf5832e48"
+reference = "0.16.2"
+resolved_reference = "d322dc344443ceefbaee9a3ec02a8ae248d1dd99"
 
 [[package]]
 name = "mypy"
@@ -1641,4 +1641,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "9ab2f7f71bde9aa1b99bd911f7d575b65152f19082fffb349ea3d4bb8f0cedb8"
+content-hash = "dc583dd2e61a8dcff2065f467e797f6dace5a06eb2c69b912fff7027d1c7ae83"
