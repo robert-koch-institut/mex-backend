@@ -1,4 +1,3 @@
-import secrets
 from typing import Annotated
 
 from fastapi import Depends, HTTPException
@@ -71,8 +70,3 @@ def has_read_access(api_key: Annotated[str | None, Depends(X_API_KEY)]) -> None:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Unauthorized API Key.",
         )
-
-
-def generate_token() -> None:
-    """Generate and print a safe token."""
-    print(secrets.token_urlsafe())  # noqa: T201
