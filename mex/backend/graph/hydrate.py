@@ -162,7 +162,7 @@ def _initialize_branch_with_missing_expected_types(
 def _get_base_model_from_field(field: FieldInfo) -> type[BaseModel]:
     if args := get_args(field.annotation):
         args_wo_none = [arg for arg in args if arg is not type(None)]
-        if args_count := len(args_wo_none) != 1:
+        if (args_count := len(args_wo_none)) != 1:
             raise TypeError(f"Expected one non-None type, got {args_count}.")
         base_model = args_wo_none[0]
     else:
