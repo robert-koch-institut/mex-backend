@@ -67,7 +67,7 @@ class Caterpillar(BaseModel):
         (Caterpillar, "home", Leaf),
     ],
 )
-def test__get_base_model_from_field(
+def test_get_base_model_from_field(
     model: type[BaseModel], attribute: str, expected: type[BaseModel] | str
 ) -> None:
     field = model.model_fields[attribute]
