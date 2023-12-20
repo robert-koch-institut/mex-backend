@@ -1,7 +1,6 @@
 from typing import Sequence
 
 from fastapi import APIRouter, Query
-from fastapi.responses import JSONResponse
 
 from mex.backend.extracted.models import ExtractedType
 from mex.backend.graph.connector import GraphConnector
@@ -9,7 +8,6 @@ from mex.backend.merged.models import MergedItemSearchResponse
 from mex.backend.merged.transform import (
     transform_graph_results_to_merged_item_search_response_facade,
 )
-from mex.backend.transform import to_primitive
 from mex.common.types import Identifier
 
 router = APIRouter()
@@ -34,7 +32,4 @@ def search_merged_items_facade(
         skip,
         limit,
     )
-    response = transform_graph_results_to_merged_item_search_response_facade(
-        query_results
-    )
-    return JSONResponse(to_primitive(response), 200)  # type: ignore[return-value]
+    return transform_graph_results_to_merged_item_search_response_facade(query_results)

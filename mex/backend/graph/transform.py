@@ -1,4 +1,5 @@
-from typing import Any
+from collections import defaultdict
+from typing import Any, TypedDict
 
 from pydantic import BaseModel as PydanticBaseModel
 
@@ -24,7 +25,8 @@ def transform_model_to_node(model: BaseModel) -> MergableNode:
     """Transform a pydantic model into a node that can be merged into the graph."""
     raw_model = to_primitive(
         model,
-        exclude=REFERENCE_FIELDS_BY_CLASS_NAME[model.__class__.__name__] | {"$type"},
+        exclude=REFERENCE_FIELDS_BY_CLASS_NAME[model.__class__.__name__]
+        | {"entityType"},
     )
     on_create = dehydrate(raw_model)
 
@@ -47,7 +49,7 @@ def transform_model_to_edges(model: MExModel) -> list[MergableEdge]:
     """Transform a model to a list of edges."""
     raw_model = to_primitive(
         model,
-        exclude={"$type"},
+        exclude={"entityType"},
         include=REFERENCE_FIELDS_BY_CLASS_NAME[model.__class__.__name__],
     )
     # TODO: add support for link fields in nested dicts, eg. for rules
@@ -69,26 +71,42 @@ def transform_model_to_edges(model: MExModel) -> list[MergableEdge]:
     return edges
 
 
+class SearchResultReference(TypedDict):
+    """Type definition for references returned by search query."""
+
+    key: str  # label of the edge, e.g. parentUnit or hadPrimarySource
+    value: list[str] | str  # stableTargetId of the referenced Node
+
+
 def transform_search_result_to_model(
     search_result: dict[str, Any]
 ) -> AnyExtractedModel:
     """Transform a graph search result to an extracted item."""
-    label = search_result["l"]
-    node = search_result["n"]
-    refs = search_result["r"]
-    model_class = EXTRACTED_MODEL_CLASSES_BY_NAME[label]
-    raw_model = hydrate(node, model_class)
+    model_class_name: str = search_result["l"]
+    flattened_dict: dict[str, Any] = search_result["n"]
+    references: list[SearchResultReference] = search_result["r"]
+    model_class = EXTRACTED_MODEL_CLASSES_BY_NAME[model_class_name]
+    raw_model = hydrate(flattened_dict, model_class)
 
     # duplicate references can occur because we link
     # rule-sets and extracted-items, not merged-items
-    for key, value in ((r["key"], r["value"]) for r in refs):
-        if not isinstance(value, list):
-            value = [value]
-        raw_model[key] = sorted(set(raw_model.get(key, [])) | set(value))  # type: ignore[arg-type,type-var]
+    deduplicated_references: dict[str, set[str]] = defaultdict(set)
+    for reference in references:
+        reference_ids = (
+            reference["value"]
+            if isinstance(reference["value"], list)
+            else [reference["value"]]
+        )
+        deduplicated_references[reference["key"]].update(reference_ids)
+    sorted_deduplicated_reference_key_values = {
+        reference_type: sorted(reference_ids)
+        for reference_type, reference_ids in deduplicated_references.items()
+    }
+    raw_model.update(sorted_deduplicated_reference_key_values)  # type: ignore[arg-type]
 
-    return model_class.parse_obj(raw_model)
+    return model_class.model_validate(raw_model)
 
 
 def transform_identity_result_to_identity(identity_result: dict[str, Any]) -> Identity:
     """Transform the result from an identity query into an Identity instance."""
-    return Identity.parse_obj(identity_result["i"])
+    return Identity.model_validate(identity_result["i"])

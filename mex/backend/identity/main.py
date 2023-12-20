@@ -1,11 +1,9 @@
 from fastapi import APIRouter
 from fastapi.exceptions import HTTPException
-from fastapi.responses import JSONResponse
 
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.transform import transform_identity_result_to_identity
 from mex.backend.identity.models import IdentityAssignRequest, IdentityFetchResponse
-from mex.backend.transform import to_primitive
 from mex.common.exceptions import MExError
 from mex.common.identity.models import Identity
 from mex.common.models import (
@@ -28,8 +26,8 @@ def assign_identity(request: IdentityAssignRequest) -> Identity:
     if len(graph_result.data) > 1:
         raise MExError("found multiple identities indicating graph inconsistency")
     if len(graph_result.data) == 1:
-        identity = transform_identity_result_to_identity(graph_result.data[0])
-    elif (
+        return transform_identity_result_to_identity(graph_result.data[0])
+    if (
         request.identifierInPrimarySource
         == MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE
         and request.hadPrimarySource == MEX_PRIMARY_SOURCE_STABLE_TARGET_ID
@@ -37,20 +35,18 @@ def assign_identity(request: IdentityAssignRequest) -> Identity:
         # This is to deal with the edge case where primary source is the parent of
         # all primary sources and has no parents for itself,
         # this will add itself as its parent.
-        identity = Identity(
+        return Identity(
             hadPrimarySource=request.hadPrimarySource,
             identifier=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
             identifierInPrimarySource=request.identifierInPrimarySource,
             stableTargetId=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
         )
-    else:
-        identity = Identity(
-            hadPrimarySource=request.hadPrimarySource,
-            identifier=Identifier.generate(),
-            identifierInPrimarySource=request.identifierInPrimarySource,
-            stableTargetId=Identifier.generate(),
-        )
-    return JSONResponse(to_primitive(identity), 200)  # type: ignore[return-value]
+    return Identity(
+        hadPrimarySource=request.hadPrimarySource,
+        identifier=Identifier.generate(),
+        identifierInPrimarySource=request.identifierInPrimarySource,
+        stableTargetId=Identifier.generate(),
+    )
 
 
 @router.get("/identity", status_code=200, tags=["extractors"])
@@ -76,5 +72,4 @@ def fetch_identity(
     identities = [
         transform_identity_result_to_identity(result) for result in graph_result.data
     ]
-    response = IdentityFetchResponse(items=identities, total=len(identities))
-    return JSONResponse(to_primitive(response), 200)  # type: ignore[return-value]
+    return IdentityFetchResponse(items=identities, total=len(identities))

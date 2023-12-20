@@ -16,7 +16,7 @@ from mex.common.types import Identifier
 def test_mocked_graph_init() -> None:
     graph = GraphConnector.get()
     result = graph.commit("MATCH (this);")
-    assert result == {"data": []}
+    assert result.model_dump() == {"data": []}
 
 
 def test_mocked_graph_seed_constraints(mocked_graph: MagicMock) -> None:
@@ -134,20 +134,22 @@ def test_mocked_graph_merges_edges(
 ) -> None:
     graph = GraphConnector.get()
     graph.merge_edges(extracted_person)
-
-    assert (
-        mocked_graph.run.call_args.args[0]
-        == """
+    mocked_graph.assert_has_calls(
+        [
+            call.run(
+                """
 MATCH (s {identifier:$fromID})
 MATCH (t {stableTargetId:$toSTI})
 MERGE (s)-[e:hadPrimarySource]->(t)
 RETURN e;
-"""
+""",
+                {
+                    "fromID": str(extracted_person.identifier),
+                    "toSTI": str(extracted_person.hadPrimarySource),
+                },
+            )
+        ]
     )
-    assert mocked_graph.run.call_args.args[1] == {
-        "fromID": str(extracted_person.identifier),
-        "toSTI": str(extracted_person.hadPrimarySource),
-    }
 
 
 def test_mocked_graph_ingests_models(
@@ -195,12 +197,12 @@ RETURN n;
         """
 MATCH (s {identifier:$fromID})
 MATCH (t {stableTargetId:$toSTI})
-MERGE (s)-[e:affiliation]->(t)
+MERGE (s)-[e:hadPrimarySource]->(t)
 RETURN e;
 """,
         {
             "fromID": str(extracted_person.identifier),
-            "toSTI": str(extracted_person.affiliation[0]),
+            "toSTI": str(extracted_person.hadPrimarySource),
         },
     )
     assert mocked_graph.run.call_args_list[-5:][2][0] == (
@@ -212,10 +214,22 @@ RETURN e;
 """,
         {
             "fromID": str(extracted_person.identifier),
-            "toSTI": str(extracted_person.affiliation[1]),
+            "toSTI": str(extracted_person.affiliation[0]),
         },
     )
     assert mocked_graph.run.call_args_list[-5:][3][0] == (
+        """
+MATCH (s {identifier:$fromID})
+MATCH (t {stableTargetId:$toSTI})
+MERGE (s)-[e:affiliation]->(t)
+RETURN e;
+""",
+        {
+            "fromID": str(extracted_person.identifier),
+            "toSTI": str(extracted_person.affiliation[1]),
+        },
+    )
+    assert mocked_graph.run.call_args_list[-5:][4][0] == (
         """
 MATCH (s {identifier:$fromID})
 MATCH (t {stableTargetId:$toSTI})
@@ -225,17 +239,5 @@ RETURN e;
         {
             "fromID": str(extracted_person.identifier),
             "toSTI": str(extracted_person.memberOf[0]),
-        },
-    )
-    assert mocked_graph.run.call_args_list[-5:][4][0] == (
-        """
-MATCH (s {identifier:$fromID})
-MATCH (t {stableTargetId:$toSTI})
-MERGE (s)-[e:hadPrimarySource]->(t)
-RETURN e;
-""",
-        {
-            "fromID": str(extracted_person.identifier),
-            "toSTI": str(extracted_person.hadPrimarySource),
         },
     )

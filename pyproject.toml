@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mex-backend"
-version = "0.9.2"
+version = "0.10.0"
 description = "Backend server for the RKI metadata exchange."
 authors = ["RKI MEx Team <mex@rki.de>"]
 readme = "README.md"
@@ -10,15 +10,15 @@ packages = [{ include = "mex" }]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-fastapi = "^0.104.1"
+fastapi = "^0.105.0"
 httpx = "^0.25.2"
-mex-common = { git = "https://github.com/robert-koch-institut/mex-common.git", rev = "0.14.1" }
+mex-common = { git = "https://github.com/robert-koch-institut/mex-common.git", rev = "0.16.2" }
 neo4j = "^5.15.0"
-pydantic = { version = "^1.10.13", extras = ["dotenv", "email"] }
+pydantic = "^2.5.2"
 uvicorn = { version = "^0.24.0.post1", extras = ["standard"] }
 
 [tool.poetry.dev-dependencies]
-black = "^23.11.0"
+black = "^23.12.0"
 ipdb = "^0.13.13"
 mypy = "^1.7.1"
 mypy-extensions = "^1.0.0"
