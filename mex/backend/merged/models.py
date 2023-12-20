@@ -1,5 +1,5 @@
 from enum import Enum, EnumMeta, _EnumDict
-from typing import TYPE_CHECKING, Iterator, Literal, Union, cast
+from typing import TYPE_CHECKING, Generator, Literal, Union, cast
 
 from pydantic import Field, create_model
 
@@ -11,7 +11,7 @@ from mex.common.types import Identifier
 
 def _collect_merged_model_classes(
     base_models: list[type[BaseModel]],
-) -> Iterator[tuple[str, type[MergedItem]]]:
+) -> Generator[tuple[str, type[MergedItem]], None, None]:
     """Create merged model classes with type for the given MEx models."""
     for model in base_models:
         name = model.__name__.replace("Base", "Merged")
