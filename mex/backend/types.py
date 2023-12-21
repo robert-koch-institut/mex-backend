@@ -27,5 +27,8 @@ class APIKeyDatabase(BaseModel):
     write: list[APIKey] = []
 
 
-class APIUserDatabase(dict[str, SecretStr]):
+class APIUserDatabase(BaseModel):
     """Database containing usernames and passwords for backend API."""
+
+    read: dict[str, APIKey] = {}
+    write: dict[str, APIKey] = {}
