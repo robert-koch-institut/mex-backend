@@ -1,11 +1,11 @@
 import secrets
 
-from mex.backend.types import APIKey, UserDatabase
+from mex.backend.types import APIKey, APIKeyDatabase
 
 
 def test_user_database() -> None:
     data_dict = {"read": "foo", "write": "bar"}
-    db = UserDatabase(**data_dict)
+    db = APIKeyDatabase(**data_dict)
 
     assert db.read == [APIKey("foo")]
 

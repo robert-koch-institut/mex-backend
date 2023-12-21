@@ -11,7 +11,7 @@ from mex.backend.extracted.models import EXTRACTED_MODEL_CLASSES_BY_NAME
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.main import app
 from mex.backend.settings import BackendSettings
-from mex.backend.types import UserDatabase
+from mex.backend.types import APIKeyDatabase
 from mex.common.models import BaseExtractedData
 from mex.common.transform import MExEncoder
 from mex.common.types import Identifier, Link, Text, TextLanguage
@@ -23,7 +23,7 @@ pytest_plugins = ("mex.common.testing.plugin",)
 def settings() -> BackendSettings:
     """Load the settings for this pytest session."""
     settings = BackendSettings.get()
-    settings.backend_user_database = UserDatabase(
+    settings.backend_api_key_database = APIKeyDatabase(
         **{"read": "read_key", "write": "write_key"}
     )
     return settings

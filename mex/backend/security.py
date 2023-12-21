@@ -29,8 +29,8 @@ def has_write_access(api_key: Annotated[str | None, Depends(X_API_KEY)]) -> None
         )
 
     settings = BackendSettings.get()
-    user_database = settings.backend_user_database
-    can_write = APIKey(api_key) in user_database.write
+    api_key_database = settings.backend_api_key_database
+    can_write = APIKey(api_key) in api_key_database.write
     if not can_write:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -57,13 +57,13 @@ def has_read_access(api_key: Annotated[str | None, Depends(X_API_KEY)]) -> None:
         )
 
     settings = BackendSettings.get()
-    user_database = settings.backend_user_database
+    api_key_database = settings.backend_api_key_database
     try:
         has_write_access(api_key)
         can_write = True
     except HTTPException:
         can_write = False
-    can_read = can_write or (APIKey(api_key) in user_database.read)
+    can_read = can_write or (APIKey(api_key) in api_key_database.read)
 
     if not can_read:
         raise HTTPException(

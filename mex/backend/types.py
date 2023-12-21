@@ -20,8 +20,12 @@ class APIKey(SecretStr):
         return f"APIKey('{self}')"
 
 
-class UserDatabase(BaseModel):
+class APIKeyDatabase(BaseModel):
     """A lookup from access level to list of allowed APIKeys."""
 
     read: list[APIKey] = []
     write: list[APIKey] = []
+
+
+class APIUserDatabase(dict[str, SecretStr]):
+    """Database containing usernames and passwords for backend API."""
