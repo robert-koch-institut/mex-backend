@@ -3,10 +3,8 @@ from fastapi import HTTPException
 from fastapi.security import HTTPBasicCredentials
 
 from mex.backend.security import (
-    AccessMode,
     has_read_access,
     has_write_access,
-    verify_user_access,
 )
 
 read_credentials = HTTPBasicCredentials(
@@ -85,14 +83,3 @@ def test_has_read_access_with_basic_auth() -> None:
     with pytest.raises(HTTPException) as error:
         has_read_access(credentials=None)
     assert "Missing authentication" in error.value.detail
-
-
-def test_verify_user_access() -> None:
-    assert verify_user_access(AccessMode.READ, read_credentials)
-    assert verify_user_access(AccessMode.READ, write_credentials)
-    assert verify_user_access(AccessMode.WRITE, write_credentials)
-    assert not verify_user_access(AccessMode.WRITE, read_credentials)
-    assert not verify_user_access(AccessMode.WRITE, missing_user)
-    assert not verify_user_access(AccessMode.READ, missing_user)
-    assert not verify_user_access(AccessMode.WRITE, user_wrong_pw)
-    assert not verify_user_access(AccessMode.READ, user_wrong_pw)
