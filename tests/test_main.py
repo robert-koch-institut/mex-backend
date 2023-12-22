@@ -130,7 +130,7 @@ def test_close_all_connectors(caplog: LogCaptureFixture) -> None:
     assert "Error closing ConnectorB" in caplog.text
 
 
-def test_all_endpoints_require_api_key(client: TestClient) -> None:
+def test_all_endpoints_require_authorization(client: TestClient) -> None:
     excluded_routes = [
         "/openapi.json",
         "/docs",
