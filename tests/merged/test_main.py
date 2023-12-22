@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 
 
 def test_search_merged_items_mocked(
-    client_with_read_permission: TestClient, mocked_graph: MagicMock
+    client_with_api_key_read_permission: TestClient, mocked_graph: MagicMock
 ) -> None:
     mocked_graph.return_value = [
         {
@@ -22,7 +22,7 @@ def test_search_merged_items_mocked(
         }
     ]
 
-    response = client_with_read_permission.get("/v0/merged-item")
+    response = client_with_api_key_read_permission.get("/v0/merged-item")
     assert response.status_code == 200, response.text
     assert response.json() == {
         "items": [
@@ -187,8 +187,10 @@ def test_search_merged_items_mocked(
 @pytest.mark.usefixtures("load_dummy_data")
 @pytest.mark.integration
 def test_search_merged_items(
-    client_with_read_permission: TestClient, query_string: str, expected: dict[str, Any]
+    client_with_api_key_read_permission: TestClient,
+    query_string: str,
+    expected: dict[str, Any],
 ) -> None:
-    response = client_with_read_permission.get(f"/v0/merged-item{query_string}")
+    response = client_with_api_key_read_permission.get(f"/v0/merged-item{query_string}")
     assert response.status_code == 200, response.text
     assert response.json() == expected
