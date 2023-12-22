@@ -20,6 +20,14 @@ class APIKey(SecretStr):
         return f"APIKey('{self}')"
 
 
+class APIUserPassword(SecretStr):
+    """An API password used for basic authentication along with a username."""
+
+    def __repr__(self) -> str:
+        """Return a secure representation of this key."""
+        return f"'{self}'"
+
+
 class APIKeyDatabase(BaseModel):
     """A lookup from access level to list of allowed APIKeys."""
 
@@ -30,5 +38,5 @@ class APIKeyDatabase(BaseModel):
 class APIUserDatabase(BaseModel):
     """Database containing usernames and passwords for backend API."""
 
-    read: dict[str, APIKey] = {}
-    write: dict[str, APIKey] = {}
+    read: dict[str, APIUserPassword] = {}
+    write: dict[str, APIUserPassword] = {}
