@@ -58,9 +58,16 @@ def client_with_api_key_read_permission(client: TestClient) -> TestClient:
 
 
 @pytest.fixture
-def client_with_basic_auth_read_permission(client: TestClient) -> TestClient:  # TODO
+def client_with_basic_auth_read_permission(client: TestClient) -> TestClient:
     """Return a fastAPI test client with read permission granted by basic auth."""
     client.headers.update({"Authorization": "Reader read_password"})
+    return client
+
+
+@pytest.fixture
+def client_with_basic_auth_write_permission(client: TestClient) -> TestClient:
+    """Return a fastAPI test client with write permission granted by basic auth."""
+    client.headers.update({"Authorization": "Writer write_password"})
     return client
 
 
