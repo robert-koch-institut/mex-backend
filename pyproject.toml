@@ -15,7 +15,7 @@ httpx = "^0.25.2"
 mex-common = { git = "https://github.com/robert-koch-institut/mex-common.git", rev = "0.16.2" }
 neo4j = "^5.15.0"
 pydantic = "^2.5.2"
-uvicorn = { version = "^0.24.0.post1", extras = ["standard"] }
+uvicorn = { version = "^0.25.0", extras = ["standard"] }
 
 [tool.poetry.dev-dependencies]
 black = "^23.12.0"
