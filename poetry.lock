@@ -586,7 +586,7 @@ traitlets = "*"
 
 [[package]]
 name = "mex-common"
-version = "0.16.2"
+version = "0.18.1"
 description = "RKI MEx common library."
 optional = false
 python-versions = "^3.11"
@@ -599,16 +599,16 @@ click = "^8.1.7"
 langdetect = "^1.0.9"
 ldap3 = "^2.9.1"
 numpy = "^1.26.2"
-pandas = "^2.1.3"
-pydantic = "^2.5.1"
+pandas = "^2.1.4"
+pydantic = "^2.5.2"
 pydantic-settings = "^2.1.0"
 requests = "^2.31.0"
 
 [package.source]
 type = "git"
 url = "https://github.com/robert-koch-institut/mex-common.git"
-reference = "0.16.2"
-resolved_reference = "d322dc344443ceefbaee9a3ec02a8ae248d1dd99"
+reference = "feature/mx-1376-try-out-sql-access"
+resolved_reference = "8b4ca41ab334c99fd86014ce4697b2e7b6a2b2c3"
 
 [[package]]
 name = "mypy"
@@ -1640,4 +1640,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "4fb78bad131c2869638509b3dd94a6d1f67555a57ae195738c0ff710481ceca0"
+content-hash = "0d70e7644d172efaec51c8ecee0896370021f2b1b8da94782eb719cefbaa46d0"
