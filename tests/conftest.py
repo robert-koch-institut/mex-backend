@@ -1,4 +1,5 @@
 import json
+from base64 import b64encode
 from functools import partial
 from unittest.mock import MagicMock, Mock
 
@@ -60,14 +61,18 @@ def client_with_api_key_read_permission(client: TestClient) -> TestClient:
 @pytest.fixture
 def client_with_basic_auth_read_permission(client: TestClient) -> TestClient:
     """Return a fastAPI test client with read permission granted by basic auth."""
-    client.headers.update({"Authorization": "Reader read_password"})
+    client.headers.update(
+        {"Authorization": f"Basic {b64encode(b'Reader:read_password').decode()}"}
+    )
     return client
 
 
 @pytest.fixture
 def client_with_basic_auth_write_permission(client: TestClient) -> TestClient:
     """Return a fastAPI test client with write permission granted by basic auth."""
-    client.headers.update({"Authorization": "Writer write_password"})
+    client.headers.update(
+        {"Authorization": f"Basic {b64encode(b'Writer:write_password').decode()}"}
+    )
     return client
 
 
