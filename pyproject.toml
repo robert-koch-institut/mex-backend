@@ -10,22 +10,21 @@ packages = [{ include = "mex" }]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-fastapi = "^0.105.0"
-httpx = "^0.25.2"
+fastapi = "^0.108.0"
+httpx = "^0.26.0"
 mex-common = { git = "https://github.com/robert-koch-institut/mex-common.git", rev = "0.16.2" }
-neo4j = "^5.15.0"
-pydantic = "^2.5.2"
+neo4j = "^5.16.0"
+pydantic = "^2.5.3"
 uvicorn = { version = "^0.25.0", extras = ["standard"] }
 
 [tool.poetry.dev-dependencies]
-black = "^23.12.0"
+black = "^23.12.1"
 ipdb = "^0.13.13"
-mypy = "^1.7.1"
-mypy-extensions = "^1.0.0"
-pytest = "^7.4.3"
+mypy = "^1.8.0"
+pytest = "^7.4.4"
 pytest-cov = "^4.1.0"
-ruff = "^0.1.8"
-types-pytz = "^2023.3.1.1"
+ruff = "^0.1.9"
+types-pytz = "^2023.3.1"
 
 [tool.poetry.scripts]
 backend = "mex.backend.main:main"
