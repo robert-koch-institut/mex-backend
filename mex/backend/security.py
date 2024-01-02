@@ -12,6 +12,34 @@ X_API_KEY = APIKeyHeader(name="X-API-Key", auto_error=False)
 X_API_CREDENTIALS = HTTPBasic(auto_error=False)
 
 
+def __check_header_fields_for_exceptions(
+    api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
+    credentials: Annotated[
+        HTTPBasicCredentials | None, Depends(X_API_CREDENTIALS)
+    ] = None,
+) -> None:
+    """Check authorization header for API key or credentials.
+
+    Raises:
+        HTTPException if both API key and credentials or none of them are in header.
+
+    Args:
+        api_key: the API key
+        credentials: username and password
+
+    """
+    if not api_key and not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing authentication header X-API-Key or credentials.",
+        )
+    if api_key and credentials:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Authenticate with X-API-Key or credentials, not both.",
+        )
+
+
 def has_write_access(
     api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
     credentials: Annotated[
@@ -30,11 +58,7 @@ def has_write_access(
     Settings:
         check credentials in backend_user_database or backend_api_key_database
     """
-    if not api_key and not credentials:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing authentication header X-API-Key or credentials.",
-        )
+    __check_header_fields_for_exceptions(api_key, credentials)
 
     settings = BackendSettings.get()
     can_write = False
@@ -73,11 +97,7 @@ def has_read_access(
     Settings:
         check credentials in backend_user_database or backend_api_key_database
     """
-    if not api_key and not credentials:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing authentication header X-API-Key or credentials.",
-        )
+    __check_header_fields_for_exceptions(api_key, credentials)
 
     try:
         has_write_access(api_key, credentials)  # read access implied by write access
