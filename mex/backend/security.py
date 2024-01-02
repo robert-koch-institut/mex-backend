@@ -68,9 +68,9 @@ def has_write_access(
     elif credentials:
         api_write_user_db = settings.backend_user_database.write
         user, pw = credentials.username, credentials.password.encode("utf-8")
-        if api_write_user_db.get(user):
+        if api_write_user := api_write_user_db.get(user):
             can_write = compare_digest(
-                pw, api_write_user_db[user].get_secret_value().encode("utf-8")
+                pw, api_write_user.get_secret_value().encode("utf-8")
             )
     if not can_write:
         raise HTTPException(
@@ -113,9 +113,9 @@ def has_read_access(
     elif credentials:
         api_read_user_db = settings.backend_user_database.read
         user, pw = credentials.username, credentials.password.encode("utf-8")
-        if api_read_user_db.get(user):
+        if api_read_user := api_read_user_db.get(user):
             can_read = compare_digest(
-                pw, api_read_user_db[user].get_secret_value().encode("utf-8")
+                pw, api_read_user.get_secret_value().encode("utf-8")
             )
     can_read = can_read or can_write
     if not can_read:
