@@ -1,3 +1,4 @@
+from secrets import compare_digest
 from typing import Annotated
 
 from fastapi import Depends, HTTPException
@@ -5,7 +6,7 @@ from fastapi.security import APIKeyHeader, HTTPBasic, HTTPBasicCredentials
 from starlette import status
 
 from mex.backend.settings import BackendSettings
-from mex.backend.types import APIKey, APIUserPassword
+from mex.backend.types import APIKey
 
 X_API_KEY = APIKeyHeader(name="X-API-Key", auto_error=False)
 X_API_CREDENTIALS = HTTPBasic(auto_error=False)
@@ -42,8 +43,11 @@ def has_write_access(
         can_write = APIKey(api_key) in api_key_database.write
     elif credentials:
         api_write_user_db = settings.backend_user_database.write
-        user, pw = credentials.username, credentials.password
-        can_write = APIUserPassword(pw) == api_write_user_db.get(user)
+        user, pw = credentials.username, credentials.password.encode("utf-8")
+        if api_write_user_db.get(user):
+            can_write = compare_digest(
+                pw, api_write_user_db[user].get_secret_value().encode("utf-8")
+            )
     if not can_write:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -88,8 +92,11 @@ def has_read_access(
         can_read = APIKey(api_key) in api_key_database.read
     elif credentials:
         api_read_user_db = settings.backend_user_database.read
-        user, pw = credentials.username, credentials.password
-        can_read = APIUserPassword(pw) == api_read_user_db.get(user)
+        user, pw = credentials.username, credentials.password.encode("utf-8")
+        if api_read_user_db.get(user):
+            can_read = compare_digest(
+                pw, api_read_user_db[user].get_secret_value().encode("utf-8")
+            )
     can_read = can_read or can_write
     if not can_read:
         raise HTTPException(
