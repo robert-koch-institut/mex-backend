@@ -23,10 +23,6 @@ class APIKey(SecretStr):
 class APIUserPassword(SecretStr):
     """An API password used for basic authentication along with a username."""
 
-    def __repr__(self) -> str:
-        """Return a secure representation of this key."""
-        return f"'{self}'"
-
 
 class APIKeyDatabase(BaseModel):
     """A lookup from access level to list of allowed APIKeys."""

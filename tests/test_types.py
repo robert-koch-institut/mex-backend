@@ -19,7 +19,7 @@ def test_api_key_repr() -> None:
 def test_api_user_pw_repr() -> None:
     key = APIUserPassword(secrets.token_urlsafe())
     key_repr = repr(key)
-    assert key_repr == "'**********'"
+    assert key_repr == "APIUserPassword('**********')"
 
 
 def test_api_user_database() -> None:
