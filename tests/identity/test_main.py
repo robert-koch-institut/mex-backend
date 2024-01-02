@@ -53,20 +53,20 @@ from mex.common.testing import Joker
     ids=["new item", "existing contact point"],
 )
 def test_assign_identity_mocked(
-    client_with_write_permission: TestClient,
+    client_with_api_key_write_permission: TestClient,
     mocked_graph: MagicMock,
     mocked_return: list[dict[str, str]],
     post_body: dict[str, str],
     expected: dict[str, Any],
 ) -> None:
     mocked_graph.return_value = mocked_return
-    response = client_with_write_permission.post("/v0/identity", json=post_body)
+    response = client_with_api_key_write_permission.post("/v0/identity", json=post_body)
     assert response.status_code == 200, response.text
     assert response.json() == expected
 
 
 def test_assign_identity_inconsistency_mocked(
-    client_with_write_permission: TestClient,
+    client_with_api_key_write_permission: TestClient,
     mocked_graph: MagicMock,
 ) -> None:
     mocked_graph.return_value = [
@@ -87,7 +87,7 @@ def test_assign_identity_inconsistency_mocked(
             }
         },
     ]
-    response = client_with_write_permission.post(
+    response = client_with_api_key_write_permission.post(
         "/v0/identity",
         json={
             "hadPrimarySource": "psSti00000000001",
@@ -100,9 +100,9 @@ def test_assign_identity_inconsistency_mocked(
 
 @pytest.mark.usefixtures("mocked_graph")
 def test_fetch_identity_invalid_query_params_mocked(
-    client_with_write_permission: TestClient,
+    client_with_api_key_write_permission: TestClient,
 ) -> None:
-    response = client_with_write_permission.get(
+    response = client_with_api_key_write_permission.get(
         "/v0/identity",
     )
     assert response.status_code == 400
@@ -154,11 +154,11 @@ def test_fetch_identity_invalid_query_params_mocked(
 @pytest.mark.usefixtures("load_dummy_data")
 @pytest.mark.integration
 def test_assign_identity(
-    client_with_write_permission: TestClient,
+    client_with_api_key_write_permission: TestClient,
     post_body: dict[str, str],
     expected: dict[str, Any],
 ) -> None:
-    response = client_with_write_permission.post("/v0/identity", json=post_body)
+    response = client_with_api_key_write_permission.post("/v0/identity", json=post_body)
     assert response.status_code == 200, response.text
     assert response.json() == expected
 
@@ -233,14 +233,14 @@ def test_assign_identity(
     ids=["nothing found", "one item", "two items"],
 )
 def test_fetch_identities_mocked(
-    client_with_write_permission: TestClient,
+    client_with_api_key_write_permission: TestClient,
     mocked_graph: MagicMock,
     mocked_return: list[dict[str, str]],
     query_string: str,
     expected: dict[str, Any],
 ) -> None:
     mocked_graph.return_value = mocked_return
-    response = client_with_write_permission.get(f"/v0/identity{query_string}")
+    response = client_with_api_key_write_permission.get(f"/v0/identity{query_string}")
     assert response.status_code == 200, response.text
     assert response.json() == expected
 
@@ -289,10 +289,10 @@ def test_fetch_identities_mocked(
 @pytest.mark.usefixtures("load_dummy_data")
 @pytest.mark.integration
 def test_fetch_identities(
-    client_with_write_permission: TestClient,
+    client_with_api_key_write_permission: TestClient,
     query_string: str,
     expected: dict[str, Any],
 ) -> None:
-    response = client_with_write_permission.get(f"/v0/identity{query_string}")
+    response = client_with_api_key_write_permission.get(f"/v0/identity{query_string}")
     assert response.status_code == 200, response.text
     assert response.json() == expected

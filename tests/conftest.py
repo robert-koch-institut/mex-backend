@@ -45,7 +45,7 @@ def client() -> TestClient:
 
 
 @pytest.fixture
-def client_with_write_permission(client: TestClient) -> TestClient:
+def client_with_api_key_write_permission(client: TestClient) -> TestClient:
     """Return a fastAPI test client with write permission initialized with our app."""
     client.headers.update({"X-API-Key": "write_key"})
     return client
