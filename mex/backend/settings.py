@@ -68,5 +68,5 @@ class BackendSettings(BaseSettings):
     backend_user_database: APIUserDatabase = Field(
         APIUserDatabase(),
         description="Database of users.",
-        validation_alias="MEX_BACKEND_USER_DATABASE",
+        validation_alias="MEX_BACKEND_API_USER_DATABASE",
     )
