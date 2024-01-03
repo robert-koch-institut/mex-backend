@@ -2,7 +2,7 @@ from pydantic import Field, SecretStr
 
 from mex.backend.types import APIKeyDatabase, APIUserDatabase
 from mex.common.settings import BaseSettings
-from mex.common.sinks import Sink
+from mex.common.types import Sink
 
 
 class BackendSettings(BaseSettings):
