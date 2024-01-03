@@ -26,8 +26,8 @@ def post_payload() -> dict[str, Any]:
 
 
 @pytest.mark.integration
-def test_bulk_insert_empty(client_with_write_permission: TestClient) -> None:
-    response = client_with_write_permission.post("/v0/ingest", json={})
+def test_bulk_insert_empty(client_with_api_key_write_permission: TestClient) -> None:
+    response = client_with_api_key_write_permission.post("/v0/ingest", json={})
 
     assert response.status_code == 201, response.text
     assert response.json() == {"identifiers": []}
@@ -35,21 +35,23 @@ def test_bulk_insert_empty(client_with_write_permission: TestClient) -> None:
 
 @pytest.mark.integration
 def test_bulk_insert(
-    client_with_write_permission: TestClient, post_payload: dict[str, Any]
+    client_with_api_key_write_permission: TestClient, post_payload: dict[str, Any]
 ) -> None:
     # post a single contact point to ingest endpoint
     identifier = post_payload["ExtractedContactPoint"][0]["identifier"]
     stable_target_id = post_payload["ExtractedContactPoint"][0]["stableTargetId"]
     had_primary_source = post_payload["ExtractedContactPoint"][0]["hadPrimarySource"]
     primary_source_id = post_payload["ExtractedPrimarySource"][0]["identifier"]
-    response = client_with_write_permission.post("/v0/ingest", json=post_payload)
+    response = client_with_api_key_write_permission.post(
+        "/v0/ingest", json=post_payload
+    )
 
     # assert the response is the identifier of the contact point
     assert response.status_code == 201, response.text
     assert response.json() == {"identifiers": [str(identifier), str(primary_source_id)]}
 
     # verify the node has actually been stored in the backend
-    response = client_with_write_permission.get(
+    response = client_with_api_key_write_permission.get(
         f"/v0/extracted-item?stableTargetId={stable_target_id}",
     )
     assert response.status_code == 200, response.text
@@ -68,8 +70,10 @@ def test_bulk_insert(
     }
 
 
-def test_bulk_insert_malformed(client_with_write_permission: TestClient) -> None:
-    response = client_with_write_permission.post(
+def test_bulk_insert_malformed(
+    client_with_api_key_write_permission: TestClient,
+) -> None:
+    response = client_with_api_key_write_permission.post(
         "/v0/ingest",
         json={"ExtractedContactPoint": "FAIL!"},
     )
@@ -90,9 +94,11 @@ def test_bulk_insert_malformed(client_with_write_permission: TestClient) -> None
 
 @pytest.mark.usefixtures("mocked_graph")
 def test_bulk_insert_mock(
-    client_with_write_permission: TestClient, post_payload: dict[str, Any]
+    client_with_api_key_write_permission: TestClient, post_payload: dict[str, Any]
 ) -> None:
-    response = client_with_write_permission.post("/v0/ingest", json=post_payload)
+    response = client_with_api_key_write_permission.post(
+        "/v0/ingest", json=post_payload
+    )
     assert response.status_code == 201, response.text
     assert response.json() == {
         "identifiers": [
