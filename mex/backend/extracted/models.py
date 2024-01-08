@@ -13,7 +13,7 @@ def _collect_extracted_model_classes(
     """Create extracted model classes with type for the given MEx models."""
     for model in base_models:
         # to satisfy current frontend, rename ExtractedThing -> Thing
-        name = model.__name__.removeprefix("Base")
+        name = model.__name__.replace("Base", "Extracted")
         extracted_model = create_model(
             name,
             __base__=(model, BaseExtractedData),
@@ -22,7 +22,7 @@ def _collect_extracted_model_classes(
         yield name, cast(type[BaseExtractedData], extracted_model)
 
 
-# mx-1387 stopgap: because we do not yet have a backend-powered identity provider,
+# mx-1533 stopgap: because we do not yet have a backend-powered identity provider,
 #                  we need to re-create the extracted models without automatic
 #                  identifier and stableTargetId assignment
 EXTRACTED_MODEL_CLASSES_BY_NAME: dict[str, type[BaseExtractedData]] = dict(

@@ -11,7 +11,7 @@ def test_search_merged_items_mocked(
     mocked_graph.return_value = [
         {
             "c": 0,
-            "l": "ContactPoint",
+            "l": "ExtractedContactPoint",  # stopgap mx-1382 (search for MergedContactPoint instead)
             "r": [{"key": "hadPrimarySource", "value": ["2222222222222222"]}],
             "n": {
                 "stableTargetId": "0000000000000000",
@@ -101,7 +101,7 @@ def test_search_merged_items_mocked(
             },
         ),
         (
-            "?entityType=ContactPoint",
+            "?entityType=ExtractedContactPoint",  # stopgap mx-1382 (search for MergedContactPoint instead)
             {
                 "items": [
                     {

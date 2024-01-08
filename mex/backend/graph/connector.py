@@ -4,7 +4,6 @@ from typing import Any
 from neo4j import GraphDatabase
 
 from mex.backend.extracted.models import (
-    EXTRACTED_MODEL_CLASSES_BY_NAME,
     AnyExtractedModel,
 )
 from mex.backend.fields import TEXT_FIELDS_BY_CLASS_NAME
@@ -25,6 +24,7 @@ from mex.backend.graph.transform import (
 from mex.common.connector import BaseConnector
 from mex.common.exceptions import MExError
 from mex.common.logging import logger
+from mex.common.models import EXTRACTED_MODEL_CLASSES_BY_NAME
 from mex.common.types import Identifier
 
 

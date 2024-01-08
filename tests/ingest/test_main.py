@@ -59,7 +59,7 @@ def test_bulk_insert(
         "total": 1,
         "items": [
             {
-                "$type": "ContactPoint",
+                "$type": "ExtractedContactPoint",
                 "email": ["info@rki.de"],
                 "identifier": str(identifier),
                 "identifierInPrimarySource": "cp-1",

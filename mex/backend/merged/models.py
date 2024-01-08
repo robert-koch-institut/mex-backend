@@ -1,32 +1,11 @@
 from enum import Enum, EnumMeta, _EnumDict
-from typing import TYPE_CHECKING, Generator, Literal, Union, cast
+from typing import TYPE_CHECKING, Union
 
-from pydantic import Field, create_model
+from pydantic import Field
 
-from mex.common.models import BASE_MODEL_CLASSES, MergedItem
+from mex.common.models import MERGED_MODEL_CLASSES_BY_NAME, MergedItem
 from mex.common.models.base import BaseModel
 from mex.common.transform import dromedary_to_snake
-from mex.common.types import Identifier
-
-
-def _collect_merged_model_classes(
-    base_models: list[type[BaseModel]],
-) -> Generator[tuple[str, type[MergedItem]], None, None]:
-    """Create merged model classes with type for the given MEx models."""
-    for model in base_models:
-        name = model.__name__.replace("Base", "Merged")
-        merged_model = create_model(
-            name,
-            __base__=(model,),
-            identifier=(Identifier, ...),
-            entityType=(Literal[name], Field(name, alias="$type", frozen=True)),
-        )
-        yield name, cast(type[MergedItem], merged_model)
-
-
-MERGED_MODEL_CLASSES_BY_NAME: dict[str, type[MergedItem]] = dict(
-    _collect_merged_model_classes(BASE_MODEL_CLASSES)
-)
 
 
 class MergedTypeMeta(EnumMeta):
