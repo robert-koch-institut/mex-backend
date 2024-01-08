@@ -30,7 +30,9 @@ def transform_graph_results_to_merged_item_search_response_facade(
             model = transform_search_result_to_model(result)
             model_dict = model.model_dump()
             # create a MergedModel class with the dictionary
-            model_dict["entityType"] = f"Merged{model_dict['entityType']}"
+            model_dict["entityType"] = model_dict["entityType"].replace(
+                "Extracted", "Merged"
+            )
             del model_dict["hadPrimarySource"]
             del model_dict["identifierInPrimarySource"]
             model_class = MERGED_MODEL_CLASSES_BY_NAME[model_dict["entityType"]]
