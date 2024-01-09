@@ -1,8 +1,8 @@
 from pydantic import Field, SecretStr
 
-from mex.backend.types import UserDatabase
+from mex.backend.types import APIKeyDatabase, APIUserDatabase
 from mex.common.settings import BaseSettings
-from mex.common.sinks import Sink
+from mex.common.types import Sink
 
 
 class BackendSettings(BaseSettings):
@@ -60,8 +60,13 @@ class BackendSettings(BaseSettings):
         description="Password for authenticating with the neo4j graph.",
         validation_alias="MEX_GRAPH_PASSWORD",
     )
-    backend_user_database: UserDatabase = Field(
-        UserDatabase(),
+    backend_api_key_database: APIKeyDatabase = Field(
+        APIKeyDatabase(),
+        description="Database of API keys.",
+        validation_alias="MEX_BACKEND_API_KEY_DATABASE",
+    )
+    backend_user_database: APIUserDatabase = Field(
+        APIUserDatabase(),
         description="Database of users.",
-        validation_alias="MEX_BACKEND_USER_DATABASE",
+        validation_alias="MEX_BACKEND_API_USER_DATABASE",
     )

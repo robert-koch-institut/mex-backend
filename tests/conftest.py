@@ -1,4 +1,5 @@
 import json
+from base64 import b64encode
 from functools import partial
 from unittest.mock import MagicMock, Mock
 
@@ -11,7 +12,7 @@ from mex.backend.extracted.models import EXTRACTED_MODEL_CLASSES_BY_NAME
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.main import app
 from mex.backend.settings import BackendSettings
-from mex.backend.types import UserDatabase
+from mex.backend.types import APIKeyDatabase, APIUserDatabase
 from mex.common.models import BaseExtractedData
 from mex.common.transform import MExEncoder
 from mex.common.types import Identifier, Link, Text, TextLanguage
@@ -23,8 +24,11 @@ pytest_plugins = ("mex.common.testing.plugin",)
 def settings() -> BackendSettings:
     """Load the settings for this pytest session."""
     settings = BackendSettings.get()
-    settings.backend_user_database = UserDatabase(
+    settings.backend_api_key_database = APIKeyDatabase(
         **{"read": "read_key", "write": "write_key"}
+    )
+    settings.backend_user_database = APIUserDatabase(
+        **{"read": {"Reader": "read_password"}, "write": {"Writer": "write_password"}}
     )
     return settings
 
@@ -41,16 +45,34 @@ def client() -> TestClient:
 
 
 @pytest.fixture
-def client_with_write_permission(client: TestClient) -> TestClient:
+def client_with_api_key_write_permission(client: TestClient) -> TestClient:
     """Return a fastAPI test client with write permission initialized with our app."""
     client.headers.update({"X-API-Key": "write_key"})
     return client
 
 
 @pytest.fixture
-def client_with_read_permission(client: TestClient) -> TestClient:
-    """Return a fastAPI test client with read permission initialized with our app."""
+def client_with_api_key_read_permission(client: TestClient) -> TestClient:
+    """Return a fastAPI test client with read permission granted by API key."""
     client.headers.update({"X-API-Key": "read_key"})
+    return client
+
+
+@pytest.fixture
+def client_with_basic_auth_read_permission(client: TestClient) -> TestClient:
+    """Return a fastAPI test client with read permission granted by basic auth."""
+    client.headers.update(
+        {"Authorization": f"Basic {b64encode(b'Reader:read_password').decode()}"}
+    )
+    return client
+
+
+@pytest.fixture
+def client_with_basic_auth_write_permission(client: TestClient) -> TestClient:
+    """Return a fastAPI test client with write permission granted by basic auth."""
+    client.headers.update(
+        {"Authorization": f"Basic {b64encode(b'Writer:write_password').decode()}"}
+    )
     return client
 
 
