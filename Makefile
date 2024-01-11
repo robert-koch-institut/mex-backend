@@ -18,7 +18,7 @@ hooks:
 install: setup hooks
 	# run the poetry installation with embedded virtual environment
 	@ echo installing package; \
-	poetry install --no-interaction --remove-untracked; \
+	poetry install --no-interaction --sync; \
 
 linter:
 	# run the linter hooks from pre-commit on all files
@@ -59,7 +59,7 @@ start: container
 	docker-compose up; \
 
 docs:
-    # use sphinx to auto-generate html docs from code
-    @ echo generating api docs; \
-    poetry run sphinx-apidoc -f -o docs/source mex; \
-    poetry run sphinx-build -b dirhtml docs docs/dist; \
+	# use sphinx to auto-generate html docs from code
+	@ echo generating api docs; \
+	poetry run sphinx-apidoc -f -o docs/source mex; \
+	poetry run sphinx-build -b dirhtml docs docs/dist; \
