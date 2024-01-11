@@ -17,17 +17,23 @@ neo4j = "^5.16.0"
 pydantic = "^2.5.3"
 uvicorn = { version = "^0.25.0", extras = ["standard"] }
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 black = "^23.12.1"
 ipdb = "^0.13.13"
 mypy = "^1.8.0"
 pytest = "^7.4.4"
 pytest-cov = "^4.1.0"
-ruff = "^0.1.9"
+ruff = "^0.1.11"
 types-pytz = "^2023.3.1"
+sphinx = "^6.2.1"
+sphinx-book-theme = "^1.1.0"
 
 [tool.poetry.scripts]
 backend = "mex.backend.main:main"
+
+[tool.cruft]
+template = "https://github.com/robert-koch-institut/mex-template"
+skip = ["tests/conftest.py", "mex/backend/main.py"]
 
 [tool.ipdb]
 context = 5
@@ -36,6 +42,7 @@ context = 5
 python_version = "3.11"
 show_error_codes = true
 strict = true
+plugins = ["pydantic.mypy"]
 
 [tool.pydantic-mypy]
 warn_untyped_fields = true
@@ -46,11 +53,11 @@ addopts = [
     "--cov",
     "--no-cov-on-fail",
     "--cov-report=term-missing:skip-covered",
-    "--cov-fail-under=99",
+    "--cov-fail-under=95",
     "--cov-branch",
-    "--pdbcls=IPython.terminal.debugger:TerminalPdb"
+    "--pdbcls=IPython.terminal.debugger:TerminalPdb",
 ]
-markers = "integration: mark a test as integration test allowing it to load real settings"
+markers = "integration: mark a test as integration test"
 
 [tool.ruff]
 fix = true
