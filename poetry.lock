@@ -607,8 +607,8 @@ requests = "^2.31.0"
 [package.source]
 type = "git"
 url = "https://github.com/robert-koch-institut/mex-common.git"
-reference = "feature/mx-1521-add-entity-type"
-resolved_reference = "48c4b1e5f4a85056058984bfb4f85cd3bfb2e70a"
+reference = "0.19.0"
+resolved_reference = "00e095a07a5bf96776d77efbe97c70348c252ed9"
 
 [[package]]
 name = "mypy"
@@ -1640,4 +1640,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "2c77a3c0795af986c49b3df68b76f2a94308e9826f5e93c77eafa1e507ab7e17"
+content-hash = "e2c21e1a48e27d306af955fd32126fab88e2dca73fab168a6e0131781ea7b56e"
