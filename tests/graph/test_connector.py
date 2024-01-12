@@ -26,7 +26,7 @@ def test_mocked_graph_seed_constraints(mocked_graph: MagicMock) -> None:
     assert mocked_graph.run.call_args_list[-1] == call(
         """
 CREATE CONSTRAINT IF NOT EXISTS
-FOR (n:VariableGroup)
+FOR (n:ExtractedVariableGroup)
 REQUIRE n.identifier IS UNIQUE;
 """,
         None,
@@ -40,8 +40,8 @@ def test_mocked_graph_seed_indices(mocked_graph: MagicMock) -> None:
     assert mocked_graph.run.call_args_list[-1] == call(
         """
 CREATE FULLTEXT INDEX text_fields IF NOT EXISTS
-FOR (n:AccessPlatform|Activity|ContactPoint|Distribution|Organization|\
-OrganizationalUnit|Person|PrimarySource|Resource|Variable|VariableGroup)
+FOR (n:ExtractedAccessPlatform|ExtractedActivity|ExtractedContactPoint|ExtractedDistribution|ExtractedOrganization|\
+ExtractedOrganizationalUnit|ExtractedPerson|ExtractedPrimarySource|ExtractedResource|ExtractedVariable|ExtractedVariableGroup)
 ON EACH [n.abstract_value, n.alternativeName_value, n.alternativeTitle_value, \
 n.description_value, n.instrumentToolOrApparatus_value, n.keyword_value, \
 n.label_value, n.methodDescription_value, n.method_value, n.name_value, \
@@ -98,7 +98,7 @@ def test_mocked_graph_merges_node(
     assert (
         mocked_graph.run.call_args.args[0]
         == """
-MERGE (n:Person {identifier:$identifier})
+MERGE (n:ExtractedPerson {identifier:$identifier})
 ON CREATE SET n = $on_create
 ON MATCH SET n += $on_match
 RETURN n;
@@ -163,13 +163,13 @@ def test_mocked_graph_ingests_models(
     # expect node is created
     assert mocked_graph.run.call_args_list[-5:][0][0] == (
         """
-MERGE (n:Person {identifier:$identifier})
+MERGE (n:ExtractedPerson {identifier:$identifier})
 ON CREATE SET n = $on_create
 ON MATCH SET n += $on_match
 RETURN n;
 """,
         {
-            "identifier": Identifier("bFQoRhcVH5DHUw"),
+            "identifier": "bFQoRhcVH5DHUw",
             "on_create": {
                 "stableTargetId": "bFQoRhcVH5DHVu",
                 "email": ["fictitiousf@rki.de", "info@rki.de"],
