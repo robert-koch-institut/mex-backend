@@ -54,7 +54,7 @@ else:
         "BulkIngestRequest",
         __base__=_BaseBulkIngestRequest,
         **{
-            f"{name}": (list[model], [])
+            name: (list[model], [])
             for name, model in EXTRACTED_MODEL_CLASSES_BY_NAME.items()
         },
     )
