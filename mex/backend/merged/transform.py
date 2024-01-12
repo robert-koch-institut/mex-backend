@@ -28,13 +28,13 @@ def transform_graph_results_to_merged_item_search_response_facade(
     for result in search_result.data:
         try:
             model = transform_search_result_to_model(result)
-            model_dict = model.model_dump()
+            model_dict = model.model_dump(
+                exclude={"hadPrimarySource", "identifierInPrimarySource"}
+            )
             # create a MergedModel class with the dictionary
             model_dict["entityType"] = model_dict["entityType"].replace(
                 "Extracted", "Merged"
             )
-            del model_dict["hadPrimarySource"]
-            del model_dict["identifierInPrimarySource"]
             model_class = MERGED_MODEL_CLASSES_BY_NAME[model_dict["entityType"]]
             items.append(model_class.model_validate(model_dict))
         except Neo4jError as error:  # pragma: no cover
