@@ -116,7 +116,7 @@ def isolate_graph_database(
 @pytest.fixture
 def extracted_person() -> BaseExtractedData:
     """Return an extracted person with static dummy values."""
-    return EXTRACTED_MODEL_CLASSES_BY_NAME["Person"](
+    return EXTRACTED_MODEL_CLASSES_BY_NAME["ExtractedPerson"](
         identifier=Identifier.generate(seed=6),
         stableTargetId=Identifier.generate(seed=66),
         affiliation=[
@@ -140,48 +140,48 @@ def load_dummy_data() -> None:
     """Ingest dummy data into Graph Database."""
     GraphConnector.get().ingest(
         [
-            EXTRACTED_MODEL_CLASSES_BY_NAME["PrimarySource"](
+            EXTRACTED_MODEL_CLASSES_BY_NAME["ExtractedPrimarySource"](
                 hadPrimarySource="psSti00000000001",
                 identifier="psId000000000001",
                 identifierInPrimarySource="ps-1",
                 stableTargetId="psSti00000000001",
             ),
-            EXTRACTED_MODEL_CLASSES_BY_NAME["PrimarySource"](
+            EXTRACTED_MODEL_CLASSES_BY_NAME["ExtractedPrimarySource"](
                 hadPrimarySource="psSti00000000001",
                 identifier="psId000000000002",
                 identifierInPrimarySource="ps-2",
                 stableTargetId="psSti00000000002",
                 title=[Text(value="A cool and searchable title", language=None)],
             ),
-            EXTRACTED_MODEL_CLASSES_BY_NAME["ContactPoint"](
+            EXTRACTED_MODEL_CLASSES_BY_NAME["ExtractedContactPoint"](
                 email="info@rki.de",
                 hadPrimarySource="psSti00000000001",
                 identifier="cpId000000000001",
                 identifierInPrimarySource="cp-1",
                 stableTargetId="cpSti00000000001",
             ),
-            EXTRACTED_MODEL_CLASSES_BY_NAME["ContactPoint"](
+            EXTRACTED_MODEL_CLASSES_BY_NAME["ExtractedContactPoint"](
                 email="mex@rki.de",
                 hadPrimarySource="psSti00000000001",
                 identifier="cpId000000000002",
                 identifierInPrimarySource="cp-2",
                 stableTargetId="cpSti00000000002",
             ),
-            EXTRACTED_MODEL_CLASSES_BY_NAME["OrganizationalUnit"](
+            EXTRACTED_MODEL_CLASSES_BY_NAME["ExtractedOrganizationalUnit"](
                 hadPrimarySource="psSti00000000002",
                 identifier="ouId000000000001",
                 identifierInPrimarySource="ou-1",
                 name="Unit 1",
                 stableTargetId="ouSti00000000001",
             ),
-            EXTRACTED_MODEL_CLASSES_BY_NAME["OrganizationalUnit"](
+            EXTRACTED_MODEL_CLASSES_BY_NAME["ExtractedOrganizationalUnit"](
                 hadPrimarySource="psSti00000000001",
                 identifier="ouId000000000002",
                 identifierInPrimarySource="ou-2",
                 name="Unit 2",
                 stableTargetId="ouSti00000000001",
             ),
-            EXTRACTED_MODEL_CLASSES_BY_NAME["Activity"](
+            EXTRACTED_MODEL_CLASSES_BY_NAME["ExtractedActivity"](
                 abstract=[
                     Text(value="An active activity.", language=TextLanguage.EN),
                     Text(value="Mumble bumble boo.", language=None),

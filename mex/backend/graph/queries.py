@@ -30,7 +30,7 @@ RETURN e;
 """
 
 STABLE_TARGET_ID_IDENTITY_QUERY = r"""
-MATCH (n)-[:hadPrimarySource]->(p:PrimarySource)
+MATCH (n)-[:hadPrimarySource]->(p:ExtractedPrimarySource)
 WHERE n.stableTargetId = $stable_target_id
 RETURN {
   stableTargetId: n.stableTargetId,
@@ -43,7 +43,7 @@ LIMIT $limit;
 """
 
 HAD_PRIMARY_SOURCE_AND_IDENTIFIER_IN_PRIMARY_SOURCE_IDENTITY_QUERY = r"""
-MATCH (n)-[:hadPrimarySource]->(p:PrimarySource)
+MATCH (n)-[:hadPrimarySource]->(p:ExtractedPrimarySource)
 WHERE n.identifierInPrimarySource = $identifier_in_primary_source
   AND p.stableTargetId = $had_primary_source
 RETURN {

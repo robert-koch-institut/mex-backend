@@ -11,7 +11,7 @@ def test_search_extracted_items_mocked(
     mocked_graph.return_value = [
         {
             "c": 0,
-            "l": "ContactPoint",
+            "l": "ExtractedContactPoint",
             "r": [{"key": "hadPrimarySource", "value": ["2222222222222222"]}],
             "n": {
                 "stableTargetId": "0000000000000000",
@@ -27,7 +27,7 @@ def test_search_extracted_items_mocked(
     assert response.json() == {
         "items": [
             {
-                "$type": "ContactPoint",
+                "$type": "ExtractedContactPoint",
                 "email": ["test@foo.bar"],
                 "hadPrimarySource": "2222222222222222",
                 "identifier": "1111111111111111",
@@ -85,7 +85,7 @@ def test_search_extracted_items_mocked(
                         "identifier": "aId0000000000001",
                         "hadPrimarySource": "psSti00000000001",
                         "identifierInPrimarySource": "a-1",
-                        "$type": "Activity",
+                        "$type": "ExtractedActivity",
                     }
                 ],
             },
@@ -95,7 +95,7 @@ def test_search_extracted_items_mocked(
             {
                 "items": [
                     {
-                        "$type": "ContactPoint",
+                        "$type": "ExtractedContactPoint",
                         "email": ["info@rki.de"],
                         "hadPrimarySource": "psSti00000000001",
                         "identifier": "cpId000000000001",
@@ -107,11 +107,11 @@ def test_search_extracted_items_mocked(
             },
         ),
         (
-            "?entityType=ContactPoint",
+            "?entityType=ExtractedContactPoint",
             {
                 "items": [
                     {
-                        "$type": "ContactPoint",
+                        "$type": "ExtractedContactPoint",
                         "email": ["info@rki.de"],
                         "hadPrimarySource": "psSti00000000001",
                         "identifier": "cpId000000000001",
@@ -119,7 +119,7 @@ def test_search_extracted_items_mocked(
                         "stableTargetId": "cpSti00000000001",
                     },
                     {
-                        "$type": "ContactPoint",
+                        "$type": "ExtractedContactPoint",
                         "email": ["mex@rki.de"],
                         "hadPrimarySource": "psSti00000000001",
                         "identifier": "cpId000000000002",
@@ -135,7 +135,7 @@ def test_search_extracted_items_mocked(
             {
                 "items": [
                     {
-                        "$type": "PrimarySource",
+                        "$type": "ExtractedPrimarySource",
                         "alternativeTitle": [],
                         "contact": [],
                         "description": [],
@@ -160,7 +160,7 @@ def test_search_extracted_items_mocked(
             {
                 "items": [
                     {
-                        "$type": "OrganizationalUnit",
+                        "$type": "ExtractedOrganizationalUnit",
                         "alternativeName": [],
                         "email": [],
                         "hadPrimarySource": "psSti00000000002",
@@ -174,7 +174,7 @@ def test_search_extracted_items_mocked(
                         "website": [],
                     },
                     {
-                        "$type": "OrganizationalUnit",
+                        "$type": "ExtractedOrganizationalUnit",
                         "alternativeName": [],
                         "email": [],
                         "hadPrimarySource": "psSti00000000001",
