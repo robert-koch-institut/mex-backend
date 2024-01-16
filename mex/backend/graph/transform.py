@@ -33,6 +33,7 @@ def transform_model_to_node(model: BaseModel) -> MergableNode:
     on_match = on_create.copy()
     on_match.pop("identifier")
     on_match.pop("stableTargetId")
+    on_match.pop("identifierInPrimarySource")
 
     return MergableNode(on_create=on_create, on_match=on_match)
 

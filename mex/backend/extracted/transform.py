@@ -37,4 +37,4 @@ def transform_graph_results_to_extracted_item_search_response(
                 "  \n".join("()-[{key}]->({value})".format(**r) for r in result["r"]),
                 exc_info=False,
             )
-    return ExtractedItemSearchResponse.model_construct(items=items, total=total)
+    return ExtractedItemSearchResponse(items=items, total=total)

@@ -17,6 +17,7 @@ def _collect_extracted_model_classes(
         extracted_model = create_model(
             name,
             __base__=(model, BaseExtractedData),
+            __module__=__name__,
             entityType=(Literal[name], Field(name, alias="$type", frozen=True)),
         )
         yield name, cast(type[BaseExtractedData], extracted_model)
