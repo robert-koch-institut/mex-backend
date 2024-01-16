@@ -3,15 +3,12 @@ from typing import Any, TypedDict
 
 from pydantic import BaseModel as PydanticBaseModel
 
-from mex.backend.extracted.models import (
-    EXTRACTED_MODEL_CLASSES_BY_NAME,
-    AnyExtractedModel,
-)
+from mex.backend.extracted.models import AnyExtractedModel
 from mex.backend.fields import REFERENCE_FIELDS_BY_CLASS_NAME
 from mex.backend.graph.hydrate import dehydrate, hydrate
 from mex.backend.transform import to_primitive
 from mex.common.identity import Identity
-from mex.common.models import BaseModel, MExModel
+from mex.common.models import EXTRACTED_MODEL_CLASSES_BY_NAME, BaseModel, MExModel
 
 
 class MergableNode(PydanticBaseModel):

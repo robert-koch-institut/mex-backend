@@ -3,7 +3,7 @@ from typing import Annotated, Any, Generator, Union, get_args, get_origin
 
 from pydantic.fields import FieldInfo
 
-from mex.backend.extracted.models import EXTRACTED_MODEL_CLASSES_BY_NAME
+from mex.common.models import EXTRACTED_MODEL_CLASSES_BY_NAME
 from mex.common.types import Identifier, Text
 
 

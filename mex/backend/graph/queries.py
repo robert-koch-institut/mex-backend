@@ -3,7 +3,7 @@ RETURN 1;
 """
 
 CREATE_CONSTRAINTS_STATEMENT = r"""
-CREATE CONSTRAINT IF NOT EXISTS
+CREATE CONSTRAINT identifier_uniqueness IF NOT EXISTS
 FOR (n:{node_label})
 REQUIRE n.identifier IS UNIQUE;
 """

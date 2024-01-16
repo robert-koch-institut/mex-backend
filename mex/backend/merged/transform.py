@@ -48,5 +48,5 @@ def transform_graph_results_to_merged_item_search_response_facade(
                 "  \n".join("()-[{key}]->({value})".format(**r) for r in result["r"]),
                 exc_info=False,
             )
-    # TODO merge extracted items with rule set
+    # TODO: merge extracted items with rule sets
     return MergedItemSearchResponse.model_validate({"items": items, "total": total})

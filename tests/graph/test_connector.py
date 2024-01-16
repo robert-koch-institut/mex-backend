@@ -25,7 +25,7 @@ def test_mocked_graph_seed_constraints(mocked_graph: MagicMock) -> None:
 
     assert mocked_graph.run.call_args_list[-1] == call(
         """
-CREATE CONSTRAINT IF NOT EXISTS
+CREATE CONSTRAINT identifier_uniqueness IF NOT EXISTS
 FOR (n:ExtractedVariableGroup)
 REQUIRE n.identifier IS UNIQUE;
 """,
@@ -122,7 +122,6 @@ RETURN n;
             "familyName": ["Fictitious"],
             "fullName": ["Fictitious, Frieda, Dr."],
             "givenName": ["Frieda"],
-            "identifierInPrimarySource": "frieda",
             "isniId": [],
             "orcidId": [],
         },
@@ -188,7 +187,6 @@ RETURN n;
                 "givenName": ["Frieda"],
                 "isniId": [],
                 "orcidId": [],
-                "identifierInPrimarySource": "frieda",
             },
         },
     )

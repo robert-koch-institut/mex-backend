@@ -10,7 +10,7 @@ def test_search_extracted_items_mocked(
 ) -> None:
     mocked_graph.return_value = [
         {
-            "c": 0,
+            "c": 1,
             "l": "ExtractedContactPoint",
             "r": [{"key": "hadPrimarySource", "value": ["2222222222222222"]}],
             "n": {
@@ -19,7 +19,13 @@ def test_search_extracted_items_mocked(
                 "identifierInPrimarySource": "test",
                 "email": "test@foo.bar",
             },
-        }
+            "i": {
+                "stableTargetId": "0000000000000000",
+                "hadPrimarySource": "2222222222222222",
+                "identifierInPrimarySource": "test",
+                "identifier": "1111111111111111",
+            },
+        },
     ]
 
     response = client_with_api_key_read_permission.get("/v0/extracted-item")
@@ -35,7 +41,7 @@ def test_search_extracted_items_mocked(
                 "stableTargetId": "0000000000000000",
             }
         ],
-        "total": 0,
+        "total": 1,
     }
 
 
@@ -45,62 +51,37 @@ def test_search_extracted_items_mocked(
         (
             "?limit=1",
             {
-                "total": 7,
                 "items": [
                     {
-                        "stableTargetId": "aSti000000000001",
-                        "abstract": [
-                            {"value": "An active activity.", "language": "en"},
-                            {"value": "Mumble bumble boo.", "language": None},
-                        ],
-                        "activityType": [],
+                        "$type": "ExtractedPrimarySource",
                         "alternativeTitle": [],
-                        "contact": [
-                            "cpSti00000000001",
-                            "cpSti00000000002",
-                            "ouSti00000000001",
-                        ],
+                        "contact": [],
+                        "description": [],
                         "documentation": [],
-                        "end": [],
-                        "externalAssociate": [],
-                        "funderOrCommissioner": [],
-                        "fundingProgram": [],
-                        "involvedPerson": [],
-                        "involvedUnit": [],
-                        "isPartOfActivity": [],
-                        "publication": [],
-                        "responsibleUnit": ["ouSti00000000001"],
-                        "shortName": [],
-                        "start": [],
-                        "succeeds": [],
-                        "theme": ["https://mex.rki.de/item/theme-3"],
-                        "title": [{"value": "Activity 1", "language": "en"}],
-                        "website": [
-                            {
-                                "language": None,
-                                "title": "Activity Homepage",
-                                "url": "https://activity-1",
-                            }
-                        ],
-                        "identifier": "aId0000000000001",
-                        "hadPrimarySource": "psSti00000000001",
-                        "identifierInPrimarySource": "a-1",
-                        "$type": "ExtractedActivity",
+                        "hadPrimarySource": "00000000000000",
+                        "identifier": "00000000000000",
+                        "identifierInPrimarySource": "mex",
+                        "locatedAt": [],
+                        "stableTargetId": "00000000000000",
+                        "title": [],
+                        "unitInCharge": [],
+                        "version": None,
                     }
                 ],
+                "total": 7,
             },
         ),
         (
-            "?limit=1&skip=1",
+            "?limit=1&skip=4",
             {
                 "items": [
                     {
                         "$type": "ExtractedContactPoint",
                         "email": ["info@rki.de"],
-                        "hadPrimarySource": "psSti00000000001",
-                        "identifier": "cpId000000000001",
+                        "hadPrimarySource": "bFQoRhcVH5DHUr",
+                        "identifier": "bFQoRhcVH5DHUu",
                         "identifierInPrimarySource": "cp-1",
-                        "stableTargetId": "cpSti00000000001",
+                        "stableTargetId": "bFQoRhcVH5DHUv",
                     }
                 ],
                 "total": 7,
@@ -113,18 +94,18 @@ def test_search_extracted_items_mocked(
                     {
                         "$type": "ExtractedContactPoint",
                         "email": ["info@rki.de"],
-                        "hadPrimarySource": "psSti00000000001",
-                        "identifier": "cpId000000000001",
+                        "hadPrimarySource": "bFQoRhcVH5DHUr",
+                        "identifier": "bFQoRhcVH5DHUu",
                         "identifierInPrimarySource": "cp-1",
-                        "stableTargetId": "cpSti00000000001",
+                        "stableTargetId": "bFQoRhcVH5DHUv",
                     },
                     {
                         "$type": "ExtractedContactPoint",
                         "email": ["mex@rki.de"],
-                        "hadPrimarySource": "psSti00000000001",
-                        "identifier": "cpId000000000002",
+                        "hadPrimarySource": "bFQoRhcVH5DHUr",
+                        "identifier": "bFQoRhcVH5DHUw",
                         "identifierInPrimarySource": "cp-2",
-                        "stableTargetId": "cpSti00000000002",
+                        "stableTargetId": "bFQoRhcVH5DHUx",
                     },
                 ],
                 "total": 2,
@@ -140,11 +121,11 @@ def test_search_extracted_items_mocked(
                         "contact": [],
                         "description": [],
                         "documentation": [],
-                        "hadPrimarySource": "psSti00000000001",
-                        "identifier": "psId000000000002",
+                        "hadPrimarySource": "00000000000000",
+                        "identifier": "bFQoRhcVH5DHUs",
                         "identifierInPrimarySource": "ps-2",
                         "locatedAt": [],
-                        "stableTargetId": "psSti00000000002",
+                        "stableTargetId": "bFQoRhcVH5DHUt",
                         "title": [
                             {"language": None, "value": "A cool and searchable title"}
                         ],
@@ -156,39 +137,25 @@ def test_search_extracted_items_mocked(
             },
         ),
         (
-            "?stableTargetId=ouSti00000000001",
+            "?stableTargetId=bFQoRhcVH5DHUz",
             {
                 "items": [
                     {
                         "$type": "ExtractedOrganizationalUnit",
                         "alternativeName": [],
                         "email": [],
-                        "hadPrimarySource": "psSti00000000002",
-                        "identifier": "ouId000000000001",
+                        "hadPrimarySource": "bFQoRhcVH5DHUt",
+                        "identifier": "bFQoRhcVH5DHUy",
                         "identifierInPrimarySource": "ou-1",
                         "name": [{"language": "en", "value": "Unit 1"}],
                         "parentUnit": None,
                         "shortName": [],
-                        "stableTargetId": "ouSti00000000001",
+                        "stableTargetId": "bFQoRhcVH5DHUz",
                         "unitOf": [],
                         "website": [],
-                    },
-                    {
-                        "$type": "ExtractedOrganizationalUnit",
-                        "alternativeName": [],
-                        "email": [],
-                        "hadPrimarySource": "psSti00000000001",
-                        "identifier": "ouId000000000002",
-                        "identifierInPrimarySource": "ou-2",
-                        "name": [{"language": "en", "value": "Unit 2"}],
-                        "parentUnit": None,
-                        "shortName": [],
-                        "stableTargetId": "ouSti00000000001",
-                        "unitOf": [],
-                        "website": [],
-                    },
+                    }
                 ],
-                "total": 2,
+                "total": 1,
             },
         ),
     ],

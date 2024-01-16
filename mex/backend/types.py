@@ -36,3 +36,9 @@ class APIUserDatabase(BaseModel):
 
     read: dict[str, APIUserPassword] = {}
     write: dict[str, APIUserPassword] = {}
+
+
+class BackendIdentityProvider(Enum):
+    """Identity providers implemented by mex-backend."""
+
+    GRAPH = "graph"
