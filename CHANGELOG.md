@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - publish cve results
 - CHANGELOG file
 - cruft template link
+- open-code workflow
 
 ### Changes
 
