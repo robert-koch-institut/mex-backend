@@ -3,7 +3,7 @@ default_language_version:
   python: python3.11
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.9
+    rev: v0.1.13
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
@@ -17,6 +17,7 @@ repos:
       - id: pretty-format-json
         name: json
         args: [--autofix]
+        exclude: .cruft.json
       - id: check-yaml
         name: yaml
   - repo: https://github.com/python-poetry/poetry
