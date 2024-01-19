@@ -32,6 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- remove dynamic extracted model classes and use those from mex-common
+
 ### Fixed
 
 - don't allow identifierInPrimarySource changes on node updates
