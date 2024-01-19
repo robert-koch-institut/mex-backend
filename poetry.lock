@@ -730,8 +730,8 @@ requests = "^2.31.0"
 [package.source]
 type = "git"
 url = "https://github.com/robert-koch-institut/mex-common.git"
-reference = "feature/mx-1533-prep-graph-id-provider"
-resolved_reference = "e13a014795065726875f296c8c56507602bd65c4"
+reference = "0.19.1"
+resolved_reference = "a0d838609cc1392958c10cfa1a5d7d39c10b67ab"
 
 [[package]]
 name = "mypy"
@@ -1902,4 +1902,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "bf4a746bd94106bd2e3a9ca3edd769f8c51039f673bf183f096e840f8b19dce6"
+content-hash = "ed0b86efa20abbd29133fb7cf89bb1fa2074e06e05d9e6ce0d7b38aca5e5b734"
