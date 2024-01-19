@@ -26,13 +26,12 @@ from mex.common.exceptions import MExError
 from mex.common.logging import logger
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
+    MEX_PRIMARY_SOURCE_IDENTIFIER,
     MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     ExtractedPrimarySource,
 )
 from mex.common.types import Identifier
-
-MEX_PRIMARY_SOURCE_IDENTIFIER = Identifier("00000000000000")
 
 
 class GraphConnector(BaseConnector):

@@ -4,10 +4,6 @@ from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.transform import transform_identity_result_to_identity
 from mex.common.exceptions import MExError
 from mex.common.identity import BaseProvider, Identity
-from mex.common.models import (
-    MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
-    MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-)
 from mex.common.types import Identifier, PrimarySourceID
 
 
@@ -29,20 +25,6 @@ class GraphIdentityProvider(BaseProvider, GraphConnector):
             raise MExError("found multiple identities indicating graph inconsistency")
         if len(graph_result.data) == 1:
             return transform_identity_result_to_identity(graph_result.data[0])
-        if (
-            identifier_in_primary_source
-            == MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE
-            and had_primary_source == MEX_PRIMARY_SOURCE_STABLE_TARGET_ID
-        ):
-            # This is to deal with the edge case where primary source is the parent of
-            # all primary sources and has no parents for itself,
-            # this will add itself as its parent.
-            return Identity(
-                hadPrimarySource=had_primary_source,
-                identifier=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-                identifierInPrimarySource=identifier_in_primary_source,
-                stableTargetId=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-            )
         return Identity(
             hadPrimarySource=had_primary_source,
             identifier=Identifier.generate(),

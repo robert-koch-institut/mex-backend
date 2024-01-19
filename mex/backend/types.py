@@ -1,8 +1,9 @@
-from enum import Enum
+from enum import Enum, EnumMeta, _EnumDict
 
 from pydantic import SecretStr
 
 from mex.common.models import BaseModel
+from mex.common.transform import dromedary_to_snake
 
 
 class AccessLevel(Enum):
@@ -42,3 +43,15 @@ class BackendIdentityProvider(Enum):
     """Identity providers implemented by mex-backend."""
 
     GRAPH = "graph"
+
+
+class DynamicStrEnum(EnumMeta):
+    """Meta class to dynamically populate the an enumeration from a list of strings."""
+
+    def __new__(
+        cls: type["DynamicStrEnum"], name: str, bases: tuple[type], dct: _EnumDict
+    ) -> "DynamicStrEnum":
+        """Create a new enum by adding an entry for each name in the source."""
+        for name in dct.pop("__names__"):
+            dct[dromedary_to_snake(name).upper()] = name
+        return super().__new__(cls, name, bases, dct)

@@ -25,7 +25,7 @@ def search_extracted_items(
     query_results = graph.query_nodes(
         q,
         stableTargetId,
-        [t.value for t in entityType or ExtractedType],
+        [str(t.value) for t in entityType or ExtractedType],
         skip,
         limit,
     )

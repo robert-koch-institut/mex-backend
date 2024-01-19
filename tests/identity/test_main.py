@@ -5,6 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from mex.common.models import (
+    MEX_PRIMARY_SOURCE_IDENTIFIER,
     MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
 )
@@ -142,7 +143,7 @@ def test_fetch_identity_invalid_query_params_mocked(
             },
             {
                 "hadPrimarySource": MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-                "identifier": MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+                "identifier": MEX_PRIMARY_SOURCE_IDENTIFIER,
                 "identifierInPrimarySource": MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
                 "stableTargetId": MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
             },

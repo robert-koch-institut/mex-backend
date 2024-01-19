@@ -77,7 +77,7 @@ def close_connectors() -> None:
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     """Async context manager to execute setup and teardown of the FastAPI app."""
     yield None
     close_connectors()

@@ -1,27 +1,23 @@
-from enum import Enum, EnumMeta, _EnumDict
+from enum import Enum
 from typing import TYPE_CHECKING, Union
 
 from pydantic import Field
 
+from mex.backend.types import DynamicStrEnum
 from mex.common.models import MERGED_MODEL_CLASSES_BY_NAME, MergedItem
 from mex.common.models.base import BaseModel
-from mex.common.transform import dromedary_to_snake
 
 
-class MergedTypeMeta(EnumMeta):
-    """Meta class to dynamically populate the entity type enumeration."""
+class UnprefixedType(Enum, metaclass=DynamicStrEnum):
+    """Enumeration of possible unprefixed types for merged items."""
 
-    def __new__(
-        cls: type["MergedTypeMeta"], name: str, bases: tuple[type], dct: _EnumDict
-    ) -> "MergedTypeMeta":
-        """Create a new entity type enum by adding an entry for each model."""
-        for entity_type in MERGED_MODEL_CLASSES_BY_NAME:
-            dct[dromedary_to_snake(entity_type).upper()] = entity_type
-        return super().__new__(cls, name, bases, dct)
+    __names__ = list(m.removeprefix("Merged") for m in MERGED_MODEL_CLASSES_BY_NAME)
 
 
-class MergedType(Enum, metaclass=MergedTypeMeta):
+class MergedType(Enum, metaclass=DynamicStrEnum):
     """Enumeration of possible types for merged items."""
+
+    __names__ = list(MERGED_MODEL_CLASSES_BY_NAME)
 
 
 if TYPE_CHECKING:  # pragma: no cover
