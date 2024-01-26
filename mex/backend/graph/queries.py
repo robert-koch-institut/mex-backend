@@ -1,12 +1,30 @@
+from collections.abc import Iterable, Mapping
+
+from mex.common.transform import dromedary_to_snake
+
 NOOP_STATEMENT = r"""
 RETURN 1;
 """
 
+
+def noop() -> str:
+    """Build a noop query to test the database connection."""
+    return NOOP_STATEMENT.strip()
+
+
 CREATE_CONSTRAINTS_STATEMENT = r"""
-CREATE CONSTRAINT identifier_uniqueness IF NOT EXISTS
-FOR (n:{node_label})
-REQUIRE n.identifier IS UNIQUE;
+CREATE CONSTRAINT {lowercase_label}_identifier_uniqueness IF NOT EXISTS
+FOR (node:{node_label})
+REQUIRE node.identifier IS UNIQUE;
 """
+
+
+def identifier_uniqueness_constraint(node_label: str) -> str:
+    """Build a uniqueness constraint statement for the `identifier` field."""
+    return CREATE_CONSTRAINTS_STATEMENT.format(
+        lowercase_label=dromedary_to_snake(node_label), node_label=node_label
+    ).strip()
+
 
 CREATE_INDEX_STATEMENT = r"""
 CREATE FULLTEXT INDEX text_fields IF NOT EXISTS
@@ -15,262 +33,61 @@ ON EACH [{node_fields}]
 OPTIONS {{indexConfig: $config}};
 """
 
-MERGE_NODE_STATEMENT = r"""
-MERGE (n:{node_label} {{identifier:$identifier}})
-ON CREATE SET n = $on_create
-ON MATCH SET n += $on_match
-RETURN n;
-"""
+
+def full_text_search_index(fields_by_label: Mapping[str, Iterable[str]]) -> str:
+    """Build a full text search index on the given label and fields."""
+    node_labels = "|".join(fields_by_label)
+    node_fields = ", ".join(
+        sorted({f"n.{f}" for fields in fields_by_label.values() for f in fields})
+    )
+    return CREATE_INDEX_STATEMENT.format(
+        node_labels=node_labels, node_fields=node_fields
+    ).strip()
+
 
 MERGE_EDGE_STATEMENT = r"""
-MATCH (s {{identifier:$fromID}})
-MATCH (t {{stableTargetId:$toSTI}})
-MERGE (s)-[e:{edge_label}]->(t)
-RETURN e;
+MATCH (fromNode {{identifier:$fromIdentifier}})
+MATCH (toNode {{stableTargetId:$toStableTargetId}})
+MERGE (fromNode)-[edge:{edge_label} {{position:$position}}]->(toNode)
+RETURN edge;
 """
 
-STABLE_TARGET_ID_IDENTITY_QUERY = r"""
+
+def merge_edge(label: str) -> str:
+    """Build a statement to merge an edge into the graph."""
+    return MERGE_EDGE_STATEMENT.format(edge_label=label).strip()
+
+
+IDENTITY_QUERY = r"""
 MATCH (n)-[:hadPrimarySource]->(p:ExtractedPrimarySource)
-WHERE n.stableTargetId = $stable_target_id
-RETURN {
-  stableTargetId: n.stableTargetId,
-  hadPrimarySource: p.stableTargetId,
-  identifierInPrimarySource: n.identifierInPrimarySource,
-  identifier: n.identifier
-} as i
+{where_clause}
+RETURN
+  n.stableTargetId as stableTargetId,
+  p.stableTargetId as hadPrimarySource,
+  n.identifierInPrimarySource as identifierInPrimarySource,
+  n.identifier as identifier
 ORDER BY n.identifier ASC
 LIMIT $limit;
 """
 
-HAD_PRIMARY_SOURCE_AND_IDENTIFIER_IN_PRIMARY_SOURCE_IDENTITY_QUERY = r"""
-MATCH (n)-[:hadPrimarySource]->(p:ExtractedPrimarySource)
+STABLE_TARGET_ID_IDENTITY_WHERE_CLAUSE = r"""
+WHERE n.stableTargetId = $stable_target_id
+"""
+
+
+def stable_target_id_identity() -> str:
+    """Build a query to get all identities for the given `stableTargetId`."""
+    clause = STABLE_TARGET_ID_IDENTITY_WHERE_CLAUSE
+    return IDENTITY_QUERY.format(where_clause=clause.strip()).strip()
+
+
+HAD_PRIMARY_SOURCE_AND_IDENTIFIER_IN_PRIMARY_SOURCE_IDENTITY_WHERE_CLAUSE = r"""
 WHERE n.identifierInPrimarySource = $identifier_in_primary_source
-  AND p.stableTargetId = $had_primary_source
-RETURN {
-  stableTargetId: n.stableTargetId,
-  hadPrimarySource: p.stableTargetId,
-  identifierInPrimarySource: n.identifierInPrimarySource,
-  identifier: n.identifier
-} as i
-ORDER BY n.identifier ASC
-LIMIT $limit;
+AND p.stableTargetId = $had_primary_source
 """
 
-FULL_TEXT_ID_AND_LABEL_FILTER_SEARCH_QUERY = r"""
-CALL db.index.fulltext.queryNodes('text_fields', $query)
-YIELD node AS hit, score
-MATCH (n)
-WHERE elementId(hit) = elementId(n)
-  AND n.stableTargetId = $stable_target_id
-  AND ANY(label IN labels(n) WHERE label IN $labels)
-CALL {
-  WITH n
-  MATCH (n)-[r]->()
-  RETURN collect({key: type(r), value: endNode(r).stableTargetId}) as r
-}
-RETURN n, head(labels(n)) AS l, r
-ORDER BY score DESC
-SKIP $skip
-LIMIT $limit;
-"""
 
-FULL_TEXT_ID_AND_LABEL_FILTER_COUNT_QUERY = r"""
-CALL db.index.fulltext.queryNodes('text_fields', $query)
-YIELD node AS hit, score
-MATCH (n)
-WHERE elementId(hit) = elementId(n)
-  AND n.stableTargetId = $stable_target_id
-  AND ANY(label IN labels(n) WHERE label IN $labels)
-RETURN COUNT(n) AS c;
-"""
-
-FULL_TEXT_ID_FILTER_SEARCH_QUERY = r"""
-CALL db.index.fulltext.queryNodes('text_fields', $query)
-YIELD node AS hit, score
-MATCH (n)
-WHERE elementId(hit) = elementId(n)
-  AND n.stableTargetId = $stable_target_id
-CALL {
-  WITH n
-  MATCH (n)-[r]->()
-  RETURN collect({key: type(r), value: endNode(r).stableTargetId}) as r
-}
-RETURN n, head(labels(n)) AS l, r
-ORDER BY score DESC
-SKIP $skip
-LIMIT $limit;
-"""
-
-FULL_TEXT_ID_FILTER_COUNT_QUERY = r"""
-CALL db.index.fulltext.queryNodes('text_fields', $query)
-YIELD node AS hit, score
-MATCH (n)
-WHERE elementId(hit) = elementId(n)
-  AND n.stableTargetId = $stable_target_id
-RETURN COUNT(n) AS c;
-"""
-
-FULL_TEXT_LABEL_FILTER_SEARCH_QUERY = r"""
-CALL db.index.fulltext.queryNodes('text_fields', $query)
-YIELD node AS hit, score
-MATCH (n)
-WHERE elementId(hit) = elementId(n)
-  AND ANY(label IN labels(n) WHERE label IN $labels)
-CALL {
-  WITH n
-  MATCH (n)-[r]->()
-  RETURN collect({key: type(r), value: endNode(r).stableTargetId}) as r
-}
-RETURN n, head(labels(n)) AS l, r
-ORDER BY score DESC
-SKIP $skip
-LIMIT $limit;
-"""
-
-FULL_TEXT_LABEL_FILTER_COUNT_QUERY = r"""
-CALL db.index.fulltext.queryNodes('text_fields', $query)
-YIELD node AS hit, score
-MATCH (n)
-WHERE elementId(hit) = elementId(n)
-  AND ANY(label IN labels(n) WHERE label IN $labels)
-RETURN COUNT(n) AS c;
-"""
-
-FULL_TEXT_SEARCH_QUERY = r"""
-CALL db.index.fulltext.queryNodes('text_fields', $query)
-YIELD node AS hit, score
-MATCH (n)
-WHERE elementId(hit) = elementId(n)
-CALL {
-  WITH n
-  MATCH (n)-[r]->()
-  RETURN collect({key: type(r), value: endNode(r).stableTargetId}) as r
-}
-RETURN n, head(labels(n)) AS l, r
-ORDER BY score DESC
-SKIP $skip
-LIMIT $limit;
-"""
-
-FULL_TEXT_COUNT_QUERY = r"""
-CALL db.index.fulltext.queryNodes('text_fields', $query)
-YIELD node AS hit, score
-MATCH (n)
-WHERE elementId(hit) = elementId(n)
-RETURN COUNT(n) AS c;
-"""
-
-ID_AND_LABEL_FILTER_SEARCH_QUERY = r"""
-MATCH (n)
-WHERE n.stableTargetId = $stable_target_id
-  AND ANY(label IN labels(n) WHERE label IN $labels)
-  CALL {
-  WITH n
-  MATCH (n)-[r]->()
-  RETURN collect({key: type(r), value: endNode(r).stableTargetId}) as r
-}
-RETURN n, head(labels(n)) AS l, r
-ORDER BY n.identifier ASC
-SKIP $skip
-LIMIT $limit;
-"""
-
-ID_AND_LABEL_FILTER_COUNT_QUERY = r"""
-MATCH (n)
-WHERE n.stableTargetId = $stable_target_id
-  AND ANY(label IN labels(n) WHERE label IN $labels)
-RETURN COUNT(n) AS c;
-"""
-
-ID_FILTER_SEARCH_QUERY = r"""
-MATCH (n)
-WHERE n.stableTargetId = $stable_target_id
-CALL {
-  WITH n
-  MATCH (n)-[r]->()
-  RETURN collect({key: type(r), value: endNode(r).stableTargetId}) as r
-}
-RETURN n, head(labels(n)) AS l, r
-ORDER BY n.identifier ASC
-SKIP $skip
-LIMIT $limit;
-"""
-
-ID_FILTER_COUNT_QUERY = r"""
-MATCH (n)
-WHERE n.stableTargetId = $stable_target_id
-RETURN COUNT(n) AS c;
-"""
-
-LABEL_FILTER_SEARCH_QUERY = r"""
-MATCH (n)
-WHERE ANY(label IN labels(n) WHERE label IN $labels)
-CALL {
-  WITH n
-  MATCH (n)-[r]->()
-  RETURN collect({key: type(r), value: endNode(r).stableTargetId}) as r
-}
-RETURN n, head(labels(n)) AS l, r
-ORDER BY n.identifier ASC
-SKIP $skip
-LIMIT $limit;
-"""
-
-LABEL_FILTER_COUNT_QUERY = r"""
-MATCH (n)
-WHERE ANY(label IN labels(n) WHERE label IN $labels)
-RETURN COUNT(n) AS c;
-"""
-
-GENERAL_SEARCH_QUERY = r"""
-MATCH (n)
-CALL {
-  WITH n MATCH (n)-[r]->()
-  RETURN collect({key: type(r), value: endNode(r).stableTargetId}) as r
-}
-RETURN n, head(labels(n)) AS l, r
-ORDER BY n.identifier ASC
-SKIP $skip
-LIMIT $limit;
-"""
-
-GENERAL_COUNT_QUERY = r"""
-MATCH (n)
-RETURN COUNT(n) AS c;
-"""
-
-QUERY_MAP = {
-    # (full_text, id_filter, label_filter) => search_query, count_query
-    (True, True, True): (
-        FULL_TEXT_ID_AND_LABEL_FILTER_SEARCH_QUERY,
-        FULL_TEXT_ID_AND_LABEL_FILTER_COUNT_QUERY,
-    ),
-    (True, True, False): (
-        FULL_TEXT_ID_FILTER_SEARCH_QUERY,
-        FULL_TEXT_ID_FILTER_COUNT_QUERY,
-    ),
-    (True, False, True): (
-        FULL_TEXT_LABEL_FILTER_SEARCH_QUERY,
-        FULL_TEXT_LABEL_FILTER_COUNT_QUERY,
-    ),
-    (True, False, False): (
-        FULL_TEXT_SEARCH_QUERY,
-        FULL_TEXT_COUNT_QUERY,
-    ),
-    (False, True, True): (
-        ID_AND_LABEL_FILTER_SEARCH_QUERY,
-        ID_AND_LABEL_FILTER_COUNT_QUERY,
-    ),
-    (False, True, False): (
-        ID_FILTER_SEARCH_QUERY,
-        ID_FILTER_COUNT_QUERY,
-    ),
-    (False, False, True): (
-        LABEL_FILTER_SEARCH_QUERY,
-        LABEL_FILTER_COUNT_QUERY,
-    ),
-    (False, False, False): (
-        GENERAL_SEARCH_QUERY,
-        GENERAL_COUNT_QUERY,
-    ),
-}
+def had_primary_source_and_identifier_in_primary_source_identity() -> str:
+    """Build a query to get all identities for the given hps/iips combo."""
+    clause = HAD_PRIMARY_SOURCE_AND_IDENTIFIER_IN_PRIMARY_SOURCE_IDENTITY_WHERE_CLAUSE
+    return IDENTITY_QUERY.format(where_clause=clause.strip()).strip()

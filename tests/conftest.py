@@ -15,7 +15,7 @@ from mex.backend.settings import BackendSettings
 from mex.backend.types import APIKeyDatabase, APIUserDatabase
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-    BaseExtractedData,
+    AnyExtractedModel,
     ExtractedActivity,
     ExtractedContactPoint,
     ExtractedOrganizationalUnit,
@@ -137,7 +137,7 @@ def isolate_graph_database(
 
 
 @pytest.fixture
-def extracted_person() -> BaseExtractedData:
+def extracted_person() -> ExtractedPerson:
     """Return an extracted person with static dummy values."""
     return ExtractedPerson.model_construct(
         identifier=Identifier.generate(seed=6),
@@ -159,7 +159,7 @@ def extracted_person() -> BaseExtractedData:
 
 
 @pytest.fixture
-def load_dummy_data() -> None:
+def load_dummy_data() -> list[AnyExtractedModel]:
     """Ingest dummy data into Graph Database."""
     primary_source_1 = ExtractedPrimarySource(
         hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -202,13 +202,13 @@ def load_dummy_data() -> None:
         title=["Activity 1"],
         website=[Link(title="Activity Homepage", url="https://activity-1")],
     )
-    GraphConnector.get().ingest(
-        [
-            primary_source_1,
-            primary_source_2,
-            contact_point_1,
-            contact_point_2,
-            organizational_unit_1,
-            activity_1,
-        ]
-    )
+    models = [
+        primary_source_1,
+        primary_source_2,
+        contact_point_1,
+        contact_point_2,
+        organizational_unit_1,
+        activity_1,
+    ]
+    GraphConnector.get().ingest(models)
+    return models

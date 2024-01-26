@@ -3,7 +3,7 @@ from typing import Any
 import pytest
 from pydantic import BaseModel
 
-from mex.backend.fields import _get_inner_types, is_reference_field, is_text_field
+from mex.backend.fields import _get_inner_types, _has_exact_type, _has_subclass_type
 from mex.common.types import Identifier, OrganizationalUnitID, PersonID, Text
 
 
@@ -16,12 +16,12 @@ from mex.common.types import Identifier, OrganizationalUnitID, PersonID, Text
         (None, [type(None)]),
     ),
 )
-def test__get_inner_types(annotation: Any, expected_types: list[type]) -> None:
+def test_get_inner_types(annotation: Any, expected_types: list[type]) -> None:
     assert list(_get_inner_types(annotation)) == expected_types
 
 
 @pytest.mark.parametrize(
-    ("annotation", "is_reference"),
+    ("annotation", "expected"),
     (
         (str, False),
         (str | None, False),
@@ -35,15 +35,15 @@ def test__get_inner_types(annotation: Any, expected_types: list[type]) -> None:
         (list[None | list[OrganizationalUnitID]], True),
     ),
 )
-def test_is_reference_field(annotation: Any, is_reference: bool) -> None:
+def test_has_exact_type(annotation: Any, expected: bool) -> None:
     class DummyModel(BaseModel):
         attribute: annotation
 
-    assert is_reference_field(DummyModel.model_fields["attribute"]) == is_reference
+    assert _has_exact_type(DummyModel.model_fields["attribute"], Identifier) == expected
 
 
 @pytest.mark.parametrize(
-    ("annotation", "is_text"),
+    ("annotation", "expected"),
     (
         (str, False),
         (str | None, False),
@@ -57,8 +57,8 @@ def test_is_reference_field(annotation: Any, is_reference: bool) -> None:
         (list[None | list[Text]], True),
     ),
 )
-def test_is_text_field(annotation: Any, is_text: bool) -> None:
+def test_has_subclass_type(annotation: Any, expected: bool) -> None:
     class DummyModel(BaseModel):
         attribute: annotation
 
-    assert is_text_field(DummyModel.model_fields["attribute"]) == is_text
+    assert _has_subclass_type(DummyModel.model_fields["attribute"], Text) == expected

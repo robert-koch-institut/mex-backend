@@ -1,7 +1,6 @@
 from functools import cache
 
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.graph.transform import transform_identity_result_to_identity
 from mex.common.exceptions import MExError
 from mex.common.identity import BaseProvider, Identity
 from mex.common.types import Identifier, PrimarySourceID
@@ -24,7 +23,7 @@ class GraphIdentityProvider(BaseProvider, GraphConnector):
         if len(graph_result.data) > 1:
             raise MExError("found multiple identities indicating graph inconsistency")
         if len(graph_result.data) == 1:
-            return transform_identity_result_to_identity(graph_result.data[0])
+            return Identity.model_validate(graph_result.data[0])
         return Identity(
             hadPrimarySource=had_primary_source,
             identifier=Identifier.generate(),
@@ -49,7 +48,4 @@ class GraphIdentityProvider(BaseProvider, GraphConnector):
             identifier_in_primary_source=identifier_in_primary_source,
             stable_target_id=stable_target_id,
         )
-        return [
-            transform_identity_result_to_identity(result)
-            for result in graph_result.data
-        ]
+        return [Identity.model_validate(result) for result in graph_result.data]

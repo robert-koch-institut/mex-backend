@@ -2,11 +2,8 @@ from unittest.mock import MagicMock, call
 
 import pytest
 
+from mex.backend.graph import queries as q
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.graph.queries import (
-    HAD_PRIMARY_SOURCE_AND_IDENTIFIER_IN_PRIMARY_SOURCE_IDENTITY_QUERY,
-    STABLE_TARGET_ID_IDENTITY_QUERY,
-)
 from mex.common.exceptions import MExError
 from mex.common.models import ExtractedPerson
 from mex.common.types import Identifier
@@ -63,7 +60,7 @@ def test_mocked_graph_fetch_identities(mocked_graph: MagicMock) -> None:
 
     graph.fetch_identities(stable_target_id=Identifier.generate(99))
     assert mocked_graph.run.call_args.args == (
-        STABLE_TARGET_ID_IDENTITY_QUERY,
+        q.stable_target_id_identity(),
         {
             "had_primary_source": None,
             "identifier_in_primary_source": None,
@@ -76,7 +73,7 @@ def test_mocked_graph_fetch_identities(mocked_graph: MagicMock) -> None:
         had_primary_source=Identifier.generate(101), identifier_in_primary_source="one"
     )
     assert mocked_graph.run.call_args.args == (
-        HAD_PRIMARY_SOURCE_AND_IDENTIFIER_IN_PRIMARY_SOURCE_IDENTITY_QUERY,
+        q.had_primary_source_and_identifier_in_primary_source_identity(),
         {
             "had_primary_source": Identifier.generate(101),
             "identifier_in_primary_source": "one",
@@ -137,14 +134,14 @@ def test_mocked_graph_merges_edges(
         [
             call.run(
                 """
-MATCH (s {identifier:$fromID})
-MATCH (t {stableTargetId:$toSTI})
+MATCH (s {identifier:$fromIdentifier})
+MATCH (t {stableTargetId:$toStableTargetId})
 MERGE (s)-[e:hadPrimarySource]->(t)
 RETURN e;
 """,
                 {
-                    "fromID": str(extracted_person.identifier),
-                    "toSTI": str(extracted_person.hadPrimarySource),
+                    "fromIdentifier": str(extracted_person.identifier),
+                    "toStableTargetId": str(extracted_person.hadPrimarySource),
                 },
             )
         ]
@@ -193,49 +190,59 @@ RETURN n;
     # expect edges are created
     assert mocked_graph.run.call_args_list[-5:][1][0] == (
         """
-MATCH (s {identifier:$fromID})
-MATCH (t {stableTargetId:$toSTI})
+MATCH (s {identifier:$fromIdentifier})
+MATCH (t {stableTargetId:$toStableTargetId})
 MERGE (s)-[e:hadPrimarySource]->(t)
 RETURN e;
 """,
         {
-            "fromID": str(extracted_person.identifier),
-            "toSTI": str(extracted_person.hadPrimarySource),
+            "fromIdentifier": str(extracted_person.identifier),
+            "toStableTargetId": str(extracted_person.hadPrimarySource),
         },
     )
     assert mocked_graph.run.call_args_list[-5:][2][0] == (
         """
-MATCH (s {identifier:$fromID})
-MATCH (t {stableTargetId:$toSTI})
+MATCH (s {identifier:$fromIdentifier})
+MATCH (t {stableTargetId:$toStableTargetId})
 MERGE (s)-[e:affiliation]->(t)
 RETURN e;
 """,
         {
-            "fromID": str(extracted_person.identifier),
-            "toSTI": str(extracted_person.affiliation[0]),
+            "fromIdentifier": str(extracted_person.identifier),
+            "toStableTargetId": str(extracted_person.affiliation[0]),
         },
     )
     assert mocked_graph.run.call_args_list[-5:][3][0] == (
         """
-MATCH (s {identifier:$fromID})
-MATCH (t {stableTargetId:$toSTI})
+MATCH (s {identifier:$fromIdentifier})
+MATCH (t {stableTargetId:$toStableTargetId})
 MERGE (s)-[e:affiliation]->(t)
 RETURN e;
 """,
         {
-            "fromID": str(extracted_person.identifier),
-            "toSTI": str(extracted_person.affiliation[1]),
+            "fromIdentifier": str(extracted_person.identifier),
+            "toStableTargetId": str(extracted_person.affiliation[1]),
         },
     )
     assert mocked_graph.run.call_args_list[-5:][4][0] == (
         """
-MATCH (s {identifier:$fromID})
-MATCH (t {stableTargetId:$toSTI})
+MATCH (s {identifier:$fromIdentifier})
+MATCH (t {stableTargetId:$toStableTargetId})
 MERGE (s)-[e:memberOf]->(t)
 RETURN e;
 """,
         {
-            "fromID": str(extracted_person.identifier),
-            "toSTI": str(extracted_person.memberOf[0]),
+            "fromIdentifier": str(extracted_person.identifier),
+            "toStableTargetId": str(extracted_person.memberOf[0]),
         },
     )
+
+
+@pytest.mark.usefixtures("load_dummy_data")
+@pytest.mark.integration
+def test_query_nodes() -> None:
+    connector = GraphConnector.get()
+
+    result = connector.query_nodes(None, None, None, 0, 1)
+
+    assert result.data == []

@@ -1,9 +1,9 @@
 from typing import Any
 
-from pydantic import BaseModel as PydanticBaseModel
+from pydantic import BaseModel
 
 
-class GraphResult(PydanticBaseModel):
+class GraphResult(BaseModel):
     """Model for graph query results."""
 
     data: list[dict[str, Any]] = []

@@ -1,26 +1,18 @@
 import json
+import logging
 from typing import Any
 
 from neo4j import GraphDatabase
 
-from mex.backend.extracted.models import (
-    AnyExtractedModel,
+from mex.backend.fields import (
+    LINK_FIELDS_BY_CLASS_NAME,
+    REFERENCE_FIELDS_BY_CLASS_NAME,
+    TEXT_FIELDS_BY_CLASS_NAME,
 )
-from mex.backend.fields import TEXT_FIELDS_BY_CLASS_NAME
+from mex.backend.graph import queries as q
 from mex.backend.graph.models import GraphResult
-from mex.backend.graph.queries import (
-    CREATE_CONSTRAINTS_STATEMENT,
-    CREATE_INDEX_STATEMENT,
-    HAD_PRIMARY_SOURCE_AND_IDENTIFIER_IN_PRIMARY_SOURCE_IDENTITY_QUERY,
-    MERGE_EDGE_STATEMENT,
-    MERGE_NODE_STATEMENT,
-    QUERY_MAP,
-    STABLE_TARGET_ID_IDENTITY_QUERY,
-)
-from mex.backend.graph.transform import (
-    transform_model_to_edges,
-    transform_model_to_node,
-)
+from mex.backend.graph.transform import transform_model_to_edges
+from mex.backend.transform import to_primitive
 from mex.common.connector import BaseConnector
 from mex.common.exceptions import MExError
 from mex.common.logging import logger
@@ -29,9 +21,13 @@ from mex.common.models import (
     MEX_PRIMARY_SOURCE_IDENTIFIER,
     MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    AnyExtractedModel,
     ExtractedPrimarySource,
 )
-from mex.common.types import Identifier
+from mex.common.types import Identifier, Link, Text, TextLanguage
+
+MERGE_NODE_LOG_MSG = "%s (:%s {identifier: %s})"
+MERGE_EDGE_LOG_MSG = "%s ({identifier: %s})-[:%s]→({stableTargetId: %s})"
 
 
 class GraphConnector(BaseConnector):
@@ -58,7 +54,7 @@ class GraphConnector(BaseConnector):
 
     def _check_connectivity_and_authentication(self) -> None:
         """Check the connectivity and authentication to the graph."""
-        self.commit("RETURN 1;")
+        self.commit(q.noop())
 
     def close(self) -> None:
         """Close the connector's underlying requests session."""
@@ -67,27 +63,15 @@ class GraphConnector(BaseConnector):
     def _seed_constraints(self) -> list[GraphResult]:
         """Ensure uniqueness constraints are enabled for all entity types."""
         constraint_statements = [
-            (CREATE_CONSTRAINTS_STATEMENT.format(node_label=entity_type), None)
+            (q.identifier_uniqueness_constraint(entity_type), None)
             for entity_type in EXTRACTED_MODEL_CLASSES_BY_NAME
         ]
         return self.mcommit(*constraint_statements)
 
     def _seed_indices(self) -> GraphResult:
         """Ensure there are full text search indices for all text fields."""
-        node_labels = "|".join(TEXT_FIELDS_BY_CLASS_NAME.keys())
-        node_fields = ", ".join(
-            sorted(
-                {
-                    f"n.{f}"
-                    for fields in TEXT_FIELDS_BY_CLASS_NAME.values()
-                    for f in fields
-                }
-            )
-        )
         return self.commit(
-            CREATE_INDEX_STATEMENT.format(
-                node_labels=node_labels, node_fields=node_fields
-            ),
+            q.full_text_search_index(TEXT_FIELDS_BY_CLASS_NAME),
             config={
                 "fulltext.eventually_consistent": True,
                 "fulltext.analyzer": "german",
@@ -101,6 +85,7 @@ class GraphConnector(BaseConnector):
             identifier=MEX_PRIMARY_SOURCE_IDENTIFIER,
             identifierInPrimarySource=MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
             stableTargetId=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+            title=[Text(value="Metadata Exchange", language=TextLanguage.EN)],
         )
         return self.ingest([mex_primary_source])[0]
 
@@ -142,11 +127,11 @@ class GraphConnector(BaseConnector):
         entity_type: list[str] | None,
         skip: int,
         limit: int,
-    ) -> list[GraphResult]:
+    ) -> GraphResult:
         """Query the graph for nodes.
 
         Args:
-            query: Fulltext search query term
+            query: Full text search query term
             stable_target_id: Optional stable target ID filter
             entity_type: Optional entity type filter
             skip: How many nodes to skip for pagination
@@ -155,28 +140,69 @@ class GraphConnector(BaseConnector):
         Returns:
             Graph result instances
         """
-        search_statement, count_statement = QUERY_MAP[
-            (bool(query), bool(stable_target_id), bool(entity_type))
-        ]
-        return self.mcommit(
-            (
-                search_statement,
-                dict(
-                    query=query,
-                    labels=entity_type,
-                    stable_target_id=stable_target_id,
-                    skip=skip,
-                    limit=limit,
-                ),
-            ),
-            (
-                count_statement,
-                dict(
-                    query=query,
-                    labels=entity_type,
-                    stable_target_id=stable_target_id,
-                ),
-            ),
+        if query and stable_target_id:
+            raise NotImplementedError(
+                "full text query and stableTargetId cannot be combined"
+            )
+
+        extracted_labels = "|".join(EXTRACTED_MODEL_CLASSES_BY_NAME)
+        nested_labels = "|".join([Link.__name__, Text.__name__])
+        if not entity_type:
+            entity_type = list(EXTRACTED_MODEL_CLASSES_BY_NAME)
+
+        if query:
+            match = r"""
+  CALL db.index.fulltext.queryNodes('search_index', $query)
+  YIELD node AS hit, score
+  MATCH (n)
+  WHERE elementId(hit) = elementId(n)
+    AND ANY(label IN labels(n) WHERE label IN $labels)
+""".strip()
+        elif stable_target_id:
+            match = r"""
+  MATCH (n)
+  WHERE n.stableTargetId = $stable_target_id
+""".strip()
+        else:
+            match = r"""
+  MATCH (n)
+  WHERE ANY(label IN labels(n) WHERE label IN $labels)
+""".strip()
+        statement = """
+CALL {{
+  {match}
+  RETURN COUNT(n) AS total
+}}
+CALL {{
+  MATCH (n)
+  WHERE ANY(label IN labels(n) WHERE label IN $labels)
+  CALL {{
+    WITH n
+    MATCH (n)-[r]->(t:{extracted_labels})
+    RETURN type(r) as label, r.position as position, t.stableTargetId as value
+  UNION
+    WITH n
+    MATCH (n)-[r]->(t:{nested_labels})
+    RETURN type(r) as label, r.position as position, properties(t) as value
+  }}
+  WITH n, collect({{label: label, position: position, value: value}}) as refs
+  RETURN n{{.*, _label: head(labels(n)), _refs: refs}}
+  ORDER BY n.identifier ASC
+  SKIP $skip
+  LIMIT $limit
+}}
+RETURN collect(n) AS items, total;
+""".format(
+            match=match, extracted_labels=extracted_labels, nested_labels=nested_labels
+        )
+
+        return self.commit(
+            statement.strip(),
+            query=query,
+            labels=entity_type,
+            stable_target_id=stable_target_id,
+            skip=skip,
+            limit=limit,
         )
 
     def fetch_identities(
@@ -208,16 +234,16 @@ class GraphConnector(BaseConnector):
             and not identifier_in_primary_source
             and stable_target_id
         ):
-            query = STABLE_TARGET_ID_IDENTITY_QUERY
+            statement = q.stable_target_id_identity()
         elif (
             had_primary_source and identifier_in_primary_source and not stable_target_id
         ):
-            query = HAD_PRIMARY_SOURCE_AND_IDENTIFIER_IN_PRIMARY_SOURCE_IDENTITY_QUERY
+            statement = q.had_primary_source_and_identifier_in_primary_source_identity()
         else:
             raise MExError("invalid identity query parameters")
 
         return self.commit(
-            query,
+            statement,
             had_primary_source=had_primary_source,
             identifier_in_primary_source=identifier_in_primary_source,
             stable_target_id=stable_target_id,
@@ -235,17 +261,76 @@ class GraphConnector(BaseConnector):
         Returns:
             Graph result instance
         """
-        entity_type = model.__class__.__name__
-        logger.info(
-            "MERGE (:%s {identifier:%s}) ",
-            entity_type,
-            model.identifier,
+        ref_fields = REFERENCE_FIELDS_BY_CLASS_NAME[model.entityType]
+        text_fields = TEXT_FIELDS_BY_CLASS_NAME[model.entityType]
+        link_fields = LINK_FIELDS_BY_CLASS_NAME[model.entityType]
+        immutable_fields = {"identifierInPrimarySource", "identifier"}
+        static_node_values = to_primitive(
+            model,
+            exclude={
+                *immutable_fields,
+                *ref_fields,
+                *text_fields,
+                *link_fields,
+                "entityType",
+            },
         )
-        node = transform_model_to_node(model)
+        immutable_node_values = to_primitive(model, include=immutable_fields)
+        s = []
+
+        s.append(
+            "MERGE (node:{label} {{identifier: $identifier}})".format(
+                label=model.entityType
+            )
+        )
+        s.append("ON CREATE SET node = $on_create")
+        s.append("ON MATCH SET node += $on_match")
+
+        raw_texts = to_primitive(model, include=text_fields)
+        raw_links = to_primitive(model, include=link_fields)
+
+        values: list[dict[str, str]] = []
+
+        for node_label, raws in [("Text", raw_texts), ("Link", raw_links)]:
+            for edge_label, raw_values in raws.items():
+                if not isinstance(raw_values, list):
+                    raw_values = [raw_values]
+                for pos, raw_value in enumerate(raw_values):
+                    s.append(
+                        "MERGE (node)-[e{0}:{1} {{position: {2}}}]->(v{0}:{3})".format(
+                            len(values), edge_label, pos, node_label
+                        )
+                    )
+                    s.append("ON CREATE SET v{0} = $values[{0}]".format(len(values)))
+                    s.append("ON MATCH SET v{0} += $values[{0}]".format(len(values)))
+                    values.append(raw_value)
+
+        s.append(
+            "WITH node, [{edges}] as edges, [{values}] as values".format(
+                edges=", ".join(f"e{i}" for i in range(len(values))),
+                values=", ".join(f"v{i}" for i in range(len(values))),
+            )
+        )
+        s.append(
+            """CALL {{
+    WITH values
+    MATCH (:{label} {{identifier: $identifier}})-[]->(gc:Text|Link)
+    WHERE NOT gc IN values
+    DETACH DELETE gc
+    RETURN gc
+}}""".format(
+                label=model.entityType
+            )
+        )
+
+        s.append("RETURN node, edges, values, gc;")
+
         return self.commit(
-            MERGE_NODE_STATEMENT.format(node_label=entity_type),
+            "\n".join(s),
             identifier=model.identifier,
-            **node.model_dump(),
+            on_match=static_node_values,
+            on_create={**static_node_values, **immutable_node_values},
+            values=values,
         )
 
     def merge_edges(self, model: AnyExtractedModel) -> list[GraphResult]:
@@ -262,15 +347,16 @@ class GraphConnector(BaseConnector):
         """
         edges = transform_model_to_edges(model)
         edge_statements_with_parameters = [
-            (MERGE_EDGE_STATEMENT.format(edge_label=edge.label), edge.parameters)
-            for edge in edges
+            (q.merge_edge(edge.label), edge.model_dump()) for edge in edges
         ]
         results = self.mcommit(*edge_statements_with_parameters)
+
         for result, edge in zip(results, edges):
-            if result.data:
-                logger.info(f"MERGED {edge.log_message}")
-            else:
-                logger.error(f"FAILED {edge.log_message}")
+            level = logging.INFO if result.data else logging.ERROR
+            verb = "MERGED" if result.data else "FAILED"
+            args = verb, edge.fromIdentifier, edge.label, edge.toStableTargetId
+            logger.log(level, MERGE_EDGE_LOG_MSG, *args)
+
         return results
 
     def ingest(self, models: list[AnyExtractedModel]) -> list[Identifier]:
@@ -283,9 +369,13 @@ class GraphConnector(BaseConnector):
             List of identifiers from the ingested models
         """
         for model in models:
+            # TODO batch this
             self.merge_node(model)
 
         for model in models:
+            # TODO batch this
             self.merge_edges(model)
+
+        # TODO prune edges
 
         return [m.identifier for m in models]

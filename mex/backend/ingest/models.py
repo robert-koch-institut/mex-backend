@@ -2,8 +2,11 @@ from typing import TYPE_CHECKING
 
 from pydantic import ConfigDict, create_model
 
-from mex.backend.extracted.models import AnyExtractedModel
-from mex.common.models import EXTRACTED_MODEL_CLASSES_BY_NAME, BaseModel
+from mex.common.models import (
+    EXTRACTED_MODEL_CLASSES_BY_NAME,
+    AnyExtractedModel,
+    BaseModel,
+)
 from mex.common.types import Identifier
 
 

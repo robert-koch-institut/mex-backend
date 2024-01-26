@@ -1,16 +1,13 @@
-from typing import Sequence
+from collections.abc import Sequence
 
 from fastapi import APIRouter, Query
 
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.merged.models import (
-    MergedItemSearchResponse,
-    MergedType,
-    UnprefixedType,
-)
+from mex.backend.merged.models import MergedItemSearchResponse
 from mex.backend.merged.transform import (
-    transform_graph_results_to_merged_item_search_response_facade,
+    transform_graph_result_to_merged_item_search_response_facade,
 )
+from mex.backend.types import MergedType, UnprefixedType
 from mex.common.types import Identifier
 
 router = APIRouter()
@@ -28,7 +25,7 @@ def search_merged_items_facade(
     # XXX We just search for extracted items and pretend they are already merged
     #     as a stopgap for MX-1382.
     graph = GraphConnector.get()
-    query_results = graph.query_nodes(
+    query_result = graph.query_nodes(
         q,
         stableTargetId,
         [
@@ -40,4 +37,4 @@ def search_merged_items_facade(
         skip,
         limit,
     )
-    return transform_graph_results_to_merged_item_search_response_facade(query_results)
+    return transform_graph_result_to_merged_item_search_response_facade(query_result)

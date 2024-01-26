@@ -1,49 +1,24 @@
-from collections import defaultdict
-from typing import Any, TypedDict
+from typing import Any
 
-from pydantic import BaseModel as PydanticBaseModel
+from pydantic import BaseModel, Field
 
-from mex.backend.extracted.models import AnyExtractedModel
-from mex.backend.fields import REFERENCE_FIELDS_BY_CLASS_NAME
-from mex.backend.graph.hydrate import dehydrate, hydrate
+from mex.backend.fields import (
+    REFERENCE_FIELDS_BY_CLASS_NAME,
+)
 from mex.backend.transform import to_primitive
-from mex.common.identity import Identity
-from mex.common.models import EXTRACTED_MODEL_CLASSES_BY_NAME, BaseModel, MExModel
+from mex.common.models import EXTRACTED_MODEL_CLASSES_BY_NAME, AnyExtractedModel
 
 
-class MergableNode(PydanticBaseModel):
-    """Helper class for merging nodes into the graph."""
-
-    on_create: dict[str, str | list[str]]
-    on_match: dict[str, str | list[str]]
-
-
-def transform_model_to_node(model: BaseModel) -> MergableNode:
-    """Transform a pydantic model into a node that can be merged into the graph."""
-    raw_model = to_primitive(
-        model,
-        exclude=REFERENCE_FIELDS_BY_CLASS_NAME[model.__class__.__name__]
-        | {"entityType"},
-    )
-    on_create = dehydrate(raw_model)
-
-    on_match = on_create.copy()
-    on_match.pop("identifier")
-    on_match.pop("stableTargetId")
-    on_match.pop("identifierInPrimarySource")
-
-    return MergableNode(on_create=on_create, on_match=on_match)
-
-
-class MergableEdge(PydanticBaseModel):
+class MergableEdge(BaseModel):
     """Helper class for merging edges into the graph."""
 
-    label: str
-    parameters: dict[str, Any]
-    log_message: str
+    label: str = Field(exclude=False)
+    fromIdentifier: str
+    toStableTargetId: str
+    position: int
 
 
-def transform_model_to_edges(model: MExModel) -> list[MergableEdge]:
+def transform_model_to_edges(model: AnyExtractedModel) -> list[MergableEdge]:
     """Transform a model to a list of edges."""
     raw_model = to_primitive(
         model,
@@ -55,56 +30,29 @@ def transform_model_to_edges(model: MExModel) -> list[MergableEdge]:
     for field, stable_target_ids in raw_model.items():
         if not isinstance(stable_target_ids, list):
             stable_target_ids = [stable_target_ids]
-        from_id = str(model.identifier)
-        for stable_target_id in stable_target_ids:
-            stable_target_id = str(stable_target_id)
-            parameters = {"fromID": from_id, "toSTI": stable_target_id}
+        for pos, stable_target_id in enumerate(stable_target_ids):
             edges.append(
                 MergableEdge(
+                    position=pos,
                     label=field,
-                    parameters=parameters,
-                    log_message=f"({from_id})-[:{field}]→({stable_target_id})",
+                    fromIdentifier=str(model.identifier),
+                    toStableTargetId=str(stable_target_id),
                 )
             )
     return edges
 
 
-class SearchResultReference(TypedDict):
-    """Type definition for references returned by search query."""
-
-    key: str  # label of the edge, e.g. parentUnit or hadPrimarySource
-    value: list[str] | str  # stableTargetId of the referenced Node
-
-
-def transform_search_result_to_model(
-    search_result: dict[str, Any]
-) -> AnyExtractedModel:
+def transform_search_result_to_model(node: dict[str, Any]) -> AnyExtractedModel:
     """Transform a graph search result to an extracted item."""
-    model_class_name: str = search_result["l"]
-    flattened_dict: dict[str, Any] = search_result["n"]
-    references: list[SearchResultReference] = search_result["r"]
-    model_class = EXTRACTED_MODEL_CLASSES_BY_NAME[model_class_name]
-    raw_model = hydrate(flattened_dict, model_class)
+    node_dict = node.copy()
+    refs = node_dict.pop("_refs")
+    label = node_dict.pop("_label")
 
-    # duplicate references can occur because we link
-    # rule-sets and extracted-items, not merged-items
-    deduplicated_references: dict[str, set[str]] = defaultdict(set)
-    for reference in references:
-        reference_ids = (
-            reference["value"]
-            if isinstance(reference["value"], list)
-            else [reference["value"]]
-        )
-        deduplicated_references[reference["key"]].update(reference_ids)
-    sorted_deduplicated_reference_key_values = {
-        reference_type: sorted(reference_ids)
-        for reference_type, reference_ids in deduplicated_references.items()
-    }
-    raw_model.update(sorted_deduplicated_reference_key_values)  # type: ignore[arg-type]
+    for ref in refs:
+        target_list = node_dict.setdefault(ref["label"], [None])
+        length_needed = 1 + ref["position"] - len(target_list)
+        target_list.extend([None] * length_needed)
+        target_list[ref["position"]] = ref["value"]
 
-    return model_class.model_validate(raw_model)
-
-
-def transform_identity_result_to_identity(identity_result: dict[str, Any]) -> Identity:
-    """Transform the result from an identity query into an Identity instance."""
-    return Identity.model_validate(identity_result["i"])
+    model_class = EXTRACTED_MODEL_CLASSES_BY_NAME[label]
+    return model_class.model_validate(node_dict)
