@@ -10,7 +10,7 @@ packages = [{ include = "mex" }]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-fastapi = "^0.108.0"
+fastapi = "^0.109.1"
 httpx = "^0.26.0"
 mex-common = { git = "https://github.com/robert-koch-institut/mex-common.git", rev = "0.19.0" }
 neo4j = "^5.16.0"
