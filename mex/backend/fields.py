@@ -39,16 +39,20 @@ def _has_exact_type(field: FieldInfo, type_: type) -> bool:
 # Model fields that link one entity to another by storing the other's stableTargetId.
 # Reference fields are typed as subclasses of `Identifier` or lists thereof.
 REFERENCE_FIELDS_BY_CLASS_NAME = {
-    name: {
-        field_name
-        for field_name, field_info in cls.model_fields.items()
-        if field_name
-        not in (
-            "identifier",
-            "stableTargetId",
+    name: tuple(
+        sorted(
+            {
+                field_name
+                for field_name, field_info in cls.model_fields.items()
+                if field_name
+                not in (
+                    "identifier",
+                    #  "stableTargetId",
+                )
+                and _has_subclass_type(field_info, Identifier)
+            }
         )
-        and _has_subclass_type(field_info, Identifier)
-    }
+    )
     for name, cls in EXTRACTED_MODEL_CLASSES_BY_NAME.items()
 }
 
@@ -56,11 +60,29 @@ REFERENCE_FIELDS_BY_CLASS_NAME = {
 # Text fields are stored as nested mappings in JSON form but are modelled as their
 # own nodes when written to the graph. They also need special treatment when querying.
 TEXT_FIELDS_BY_CLASS_NAME = {
-    name: {
-        field_name
-        for field_name, field_info in cls.model_fields.items()
-        if _has_exact_type(field_info, Text)
-    }
+    name: tuple(
+        sorted(
+            {
+                field_name
+                for field_name, field_info in cls.model_fields.items()
+                if _has_exact_type(field_info, Text)
+            }
+        )
+    )
+    for name, cls in EXTRACTED_MODEL_CLASSES_BY_NAME.items()
+}
+
+# XXX add Text support
+SEARCH_FIELDS_BY_CLASS_NAME = {
+    name: tuple(
+        sorted(
+            {
+                field_name
+                for field_name, field_info in cls.model_fields.items()
+                if _has_exact_type(field_info, str)
+            }
+        )
+    )
     for name, cls in EXTRACTED_MODEL_CLASSES_BY_NAME.items()
 }
 
@@ -68,21 +90,29 @@ TEXT_FIELDS_BY_CLASS_NAME = {
 # Link fields are stored as nested mappings in JSON form but are modelled as their
 # own nodes when written to the graph. They also need special treatment when querying.
 LINK_FIELDS_BY_CLASS_NAME = {
-    name: {
-        field_name
-        for field_name, field_info in cls.model_fields.items()
-        if _has_exact_type(field_info, Link)
-    }
+    name: tuple(
+        sorted(
+            {
+                field_name
+                for field_name, field_info in cls.model_fields.items()
+                if _has_exact_type(field_info, Link)
+            }
+        )
+    )
     for name, cls in EXTRACTED_MODEL_CLASSES_BY_NAME.items()
 }
 
 # Model fields that are searchable via full text queries and should be indexed
 # by neo4j for lucene-backed searches. These fields need to be of type `str`.
 SEARCHABLE_FIELDS_BY_CLASS_NAME = {
-    name: {
-        field_name
-        for field_name, field_info in cls.model_fields.items()
-        if _has_exact_type(field_info, str)
-    }
+    name: tuple(
+        sorted(
+            {
+                field_name
+                for field_name, field_info in cls.model_fields.items()
+                if _has_exact_type(field_info, str)
+            }
+        )
+    )
     for name, cls in EXTRACTED_MODEL_CLASSES_BY_NAME.items()
 }

@@ -39,7 +39,9 @@ def test_has_exact_type(annotation: Any, expected: bool) -> None:
     class DummyModel(BaseModel):
         attribute: annotation
 
-    assert _has_exact_type(DummyModel.model_fields["attribute"], Identifier) == expected
+    assert (
+        _has_subclass_type(DummyModel.model_fields["attribute"], Identifier) == expected
+    )
 
 
 @pytest.mark.parametrize(
@@ -61,4 +63,4 @@ def test_has_subclass_type(annotation: Any, expected: bool) -> None:
     class DummyModel(BaseModel):
         attribute: annotation
 
-    assert _has_subclass_type(DummyModel.model_fields["attribute"], Text) == expected
+    assert _has_exact_type(DummyModel.model_fields["attribute"], Text) == expected

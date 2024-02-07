@@ -13,20 +13,18 @@ from mex.common.types import Identifier
 def test_mocked_graph_init() -> None:
     graph = GraphConnector.get()
     result = graph.commit("MATCH (this);")
-    assert result.model_dump() == {"data": []}
+    assert result.all() == []
 
 
 def test_mocked_graph_seed_constraints(mocked_graph: MagicMock) -> None:
     graph = GraphConnector.get()
     graph._seed_constraints()
 
-    assert mocked_graph.run.call_args_list[-1] == call(
-        """
-CREATE CONSTRAINT identifier_uniqueness IF NOT EXISTS
+    assert mocked_graph.call_args_list[-1] == call(
+        """CREATE CONSTRAINT extracted_variable_group_identifier_uniqueness IF NOT EXISTS
 FOR (n:ExtractedVariableGroup)
-REQUIRE n.identifier IS UNIQUE;
-""",
-        None,
+REQUIRE n.identifier IS UNIQUE;""",
+        {},
     )
 
 
@@ -34,18 +32,11 @@ def test_mocked_graph_seed_indices(mocked_graph: MagicMock) -> None:
     graph = GraphConnector.get()
     graph._seed_indices()
 
-    assert mocked_graph.run.call_args_list[-1] == call(
-        """
-CREATE FULLTEXT INDEX text_fields IF NOT EXISTS
-FOR (n:ExtractedAccessPlatform|ExtractedActivity|ExtractedContactPoint|ExtractedDistribution|ExtractedOrganization|\
-ExtractedOrganizationalUnit|ExtractedPerson|ExtractedPrimarySource|ExtractedResource|ExtractedVariable|ExtractedVariableGroup)
-ON EACH [n.abstract_value, n.alternativeName_value, n.alternativeTitle_value, \
-n.description_value, n.instrumentToolOrApparatus_value, n.keyword_value, \
-n.label_value, n.methodDescription_value, n.method_value, n.name_value, \
-n.officialName_value, n.qualityInformation_value, n.resourceTypeSpecific_value, \
-n.rights_value, n.shortName_value, n.spatial_value, n.title_value]
-OPTIONS {indexConfig: $config};
-""",
+    assert mocked_graph.call_args_list[-1] == call(
+        """CREATE FULLTEXT INDEX search_index IF NOT EXISTS
+FOR (n:ExtractedAccessPlatform|ExtractedActivity|ExtractedContactPoint|ExtractedDistribution|ExtractedOrganization|ExtractedOrganizationalUnit|ExtractedPerson|ExtractedPrimarySource|ExtractedResource|ExtractedVariable|ExtractedVariableGroup)
+ON EACH [n.codingSystem, n.familyName, n.fullName, n.fundingProgram, n.geprisId, n.givenName, n.gndId, n.icd10code, n.identifierInPrimarySource, n.isniId, n.loincId, n.meshId, n.orcidId, n.rorId, n.sizeOfDataBasis, n.temporal, n.title, n.valueSet, n.version, n.viafId, n.wikidataId]
+OPTIONS {indexConfig: $config};""",
         {
             "config": {
                 "fulltext.eventually_consistent": True,
@@ -59,7 +50,7 @@ def test_mocked_graph_fetch_identities(mocked_graph: MagicMock) -> None:
     graph = GraphConnector.get()
 
     graph.fetch_identities(stable_target_id=Identifier.generate(99))
-    assert mocked_graph.run.call_args.args == (
+    assert mocked_graph.call_args_list[-1].args == (
         q.stable_target_id_identity(),
         {
             "had_primary_source": None,
@@ -72,7 +63,7 @@ def test_mocked_graph_fetch_identities(mocked_graph: MagicMock) -> None:
     graph.fetch_identities(
         had_primary_source=Identifier.generate(101), identifier_in_primary_source="one"
     )
-    assert mocked_graph.run.call_args.args == (
+    assert mocked_graph.call_args_list[-1].args == (
         q.had_primary_source_and_identifier_in_primary_source_identity(),
         {
             "had_primary_source": Identifier.generate(101),
@@ -93,7 +84,7 @@ def test_mocked_graph_merges_node(
     graph.merge_node(extracted_person)
 
     assert (
-        mocked_graph.run.call_args.args[0]
+        mocked_graph.call_args_list[-1].args[0]
         == """
 MERGE (n:ExtractedPerson {identifier:$identifier})
 ON CREATE SET n = $on_create
@@ -101,7 +92,7 @@ ON MATCH SET n += $on_match
 RETURN n;
 """
     )
-    assert mocked_graph.run.call_args.args[1] == {
+    assert mocked_graph.call_args_list[-1].args[1] == {
         "identifier": str(extracted_person.identifier),
         "on_create": {
             "email": ["fictitiousf@rki.de", "info@rki.de"],
@@ -130,21 +121,20 @@ def test_mocked_graph_merges_edges(
 ) -> None:
     graph = GraphConnector.get()
     graph.merge_edges(extracted_person)
-    mocked_graph.assert_has_calls(
-        [
-            call.run(
-                """
+    assert (
+        call.run(
+            """
 MATCH (s {identifier:$fromIdentifier})
 MATCH (t {stableTargetId:$toStableTargetId})
 MERGE (s)-[e:hadPrimarySource]->(t)
 RETURN e;
 """,
-                {
-                    "fromIdentifier": str(extracted_person.identifier),
-                    "toStableTargetId": str(extracted_person.hadPrimarySource),
-                },
-            )
-        ]
+            {
+                "fromIdentifier": str(extracted_person.identifier),
+                "toStableTargetId": str(extracted_person.hadPrimarySource),
+            },
+        )
+        in mocked_graph.call_args_list
     )
 
 
@@ -157,7 +147,7 @@ def test_mocked_graph_ingests_models(
     assert identifiers == [extracted_person.identifier]
 
     # expect node is created
-    assert mocked_graph.run.call_args_list[-5:][0][0] == (
+    assert mocked_graph.call_args_list[-5:][0][0] == (
         """
 MERGE (n:ExtractedPerson {identifier:$identifier})
 ON CREATE SET n = $on_create
@@ -188,7 +178,7 @@ RETURN n;
         },
     )
     # expect edges are created
-    assert mocked_graph.run.call_args_list[-5:][1][0] == (
+    assert mocked_graph.call_args_list[-5:][1][0] == (
         """
 MATCH (s {identifier:$fromIdentifier})
 MATCH (t {stableTargetId:$toStableTargetId})
@@ -200,7 +190,7 @@ RETURN e;
             "toStableTargetId": str(extracted_person.hadPrimarySource),
         },
     )
-    assert mocked_graph.run.call_args_list[-5:][2][0] == (
+    assert mocked_graph.call_args_list[-5:][2][0] == (
         """
 MATCH (s {identifier:$fromIdentifier})
 MATCH (t {stableTargetId:$toStableTargetId})
@@ -212,7 +202,7 @@ RETURN e;
             "toStableTargetId": str(extracted_person.affiliation[0]),
         },
     )
-    assert mocked_graph.run.call_args_list[-5:][3][0] == (
+    assert mocked_graph.call_args_list[-5:][3][0] == (
         """
 MATCH (s {identifier:$fromIdentifier})
 MATCH (t {stableTargetId:$toStableTargetId})
@@ -224,7 +214,7 @@ RETURN e;
             "toStableTargetId": str(extracted_person.affiliation[1]),
         },
     )
-    assert mocked_graph.run.call_args_list[-5:][4][0] == (
+    assert mocked_graph.call_args_list[-5:][4][0] == (
         """
 MATCH (s {identifier:$fromIdentifier})
 MATCH (t {stableTargetId:$toStableTargetId})
@@ -245,4 +235,4 @@ def test_query_nodes() -> None:
 
     result = connector.query_nodes(None, None, None, 0, 1)
 
-    assert result.data == []
+    assert result.one() == {}

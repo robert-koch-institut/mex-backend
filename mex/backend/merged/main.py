@@ -4,9 +4,6 @@ from fastapi import APIRouter, Query
 
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.merged.models import MergedItemSearchResponse
-from mex.backend.merged.transform import (
-    transform_graph_result_to_merged_item_search_response_facade,
-)
 from mex.backend.types import MergedType, UnprefixedType
 from mex.common.types import Identifier
 
@@ -25,7 +22,7 @@ def search_merged_items_facade(
     # XXX We just search for extracted items and pretend they are already merged
     #     as a stopgap for MX-1382.
     graph = GraphConnector.get()
-    query_result = graph.query_nodes(
+    result = graph.query_nodes(
         q,
         stableTargetId,
         [
@@ -37,4 +34,10 @@ def search_merged_items_facade(
         skip,
         limit,
     )
-    return transform_graph_result_to_merged_item_search_response_facade(query_result)
+
+    for item in result["items"]:
+        del item["hadPrimarySource"]
+        del item["identifierInPrimarySource"]
+        item["entityType"] = item["entityType"].replace("Extracted", "Merged")
+
+    return MergedItemSearchResponse.model_validate(result.one())

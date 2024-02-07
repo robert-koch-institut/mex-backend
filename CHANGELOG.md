@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - cruft template link
 - open-code workflow
 - graph identity provider that assigns ids to extracted data
-- generalize type enums into DynamicStrEnum superclass
+- generalize type enums into _DynamicStrEnum superclass
 - seed primary source for mex on connector init
 - test fixture that makes Identifiers deterministic
 

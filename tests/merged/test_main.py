@@ -114,11 +114,9 @@ def test_search_merged_items_mocked(
                         "identifier": "bFQoRhcVH5DHUs",
                         "locatedAt": [],
                         "stableTargetId": "bFQoRhcVH5DHUt",
-                        "title": [
-                            {"language": None, "value": "A cool and searchable title"}
-                        ],
+                        "title": [],
                         "unitInCharge": [],
-                        "version": None,
+                        "version": "Cool Version v2.13",
                     }
                 ],
                 "total": 1,

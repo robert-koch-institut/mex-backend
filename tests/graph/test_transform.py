@@ -4,9 +4,7 @@ from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.transform import (
     transform_search_result_to_model,
 )
-from mex.common.models import (
-    AnyExtractedModel,
-)
+from mex.common.models import AnyExtractedModel
 from mex.common.types import TextLanguage
 
 
@@ -16,7 +14,7 @@ def test_transform_search_result_to_model(
 ) -> None:
     connector = GraphConnector.get()
     result = connector.query_nodes(None, None, None, 0, 100)
-    models = [transform_search_result_to_model(i) for i in result.data[0]["items"]]
+    models = [transform_search_result_to_model(i) for i in result["items"]]
     assert [m.model_dump() for m in models] == [
         {
             "identifier": "00000000000000",

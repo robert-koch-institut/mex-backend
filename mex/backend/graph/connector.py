@@ -1,5 +1,6 @@
 import json
 import logging
+from string import Template
 from typing import Any
 
 from neo4j import GraphDatabase
@@ -7,11 +8,15 @@ from neo4j import GraphDatabase
 from mex.backend.fields import (
     LINK_FIELDS_BY_CLASS_NAME,
     REFERENCE_FIELDS_BY_CLASS_NAME,
+    SEARCH_FIELDS_BY_CLASS_NAME,
     TEXT_FIELDS_BY_CLASS_NAME,
 )
 from mex.backend.graph import queries as q
-from mex.backend.graph.models import GraphResult
-from mex.backend.graph.transform import transform_model_to_edges
+from mex.backend.graph.models import Result
+from mex.backend.graph.transform import (
+    transform_model_to_edges,
+    transform_search_result_to_model,
+)
 from mex.backend.transform import to_primitive
 from mex.common.connector import BaseConnector
 from mex.common.exceptions import MExError
@@ -24,7 +29,7 @@ from mex.common.models import (
     AnyExtractedModel,
     ExtractedPrimarySource,
 )
-from mex.common.types import Identifier, Link, Text, TextLanguage
+from mex.common.types import Identifier
 
 MERGE_NODE_LOG_MSG = "%s (:%s {identifier: %s})"
 MERGE_EDGE_LOG_MSG = "%s ({identifier: %s})-[:%s]→({stableTargetId: %s})"
@@ -50,75 +55,63 @@ class GraphConnector(BaseConnector):
         self._check_connectivity_and_authentication()
         self._seed_constraints()
         self._seed_indices()
-        self._seed_primary_source()
+        self._seed_data()
 
-    def _check_connectivity_and_authentication(self) -> None:
+    def _check_connectivity_and_authentication(self) -> Result:
         """Check the connectivity and authentication to the graph."""
-        self.commit(q.noop())
+        return self.commit(q.noop())
 
-    def close(self) -> None:
-        """Close the connector's underlying requests session."""
-        self.driver.close()
-
-    def _seed_constraints(self) -> list[GraphResult]:
+    def _seed_constraints(self) -> list[Result]:
         """Ensure uniqueness constraints are enabled for all entity types."""
-        constraint_statements = [
-            (q.identifier_uniqueness_constraint(entity_type), None)
+        return [
+            self.commit(q.identifier_uniqueness_constraint(entity_type))
             for entity_type in EXTRACTED_MODEL_CLASSES_BY_NAME
         ]
-        return self.mcommit(*constraint_statements)
 
-    def _seed_indices(self) -> GraphResult:
+    def _seed_indices(self) -> Result:
         """Ensure there are full text search indices for all text fields."""
         return self.commit(
-            q.full_text_search_index(TEXT_FIELDS_BY_CLASS_NAME),
+            q.full_text_search_index(**SEARCH_FIELDS_BY_CLASS_NAME),
             config={
                 "fulltext.eventually_consistent": True,
                 "fulltext.analyzer": "german",
             },
         )
 
-    def _seed_primary_source(self) -> Identifier:
+    def _seed_data(self) -> list[Identifier]:
         """Ensure the primary source `mex` is seeded and linked to itself."""
-        mex_primary_source = ExtractedPrimarySource.model_construct(
-            hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-            identifier=MEX_PRIMARY_SOURCE_IDENTIFIER,
-            identifierInPrimarySource=MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
-            stableTargetId=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-            title=[Text(value="Metadata Exchange", language=TextLanguage.EN)],
+        return self.ingest(
+            [
+                ExtractedPrimarySource.model_construct(
+                    hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+                    identifier=MEX_PRIMARY_SOURCE_IDENTIFIER,
+                    identifierInPrimarySource=MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
+                    stableTargetId=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+                )
+            ]
         )
-        return self.ingest([mex_primary_source])[0]
 
-    def mcommit(
-        self, *statements_with_parameters: tuple[str, dict[str, Any] | None]
-    ) -> list[GraphResult]:
-        """Send and commit a batch of graph transactions."""
-        with self.driver.session(database="neo4j") as session:
-            results = []
-            logger.info(
-                "\033[95m\n%s\n\033[0m",
-                json.dumps(
-                    {
-                        "statements": [
-                            {
-                                "statement": statement,
-                                **({"parameters": parameters} if parameters else {}),
-                            }
-                            for statement, parameters in statements_with_parameters
-                        ]
-                    },
-                    indent=2,
-                ),
-            )
-            for statement, parameters in statements_with_parameters:
-                result = session.run(statement, parameters)
-                results.append(GraphResult(data=result.data()))
-        return results
+    def close(self) -> None:
+        """Close the connector's underlying requests session."""
+        self.driver.close()
 
-    def commit(self, statement: str, **parameters: Any) -> GraphResult:
+    def commit(self, statement: str, **parameters: Any) -> Result:
         """Send and commit a single graph transaction."""
-        results = self.mcommit((statement, parameters))
-        return results[0]
+        log_message = ("\033[95m\n%s%s\033[0m",)
+        log_statement = Template(statement).safe_substitute(
+            {k: json.dumps(v) for k, v in (parameters or {}).items()}
+        )
+        try:
+            with self.driver.session(database="neo4j") as session:
+                result = Result(session.run(statement, parameters))
+        except Exception as error:
+            logging.error(log_message, log_statement, f"\n{error}")
+            raise
+        if counters := result.update_counters:
+            logging.info(log_message, log_statement, f"\n{json.dumps(counters)}")
+        else:
+            logging.info(log_message, log_statement, "")
+        return result
 
     def query_nodes(
         self,
@@ -127,7 +120,7 @@ class GraphConnector(BaseConnector):
         entity_type: list[str] | None,
         skip: int,
         limit: int,
-    ) -> GraphResult:
+    ) -> Result:
         """Query the graph for nodes.
 
         Args:
@@ -138,72 +131,33 @@ class GraphConnector(BaseConnector):
             limit: How many nodes to return at most
 
         Returns:
-            Graph result instances
+            Graph result instance
         """
         if query and stable_target_id:
             raise NotImplementedError(
                 "full text query and stableTargetId cannot be combined"
             )
-
-        extracted_labels = "|".join(EXTRACTED_MODEL_CLASSES_BY_NAME)
-        nested_labels = "|".join([Link.__name__, Text.__name__])
         if not entity_type:
             entity_type = list(EXTRACTED_MODEL_CLASSES_BY_NAME)
 
         if query:
-            match = r"""
-  CALL db.index.fulltext.queryNodes('search_index', $query)
-  YIELD node AS hit, score
-  MATCH (n)
-  WHERE elementId(hit) = elementId(n)
-    AND ANY(label IN labels(n) WHERE label IN $labels)
-""".strip()
+            statement = q.extracted_data_query(q.full_text_match_clause())
         elif stable_target_id:
-            match = r"""
-  MATCH (n)
-  WHERE n.stableTargetId = $stable_target_id
-""".strip()
+            statement = q.extracted_data_query(q.stable_target_id_match_clause())
         else:
-            match = r"""
-  MATCH (n)
-  WHERE ANY(label IN labels(n) WHERE label IN $labels)
-""".strip()
-        statement = """
-CALL {{
-  {match}
-  RETURN COUNT(n) AS total
-}}
-CALL {{
-  MATCH (n)
-  WHERE ANY(label IN labels(n) WHERE label IN $labels)
-  CALL {{
-    WITH n
-    MATCH (n)-[r]->(t:{extracted_labels})
-    RETURN type(r) as label, r.position as position, t.stableTargetId as value
-  UNION
-    WITH n
-    MATCH (n)-[r]->(t:{nested_labels})
-    RETURN type(r) as label, r.position as position, properties(t) as value
-  }}
-  WITH n, collect({{label: label, position: position, value: value}}) as refs
-  RETURN n{{.*, _label: head(labels(n)), _refs: refs}}
-  ORDER BY n.identifier ASC
-  SKIP $skip
-  LIMIT $limit
-}}
-RETURN collect(n) AS items, total;
-""".format(
-            match=match, extracted_labels=extracted_labels, nested_labels=nested_labels
-        )
+            statement = q.extracted_data_query(q.entity_type_match_clause())
 
-        return self.commit(
-            statement.strip(),
+        result = self.commit(
+            statement,
             query=query,
             labels=entity_type,
             stable_target_id=stable_target_id,
             skip=skip,
             limit=limit,
         )
+        for item in result["items"]:
+            transform_search_result_to_model(item)
+        return result
 
     def fetch_identities(
         self,
@@ -211,7 +165,7 @@ RETURN collect(n) AS items, total;
         identifier_in_primary_source: str | None = None,
         stable_target_id: Identifier | None = None,
         limit: int = 1000,
-    ) -> GraphResult:
+    ) -> Result:
         """Search the graph for nodes matching the given ID combination.
 
         Identity queries can be filtered either with just a `stable_target_id`
@@ -250,7 +204,7 @@ RETURN collect(n) AS items, total;
             limit=limit,
         )
 
-    def merge_node(self, model: AnyExtractedModel) -> GraphResult:
+    def merge_node(self, model: AnyExtractedModel) -> Result:
         """Convert a model into a node and merge it into the graph.
 
         Existing nodes will be updated, a new node will be created otherwise.
@@ -279,15 +233,20 @@ RETURN collect(n) AS items, total;
         s = []
 
         s.append(
-            "MERGE (node:{label} {{identifier: $identifier}})".format(
+            "MERGE (merged:{label} {{identifier: $stable_target_id}})".format(
+                label=model.entityType.replace("Extracted", "Merged")
+            )
+        )
+        s.append(
+            "MERGE (extracted:{label} {{identifier: $identifier}})-[stableTargetId:stableTargetId {{position: 0}}]->(merged)".format(
                 label=model.entityType
             )
         )
-        s.append("ON CREATE SET node = $on_create")
-        s.append("ON MATCH SET node += $on_match")
+        s.append("ON CREATE SET extracted = $on_create")
+        s.append("ON MATCH SET extracted += $on_match")
 
-        raw_texts = to_primitive(model, include=text_fields)
-        raw_links = to_primitive(model, include=link_fields)
+        raw_texts = to_primitive(model, include=set(text_fields))
+        raw_links = to_primitive(model, include=set(link_fields))
 
         values: list[dict[str, str]] = []
 
@@ -297,7 +256,7 @@ RETURN collect(n) AS items, total;
                     raw_values = [raw_values]
                 for pos, raw_value in enumerate(raw_values):
                     s.append(
-                        "MERGE (node)-[e{0}:{1} {{position: {2}}}]->(v{0}:{3})".format(
+                        "MERGE (extracted)-[e{0}:{1} {{position: {2}}}]->(v{0}:{3})".format(
                             len(values), edge_label, pos, node_label
                         )
                     )
@@ -306,7 +265,7 @@ RETURN collect(n) AS items, total;
                     values.append(raw_value)
 
         s.append(
-            "WITH node, [{edges}] as edges, [{values}] as values".format(
+            "WITH extracted, [{edges}] as edges, [{values}] as values".format(
                 edges=", ".join(f"e{i}" for i in range(len(values))),
                 values=", ".join(f"v{i}" for i in range(len(values))),
             )
@@ -317,23 +276,24 @@ RETURN collect(n) AS items, total;
     MATCH (:{label} {{identifier: $identifier}})-[]->(gc:Text|Link)
     WHERE NOT gc IN values
     DETACH DELETE gc
-    RETURN gc
+    RETURN count(gc) as pruned
 }}""".format(
                 label=model.entityType
             )
         )
 
-        s.append("RETURN node, edges, values, gc;")
+        s.append("RETURN extracted, edges, values, pruned;")
 
         return self.commit(
             "\n".join(s),
             identifier=model.identifier,
+            stable_target_id=model.stableTargetId,
             on_match=static_node_values,
             on_create={**static_node_values, **immutable_node_values},
             values=values,
         )
 
-    def merge_edges(self, model: AnyExtractedModel) -> list[GraphResult]:
+    def merge_edges(self, model: AnyExtractedModel) -> list[Result]:
         """Merge edges into the graph for all relations in the given model.
 
         All fields containing references will be iterated over. When the targeted node
@@ -343,20 +303,12 @@ RETURN collect(n) AS items, total;
             model: Model to ensure all edges are created in the graph
 
         Returns:
-            Graph result instances
+            Graph result instance
         """
-        edges = transform_model_to_edges(model)
-        edge_statements_with_parameters = [
-            (q.merge_edge(edge.label), edge.model_dump()) for edge in edges
-        ]
-        results = self.mcommit(*edge_statements_with_parameters)
-
-        for result, edge in zip(results, edges):
-            level = logging.INFO if result.data else logging.ERROR
-            verb = "MERGED" if result.data else "FAILED"
-            args = verb, edge.fromIdentifier, edge.label, edge.toStableTargetId
-            logger.log(level, MERGE_EDGE_LOG_MSG, *args)
-
+        results = []
+        for edge in transform_model_to_edges(model):
+            result = self.commit(q.merge_edge(edge.label), **edge.model_dump())
+            results.append(result)
         return results
 
     def ingest(self, models: list[AnyExtractedModel]) -> list[Identifier]:

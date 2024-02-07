@@ -2,11 +2,12 @@ import json
 from base64 import b64encode
 from functools import partial
 from itertools import count
+from typing import Any, NoReturn
 from unittest.mock import MagicMock, Mock
 
 import pytest
 from fastapi.testclient import TestClient
-from neo4j import GraphDatabase
+from neo4j import GraphDatabase, ResultSummary, SummaryCounters
 from pytest import MonkeyPatch
 
 from mex.backend.graph.connector import GraphConnector
@@ -23,7 +24,7 @@ from mex.common.models import (
     ExtractedPrimarySource,
 )
 from mex.common.transform import MExEncoder
-from mex.common.types import Identifier, Link, Text, TextLanguage
+from mex.common.types import Identifier, IdentityProvider, Link, Text, TextLanguage
 from mex.common.types.identifier import IdentifierT
 
 pytest_plugins = ("mex.common.testing.plugin",)
@@ -93,16 +94,35 @@ def patch_test_client_json_encoder(monkeypatch: MonkeyPatch) -> None:
     )
 
 
+class MockGraph:
+    def __init__(self, records: list[Any], session_run: MagicMock) -> None:
+        self.records = records
+        self.run = session_run
+
+    @property
+    def return_value(self) -> NoReturn:
+        raise NotImplementedError
+
+    @return_value.setter
+    def return_value(self, value: list[Any]) -> None:
+        self.records[:] = [Mock(data=MagicMock(return_value=v)) for v in value]
+
+    @property
+    def call_args_list(self) -> list[Any]:
+        return self.run.call_args_list
+
+
 @pytest.fixture
-def mocked_graph(monkeypatch: MonkeyPatch) -> MagicMock:
+def mocked_graph(monkeypatch: MonkeyPatch) -> MockGraph:
     """Mock the graph connector and return the mocked `run` for easy manipulation."""
-    data = MagicMock(return_value=[])
-    run = MagicMock(return_value=Mock(data=data))
-    data.run = run  # make the call_args available in tests
+    records: list[Any] = []
+    summary = Mock(counters=SummaryCounters({}))
+    result = Mock(to_eager_result=MagicMock(return_value=(records, summary, None)))
+    run = MagicMock(return_value=result)
     session = MagicMock(__enter__=MagicMock(return_value=Mock(run=run)))
     driver = Mock(session=MagicMock(return_value=session))
     monkeypatch.setattr(GraphDatabase, "driver", lambda _, **__: driver)
-    return data
+    return MockGraph(records, run)
 
 
 @pytest.fixture(autouse=True)
@@ -132,8 +152,19 @@ def isolate_graph_database(
             database=settings.graph_db,
         ) as driver:
             driver.execute_query("MATCH (n) DETACH DELETE n;")
-            driver.execute_query("DROP INDEX text_fields IF EXISTS;")
-            driver.execute_query("DROP CONSTRAINT identifier_uniqueness IF EXISTS;")
+            for row in driver.execute_query("SHOW ALL CONSTRAINTS;").records:
+                driver.execute_query(f"DROP CONSTRAINT {row['name']};")
+            for row in driver.execute_query("SHOW ALL INDEXES;").records:
+                driver.execute_query(f"DROP INDEX {row['name']};")
+
+
+@pytest.fixture(autouse=True)
+def isolate_identity_provider(
+    is_integration_test: bool, settings: BackendSettings, monkeypatch: MonkeyPatch
+) -> None:
+    """Automatically use the memory identity provider for mocked tests."""
+    if not is_integration_test:
+        monkeypatch.setattr(settings, "identity_provider", IdentityProvider.MEMORY)
 
 
 @pytest.fixture
@@ -168,7 +199,7 @@ def load_dummy_data() -> list[AnyExtractedModel]:
     primary_source_2 = ExtractedPrimarySource(
         hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
         identifierInPrimarySource="ps-2",
-        title=[Text(value="A cool and searchable title", language=None)],
+        version=["Cool Version v2.13"],
     )
     contact_point_1 = ExtractedContactPoint(
         email="info@rki.de",
@@ -188,7 +219,7 @@ def load_dummy_data() -> list[AnyExtractedModel]:
     activity_1 = ExtractedActivity(
         abstract=[
             Text(value="An active activity.", language=TextLanguage.EN),
-            Text(value="Mumble bumble boo.", language=None),
+            Text(value="Une activité active.", language=None),
         ],
         contact=[
             contact_point_1.stableTargetId,
