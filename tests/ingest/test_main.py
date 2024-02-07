@@ -4,6 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from mex.common.models import ExtractedContactPoint, ExtractedPrimarySource
+from mex.common.testing import Joker
 from mex.common.types import Identifier
 
 
@@ -82,10 +83,10 @@ def test_bulk_insert_malformed(
         "detail": [
             {
                 "type": "dict_type",
-                "loc": ["body", "ExtractedContactPoint", 0, 0],
+                "loc": ["body", "ExtractedContactPoint", 0, 1],
                 "msg": "Input should be a valid dictionary",
                 "input": "FAIL!",
-                "url": "https://errors.pydantic.dev/2.5/v/dict_type",
+                "url": Joker(),
             }
         ]
     }
