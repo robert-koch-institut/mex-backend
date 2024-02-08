@@ -9,8 +9,6 @@ from mex.common.models import (
 from mex.common.transform import dromedary_to_snake
 from mex.common.types import Link, Text
 
-from mex.backend.transform import to_primitive
-
 QueryFactory = TypeVar("QueryFactory", bound=Callable[..., str])
 
 
@@ -76,8 +74,8 @@ def full_text_search_index(**fields_by_label: Iterable[str]) -> str:
 
 
 MERGE_EDGE_STATEMENT = r"""
-MATCH (fromNode:{extracted_labels} {{identifier:$fromIdentifier}})
-MATCH (toNode:{merged_labels} {{identifier:$toStableTargetId}})
+MATCH (fromNode:{extracted_labels} {{identifier:$source_node}})
+MATCH (toNode:{merged_labels} {{identifier:$target_node}})
 MERGE (fromNode)-[edge:{edge_label} {{position:$position}}]->(toNode)
 RETURN edge;
 """

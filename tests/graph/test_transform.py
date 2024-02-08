@@ -1,35 +1,65 @@
-import pytest
-
-from mex.backend.graph.connector import GraphConnector
-from mex.backend.graph.transform import (
-    transform_search_result_to_model,
-)
-from mex.common.models import AnyExtractedModel
-from mex.common.types import TextLanguage
+from mex.backend.graph.transform import transform_search_result_to_model
 
 
-@pytest.mark.integration
-def test_transform_search_result_to_model(
-    load_dummy_data: list[AnyExtractedModel],
-) -> None:
-    connector = GraphConnector.get()
-    result = connector.query_nodes(None, None, None, 0, 100)
-    models = [transform_search_result_to_model(i) for i in result["items"]]
-    assert [m.model_dump() for m in models] == [
-        {
-            "identifier": "00000000000000",
-            "hadPrimarySource": "00000000000000",
-            "identifierInPrimarySource": "mex",
-            "stableTargetId": "00000000000000",
-            "alternativeTitle": [],
-            "contact": [],
-            "description": [],
-            "documentation": [],
-            "locatedAt": [],
-            "title": [{"value": "Metadata Exchange", "language": TextLanguage.EN}],
-            "unitInCharge": [],
-            "version": None,
-            "entityType": "ExtractedPrimarySource",
-        },
-        *[m.model_dump() for m in sorted(load_dummy_data, key=lambda x: x.identifier)],
-    ]
+def test_transform_search_result_to_model() -> None:
+    node_dict = {
+        "_refs": [
+            {"label": "responsibleUnit", "position": 0, "value": "bFQoRhcVH5DHUz"},
+            {"label": "contact", "position": 2, "value": "bFQoRhcVH5DHUz"},
+            {"label": "contact", "position": 0, "value": "bFQoRhcVH5DHUv"},
+            {"label": "contact", "position": 1, "value": "bFQoRhcVH5DHUx"},
+            {"label": "hadPrimarySource", "position": 0, "value": "bFQoRhcVH5DHUr"},
+            {"label": "stableTargetId", "position": 0, "value": "bFQoRhcVH5DHUB"},
+            {
+                "label": "website",
+                "position": 0,
+                "value": {"title": "Activity Homepage", "url": "https://activity-1"},
+            },
+            {
+                "label": "abstract",
+                "position": 1,
+                "value": {"value": "Une activité active."},
+            },
+            {
+                "label": "title",
+                "position": 0,
+                "value": {"language": "de", "value": "Aktivität 1"},
+            },
+            {
+                "label": "abstract",
+                "position": 0,
+                "value": {"language": "en", "value": "An active activity."},
+            },
+        ],
+        "activityType": [],
+        "end": [],
+        "entityType": "ExtractedActivity",
+        "fundingProgram": [],
+        "identifier": "bFQoRhcVH5DHUA",
+        "identifierInPrimarySource": "a-1",
+        "start": [],
+        "theme": ["https://mex.rki.de/item/theme-3"],
+    }
+
+    transform_search_result_to_model(node_dict)
+
+    assert node_dict == {
+        "activityType": [],
+        "end": [],
+        "entityType": "ExtractedActivity",
+        "fundingProgram": [],
+        "identifier": "bFQoRhcVH5DHUA",
+        "identifierInPrimarySource": "a-1",
+        "start": [],
+        "theme": ["https://mex.rki.de/item/theme-3"],
+        "responsibleUnit": ["bFQoRhcVH5DHUz"],
+        "contact": ["bFQoRhcVH5DHUv", "bFQoRhcVH5DHUx", "bFQoRhcVH5DHUz"],
+        "hadPrimarySource": ["bFQoRhcVH5DHUr"],
+        "stableTargetId": ["bFQoRhcVH5DHUB"],
+        "website": [{"title": "Activity Homepage", "url": "https://activity-1"}],
+        "abstract": [
+            {"language": "en", "value": "An active activity."},
+            {"value": "Une activité active."},
+        ],
+        "title": [{"language": "de", "value": "Aktivität 1"}],
+    }

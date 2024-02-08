@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 from fastapi.testclient import TestClient
-from neo4j import GraphDatabase, ResultSummary, SummaryCounters
+from neo4j import GraphDatabase, SummaryCounters
 from pytest import MonkeyPatch
 
 from mex.backend.graph.connector import GraphConnector
@@ -20,11 +20,18 @@ from mex.common.models import (
     ExtractedActivity,
     ExtractedContactPoint,
     ExtractedOrganizationalUnit,
-    ExtractedPerson,
     ExtractedPrimarySource,
 )
 from mex.common.transform import MExEncoder
-from mex.common.types import Identifier, IdentityProvider, Link, Text, TextLanguage
+from mex.common.types import (
+    Email,
+    Identifier,
+    IdentityProvider,
+    Link,
+    Text,
+    TextLanguage,
+    Theme,
+)
 from mex.common.types.identifier import IdentifierT
 
 pytest_plugins = ("mex.common.testing.plugin",)
@@ -168,30 +175,8 @@ def isolate_identity_provider(
 
 
 @pytest.fixture
-def extracted_person() -> ExtractedPerson:
-    """Return an extracted person with static dummy values."""
-    return ExtractedPerson.model_construct(
-        identifier=Identifier.generate(seed=6),
-        stableTargetId=Identifier.generate(seed=66),
-        affiliation=[
-            Identifier.generate(seed=255),
-            Identifier.generate(seed=3810),
-        ],
-        email=["fictitiousf@rki.de", "info@rki.de"],
-        familyName=["Fictitious"],
-        givenName=["Frieda"],
-        identifierInPrimarySource="frieda",
-        fullName=["Fictitious, Frieda, Dr."],
-        hadPrimarySource=Identifier.generate(seed=64),
-        memberOf=[
-            Identifier.generate(seed=35),
-        ],
-    )
-
-
-@pytest.fixture
-def load_dummy_data() -> list[AnyExtractedModel]:
-    """Ingest dummy data into Graph Database."""
+def dummy_data() -> list[AnyExtractedModel]:
+    """Create a set of interlinked dummy data."""
     primary_source_1 = ExtractedPrimarySource(
         hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
         identifierInPrimarySource="ps-1",
@@ -199,22 +184,22 @@ def load_dummy_data() -> list[AnyExtractedModel]:
     primary_source_2 = ExtractedPrimarySource(
         hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
         identifierInPrimarySource="ps-2",
-        version=["Cool Version v2.13"],
+        version="Cool Version v2.13",
     )
     contact_point_1 = ExtractedContactPoint(
-        email="info@rki.de",
+        email=[Email("info@contact-point.one")],
         hadPrimarySource=primary_source_1.stableTargetId,
         identifierInPrimarySource="cp-1",
     )
     contact_point_2 = ExtractedContactPoint(
-        email="mex@rki.de",
+        email=[Email("help@contact-point.two")],
         hadPrimarySource=primary_source_1.stableTargetId,
         identifierInPrimarySource="cp-2",
     )
     organizational_unit_1 = ExtractedOrganizationalUnit(
         hadPrimarySource=primary_source_2.stableTargetId,
         identifierInPrimarySource="ou-1",
-        name="Unit 1",
+        name=[Text(value="Unit 1", language=TextLanguage.EN)],
     )
     activity_1 = ExtractedActivity(
         abstract=[
@@ -229,11 +214,11 @@ def load_dummy_data() -> list[AnyExtractedModel]:
         hadPrimarySource=primary_source_1.stableTargetId,
         identifierInPrimarySource="a-1",
         responsibleUnit=[organizational_unit_1.stableTargetId],
-        theme=["https://mex.rki.de/item/theme-3"],
-        title=["Activity 1"],
+        theme=[Theme["DIGITAL_PUBLIC_HEALTH"]],
+        title=[Text(value="Aktivität 1", language=TextLanguage.DE)],
         website=[Link(title="Activity Homepage", url="https://activity-1")],
     )
-    models = [
+    return [
         primary_source_1,
         primary_source_2,
         contact_point_1,
@@ -241,5 +226,10 @@ def load_dummy_data() -> list[AnyExtractedModel]:
         organizational_unit_1,
         activity_1,
     ]
-    GraphConnector.get().ingest(models)
-    return models
+
+
+@pytest.fixture
+def load_dummy_data(dummy_data: list[AnyExtractedModel]) -> list[AnyExtractedModel]:
+    """Ingest dummy data into the graph."""
+    GraphConnector.get().ingest(dummy_data)
+    return dummy_data

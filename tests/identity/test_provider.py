@@ -3,8 +3,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from mex.backend.graph.exceptions import MultipleResultsFoundError
 from mex.backend.identity.provider import GraphIdentityProvider
-from mex.common.exceptions import MExError
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_IDENTIFIER,
     MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
@@ -30,12 +30,10 @@ from mex.common.types import Identifier, PrimarySourceID
         (
             [
                 {
-                    "i": {
-                        "hadPrimarySource": "psSti00000000001",
-                        "identifier": "cpId000000000002",
-                        "identifierInPrimarySource": "existing-item",
-                        "stableTargetId": "cpSti00000000002",
-                    }
+                    "hadPrimarySource": "psSti00000000001",
+                    "identifier": "cpId000000000002",
+                    "identifierInPrimarySource": "existing-item",
+                    "stableTargetId": "cpSti00000000002",
                 }
             ],
             PrimarySourceID("psSti00000000001"),
@@ -71,24 +69,20 @@ def test_assign_identity_inconsistency_mocked(
 ) -> None:
     mocked_graph.return_value = [
         {
-            "i": {
-                "hadPrimarySource": "psSti00000000001",
-                "identifier": "cpId000000000002",
-                "identifierInPrimarySource": "existing-item",
-                "stableTargetId": "cpSti00000000002",
-            }
+            "hadPrimarySource": "psSti00000000001",
+            "identifier": "cpId000000000002",
+            "identifierInPrimarySource": "existing-item",
+            "stableTargetId": "cpSti00000000002",
         },
         {
-            "i": {
-                "hadPrimarySource": "psSti00000000001",
-                "identifier": "cpId000000000098",
-                "identifierInPrimarySource": "existing-item",
-                "stableTargetId": "cpSti00000000099",
-            }
+            "hadPrimarySource": "psSti00000000001",
+            "identifier": "cpId000000000098",
+            "identifierInPrimarySource": "existing-item",
+            "stableTargetId": "cpSti00000000099",
         },
     ]
     provider = GraphIdentityProvider.get()
-    with pytest.raises(MExError, match="graph inconsistency"):
+    with pytest.raises(MultipleResultsFoundError):
         provider.assign(
             had_primary_source=PrimarySourceID("psSti00000000001"),
             identifier_in_primary_source="existing-item",
@@ -159,12 +153,10 @@ def test_assign_identity(
         (
             [
                 {
-                    "i": {
-                        "hadPrimarySource": "28282828282828",
-                        "identifier": "7878787878787878777",
-                        "identifierInPrimarySource": "one",
-                        "stableTargetId": "949494949494949494",
-                    }
+                    "hadPrimarySource": "28282828282828",
+                    "identifier": "7878787878787878777",
+                    "identifierInPrimarySource": "one",
+                    "stableTargetId": "949494949494949494",
                 }
             ],
             PrimarySourceID("28282828282828"),
@@ -182,20 +174,16 @@ def test_assign_identity(
         (
             [
                 {
-                    "i": {
-                        "hadPrimarySource": "28282828282828",
-                        "identifier": "62626262626266262",
-                        "identifierInPrimarySource": "two",
-                        "stableTargetId": "949494949494949494",
-                    }
+                    "hadPrimarySource": "28282828282828",
+                    "identifier": "62626262626266262",
+                    "identifierInPrimarySource": "two",
+                    "stableTargetId": "949494949494949494",
                 },
                 {
-                    "i": {
-                        "hadPrimarySource": "39393939393939",
-                        "identifier": "7878787878787878777",
-                        "identifierInPrimarySource": "duo",
-                        "stableTargetId": "949494949494949494",
-                    }
+                    "hadPrimarySource": "39393939393939",
+                    "identifier": "7878787878787878777",
+                    "identifierInPrimarySource": "duo",
+                    "stableTargetId": "949494949494949494",
                 },
             ],
             None,

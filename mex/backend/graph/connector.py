@@ -20,7 +20,6 @@ from mex.backend.graph.transform import (
 from mex.backend.transform import to_primitive
 from mex.common.connector import BaseConnector
 from mex.common.exceptions import MExError
-from mex.common.logging import logger
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MEX_PRIMARY_SOURCE_IDENTIFIER,
@@ -33,6 +32,12 @@ from mex.common.types import Identifier
 
 MERGE_NODE_LOG_MSG = "%s (:%s {identifier: %s})"
 MERGE_EDGE_LOG_MSG = "%s ({identifier: %s})-[:%s]→({stableTargetId: %s})"
+MEX_EXTRACTED_PRIMARY_SOURCE = ExtractedPrimarySource.model_construct(
+    hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    identifier=MEX_PRIMARY_SOURCE_IDENTIFIER,
+    identifierInPrimarySource=MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
+    stableTargetId=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+)
 
 
 class GraphConnector(BaseConnector):
@@ -80,16 +85,7 @@ class GraphConnector(BaseConnector):
 
     def _seed_data(self) -> list[Identifier]:
         """Ensure the primary source `mex` is seeded and linked to itself."""
-        return self.ingest(
-            [
-                ExtractedPrimarySource.model_construct(
-                    hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-                    identifier=MEX_PRIMARY_SOURCE_IDENTIFIER,
-                    identifierInPrimarySource=MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
-                    stableTargetId=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-                )
-            ]
-        )
+        return self.ingest([MEX_EXTRACTED_PRIMARY_SOURCE])
 
     def close(self) -> None:
         """Close the connector's underlying requests session."""
@@ -306,8 +302,8 @@ class GraphConnector(BaseConnector):
             Graph result instance
         """
         results = []
-        for edge in transform_model_to_edges(model):
-            result = self.commit(q.merge_edge(edge.label), **edge.model_dump())
+        for label, edge in transform_model_to_edges(model):
+            result = self.commit(q.merge_edge(label), **edge)
             results.append(result)
         return results
 

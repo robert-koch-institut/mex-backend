@@ -30,12 +30,10 @@ from mex.common.models import (
         (
             [
                 {
-                    "i": {
-                        "hadPrimarySource": "psSti00000000001",
-                        "identifier": "cpId000000000002",
-                        "identifierInPrimarySource": "cp-2",
-                        "stableTargetId": "cpSti00000000002",
-                    }
+                    "hadPrimarySource": "psSti00000000001",
+                    "identifier": "cpId000000000002",
+                    "identifierInPrimarySource": "cp-2",
+                    "stableTargetId": "cpSti00000000002",
                 }
             ],
             {
@@ -71,20 +69,16 @@ def test_assign_identity_inconsistency_mocked(
 ) -> None:
     mocked_graph.return_value = [
         {
-            "i": {
-                "hadPrimarySource": "psSti00000000001",
-                "identifier": "cpId000000000002",
-                "identifierInPrimarySource": "cp-2",
-                "stableTargetId": "cpSti00000000002",
-            }
+            "hadPrimarySource": "psSti00000000001",
+            "identifier": "cpId000000000002",
+            "identifierInPrimarySource": "cp-2",
+            "stableTargetId": "cpSti00000000002",
         },
         {
-            "i": {
-                "hadPrimarySource": "psSti00000000001",
-                "identifier": "cpId000000000098",
-                "identifierInPrimarySource": "cp-2",
-                "stableTargetId": "cpSti00000000099",
-            }
+            "hadPrimarySource": "psSti00000000001",
+            "identifier": "cpId000000000098",
+            "identifierInPrimarySource": "cp-2",
+            "stableTargetId": "cpSti00000000099",
         },
     ]
     response = client_with_api_key_write_permission.post(
@@ -95,7 +89,7 @@ def test_assign_identity_inconsistency_mocked(
         },
     )
     assert response.status_code == 500
-    assert "graph inconsistency" in response.text
+    assert "MultipleResultsFoundError" in response.text
 
 
 @pytest.mark.usefixtures("mocked_graph")
@@ -170,12 +164,10 @@ def test_assign_identity(
         (
             [
                 {
-                    "i": {
-                        "hadPrimarySource": "28282828282828",
-                        "identifier": "7878787878787878777",
-                        "identifierInPrimarySource": "one",
-                        "stableTargetId": "949494949494949494",
-                    }
+                    "hadPrimarySource": "28282828282828",
+                    "identifier": "7878787878787878777",
+                    "identifierInPrimarySource": "one",
+                    "stableTargetId": "949494949494949494",
                 }
             ],
             "?hadPrimarySource=28282828282828&identifierInPrimarySource=one",
@@ -194,20 +186,16 @@ def test_assign_identity(
         (
             [
                 {
-                    "i": {
-                        "hadPrimarySource": "28282828282828",
-                        "identifier": "62626262626266262",
-                        "identifierInPrimarySource": "two",
-                        "stableTargetId": "949494949494949494",
-                    }
+                    "hadPrimarySource": "28282828282828",
+                    "identifier": "62626262626266262",
+                    "identifierInPrimarySource": "two",
+                    "stableTargetId": "949494949494949494",
                 },
                 {
-                    "i": {
-                        "hadPrimarySource": "39393939393939",
-                        "identifier": "7878787878787878777",
-                        "identifierInPrimarySource": "duo",
-                        "stableTargetId": "949494949494949494",
-                    }
+                    "hadPrimarySource": "39393939393939",
+                    "identifier": "7878787878787878777",
+                    "identifierInPrimarySource": "duo",
+                    "stableTargetId": "949494949494949494",
                 },
             ],
             "?stableTargetId=949494949494949494",

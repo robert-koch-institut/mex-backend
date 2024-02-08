@@ -4,27 +4,56 @@ from unittest.mock import MagicMock
 import pytest
 from fastapi.testclient import TestClient
 
+from mex.common.models import ExtractedOrganizationalUnit
+
 
 def test_search_merged_items_mocked(
     client_with_api_key_read_permission: TestClient, mocked_graph: MagicMock
 ) -> None:
+    unit = ExtractedOrganizationalUnit.model_validate(
+        {
+            "hadPrimarySource": "2222222222222222",
+            "identifierInPrimarySource": "unit-1",
+            "email": ["test@foo.bar"],
+            "name": [
+                {"value": "Eine unit von einer Org.", "language": "de"},
+                {"value": "A unit of an org.", "language": "en"},
+            ],
+        }
+    )
     mocked_graph.return_value = [
         {
-            "c": 0,
-            "l": "ExtractedContactPoint",  # stopgap mx-1382 (search for MergedContactPoint instead)
-            "r": [{"key": "hadPrimarySource", "value": ["2222222222222222"]}],
-            "n": {
-                "stableTargetId": "0000000000000000",
-                "identifier": "1111111111111111",
-                "identifierInPrimarySource": "test",
-                "email": "test@foo.bar",
-            },
-            "i": {
-                "stableTargetId": "0000000000000000",
-                "identifier": "1111111111111111",
-                "identifierInPrimarySource": "test",
-                "hadPrimarySource": "2222222222222222",
-            },
+            "total": 14,
+            "items": [
+                {
+                    "identifier": unit.identifier,
+                    "identifierInPrimarySource": unit.identifierInPrimarySource,
+                    "stableTargetId": unit.stableTargetId,
+                    "email": ["test@foo.bar"],
+                    # stopgap mx-1382 (search for ExtractedOrganizationalUnit instead)
+                    "entityType": "ExtractedOrganizationalUnit",
+                    "_refs": [
+                        {
+                            "label": "hadPrimarySource",
+                            "position": 0,
+                            "value": "2222222222222222",
+                        },
+                        {
+                            "label": "name",
+                            "position": 0,
+                            "value": {
+                                "value": "Eine unit von einer Org.",
+                                "language": "de",
+                            },
+                        },
+                        {
+                            "label": "name",
+                            "position": 1,
+                            "value": {"value": "A unit of an org.", "language": "en"},
+                        },
+                    ],
+                }
+            ],
         }
     ]
 
@@ -33,13 +62,22 @@ def test_search_merged_items_mocked(
     assert response.json() == {
         "items": [
             {
-                "$type": "MergedContactPoint",
+                "$type": "MergedOrganizationalUnit",
+                "alternativeName": [],
                 "email": ["test@foo.bar"],
-                "identifier": "1111111111111111",
-                "stableTargetId": "0000000000000000",
+                "identifier": unit.identifier,
+                "name": [
+                    {"language": "de", "value": "Eine unit von einer Org."},
+                    {"language": "en", "value": "A unit of an org."},
+                ],
+                "parentUnit": None,
+                "shortName": [],
+                "stableTargetId": unit.stableTargetId,
+                "unitOf": [],
+                "website": [],
             }
         ],
-        "total": 0,
+        "total": 14,
     }
 
 
@@ -73,7 +111,7 @@ def test_search_merged_items_mocked(
                 "items": [
                     {
                         "$type": "MergedContactPoint",
-                        "email": ["info@rki.de"],
+                        "email": ["info@contact-point.one"],
                         "identifier": "bFQoRhcVH5DHUu",
                         "stableTargetId": "bFQoRhcVH5DHUv",
                     }
@@ -87,13 +125,13 @@ def test_search_merged_items_mocked(
                 "items": [
                     {
                         "$type": "MergedContactPoint",
-                        "email": ["info@rki.de"],
+                        "email": ["info@contact-point.one"],
                         "identifier": "bFQoRhcVH5DHUu",
                         "stableTargetId": "bFQoRhcVH5DHUv",
                     },
                     {
                         "$type": "MergedContactPoint",
-                        "email": ["mex@rki.de"],
+                        "email": ["help@contact-point.two"],
                         "identifier": "bFQoRhcVH5DHUw",
                         "stableTargetId": "bFQoRhcVH5DHUx",
                     },

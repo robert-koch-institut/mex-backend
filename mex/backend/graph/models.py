@@ -1,9 +1,9 @@
+from functools import cache
 from typing import Any, Iterator
 
 from neo4j import Result as Neo4jResult
-from pydantic import BaseModel, Field
 
-from mex.backend.graph.exceptions import MultipleResultsFound, NoResultFound
+from mex.backend.graph.exceptions import MultipleResultsFoundError, NoResultFoundError
 
 
 class Result:
@@ -17,6 +17,7 @@ class Result:
     def __init__(self, result: Neo4jResult) -> None:
         """Wrap a neo4j result object in a mex-backend result."""
         self._records, self._summary, _ = result.to_eager_result()
+        self._data = [None] * len(self._records)
 
     def __getitem__(self, key: str) -> Any:
         """Proxy a getitem instruction to the first record if exactly one exists."""
@@ -24,14 +25,22 @@ class Result:
 
     def __iter__(self) -> Iterator[dict[str, Any]]:
         """Return an iterator over all records."""
-        yield from (record.data() for record in self._records)
+        yield from (self._record_to_data(index) for index in range(len(self._records)))
 
     def __repr__(self) -> str:
         """Return a human-readable representation of this result object."""
         representation = f"Result({self.all()!r})"
         if len(representation) > 120:
-            representation = f"{representation[:60]}...{representation[57:]}"
+            representation = f"{representation[:50]}... ...{representation[-50:]}"
         return representation
+
+    @cache
+    def _record_to_data(self, record_index: int) -> dict[str, Any]:
+        """Cache the data retrieval for each record."""
+        try:
+            return self._records[record_index].data()
+        except IndexError:
+            raise NoResultFoundError
 
     def all(self) -> list[dict[str, Any]]:
         """Return all records as a list."""
@@ -41,11 +50,11 @@ class Result:
         """Return exactly one record or raise an exception."""
         match len(self._records):
             case 1:
-                return self._records[0].data()
+                return self._record_to_data(0)
             case 0:
-                raise NoResultFound
+                raise NoResultFoundError
             case _:
-                raise MultipleResultsFound
+                raise MultipleResultsFoundError
 
     def one_or_none(self) -> dict[str, Any] | None:
         """Return at most one result or raise an exception.
@@ -55,22 +64,13 @@ class Result:
         """
         match len(self._records):
             case 1:
-                return self._records[0].data()
+                return self._record_to_data(0)
             case 0:
                 return None
             case _:
-                raise MultipleResultsFound
+                raise MultipleResultsFoundError
 
     @property
     def update_counters(self) -> dict[str, int]:
         """Return a summary of counters for operations the query triggered."""
         return {k: v for k, v in vars(self._summary.counters).items() if v}
-
-
-class MergableEdge(BaseModel):
-    """Helper class for merging edges into the graph."""
-
-    label: str = Field(exclude=False)
-    fromIdentifier: str
-    toStableTargetId: str
-    position: int

@@ -94,7 +94,7 @@ def test_search_extracted_items_mocked(
                 "items": [
                     {
                         "$type": "ExtractedContactPoint",
-                        "email": ["info@rki.de"],
+                        "email": ["info@contact-point.one"],
                         "hadPrimarySource": "bFQoRhcVH5DHUr",
                         "identifier": "bFQoRhcVH5DHUu",
                         "identifierInPrimarySource": "cp-1",
@@ -110,7 +110,7 @@ def test_search_extracted_items_mocked(
                 "items": [
                     {
                         "$type": "ExtractedContactPoint",
-                        "email": ["info@rki.de"],
+                        "email": ["info@contact-point.one"],
                         "hadPrimarySource": "bFQoRhcVH5DHUr",
                         "identifier": "bFQoRhcVH5DHUu",
                         "identifierInPrimarySource": "cp-1",
@@ -118,7 +118,7 @@ def test_search_extracted_items_mocked(
                     },
                     {
                         "$type": "ExtractedContactPoint",
-                        "email": ["mex@rki.de"],
+                        "email": ["help@contact-point.two"],
                         "hadPrimarySource": "bFQoRhcVH5DHUr",
                         "identifier": "bFQoRhcVH5DHUw",
                         "identifierInPrimarySource": "cp-2",
