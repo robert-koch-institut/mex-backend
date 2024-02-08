@@ -10,21 +10,21 @@ packages = [{ include = "mex" }]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-fastapi = "^0.108.0"
+fastapi = "^0.109.2"
 httpx = "^0.26.0"
 mex-common = { git = "https://github.com/robert-koch-institut/mex-common.git", rev = "feature/mx-1381-prep-rule-endpoint" }
-neo4j = "^5.16.0"
-pydantic = "^2.5.3"
-uvicorn = { version = "^0.25.0", extras = ["standard"] }
+neo4j = "^5.17.0"
+pydantic = "2.6.1"
+uvicorn = { version = "^0.27.0", extras = ["standard"] }
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.12.1"
+black = "^24.1.1"
 ipdb = "^0.13.13"
 mypy = "^1.8.0"
-pytest = "^7.4.4"
+pytest = "^8.0.0"
 pytest-cov = "^4.1.0"
-ruff = "^0.1.13"
-types-pytz = "^2023.3.1"
+ruff = "^0.2.0"
+types-pytz = "^2024.1.0"
 sphinx = "^7.2.6"
 
 [tool.poetry.scripts]
@@ -109,5 +109,5 @@ known-first-party = ["mex", "tests"]
 convention = "google"
 
 [build-system]
-requires = ["poetry-core>=1.8.1"]
+requires = ["poetry-core>=1.9.0"]
 build-backend = "poetry.core.masonry.api"
