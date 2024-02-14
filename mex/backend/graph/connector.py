@@ -5,11 +5,11 @@ from typing import Any
 from neo4j import Driver, GraphDatabase
 
 from mex.backend.fields import (
-    FINAL_FIELDS,
+    FROZEN_FIELDS_BY_CLASS_NAME,
     LINK_FIELDS_BY_CLASS_NAME,
     MUTABLE_FIELDS_BY_CLASS_NAME,
-    SEARCH_FIELDS,
-    SEARCH_FIELDS_BY_CLASS_NAME,
+    SEARCHABLE_CLASSES,
+    SEARCHABLE_FIELDS,
     TEXT_FIELDS_BY_CLASS_NAME,
 )
 from mex.backend.graph.models import Result
@@ -92,8 +92,8 @@ class GraphConnector(BaseConnector):
         """Ensure there are full text search indices for all text fields."""
         return self.commit(
             q.create_full_text_search_index(
-                node_labels=SEARCH_FIELDS_BY_CLASS_NAME,
-                search_fields=SEARCH_FIELDS,
+                node_labels=SEARCHABLE_CLASSES,
+                search_fields=SEARCHABLE_FIELDS,
             ),
             index_config={
                 "fulltext.eventually_consistent": True,
@@ -209,33 +209,37 @@ class GraphConnector(BaseConnector):
         Returns:
             Graph result instance
         """
-        text_fields = TEXT_FIELDS_BY_CLASS_NAME[model.entityType]
-        link_fields = LINK_FIELDS_BY_CLASS_NAME[model.entityType]
-        mutable_fields = MUTABLE_FIELDS_BY_CLASS_NAME[model.entityType]
-        mutable_node_values = to_primitive(model, include=set(mutable_fields))
-        final_node_values = to_primitive(model, include=FINAL_FIELDS)
-        all_node_values = {**mutable_node_values, **final_node_values}
+        extracted_type = model.entityType
+        merged_type = extracted_type.replace("Extracted", "Merged")
+        text_fields = TEXT_FIELDS_BY_CLASS_NAME[extracted_type]
+        link_fields = LINK_FIELDS_BY_CLASS_NAME[extracted_type]
+        mutable_fields = MUTABLE_FIELDS_BY_CLASS_NAME[extracted_type]
+        frozen_fields = FROZEN_FIELDS_BY_CLASS_NAME[extracted_type]
 
-        raw_texts = to_primitive(model, include=set(text_fields))
-        raw_links = to_primitive(model, include=set(link_fields))
+        mutable_values = to_primitive(model, include=set(mutable_fields))
+        final_values = to_primitive(model, include=set(frozen_fields))
+        all_values = {**mutable_values, **final_values}
+
+        text_values = to_primitive(model, include=set(text_fields))
+        link_values = to_primitive(model, include=set(link_fields))
 
         nested_spec: list[tuple[str, str]] = []
-        nested_values: list[dict[str, Any]] = []
         nested_positions: list[int] = []
+        nested_values: list[dict[str, Any]] = []
 
-        for node_label, raws in [
-            (Text.__name__, raw_texts),
-            (Link.__name__, raw_links),
+        for nested_label, raws in [
+            (Text.__name__, text_values),
+            (Link.__name__, link_values),
         ]:
             for edge_label, raw_values in to_key_and_values(raws):
                 for position, raw_value in enumerate(raw_values):
-                    nested_values.append(raw_value)
+                    nested_spec.append((edge_label, nested_label))
                     nested_positions.append(position)
-                    nested_spec.append((edge_label, node_label))
+                    nested_values.append(raw_value)
 
         statement = q.merge_node(
-            extracted_label=model.entityType,
-            merged_label=model.entityType.replace("Extracted", "Merged"),
+            extracted_label=extracted_type,
+            merged_label=merged_type,
             nested_spec=nested_spec,
         )
 
@@ -243,8 +247,8 @@ class GraphConnector(BaseConnector):
             statement,
             identifier=model.identifier,
             stable_target_id=model.stableTargetId,
-            on_match=mutable_node_values,
-            on_create=all_node_values,
+            on_match=mutable_values,
+            on_create=all_values,
             nested_values=nested_values,
             nested_positions=nested_positions,
         )
@@ -263,11 +267,9 @@ class GraphConnector(BaseConnector):
         """
         results = []
         for label, parameters in transform_model_to_labels_and_parameters(model):
-            result = self.commit(
-                q.merge_edge(edge_label=label),
-                **parameters,
-            )
+            result = self.commit(q.merge_edge(edge_label=label), **parameters)
             results.append(result)
+        # TODO prune edges
         return results
 
     def ingest(self, models: list[AnyExtractedModel]) -> list[Identifier]:
@@ -284,7 +286,5 @@ class GraphConnector(BaseConnector):
 
         for model in models:
             self.merge_edges(model)
-
-        # TODO prune edges
 
         return [m.identifier for m in models]

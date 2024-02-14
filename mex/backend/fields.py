@@ -1,7 +1,17 @@
 from collections.abc import Generator
 from types import UnionType
-from typing import Annotated, Any, Union, get_args, get_origin
+from typing import (
+    Annotated,
+    Any,
+    Callable,
+    Literal,
+    Mapping,
+    Union,
+    get_args,
+    get_origin,
+)
 
+from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 
 from mex.common.models import EXTRACTED_MODEL_CLASSES_BY_NAME
@@ -27,95 +37,80 @@ def _has_true_subclass_type(field: FieldInfo, type_: type) -> bool:
     A "true" subclass is defined as not being identical to the provided `type_` itself.
     """
     return all(
-        # isinstance(t, type) and
-        issubclass(t, type_) and t is not type_
+        isinstance(t, type) and issubclass(t, type_) and t is not type_
         for t in _get_inner_types(field.annotation)
     )
-
-
-# TODO: continue here fixing the type-filter-funcs
 
 
 def _has_exact_type(field: FieldInfo, type_: type) -> bool:
     """Return whether a field is annotated as exactly the given type."""
     return all(
-        # isinstance(t, type) and
-        t is type_
-        for t in _get_inner_types(field.annotation)
+        isinstance(t, type) and t is type_ for t in _get_inner_types(field.annotation)
     )
 
 
-STATIC_FIELDS = {"entityType"}  # TODO derive from ClassVars
-FINAL_FIELDS = {"identifierInPrimarySource", "identifier"}  # TODO make these Final
+def _group_fields_by_class_name(
+    model_classes_by_name: Mapping[str, type[BaseModel]],
+    predicate: Callable[[FieldInfo], bool],
+) -> dict[str, list[str]]:
+    """Group the field names by model class and filter them by the given predicate."""
+    return {
+        name: sorted(
+            {
+                field_name
+                for field_name, field_info in cls.model_fields.items()
+                if predicate(field_info)
+            }
+        )
+        for name, cls in model_classes_by_name.items()
+    }
 
-IMMUTABLE_FIELDS = STATIC_FIELDS | FINAL_FIELDS
 
-# Model fields that connect one entity to another by storing the other's stableTargetId.
-# Reference fields are typed as subclasses of `Identifier` or lists thereof.
-# XXX update doc
-REFERENCE_FIELDS_BY_CLASS_NAME = {
-    name: sorted(
-        {
-            field_name
-            for field_name, field_info in cls.model_fields.items()
-            # true subclass because we want to ignore literal `Identifier` typed
-            # fields like `identifier`
-            if _has_true_subclass_type(field_info, Identifier)
-        }
-    )
-    for name, cls in EXTRACTED_MODEL_CLASSES_BY_NAME.items()
-}
+FROZEN_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
+    EXTRACTED_MODEL_CLASSES_BY_NAME, lambda field_info: field_info.frozen is True
+)
 
-# Model fields that store text objects and are typed as `Text` or lists thereof.
-# Text fields are stored as nested mappings in JSON form but are modelled as their
-# own nodes when written to the graph. They also need special treatment when querying.
-TEXT_FIELDS_BY_CLASS_NAME = {
-    name: sorted(
-        {
-            field_name
-            for field_name, field_info in cls.model_fields.items()
-            if _has_exact_type(field_info, Text)
-        }
-    )
-    for name, cls in EXTRACTED_MODEL_CLASSES_BY_NAME.items()
-}
+LITERAL_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
+    EXTRACTED_MODEL_CLASSES_BY_NAME,
+    lambda field_info: isinstance(field_info.annotation, type(Literal["entityType"])),
+)
 
-# XXX add Text support
-SEARCH_FIELDS_BY_CLASS_NAME = {
-    name: sorted(field_names)
-    for name, cls in EXTRACTED_MODEL_CLASSES_BY_NAME.items()
-    if (
-        field_names := {
-            field_name
-            for field_name, field_info in cls.model_fields.items()
-            if _has_exact_type(field_info, str)
-        }
-    )
-}
+REFERENCE_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
+    EXTRACTED_MODEL_CLASSES_BY_NAME,
+    # true subclasses only because we want to ignore literal `Identifier` typed
+    # fields like `identifier`
+    lambda field_info: _has_true_subclass_type(field_info, Identifier),
+)
 
-SEARCH_FIELDS = sorted(
+TEXT_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
+    EXTRACTED_MODEL_CLASSES_BY_NAME,
+    lambda field_info: _has_exact_type(field_info, Text),
+)
+
+STRING_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
+    EXTRACTED_MODEL_CLASSES_BY_NAME, lambda field_info: _has_exact_type(field_info, str)
+)
+
+SEARCHABLE_FIELDS = sorted(
     {
         field_name
-        for field_names in SEARCH_FIELDS_BY_CLASS_NAME.values()
+        for field_names in STRING_FIELDS_BY_CLASS_NAME.values()
         for field_name in field_names
     }
+)
+
+SEARCHABLE_CLASSES = sorted(
+    {name for name, field_names in STRING_FIELDS_BY_CLASS_NAME.items() if field_names}
 )
 
 # Model fields that store link objects and are typed as `Link` or lists thereof.
 # Link fields are stored as nested mappings in JSON form but are modelled as their
 # own nodes when written to the graph. They also need special treatment when querying.
-LINK_FIELDS_BY_CLASS_NAME = {
-    name: sorted(
-        {
-            field_name
-            for field_name, field_info in cls.model_fields.items()
-            if _has_exact_type(field_info, Link)
-        }
-    )
-    for name, cls in EXTRACTED_MODEL_CLASSES_BY_NAME.items()
-}
+LINK_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
+    EXTRACTED_MODEL_CLASSES_BY_NAME,
+    lambda field_info: _has_exact_type(field_info, Link),
+)
 
-# TODO doc
 MUTABLE_FIELDS_BY_CLASS_NAME = {
     name: sorted(
         {
@@ -123,25 +118,11 @@ MUTABLE_FIELDS_BY_CLASS_NAME = {
             for field_name in cls.model_fields
             if field_name
             not in (
-                *IMMUTABLE_FIELDS,
+                *FROZEN_FIELDS_BY_CLASS_NAME[name],
                 *REFERENCE_FIELDS_BY_CLASS_NAME[name],
                 *TEXT_FIELDS_BY_CLASS_NAME[name],
                 *LINK_FIELDS_BY_CLASS_NAME[name],
             )
-        }
-    )
-    for name, cls in EXTRACTED_MODEL_CLASSES_BY_NAME.items()
-}
-
-
-# Model fields that are searchable via full text queries and should be indexed
-# by neo4j for lucene-backed searches. These fields need to be of type `str`.
-SEARCHABLE_FIELDS_BY_CLASS_NAME = {
-    name: sorted(
-        {
-            field_name
-            for field_name, field_info in cls.model_fields.items()
-            if _has_exact_type(field_info, str)
         }
     )
     for name, cls in EXTRACTED_MODEL_CLASSES_BY_NAME.items()
