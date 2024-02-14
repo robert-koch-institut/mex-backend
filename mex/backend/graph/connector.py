@@ -8,6 +8,7 @@ from mex.backend.fields import (
     FROZEN_FIELDS_BY_CLASS_NAME,
     LINK_FIELDS_BY_CLASS_NAME,
     MUTABLE_FIELDS_BY_CLASS_NAME,
+    REFERENCE_FIELDS_BY_CLASS_NAME,
     SEARCHABLE_CLASSES,
     SEARCHABLE_FIELDS,
     TEXT_FIELDS_BY_CLASS_NAME,
@@ -16,7 +17,6 @@ from mex.backend.graph.models import Result
 from mex.backend.graph.queries import q
 from mex.backend.graph.transform import (
     expand_references_in_search_result,
-    transform_model_to_labels_and_parameters,
 )
 from mex.backend.transform import to_primitive
 from mex.common.connector import BaseConnector
@@ -223,24 +223,27 @@ class GraphConnector(BaseConnector):
         text_values = to_primitive(model, include=set(text_fields))
         link_values = to_primitive(model, include=set(link_fields))
 
-        nested_spec: list[tuple[str, str]] = []
+        nested_edge_labels: list[str] = []
+        nested_node_labels: list[str] = []
         nested_positions: list[int] = []
         nested_values: list[dict[str, Any]] = []
 
-        for nested_label, raws in [
+        for nested_node_label, raws in [
             (Text.__name__, text_values),
             (Link.__name__, link_values),
         ]:
-            for edge_label, raw_values in to_key_and_values(raws):
+            for nested_edge_label, raw_values in to_key_and_values(raws):
                 for position, raw_value in enumerate(raw_values):
-                    nested_spec.append((edge_label, nested_label))
+                    nested_edge_labels.append(nested_edge_label)
+                    nested_node_labels.append(nested_node_label)
                     nested_positions.append(position)
                     nested_values.append(raw_value)
 
         statement = q.merge_node(
             extracted_label=extracted_type,
             merged_label=merged_type,
-            nested_spec=nested_spec,
+            nested_edge_labels=nested_edge_labels,
+            nested_node_labels=nested_node_labels,
         )
 
         return self.commit(
@@ -253,7 +256,7 @@ class GraphConnector(BaseConnector):
             nested_positions=nested_positions,
         )
 
-    def merge_edges(self, model: AnyExtractedModel) -> list[Result]:
+    def merge_edges(self, model: AnyExtractedModel) -> Result:
         """Merge edges into the graph for all relations in the given model.
 
         All fields containing references will be iterated over. When the targeted node
@@ -265,12 +268,31 @@ class GraphConnector(BaseConnector):
         Returns:
             Graph result instance
         """
-        results = []
-        for label, parameters in transform_model_to_labels_and_parameters(model):
-            result = self.commit(q.merge_edge(edge_label=label), **parameters)
-            results.append(result)
-        # TODO prune edges
-        return results
+        extracted_type = model.entityType
+        ref_fields = REFERENCE_FIELDS_BY_CLASS_NAME[model.entityType]
+        ref_values = to_primitive(model, include=set(ref_fields))
+
+        ref_labels: list[str] = []
+        ref_identifiers: list[str] = []
+        ref_positions: list[int] = []
+
+        for field, identifiers in to_key_and_values(ref_values):
+            for position, identifier in enumerate(identifiers):
+                ref_identifiers.append(str(identifier))
+                ref_positions.append(position)
+                ref_labels.append(field)
+
+        statement = q.merge_edges(
+            extracted_label=extracted_type,
+            ref_labels=ref_labels,
+        )
+
+        return self.commit(
+            statement,
+            identifier=model.identifier,
+            ref_identifiers=ref_identifiers,
+            ref_positions=ref_positions,
+        )
 
     def ingest(self, models: list[AnyExtractedModel]) -> list[Identifier]:
         """Ingest a list of models into the graph as nodes and connect all edges.
