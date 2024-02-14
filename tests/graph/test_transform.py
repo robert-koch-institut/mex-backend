@@ -1,7 +1,7 @@
-from mex.backend.graph.transform import transform_search_result_to_model
+from mex.backend.graph.transform import expand_references_in_search_result
 
 
-def test_transform_search_result_to_model() -> None:
+def test_expand_references_in_search_result() -> None:
     node_dict = {
         "_refs": [
             {"label": "responsibleUnit", "position": 0, "value": "bFQoRhcVH5DHUz"},
@@ -41,7 +41,7 @@ def test_transform_search_result_to_model() -> None:
         "theme": ["https://mex.rki.de/item/theme-3"],
     }
 
-    transform_search_result_to_model(node_dict)
+    expand_references_in_search_result(node_dict)
 
     assert node_dict == {
         "activityType": [],

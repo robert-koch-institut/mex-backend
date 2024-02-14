@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from mex.backend.graph.connector import GraphConnector
 from mex.common.models import AnyExtractedModel
 from mex.common.testing import Joker
+from tests.conftest import MockedGraph
 
 Payload = dict[str, list[dict[str, Any]]]
 
@@ -16,7 +17,7 @@ def post_payload(dummy_data: list[AnyExtractedModel]) -> Payload:
     payload = defaultdict(list)
     for model in dummy_data:
         payload[model.entityType].append(model.model_dump())
-    return cast(Payload, payload)
+    return cast(Payload, dict(payload))
 
 
 @pytest.mark.integration
@@ -72,12 +73,13 @@ def test_bulk_insert_malformed(
     }
 
 
-@pytest.mark.usefixtures("mocked_graph")
-def test_bulk_insert_mock(
+def test_bulk_insert_mocked(
     client_with_api_key_write_permission: TestClient,
     post_payload: Payload,
     dummy_data: list[AnyExtractedModel],
+    mocked_graph: MockedGraph,
 ) -> None:
+    mocked_graph.return_value = []
     response = client_with_api_key_write_permission.post(
         "/v0/ingest", json=post_payload
     )

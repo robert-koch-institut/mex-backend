@@ -1,8 +1,7 @@
-import asyncio
 import json
 import logging
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, Mock
+from unittest.mock import MagicMock, Mock
 
 import pydantic_core
 import pytest
@@ -12,7 +11,6 @@ from pydantic import ValidationError
 from pytest import LogCaptureFixture
 
 from mex.backend.main import (
-    SettingsMiddleware,
     app,
     close_connectors,
     handle_uncaught_exception,
@@ -20,7 +18,6 @@ from mex.backend.main import (
 from mex.backend.settings import BackendSettings
 from mex.common.connector import ConnectorContext
 from mex.common.exceptions import MExError
-from mex.common.settings import SettingsContext
 
 
 def test_openapi_schema(client: TestClient) -> None:
@@ -95,26 +92,8 @@ def test_handle_uncaught_exception(
     exception: Exception, expected: dict[str, Any]
 ) -> None:
     response = handle_uncaught_exception(Mock(), exception)
-    assert response.status_code == 500
+    assert response.status_code == 500, response.body
     assert json.loads(response.body) == expected
-
-
-def test_settings_middleware() -> None:
-    SettingsContext.set(None)
-    assert SettingsContext.get() is None
-
-    # check settings are loaded on middleware init
-    middleware = SettingsMiddleware(Mock())
-    assert middleware.settings.debug is False
-
-    # check settings are injected on middleware dispatch
-    async def dispatch_and_assert() -> None:
-        await middleware.dispatch(Mock(), AsyncMock())
-        settings = SettingsContext.get()
-        assert settings
-        assert settings.debug is False
-
-    asyncio.run(dispatch_and_assert())
 
 
 def test_close_all_connectors(caplog: LogCaptureFixture) -> None:

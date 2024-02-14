@@ -1,0 +1,2 @@
+SHOW DEFAULT DATABASE
+YIELD currentStatus;

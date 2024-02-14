@@ -1,5 +1,4 @@
 from typing import Any
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -11,6 +10,7 @@ from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
 )
 from mex.common.types import Identifier, PrimarySourceID
+from tests.conftest import MockedGraph
 
 
 @pytest.mark.parametrize(
@@ -49,7 +49,7 @@ from mex.common.types import Identifier, PrimarySourceID
     ids=["new item", "existing item"],
 )
 def test_assign_identity_mocked(
-    mocked_graph: MagicMock,
+    mocked_graph: MockedGraph,
     mocked_return: list[dict[str, str]],
     had_primary_source: PrimarySourceID,
     identifier_in_primary_source: str,
@@ -65,7 +65,7 @@ def test_assign_identity_mocked(
 
 
 def test_assign_identity_inconsistency_mocked(
-    mocked_graph: MagicMock,
+    mocked_graph: MockedGraph,
 ) -> None:
     mocked_graph.return_value = [
         {
@@ -208,7 +208,7 @@ def test_assign_identity(
     ids=["nothing found", "one item", "two items"],
 )
 def test_fetch_identities_mocked(
-    mocked_graph: MagicMock,
+    mocked_graph: MockedGraph,
     mocked_return: list[dict[str, str]],
     had_primary_source: PrimarySourceID | None,
     identifier_in_primary_source: str | None,

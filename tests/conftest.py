@@ -2,7 +2,7 @@ import json
 from base64 import b64encode
 from functools import partial
 from itertools import count
-from typing import Any, NoReturn
+from typing import Any
 from unittest.mock import MagicMock, Mock
 
 import pytest
@@ -26,7 +26,6 @@ from mex.common.transform import MExEncoder
 from mex.common.types import (
     Email,
     Identifier,
-    IdentityProvider,
     Link,
     Text,
     TextLanguage,
@@ -52,7 +51,7 @@ def settings() -> BackendSettings:
 
 @pytest.fixture(autouse=True)
 def skip_integration_test_in_ci(is_integration_test: bool) -> None:
-    """Overwrite fixture from plugin to not skip int tests in ci."""
+    """Overwrite fixture from plugin to not skip integration tests in ci."""
 
 
 @pytest.fixture
@@ -101,14 +100,14 @@ def patch_test_client_json_encoder(monkeypatch: MonkeyPatch) -> None:
     )
 
 
-class MockGraph:
+class MockedGraph:
     def __init__(self, records: list[Any], session_run: MagicMock) -> None:
         self.records = records
         self.run = session_run
 
     @property
-    def return_value(self) -> NoReturn:
-        raise NotImplementedError
+    def return_value(self) -> list[Any]:
+        return self.records
 
     @return_value.setter
     def return_value(self, value: list[Any]) -> None:
@@ -120,7 +119,7 @@ class MockGraph:
 
 
 @pytest.fixture
-def mocked_graph(monkeypatch: MonkeyPatch) -> MockGraph:
+def mocked_graph(monkeypatch: MonkeyPatch) -> MockedGraph:
     """Mock the graph connector and return the mocked `run` for easy manipulation."""
     records: list[Any] = []
     summary = Mock(counters=SummaryCounters({}))
@@ -128,8 +127,10 @@ def mocked_graph(monkeypatch: MonkeyPatch) -> MockGraph:
     run = MagicMock(return_value=result)
     session = MagicMock(__enter__=MagicMock(return_value=Mock(run=run)))
     driver = Mock(session=MagicMock(return_value=session))
-    monkeypatch.setattr(GraphDatabase, "driver", lambda _, **__: driver)
-    return MockGraph(records, run)
+    monkeypatch.setattr(
+        GraphConnector, "__init__", lambda self: setattr(self, "driver", driver)
+    )
+    return MockedGraph(records, run)
 
 
 @pytest.fixture(autouse=True)
@@ -163,15 +164,6 @@ def isolate_graph_database(
                 driver.execute_query(f"DROP CONSTRAINT {row['name']};")
             for row in driver.execute_query("SHOW ALL INDEXES;").records:
                 driver.execute_query(f"DROP INDEX {row['name']};")
-
-
-@pytest.fixture(autouse=True)
-def isolate_identity_provider(
-    is_integration_test: bool, settings: BackendSettings, monkeypatch: MonkeyPatch
-) -> None:
-    """Automatically use the memory identity provider for mocked tests."""
-    if not is_integration_test:
-        monkeypatch.setattr(settings, "identity_provider", IdentityProvider.MEMORY)
 
 
 @pytest.fixture

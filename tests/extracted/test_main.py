@@ -1,15 +1,15 @@
 from typing import Any
-from unittest.mock import MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
 
 from mex.backend.transform import to_primitive
 from mex.common.models import ExtractedOrganizationalUnit
+from tests.conftest import MockedGraph
 
 
 def test_search_extracted_items_mocked(
-    client_with_api_key_read_permission: TestClient, mocked_graph: MagicMock
+    client_with_api_key_read_permission: TestClient, mocked_graph: MockedGraph
 ) -> None:
     unit = ExtractedOrganizationalUnit.model_validate(
         {
