@@ -14,7 +14,7 @@ from mex.backend.fields import (
     TEXT_FIELDS_BY_CLASS_NAME,
 )
 from mex.backend.graph.models import Result
-from mex.backend.graph.queries import q
+from mex.backend.graph.query import QueryBuilder
 from mex.backend.graph.transform import (
     expand_references_in_search_result,
 )
@@ -72,16 +72,20 @@ class GraphConnector(BaseConnector):
 
     def _check_connectivity_and_authentication(self) -> Result:
         """Check the connectivity and authentication to the graph."""
-        result = self.commit(q.fetch_database_status())
+        query_builder = QueryBuilder.get()
+        result = self.commit(query_builder.fetch_database_status())
         if (status := result["currentStatus"]) != "online":
             raise MExError(f"Database is {status}.")
         return result
 
     def _seed_constraints(self) -> list[Result]:
         """Ensure uniqueness constraints are enabled for all entity types."""
+        query_builder = QueryBuilder.get()
         return [
             self.commit(
-                q.create_identifier_uniqueness_constraint(node_label=class_name)
+                query_builder.create_identifier_uniqueness_constraint(
+                    node_label=class_name
+                )
             )
             for class_name in sorted(
                 set(EXTRACTED_MODEL_CLASSES_BY_NAME) | set(MERGED_MODEL_CLASSES_BY_NAME)
@@ -90,8 +94,9 @@ class GraphConnector(BaseConnector):
 
     def _seed_indices(self) -> Result:
         """Ensure there are full text search indices for all text fields."""
+        query_builder = QueryBuilder.get()
         return self.commit(
-            q.create_full_text_search_index(
+            query_builder.create_full_text_search_index(
                 node_labels=SEARCHABLE_CLASSES,
                 search_fields=SEARCHABLE_FIELDS,
             ),
@@ -109,9 +114,9 @@ class GraphConnector(BaseConnector):
         """Close the connector's underlying requests session."""
         self.driver.close()
 
-    def commit(self, statement: str, **parameters: Any) -> Result:
+    def commit(self, query: str, **parameters: Any) -> Result:
         """Send and commit a single graph transaction."""
-        message = Template(statement).safe_substitute(
+        message = Template(query).safe_substitute(
             {
                 k: json.dumps(v, ensure_ascii=False)
                 for k, v in (parameters or {}).items()
@@ -119,7 +124,7 @@ class GraphConnector(BaseConnector):
         )
         try:
             with self.driver.session(database="neo4j") as session:
-                result = Result(session.run(statement, parameters))
+                result = Result(session.run(query, parameters))
         except Exception as error:
             logger.error("\n%s\n%s", message, error)
             raise
@@ -131,7 +136,7 @@ class GraphConnector(BaseConnector):
 
     def query_nodes(
         self,
-        query: str | None,
+        query_string: str | None,
         stable_target_id: str | None,
         entity_type: list[str] | None,
         skip: int,
@@ -140,7 +145,7 @@ class GraphConnector(BaseConnector):
         """Query the graph for nodes.
 
         Args:
-            query: Full text search query term
+            query_string: Full text search query term
             stable_target_id: Optional stable target ID filter
             entity_type: Optional entity type filter
             skip: How many nodes to skip for pagination
@@ -149,13 +154,15 @@ class GraphConnector(BaseConnector):
         Returns:
             Graph result instance
         """
+        query_builder = QueryBuilder.get()
+        query = query_builder.fetch_extracted_data(
+            query_string=bool(query_string),
+            stable_target_id=bool(stable_target_id),
+            labels=bool(entity_type),
+        )
         result = self.commit(
-            q.fetch_extracted_data(
-                query=bool(query),
-                stable_target_id=bool(stable_target_id),
-                labels=bool(entity_type),
-            ),
-            query=query,
+            query,
+            query_string=query_string,
             labels=entity_type,
             stable_target_id=stable_target_id,
             skip=skip,
@@ -186,12 +193,14 @@ class GraphConnector(BaseConnector):
         Returns:
             A graph result set containing identities
         """
+        query_builder = QueryBuilder.get()
+        query = query_builder.fetch_identities(
+            had_primary_source=bool(had_primary_source),
+            identifier_in_primary_source=bool(identifier_in_primary_source),
+            stable_target_id=bool(stable_target_id),
+        )
         return self.commit(
-            q.fetch_identities(
-                had_primary_source=bool(had_primary_source),
-                identifier_in_primary_source=bool(identifier_in_primary_source),
-                stable_target_id=bool(stable_target_id),
-            ),
+            query,
             had_primary_source=had_primary_source,
             identifier_in_primary_source=identifier_in_primary_source,
             stable_target_id=stable_target_id,
@@ -209,6 +218,7 @@ class GraphConnector(BaseConnector):
         Returns:
             Graph result instance
         """
+        query_builder = QueryBuilder.get()
         extracted_type = model.entityType
         merged_type = extracted_type.replace("Extracted", "Merged")
         text_fields = TEXT_FIELDS_BY_CLASS_NAME[extracted_type]
@@ -239,7 +249,7 @@ class GraphConnector(BaseConnector):
                     nested_positions.append(position)
                     nested_values.append(raw_value)
 
-        statement = q.merge_node(
+        query = query_builder.merge_node(
             extracted_label=extracted_type,
             merged_label=merged_type,
             nested_edge_labels=nested_edge_labels,
@@ -247,7 +257,7 @@ class GraphConnector(BaseConnector):
         )
 
         return self.commit(
-            statement,
+            query,
             identifier=model.identifier,
             stable_target_id=model.stableTargetId,
             on_match=mutable_values,
@@ -268,6 +278,7 @@ class GraphConnector(BaseConnector):
         Returns:
             Graph result instance
         """
+        query_builder = QueryBuilder.get()
         extracted_type = model.entityType
         ref_fields = REFERENCE_FIELDS_BY_CLASS_NAME[model.entityType]
         ref_values = to_primitive(model, include=set(ref_fields))
@@ -282,13 +293,13 @@ class GraphConnector(BaseConnector):
                 ref_positions.append(position)
                 ref_labels.append(field)
 
-        statement = q.merge_edges(
+        query = query_builder.merge_edges(
             extracted_label=extracted_type,
             ref_labels=ref_labels,
         )
 
         return self.commit(
-            statement,
+            query,
             identifier=model.identifier,
             ref_identifiers=ref_identifiers,
             ref_positions=ref_positions,

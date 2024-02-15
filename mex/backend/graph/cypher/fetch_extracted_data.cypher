@@ -1,32 +1,32 @@
 CALL {
-<% block match_clause %>
-<% if query %>
-    CALL db.index.fulltext.queryNodes("search_index", $query)
+<%- block match_clause -%>
+<%- if query_string %>
+    CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
-<% endif %>
-<% if stable_target_id %>
+<%- endif %>
+<%- if stable_target_id %>
     MATCH (n:<<extracted_labels|join("|")>>)-[:stableTargetId]->(m:<<merged_labels|join("|")>>)
-<% else %>
+<%- else %>
     MATCH (n:<<extracted_labels|join("|")>>)
-<% endif %>
-<% if query or stable_target_id or labels -%>
-<%- set and_ = joiner("AND") %>
+<%- endif %>
+<%- if query_string or stable_target_id or labels -%>
+<%- set and_ = joiner("AND ") %>
     WHERE
-    <% if query %>
-        <<and_()>> elementId(hit) = elementId(n)
-    <% endif %>
-    <% if stable_target_id %>
-        <<and_()>> m.identifier = $stable_target_id
-    <% endif %>
-    <% if labels %>
-        <<and_()>> ANY(label IN labels(n) WHERE label IN $labels)
-    <% endif %>
-<% endif %>
-<% endblock %>
+    <%- if query_string %>
+        <<and_()>>elementId(hit) = elementId(n)
+    <%- endif %>
+    <%- if stable_target_id %>
+        <<and_()>>m.identifier = $stable_target_id
+    <%- endif %>
+    <%- if labels %>
+        <<and_()>>ANY(label IN labels(n) WHERE label IN $labels)
+    <%- endif %>
+<%- endif %>
+<%- endblock %>
     RETURN COUNT(n) AS total
 }
 CALL {
-    <<self.match_clause()>>
+    <<-self.match_clause()>>
     CALL {
         WITH n
         MATCH (n:<<extracted_labels|join("|")>>)-[r]->(t:<<merged_labels|join("|")>>)

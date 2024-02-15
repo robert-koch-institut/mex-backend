@@ -9,8 +9,8 @@ ON CREATE SET value_<<index>> = $nested_values[<<index>>]
 ON MATCH SET value_<<index>> += $nested_values[<<index>>]
 <%- endfor %>
 WITH extracted,
-    [<<range(nested_spec|count)|map("ensure_prefix", "edge_")|join(", ")>>] as edges,
-    [<<range(nested_spec|count)|map("ensure_prefix", "value_")|join(", ")>>] as values
+    [<<range(nested_edge_labels|count)|map("ensure_prefix", "edge_")|join(", ")>>] as edges,
+    [<<range(nested_edge_labels|count)|map("ensure_prefix", "value_")|join(", ")>>] as values
 CALL {
     WITH values
     MATCH (:<<extracted_label>> {identifier: $identifier})-[]->(gc:<<nested_labels|join("|")>>)

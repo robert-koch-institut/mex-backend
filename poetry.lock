@@ -741,7 +741,7 @@ requests = "^2.31.0"
 type = "git"
 url = "https://github.com/robert-koch-institut/mex-common.git"
 reference = "feature/mx-1381-prep-rule-endpoint"
-resolved_reference = "68df38ec37c5e7a69cfca8865e61a90a7fecef65"
+resolved_reference = "1f2ba8f7a20735985212c3899eec56b49e106e7b"
 
 [[package]]
 name = "mypy"

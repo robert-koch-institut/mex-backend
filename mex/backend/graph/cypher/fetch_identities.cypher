@@ -1,6 +1,6 @@
 MATCH (n:<<extracted_labels|join("|")>>)-[:stableTargetId]->(m:<<merged_labels|join("|")>>)
 MATCH (n:<<extracted_labels|join("|")>>)-[:hadPrimarySource]->(p:MergedPrimarySource)
-<% if had_primary_source or identifier_in_primary_source or stable_target_id -%>
+<%- if had_primary_source or identifier_in_primary_source or stable_target_id %>
 WHERE
     <%- set and_ = joiner("AND ") -%>
     <%- if had_primary_source %>
