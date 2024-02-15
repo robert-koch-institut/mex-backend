@@ -7,6 +7,7 @@ from neo4j import Driver, GraphDatabase
 from mex.backend.fields import (
     FROZEN_FIELDS_BY_CLASS_NAME,
     LINK_FIELDS_BY_CLASS_NAME,
+    LITERAL_FIELDS_BY_CLASS_NAME,
     MUTABLE_FIELDS_BY_CLASS_NAME,
     REFERENCE_FIELDS_BY_CLASS_NAME,
     SEARCHABLE_CLASSES,
@@ -221,17 +222,22 @@ class GraphConnector(BaseConnector):
         query_builder = QueryBuilder.get()
         extracted_type = model.entityType
         merged_type = extracted_type.replace("Extracted", "Merged")
-        text_fields = TEXT_FIELDS_BY_CLASS_NAME[extracted_type]
-        link_fields = LINK_FIELDS_BY_CLASS_NAME[extracted_type]
-        mutable_fields = MUTABLE_FIELDS_BY_CLASS_NAME[extracted_type]
-        frozen_fields = FROZEN_FIELDS_BY_CLASS_NAME[extracted_type]
 
-        mutable_values = to_primitive(model, include=set(mutable_fields))
-        final_values = to_primitive(model, include=set(frozen_fields))
+        text_fields = set(TEXT_FIELDS_BY_CLASS_NAME[extracted_type])
+        link_fields = set(LINK_FIELDS_BY_CLASS_NAME[extracted_type])
+        mutable_fields = set(MUTABLE_FIELDS_BY_CLASS_NAME[extracted_type])
+
+        frozen_fields = set(FROZEN_FIELDS_BY_CLASS_NAME[extracted_type])
+        literal_fields = set(LITERAL_FIELDS_BY_CLASS_NAME[extracted_type])
+        reference_fields = set(REFERENCE_FIELDS_BY_CLASS_NAME[extracted_type])
+        final_fields = frozen_fields - literal_fields - reference_fields
+
+        mutable_values = to_primitive(model, include=mutable_fields)
+        final_values = to_primitive(model, include=final_fields)
         all_values = {**mutable_values, **final_values}
 
-        text_values = to_primitive(model, include=set(text_fields))
-        link_values = to_primitive(model, include=set(link_fields))
+        text_values = to_primitive(model, include=text_fields)
+        link_values = to_primitive(model, include=link_fields)
 
         nested_edge_labels: list[str] = []
         nested_node_labels: list[str] = []

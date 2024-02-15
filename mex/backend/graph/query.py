@@ -51,7 +51,7 @@ class QueryBuilder(BaseConnector):
 
     def __getattr__(self, name: str) -> Callable[..., str]:
         """Load the template with the given `name` and return its `render` method."""
-        template = self._env.get_template(f"{name}.cypher")
+        template = self._env.get_template(f"{name}.cql")
         return template.render
 
     def close(self) -> None:

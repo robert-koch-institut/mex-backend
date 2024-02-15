@@ -8,16 +8,16 @@ from mex.backend.fields import (
     _has_exact_type,
     _has_true_subclass_type,
 )
-from mex.common.types import Identifier, OrganizationalUnitID, PersonID, Text
+from mex.common.types import Identifier, PersonID, Text
 
 
 @pytest.mark.parametrize(
     ("annotation", "expected_types"),
     (
         (str, [str]),
-        (str | None, [str, type(None)]),
+        (str | None, [str]),
         (list[str | int | list[str]], [str, int, str]),
-        (None, [type(None)]),
+        (None, []),
     ),
 )
 def test_get_inner_types(annotation: Any, expected_types: list[type]) -> None:
@@ -27,10 +27,9 @@ def test_get_inner_types(annotation: Any, expected_types: list[type]) -> None:
 @pytest.mark.parametrize(
     ("annotation", "expected"),
     (
+        (None, False),
         (str, False),
         (str | None, False),
-        (list[str | int | list[str]], False),
-        (None, False),
         (Text, False),
         (Identifier, False),
         (PersonID, True),
@@ -59,11 +58,11 @@ def test_has_true_subclass_type(annotation: Any, expected: bool) -> None:
         (list[str | int | list[str]], False),
         (None, False),
         (Identifier, True),
-        (PersonID, True),
-        (list[PersonID], True),
-        (str | PersonID, True),
-        (list[None | OrganizationalUnitID], True),
-        (list[None | list[OrganizationalUnitID]], True),
+        (PersonID, False),
+        (list[PersonID], False),
+        (str | PersonID, False),
+        (list[None | Identifier], True),
+        (list[None | list[Identifier]], True),
     ),
 )
 def test_has_exact_type(annotation: Any, expected: bool) -> None:

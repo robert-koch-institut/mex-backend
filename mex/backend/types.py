@@ -1,4 +1,5 @@
 from enum import Enum, EnumMeta, _EnumDict
+from typing import Literal
 
 from pydantic import SecretStr
 
@@ -9,6 +10,8 @@ from mex.common.models import (
     BaseModel,
 )
 from mex.common.transform import dromedary_to_snake
+
+LiteralStringType = type(Literal["str"])
 
 
 class AccessLevel(Enum):

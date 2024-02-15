@@ -16,10 +16,10 @@ def test_graph_ingest_and_query_roundtrip(
     connector = GraphConnector.get()
     result = connector.query_nodes(None, None, None, 0, len(seeded_models))
 
-    extracted_model_parser = TypeAdapter(
+    extracted_model_adapter = TypeAdapter(
         list[Annotated[AnyExtractedModel, Field(discriminator="entityType")]]
-    ).validate_python
+    )
 
-    assert extracted_model_parser(result["items"]) == list(
-        sorted(seeded_models, key=lambda x: x.identifier)
+    assert extracted_model_adapter.validate_python(result["items"]) == sorted(
+        seeded_models, key=lambda x: x.identifier
     )

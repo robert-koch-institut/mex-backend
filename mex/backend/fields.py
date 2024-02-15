@@ -1,10 +1,9 @@
 from collections.abc import Generator
-from types import UnionType
+from types import NoneType, UnionType
 from typing import (
     Annotated,
     Any,
     Callable,
-    Literal,
     Mapping,
     Union,
     get_args,
@@ -14,20 +13,19 @@ from typing import (
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 
+from mex.backend.types import LiteralStringType
 from mex.common.models import EXTRACTED_MODEL_CLASSES_BY_NAME
 from mex.common.types import Identifier, Link, Text
 
 
 def _get_inner_types(annotation: Any) -> Generator[type, None, None]:
-    """Yield all inner types from Unions, lists and annotations."""
+    """Yield all inner types from unions, lists and optional annotations."""
     if get_origin(annotation) == Annotated:
         yield from _get_inner_types(get_args(annotation)[0])
     elif get_origin(annotation) in (Union, UnionType, list):
         for arg in get_args(annotation):
             yield from _get_inner_types(arg)
-    elif annotation is None:
-        yield type(None)
-    else:
+    elif annotation not in (None, NoneType):
         yield annotation
 
 
@@ -35,18 +33,26 @@ def _has_true_subclass_type(field: FieldInfo, type_: type) -> bool:
     """Return whether a field is annotated as a true subclass of the given type.
 
     A "true" subclass is defined as not being identical to the provided `type_` itself.
+    Optional annotations and unions with `None` are allowed as long as at least one
+    non-`NoneType` type is present in the annotation.
     """
-    return all(
-        isinstance(t, type) and issubclass(t, type_) and t is not type_
-        for t in _get_inner_types(field.annotation)
-    )
+    if inner_types := list(_get_inner_types(field.annotation)):
+        return all(
+            isinstance(t, type) and issubclass(t, type_) and t is not type_
+            for t in inner_types
+        )
+    return False
 
 
 def _has_exact_type(field: FieldInfo, type_: type) -> bool:
-    """Return whether a field is annotated as exactly the given type."""
-    return all(
-        isinstance(t, type) and t is type_ for t in _get_inner_types(field.annotation)
-    )
+    """Return whether a field is annotated as exactly the given type.
+
+    Lists and unions with `NoneType` are allowed and only the non-`NoneType` annotation
+    is considered.
+    """
+    if inner_types := list(_get_inner_types(field.annotation)):
+        return all(isinstance(t, type) and t is type_ for t in inner_types)
+    return False
 
 
 def _group_fields_by_class_name(
@@ -66,13 +72,15 @@ def _group_fields_by_class_name(
     }
 
 
+# immutable
 FROZEN_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
     EXTRACTED_MODEL_CLASSES_BY_NAME, lambda field_info: field_info.frozen is True
 )
 
+# static
 LITERAL_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
     EXTRACTED_MODEL_CLASSES_BY_NAME,
-    lambda field_info: isinstance(field_info.annotation, type(Literal["entityType"])),
+    lambda field_info: isinstance(field_info.annotation, LiteralStringType),
 )
 
 REFERENCE_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(

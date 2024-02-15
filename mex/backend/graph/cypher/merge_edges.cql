@@ -1,11 +1,11 @@
 MATCH (source:<<extracted_label>> {identifier: $identifier})
 CALL {
 <%- if ref_labels %>
-    WITH source
 <%- set union = joiner("UNION\n    ") %>
 <%- for ref_label in ref_labels %>
 <%- set index = loop.index0 %>
-    <<union()>>MATCH (target_<<index>> {identifier: $ref_identifiers[<<index>>]})
+    <<union()>>WITH source
+    MATCH (target_<<index>> {identifier: $ref_identifiers[<<index>>]})
     MERGE (source)-[edge:<<ref_label>> {position: $ref_positions[<<index>>]}]->(target_<<index>>)
     RETURN edge
 <%- endfor %>

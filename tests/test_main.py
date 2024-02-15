@@ -30,7 +30,7 @@ def test_openapi_schema(client: TestClient) -> None:
     assert schema["components"]["schemas"]["PersonID"] == {
         "title": "PersonID",
         "type": "string",
-        "description": "Identifier for Person items.",
+        "description": "Identifier for merged persons.",
         "pattern": "^[a-zA-Z0-9]{14,22}$",
     }
 

@@ -1,32 +1,82 @@
+from typing import Callable
+
 import pytest
+from black import Mode, format_str
+from pytest import MonkeyPatch
 
 from mex.backend.graph.connector import GraphConnector
+from mex.backend.graph.query import QueryBuilder
 from mex.common.models import AnyExtractedModel
 from mex.common.types import Identifier, PrimarySourceID
 from tests.conftest import MockedGraph
 
 
+@pytest.fixture
+def mocked_query_builder(monkeypatch: MonkeyPatch) -> None:
+    def __getattr__(_: QueryBuilder, query: str) -> Callable[..., str]:
+        return lambda **parameters: format_str(
+            f"{query}({','.join(f'{k}={v!r}' for k, v in parameters.items())})",
+            mode=Mode(line_length=78),
+        ).strip()
+
+    monkeypatch.setattr(QueryBuilder, "__getattr__", __getattr__)
+
+
+@pytest.mark.usefixtures("mocked_query_builder")
 def test_mocked_graph_seed_constraints(mocked_graph: MockedGraph) -> None:
     graph = GraphConnector.get()
     graph._seed_constraints()
 
     assert mocked_graph.call_args_list[-1].args == (
-        r"""CREATE CONSTRAINT merged_variable_group_identifier_uniqueness IF NOT EXISTS
-FOR (n:MergedVariableGroup)
-REQUIRE n.identifier IS UNIQUE;""",
+        'create_identifier_uniqueness_constraint(node_label="MergedVariableGroup")',
         {},
     )
 
 
+@pytest.mark.usefixtures("mocked_query_builder")
 def test_mocked_graph_seed_indices(mocked_graph: MockedGraph) -> None:
     graph = GraphConnector.get()
     graph._seed_indices()
 
     assert mocked_graph.call_args_list[-1].args == (
-        r"""CREATE FULLTEXT INDEX search_index IF NOT EXISTS
-FOR (n:ExtractedAccessPlatform|ExtractedActivity|ExtractedContactPoint|ExtractedDistribution|ExtractedOrganization|ExtractedOrganizationalUnit|ExtractedPerson|ExtractedPrimarySource|ExtractedResource|ExtractedVariable|ExtractedVariableGroup)
-ON EACH [n.codingSystem, n.familyName, n.fullName, n.fundingProgram, n.geprisId, n.givenName, n.gndId, n.icd10code, n.identifierInPrimarySource, n.isniId, n.loincId, n.meshId, n.orcidId, n.rorId, n.sizeOfDataBasis, n.temporal, n.title, n.valueSet, n.version, n.viafId, n.wikidataId]
-OPTIONS {indexConfig: $index_config};""",
+        """\
+create_full_text_search_index(
+    node_labels=[
+        "ExtractedAccessPlatform",
+        "ExtractedActivity",
+        "ExtractedContactPoint",
+        "ExtractedDistribution",
+        "ExtractedOrganization",
+        "ExtractedOrganizationalUnit",
+        "ExtractedPerson",
+        "ExtractedPrimarySource",
+        "ExtractedResource",
+        "ExtractedVariable",
+        "ExtractedVariableGroup",
+    ],
+    search_fields=[
+        "codingSystem",
+        "familyName",
+        "fullName",
+        "fundingProgram",
+        "geprisId",
+        "givenName",
+        "gndId",
+        "icd10code",
+        "identifierInPrimarySource",
+        "isniId",
+        "loincId",
+        "meshId",
+        "orcidId",
+        "rorId",
+        "sizeOfDataBasis",
+        "title",
+        "valueSet",
+        "version",
+        "viafId",
+        "wikidataId",
+    ],
+)""",
         {
             "index_config": {
                 "fulltext.eventually_consistent": True,
@@ -36,26 +86,19 @@ OPTIONS {indexConfig: $index_config};""",
     )
 
 
+@pytest.mark.usefixtures("mocked_query_builder")
 def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
     graph = GraphConnector.get()
     graph._seed_data()
 
-    assert mocked_graph.call_args_list[-3].args == (
-        r"""MERGE (merged:MergedPrimarySource {identifier: $stable_target_id})
-MERGE (extracted:ExtractedPrimarySource {identifier: $identifier})-[stableTargetId:stableTargetId {position: 0}]->(merged)
-ON CREATE SET extracted = $on_create
-ON MATCH SET extracted += $on_match
-WITH extracted,
-    [] as edges,
-    [] as values
-CALL {
-    WITH values
-    MATCH (:ExtractedPrimarySource {identifier: $identifier})-[]->(gc:Link|Text)
-    WHERE NOT gc IN values
-    DETACH DELETE gc
-    RETURN count(gc) as pruned
-}
-RETURN extracted, edges, values, pruned;""",
+    assert mocked_graph.call_args_list[-2].args == (
+        """\
+merge_node(
+    extracted_label="ExtractedPrimarySource",
+    merged_label="MergedPrimarySource",
+    nested_edge_labels=[],
+    nested_node_labels=[],
+)""",
         {
             "identifier": Identifier("00000000000000"),
             "stable_target_id": PrimarySourceID("00000000000000"),
@@ -69,46 +112,32 @@ RETURN extracted, edges, values, pruned;""",
             "nested_values": [],
         },
     )
-    assert mocked_graph.call_args_list[-2].args == (
-        r"""MATCH (fromNode:ExtractedAccessPlatform|ExtractedActivity|ExtractedContactPoint|ExtractedDistribution|ExtractedOrganization|ExtractedOrganizationalUnit|ExtractedPerson|ExtractedPrimarySource|ExtractedResource|ExtractedVariable|ExtractedVariableGroup {identifier: $source_node})
-MATCH (toNode:MergedAccessPlatform|MergedActivity|MergedContactPoint|MergedDistribution|MergedOrganization|MergedOrganizationalUnit|MergedPerson|MergedPrimarySource|MergedResource|MergedVariable|MergedVariableGroup {identifier: $target_node})
-MERGE (fromNode)-[edge:hadPrimarySource {position: $position}]->(toNode)
-RETURN edge;""",
-        {
-            "position": 0,
-            "source_node": "00000000000000",
-            "target_node": "00000000000000",
-        },
-    )
     assert mocked_graph.call_args_list[-1].args == (
-        r"""MATCH (fromNode:ExtractedAccessPlatform|ExtractedActivity|ExtractedContactPoint|ExtractedDistribution|ExtractedOrganization|ExtractedOrganizationalUnit|ExtractedPerson|ExtractedPrimarySource|ExtractedResource|ExtractedVariable|ExtractedVariableGroup {identifier: $source_node})
-MATCH (toNode:MergedAccessPlatform|MergedActivity|MergedContactPoint|MergedDistribution|MergedOrganization|MergedOrganizationalUnit|MergedPerson|MergedPrimarySource|MergedResource|MergedVariable|MergedVariableGroup {identifier: $target_node})
-MERGE (fromNode)-[edge:stableTargetId {position: $position}]->(toNode)
-RETURN edge;""",
+        """\
+merge_edges(
+    extracted_label="ExtractedPrimarySource",
+    ref_labels=["hadPrimarySource", "stableTargetId"],
+)""",
         {
-            "position": 0,
-            "source_node": "00000000000000",
-            "target_node": "00000000000000",
+            "identifier": Identifier("00000000000000"),
+            "ref_identifiers": ["00000000000000", "00000000000000"],
+            "ref_positions": [0, 0],
         },
     )
 
 
+@pytest.mark.usefixtures("mocked_query_builder")
 def test_mocked_graph_fetch_identities(mocked_graph: MockedGraph) -> None:
     graph = GraphConnector.get()
     graph.fetch_identities(stable_target_id=Identifier.generate(99))
 
     assert mocked_graph.call_args_list[-1].args == (
-        r"""MATCH (n:ExtractedAccessPlatform|ExtractedActivity|ExtractedContactPoint|ExtractedDistribution|ExtractedOrganization|ExtractedOrganizationalUnit|ExtractedPerson|ExtractedPrimarySource|ExtractedResource|ExtractedVariable|ExtractedVariableGroup)-[:stableTargetId]->(m:MergedAccessPlatform|MergedActivity|MergedContactPoint|MergedDistribution|MergedOrganization|MergedOrganizationalUnit|MergedPerson|MergedPrimarySource|MergedResource|MergedVariable|MergedVariableGroup)
-MATCH (n:ExtractedAccessPlatform|ExtractedActivity|ExtractedContactPoint|ExtractedDistribution|ExtractedOrganization|ExtractedOrganizationalUnit|ExtractedPerson|ExtractedPrimarySource|ExtractedResource|ExtractedVariable|ExtractedVariableGroup)-[:hadPrimarySource]->(p:MergedPrimarySource)
-WHERE
-    m.identifier = $stable_target_id
-RETURN
-    m.identifier as stableTargetId,
-    p.identifier as hadPrimarySource,
-    n.identifierInPrimarySource as identifierInPrimarySource,
-    n.identifier as identifier
-ORDER BY n.identifier ASC
-LIMIT $limit;""",
+        """\
+fetch_identities(
+    had_primary_source=False,
+    identifier_in_primary_source=False,
+    stable_target_id=True,
+)""",
         {
             "had_primary_source": None,
             "identifier_in_primary_source": None,
@@ -122,18 +151,12 @@ LIMIT $limit;""",
     )
 
     assert mocked_graph.call_args_list[-1].args == (
-        r"""MATCH (n:ExtractedAccessPlatform|ExtractedActivity|ExtractedContactPoint|ExtractedDistribution|ExtractedOrganization|ExtractedOrganizationalUnit|ExtractedPerson|ExtractedPrimarySource|ExtractedResource|ExtractedVariable|ExtractedVariableGroup)-[:stableTargetId]->(m:MergedAccessPlatform|MergedActivity|MergedContactPoint|MergedDistribution|MergedOrganization|MergedOrganizationalUnit|MergedPerson|MergedPrimarySource|MergedResource|MergedVariable|MergedVariableGroup)
-MATCH (n:ExtractedAccessPlatform|ExtractedActivity|ExtractedContactPoint|ExtractedDistribution|ExtractedOrganization|ExtractedOrganizationalUnit|ExtractedPerson|ExtractedPrimarySource|ExtractedResource|ExtractedVariable|ExtractedVariableGroup)-[:hadPrimarySource]->(p:MergedPrimarySource)
-WHERE
-    p.identifier = $had_primary_source
-    AND n.identifierInPrimarySource = $identifier_in_primary_source
-RETURN
-    m.identifier as stableTargetId,
-    p.identifier as hadPrimarySource,
-    n.identifierInPrimarySource as identifierInPrimarySource,
-    n.identifier as identifier
-ORDER BY n.identifier ASC
-LIMIT $limit;""",
+        """\
+fetch_identities(
+    had_primary_source=True,
+    identifier_in_primary_source=True,
+    stable_target_id=False,
+)""",
         {
             "had_primary_source": Identifier.generate(101),
             "identifier_in_primary_source": "one",
@@ -145,17 +168,12 @@ LIMIT $limit;""",
     graph.fetch_identities(identifier_in_primary_source="two")
 
     assert mocked_graph.call_args_list[-1].args == (
-        r"""MATCH (n:ExtractedAccessPlatform|ExtractedActivity|ExtractedContactPoint|ExtractedDistribution|ExtractedOrganization|ExtractedOrganizationalUnit|ExtractedPerson|ExtractedPrimarySource|ExtractedResource|ExtractedVariable|ExtractedVariableGroup)-[:stableTargetId]->(m:MergedAccessPlatform|MergedActivity|MergedContactPoint|MergedDistribution|MergedOrganization|MergedOrganizationalUnit|MergedPerson|MergedPrimarySource|MergedResource|MergedVariable|MergedVariableGroup)
-MATCH (n:ExtractedAccessPlatform|ExtractedActivity|ExtractedContactPoint|ExtractedDistribution|ExtractedOrganization|ExtractedOrganizationalUnit|ExtractedPerson|ExtractedPrimarySource|ExtractedResource|ExtractedVariable|ExtractedVariableGroup)-[:hadPrimarySource]->(p:MergedPrimarySource)
-WHERE
-    n.identifierInPrimarySource = $identifier_in_primary_source
-RETURN
-    m.identifier as stableTargetId,
-    p.identifier as hadPrimarySource,
-    n.identifierInPrimarySource as identifierInPrimarySource,
-    n.identifier as identifier
-ORDER BY n.identifier ASC
-LIMIT $limit;""",
+        """\
+fetch_identities(
+    had_primary_source=False,
+    identifier_in_primary_source=True,
+    stable_target_id=False,
+)""",
         {
             "had_primary_source": None,
             "identifier_in_primary_source": "two",
@@ -165,6 +183,7 @@ LIMIT $limit;""",
     )
 
 
+@pytest.mark.usefixtures("mocked_query_builder")
 def test_mocked_graph_merges_node(
     mocked_graph: MockedGraph, dummy_data: list[AnyExtractedModel]
 ) -> None:
@@ -172,42 +191,30 @@ def test_mocked_graph_merges_node(
     graph = GraphConnector.get()
     graph.merge_node(extracted_organizational_unit)
 
-    assert (
-        mocked_graph.call_args_list[-1].args[0]
-        == r"""MERGE (merged:MergedOrganizationalUnit {identifier: $stable_target_id})
-MERGE (extracted:ExtractedOrganizationalUnit {identifier: $identifier})-[stableTargetId:stableTargetId {position: 0}]->(merged)
-ON CREATE SET extracted = $on_create
-ON MATCH SET extracted += $on_match
-MERGE (extracted)-[edge_0:name {position: $nested_positions[0]}]->(value_0:Text)
-ON CREATE SET value_0 = $nested_values[0]
-ON MATCH SET value_0 += $nested_values[0]
-WITH extracted,
-    [edge_0] as edges,
-    [value_0] as values
-CALL {
-    WITH values
-    MATCH (:ExtractedOrganizationalUnit {identifier: $identifier})-[]->(gc:Link|Text)
-    WHERE NOT gc IN values
-    DETACH DELETE gc
-    RETURN count(gc) as pruned
-}
-RETURN extracted, edges, values, pruned;"""
+    assert mocked_graph.call_args_list[-1].args == (
+        """\
+merge_node(
+    extracted_label="ExtractedOrganizationalUnit",
+    merged_label="MergedOrganizationalUnit",
+    nested_edge_labels=["name"],
+    nested_node_labels=["Text"],
+)""",
+        {
+            "identifier": "bFQoRhcVH5DHUz",
+            "nested_positions": [0],
+            "nested_values": [{"language": "en", "value": "Unit 1"}],
+            "on_create": {
+                "email": [],
+                "identifier": "bFQoRhcVH5DHUz",
+                "identifierInPrimarySource": "ou-1",
+            },
+            "on_match": {"email": []},
+            "stable_target_id": "bFQoRhcVH5DHUy",
+        },
     )
 
-    assert mocked_graph.call_args_list[-1].args[1] == {
-        "identifier": "bFQoRhcVH5DHUz",
-        "nested_positions": [0],
-        "nested_values": [{"language": "en", "value": "Unit 1"}],
-        "on_create": {
-            "email": [],
-            "identifier": "bFQoRhcVH5DHUz",
-            "identifierInPrimarySource": "ou-1",
-        },
-        "on_match": {"email": []},
-        "stable_target_id": "bFQoRhcVH5DHUy",
-    }
 
-
+@pytest.mark.usefixtures("mocked_query_builder")
 def test_mocked_graph_merges_edges(
     mocked_graph: MockedGraph, dummy_data: list[AnyExtractedModel]
 ) -> None:
@@ -215,18 +222,18 @@ def test_mocked_graph_merges_edges(
     graph = GraphConnector.get()
     graph.merge_edges(extracted_activity)
 
-    assert (
-        mocked_graph.call_args_list[-1].args[0]
-        == r"""MATCH (fromNode:ExtractedAccessPlatform|ExtractedActivity|ExtractedContactPoint|ExtractedDistribution|ExtractedOrganization|ExtractedOrganizationalUnit|ExtractedPerson|ExtractedPrimarySource|ExtractedResource|ExtractedVariable|ExtractedVariableGroup {identifier: $source_node})
-MATCH (toNode:MergedAccessPlatform|MergedActivity|MergedContactPoint|MergedDistribution|MergedOrganization|MergedOrganizationalUnit|MergedPerson|MergedPrimarySource|MergedResource|MergedVariable|MergedVariableGroup {identifier: $target_node})
-MERGE (fromNode)-[edge:stableTargetId {position: $position}]->(toNode)
-RETURN edge;"""
+    assert mocked_graph.call_args_list[-1].args == (
+        """\
+merge_edges(
+    extracted_label="ExtractedOrganizationalUnit",
+    ref_labels=["hadPrimarySource", "stableTargetId"],
+)""",
+        {
+            "identifier": "bFQoRhcVH5DHUz",
+            "ref_identifiers": ["bFQoRhcVH5DHUs", "bFQoRhcVH5DHUy"],
+            "ref_positions": [0, 0],
+        },
     )
-    assert mocked_graph.call_args_list[-1].args[1] == {
-        "position": 0,
-        "source_node": "bFQoRhcVH5DHUz",
-        "target_node": "bFQoRhcVH5DHUy",
-    }
 
 
 @pytest.mark.usefixtures("mocked_graph")
