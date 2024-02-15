@@ -2,14 +2,8 @@ from mex.common.exceptions import MExError
 
 
 class NoResultFoundError(MExError):
-    """A database result was required but none was found.
-
-    Akin to `sqlalchemy.exc.NoResultFound`
-    """
+    """A database result was required but none was found."""
 
 
 class MultipleResultsFoundError(MExError):
-    """A single database result was required but more than one were found.
-
-    Akin to `sqlalchemy.exc.MultipleResultsFound`
-    """
+    """A single database result was required but more than one were found."""

@@ -1,9 +1,9 @@
-from collections.abc import Generator
 from types import NoneType, UnionType
 from typing import (
     Annotated,
     Any,
     Callable,
+    Generator,
     Mapping,
     Union,
     get_args,
@@ -72,33 +72,41 @@ def _group_fields_by_class_name(
     }
 
 
-# immutable
+# fields that are immutable and can only be set once
 FROZEN_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
     EXTRACTED_MODEL_CLASSES_BY_NAME, lambda field_info: field_info.frozen is True
 )
 
-# static
+# static fields that are set once on class-level to a literal type
 LITERAL_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     lambda field_info: isinstance(field_info.annotation, LiteralStringType),
 )
 
+# fields typed as subclasses of `Identifier` containing references to merged items
 REFERENCE_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
     EXTRACTED_MODEL_CLASSES_BY_NAME,
-    # true subclasses only because we want to ignore literal `Identifier` typed
-    # fields like `identifier`
     lambda field_info: _has_true_subclass_type(field_info, Identifier),
 )
 
+# nested fields that contain `Text` objects
 TEXT_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     lambda field_info: _has_exact_type(field_info, Text),
 )
 
+# nested fields that contain `Link` objects
+LINK_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
+    EXTRACTED_MODEL_CLASSES_BY_NAME,
+    lambda field_info: _has_exact_type(field_info, Link),
+)
+
+# fields annotated as `str` type
 STRING_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
     EXTRACTED_MODEL_CLASSES_BY_NAME, lambda field_info: _has_exact_type(field_info, str)
 )
 
+# fields that should be indexed as searchable fields
 SEARCHABLE_FIELDS = sorted(
     {
         field_name
@@ -107,18 +115,12 @@ SEARCHABLE_FIELDS = sorted(
     }
 )
 
+# classes that have fields that should be searchable
 SEARCHABLE_CLASSES = sorted(
     {name for name, field_names in STRING_FIELDS_BY_CLASS_NAME.items() if field_names}
 )
 
-# Model fields that store link objects and are typed as `Link` or lists thereof.
-# Link fields are stored as nested mappings in JSON form but are modelled as their
-# own nodes when written to the graph. They also need special treatment when querying.
-LINK_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
-    EXTRACTED_MODEL_CLASSES_BY_NAME,
-    lambda field_info: _has_exact_type(field_info, Link),
-)
-
+# fields with changeable values that are not nested objects or merged item references
 MUTABLE_FIELDS_BY_CLASS_NAME = {
     name: sorted(
         {
@@ -130,6 +132,23 @@ MUTABLE_FIELDS_BY_CLASS_NAME = {
                 *REFERENCE_FIELDS_BY_CLASS_NAME[name],
                 *TEXT_FIELDS_BY_CLASS_NAME[name],
                 *LINK_FIELDS_BY_CLASS_NAME[name],
+            )
+        }
+    )
+    for name, cls in EXTRACTED_MODEL_CLASSES_BY_NAME.items()
+}
+
+# fields with values that should be set once but are neither literal nor references
+FINAL_FIELDS_BY_CLASS_NAME = {
+    name: sorted(
+        {
+            field_name
+            for field_name in cls.model_fields
+            if field_name in FROZEN_FIELDS_BY_CLASS_NAME[name]
+            and field_name
+            not in (
+                *LITERAL_FIELDS_BY_CLASS_NAME[name],
+                *REFERENCE_FIELDS_BY_CLASS_NAME[name],
             )
         }
     )

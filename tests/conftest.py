@@ -149,7 +149,7 @@ def isolate_identifier_seeds(monkeypatch: MonkeyPatch) -> None:
 def isolate_graph_database(
     is_integration_test: bool, settings: BackendSettings
 ) -> None:
-    """Automatically flush the neo4j database for integration testing."""
+    """Automatically flush the graph database for integration testing."""
     if is_integration_test:  # pragma: no cover
         with GraphDatabase.driver(
             settings.graph_url,

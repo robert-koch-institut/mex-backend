@@ -125,7 +125,7 @@ def test_all_endpoints_require_authorization(client: TestClient) -> None:
 
 
 @pytest.mark.integration
-def test_database_is_empty(settings: BackendSettings):
+def test_database_is_empty(settings: BackendSettings) -> None:
     with GraphDatabase.driver(
         settings.graph_url,
         auth=(

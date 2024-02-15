@@ -5,9 +5,8 @@ from typing import Any
 from neo4j import Driver, GraphDatabase
 
 from mex.backend.fields import (
-    FROZEN_FIELDS_BY_CLASS_NAME,
+    FINAL_FIELDS_BY_CLASS_NAME,
     LINK_FIELDS_BY_CLASS_NAME,
-    LITERAL_FIELDS_BY_CLASS_NAME,
     MUTABLE_FIELDS_BY_CLASS_NAME,
     REFERENCE_FIELDS_BY_CLASS_NAME,
     SEARCHABLE_CLASSES,
@@ -35,8 +34,6 @@ from mex.common.models import (
 from mex.common.transform import to_key_and_values
 from mex.common.types import Identifier, Link, Text
 
-MERGE_NODE_LOG_MSG = "%s (:%s {identifier: %s})"
-MERGE_EDGE_LOG_MSG = "%s ({identifier: %s})-[:%s]→({stableTargetId: %s})"
 MEX_EXTRACTED_PRIMARY_SOURCE = ExtractedPrimarySource.model_construct(
     hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     identifier=MEX_PRIMARY_SOURCE_IDENTIFIER,
@@ -124,7 +121,7 @@ class GraphConnector(BaseConnector):
             }
         )
         try:
-            with self.driver.session(database="neo4j") as session:
+            with self.driver.session() as session:
                 result = Result(session.run(query, parameters))
         except Exception as error:
             logger.error("\n%s\n%s", message, error)
@@ -226,11 +223,7 @@ class GraphConnector(BaseConnector):
         text_fields = set(TEXT_FIELDS_BY_CLASS_NAME[extracted_type])
         link_fields = set(LINK_FIELDS_BY_CLASS_NAME[extracted_type])
         mutable_fields = set(MUTABLE_FIELDS_BY_CLASS_NAME[extracted_type])
-
-        frozen_fields = set(FROZEN_FIELDS_BY_CLASS_NAME[extracted_type])
-        literal_fields = set(LITERAL_FIELDS_BY_CLASS_NAME[extracted_type])
-        reference_fields = set(REFERENCE_FIELDS_BY_CLASS_NAME[extracted_type])
-        final_fields = frozen_fields - literal_fields - reference_fields
+        final_fields = set(FINAL_FIELDS_BY_CLASS_NAME[extracted_type])
 
         mutable_values = to_primitive(model, include=mutable_fields)
         final_values = to_primitive(model, include=final_fields)

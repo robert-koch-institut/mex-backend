@@ -6,7 +6,7 @@ from mex.common.types import Identifier, PrimarySourceID
 
 
 class GraphIdentityProvider(BaseProvider, GraphConnector):
-    """Identity provider that communicates with the neo4j graph database."""
+    """Identity provider that communicates with the graph database."""
 
     @cache
     def assign(

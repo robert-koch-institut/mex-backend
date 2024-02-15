@@ -53,31 +53,31 @@ class BackendIdentityProvider(Enum):
     GRAPH = "graph"
 
 
-class _DynamicStrEnum(EnumMeta):
+class DynamicStrEnum(EnumMeta):
     """Meta class to dynamically populate the an enumeration from a list of strings."""
 
     def __new__(
-        cls: type["_DynamicStrEnum"], name: str, bases: tuple[type], dct: _EnumDict
-    ) -> "_DynamicStrEnum":
+        cls: type["DynamicStrEnum"], name: str, bases: tuple[type], dct: _EnumDict
+    ) -> "DynamicStrEnum":
         """Create a new enum by adding an entry for each name in the source."""
         for name in dct.pop("__names__"):
             dct[dromedary_to_snake(name).upper()] = name
         return super().__new__(cls, name, bases, dct)
 
 
-class UnprefixedType(Enum, metaclass=_DynamicStrEnum):
+class UnprefixedType(Enum, metaclass=DynamicStrEnum):
     """Enumeration of possible types without any prefix."""
 
     __names__ = list(m.removeprefix("Base") for m in BASE_MODEL_CLASSES_BY_NAME)
 
 
-class ExtractedType(Enum, metaclass=_DynamicStrEnum):
+class ExtractedType(Enum, metaclass=DynamicStrEnum):
     """Enumeration of possible types for extracted items."""
 
     __names__ = list(EXTRACTED_MODEL_CLASSES_BY_NAME)
 
 
-class MergedType(Enum, metaclass=_DynamicStrEnum):
+class MergedType(Enum, metaclass=DynamicStrEnum):
     """Enumeration of possible types for merged items."""
 
     __names__ = list(MERGED_MODEL_CLASSES_BY_NAME)

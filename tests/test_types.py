@@ -6,7 +6,7 @@ from mex.backend.types import (
     APIKeyDatabase,
     APIUserDatabase,
     APIUserPassword,
-    _DynamicStrEnum,
+    DynamicStrEnum,
 )
 
 
@@ -37,7 +37,7 @@ def test_api_user_database() -> None:
 
 
 def test_dynamic_str_enum() -> None:
-    class Dummy(Enum, metaclass=_DynamicStrEnum):
+    class Dummy(Enum, metaclass=DynamicStrEnum):
         __names__ = ["foo", "Bar", "LoremIpsum"]
 
     assert {d.name: d.value for d in Dummy} == {

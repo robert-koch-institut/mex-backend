@@ -1,6 +1,5 @@
-from collections.abc import Callable
 from enum import Enum
-from typing import Any
+from typing import Any, Callable
 
 from fastapi.encoders import jsonable_encoder
 
