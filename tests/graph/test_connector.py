@@ -4,7 +4,7 @@ import pytest
 from black import Mode, format_str
 from pytest import MonkeyPatch
 
-from mex.backend.graph.connector import GraphConnector
+from mex.backend.graph.connector import MEX_EXTRACTED_PRIMARY_SOURCE, GraphConnector
 from mex.backend.graph.query import QueryBuilder
 from mex.common.models import AnyExtractedModel
 from mex.common.types import Identifier, PrimarySourceID
@@ -200,16 +200,16 @@ merge_node(
     nested_node_labels=["Text"],
 )""",
         {
-            "identifier": "bFQoRhcVH5DHUz",
+            "identifier": extracted_organizational_unit.identifier,
             "nested_positions": [0],
             "nested_values": [{"language": "en", "value": "Unit 1"}],
             "on_create": {
                 "email": [],
-                "identifier": "bFQoRhcVH5DHUz",
+                "identifier": extracted_organizational_unit.identifier,
                 "identifierInPrimarySource": "ou-1",
             },
             "on_match": {"email": []},
-            "stable_target_id": "bFQoRhcVH5DHUy",
+            "stable_target_id": extracted_organizational_unit.stableTargetId,
         },
     )
 
@@ -229,8 +229,11 @@ merge_edges(
     ref_labels=["hadPrimarySource", "stableTargetId"],
 )""",
         {
-            "identifier": "bFQoRhcVH5DHUz",
-            "ref_identifiers": ["bFQoRhcVH5DHUs", "bFQoRhcVH5DHUy"],
+            "identifier": extracted_activity.identifier,
+            "ref_identifiers": [
+                extracted_activity.hadPrimarySource,
+                extracted_activity.stableTargetId,
+            ],
             "ref_positions": [0, 0],
         },
     )
@@ -255,11 +258,11 @@ def test_query_nodes() -> None:
         {
             "items": [
                 {
-                    "entityType": "ExtractedPrimarySource",
-                    "hadPrimarySource": ["00000000000000"],
-                    "identifier": "00000000000000",
-                    "identifierInPrimarySource": "mex",
-                    "stableTargetId": ["00000000000000"],
+                    "entityType": MEX_EXTRACTED_PRIMARY_SOURCE.entityType,
+                    "hadPrimarySource": [MEX_EXTRACTED_PRIMARY_SOURCE.hadPrimarySource],
+                    "identifier": MEX_EXTRACTED_PRIMARY_SOURCE.identifier,
+                    "identifierInPrimarySource": MEX_EXTRACTED_PRIMARY_SOURCE.identifierInPrimarySource,
+                    "stableTargetId": [MEX_EXTRACTED_PRIMARY_SOURCE.stableTargetId],
                 }
             ],
             "total": 7,
