@@ -2,9 +2,12 @@ from typing import Sequence
 
 from fastapi import APIRouter, Query
 
-from mex.backend.extracted.models import ExtractedType
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.merged.models import MergedItemSearchResponse
+from mex.backend.merged.models import (
+    MergedItemSearchResponse,
+    MergedType,
+    UnprefixedType,
+)
 from mex.backend.merged.transform import (
     transform_graph_results_to_merged_item_search_response_facade,
 )
@@ -17,7 +20,7 @@ router = APIRouter()
 def search_merged_items_facade(
     q: str = Query("", max_length=1000),
     stableTargetId: Identifier | None = Query(None),  # noqa: N803
-    entityType: Sequence[ExtractedType] = Query([]),  # noqa: N803
+    entityType: Sequence[MergedType | UnprefixedType] = Query([]),  # noqa: N803
     skip: int = Query(0, ge=0, le=10e10),
     limit: int = Query(10, ge=1, le=100),
 ) -> MergedItemSearchResponse:
@@ -28,7 +31,12 @@ def search_merged_items_facade(
     query_results = graph.query_nodes(
         q,
         stableTargetId,
-        [t.value for t in entityType or ExtractedType],
+        [
+            # Allow 'MergedPerson' as well as 'Person' as an entityType for this
+            # endpoint to keep compatibility with previous API clients.
+            f"Extracted{t.value.removeprefix('Merged')}"
+            for t in entityType or MergedType
+        ],
         skip,
         limit,
     )

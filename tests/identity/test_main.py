@@ -5,10 +5,10 @@ import pytest
 from fastapi.testclient import TestClient
 
 from mex.common.models import (
+    MEX_PRIMARY_SOURCE_IDENTIFIER,
     MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
 )
-from mex.common.testing import Joker
 
 
 @pytest.mark.parametrize(
@@ -22,9 +22,9 @@ from mex.common.testing import Joker
             },
             {
                 "hadPrimarySource": "psSti00000000001",
-                "identifier": Joker(),
+                "identifier": "bFQoRhcVH5DHUq",
                 "identifierInPrimarySource": "new-item",
-                "stableTargetId": Joker(),
+                "stableTargetId": "bFQoRhcVH5DHUr",
             },
         ),
         (
@@ -114,26 +114,26 @@ def test_fetch_identity_invalid_query_params_mocked(
     [
         (
             {
-                "hadPrimarySource": "psSti00000000001",
+                "hadPrimarySource": "bFQoRhcVH5DHUr",
                 "identifierInPrimarySource": "new-item",
             },
             {
-                "hadPrimarySource": "psSti00000000001",
-                "identifier": Joker(),
+                "hadPrimarySource": "bFQoRhcVH5DHUr",
+                "identifier": "bFQoRhcVH5DHUC",
                 "identifierInPrimarySource": "new-item",
-                "stableTargetId": Joker(),
+                "stableTargetId": "bFQoRhcVH5DHUD",
             },
         ),
         (
             {
-                "hadPrimarySource": "psSti00000000001",
+                "hadPrimarySource": "bFQoRhcVH5DHUr",
                 "identifierInPrimarySource": "cp-2",
             },
             {
-                "hadPrimarySource": "psSti00000000001",
-                "identifier": "cpId000000000002",
+                "identifier": "bFQoRhcVH5DHUw",
+                "hadPrimarySource": "bFQoRhcVH5DHUr",
                 "identifierInPrimarySource": "cp-2",
-                "stableTargetId": "cpSti00000000002",
+                "stableTargetId": "bFQoRhcVH5DHUx",
             },
         ),
         (
@@ -143,7 +143,7 @@ def test_fetch_identity_invalid_query_params_mocked(
             },
             {
                 "hadPrimarySource": MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-                "identifier": MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+                "identifier": MEX_PRIMARY_SOURCE_IDENTIFIER,
                 "identifierInPrimarySource": MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
                 "stableTargetId": MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
             },
@@ -250,41 +250,39 @@ def test_fetch_identities_mocked(
     [
         ("?stableTargetId=thisDoesNotExist", {"items": [], "total": 0}),
         (
-            "?hadPrimarySource=psSti00000000001&identifierInPrimarySource=ps-1",
+            "?hadPrimarySource=00000000000000&identifierInPrimarySource=ps-1",
             {
                 "items": [
                     {
-                        "hadPrimarySource": "psSti00000000001",
-                        "identifier": "psId000000000001",
+                        "hadPrimarySource": "00000000000000",
+                        "identifier": "bFQoRhcVH5DHUq",
                         "identifierInPrimarySource": "ps-1",
-                        "stableTargetId": "psSti00000000001",
+                        "stableTargetId": "bFQoRhcVH5DHUr",
                     },
                 ],
                 "total": 1,
             },
         ),
         (
-            "?stableTargetId=ouSti00000000001",
+            "?stableTargetId=bFQoRhcVH5DHUz",
             {
                 "items": [
                     {
-                        "hadPrimarySource": "psSti00000000002",
-                        "identifier": "ouId000000000001",
+                        "identifier": "bFQoRhcVH5DHUy",
+                        "hadPrimarySource": "bFQoRhcVH5DHUt",
                         "identifierInPrimarySource": "ou-1",
-                        "stableTargetId": "ouSti00000000001",
-                    },
-                    {
-                        "hadPrimarySource": "psSti00000000001",
-                        "identifier": "ouId000000000002",
-                        "identifierInPrimarySource": "ou-2",
-                        "stableTargetId": "ouSti00000000001",
-                    },
+                        "stableTargetId": "bFQoRhcVH5DHUz",
+                    }
                 ],
-                "total": 2,
+                "total": 1,
             },
         ),
     ],
-    ids=["nothing found", "one item", "two items"],
+    ids=[
+        "nothing found",
+        "by hadPrimarySource and identifierInPrimarySource",
+        "by stableTargetId",
+    ],
 )
 @pytest.mark.usefixtures("load_dummy_data")
 @pytest.mark.integration

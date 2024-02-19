@@ -33,17 +33,21 @@ def __check_header_for_authorization_method(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Missing authentication header X-API-Key or credentials.",
-            headers={"WWW-Authenticate": "Basic"}
-            if user_agent.startswith("Mozilla/")
-            else None,
+            headers=(
+                {"WWW-Authenticate": "Basic"}
+                if user_agent.startswith("Mozilla/")
+                else None
+            ),
         )
     if api_key and credentials:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Authenticate with X-API-Key or credentials, not both.",
-            headers={"WWW-Authenticate": "Basic"}
-            if user_agent.startswith("Mozilla/")
-            else None,
+            headers=(
+                {"WWW-Authenticate": "Basic"}
+                if user_agent.startswith("Mozilla/")
+                else None
+            ),
         )
 
 
@@ -85,9 +89,11 @@ def has_write_access(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"Unauthorized {'API Key' if api_key else 'credentials'}.",
-            headers={"WWW-Authenticate": "Basic"}
-            if user_agent.startswith("Mozilla/")
-            else None,
+            headers=(
+                {"WWW-Authenticate": "Basic"}
+                if user_agent.startswith("Mozilla/")
+                else None
+            ),
         )
 
 
@@ -137,7 +143,9 @@ def has_read_access(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"Unauthorized {'API Key' if api_key else 'credentials'}.",
-            headers={"WWW-Authenticate": "Basic"}
-            if user_agent.startswith("Mozilla/")
-            else None,
+            headers=(
+                {"WWW-Authenticate": "Basic"}
+                if user_agent.startswith("Mozilla/")
+                else None
+            ),
         )

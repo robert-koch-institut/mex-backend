@@ -19,6 +19,12 @@ def test_search_merged_items_mocked(
                 "identifierInPrimarySource": "test",
                 "email": "test@foo.bar",
             },
+            "i": {
+                "stableTargetId": "0000000000000000",
+                "identifier": "1111111111111111",
+                "identifierInPrimarySource": "test",
+                "hadPrimarySource": "2222222222222222",
+            },
         }
     ]
 
@@ -43,78 +49,53 @@ def test_search_merged_items_mocked(
         (
             "?limit=1",
             {
-                "total": 7,
                 "items": [
                     {
-                        "stableTargetId": "aSti000000000001",
-                        "abstract": [
-                            {"value": "An active activity.", "language": "en"},
-                            {"value": "Mumble bumble boo.", "language": None},
-                        ],
-                        "activityType": [],
+                        "$type": "MergedPrimarySource",
                         "alternativeTitle": [],
-                        "contact": [
-                            "cpSti00000000001",
-                            "cpSti00000000002",
-                            "ouSti00000000001",
-                        ],
+                        "contact": [],
+                        "description": [],
                         "documentation": [],
-                        "end": [],
-                        "externalAssociate": [],
-                        "funderOrCommissioner": [],
-                        "fundingProgram": [],
-                        "involvedPerson": [],
-                        "involvedUnit": [],
-                        "isPartOfActivity": [],
-                        "publication": [],
-                        "responsibleUnit": ["ouSti00000000001"],
-                        "shortName": [],
-                        "start": [],
-                        "succeeds": [],
-                        "theme": ["https://mex.rki.de/item/theme-3"],
-                        "title": [{"value": "Activity 1", "language": "en"}],
-                        "website": [
-                            {
-                                "language": None,
-                                "title": "Activity Homepage",
-                                "url": "https://activity-1",
-                            }
-                        ],
-                        "identifier": "aId0000000000001",
-                        "$type": "MergedActivity",
-                    }
-                ],
-            },
-        ),
-        (
-            "?limit=1&skip=1",
-            {
-                "items": [
-                    {
-                        "$type": "MergedContactPoint",
-                        "email": ["info@rki.de"],
-                        "identifier": "cpId000000000001",
-                        "stableTargetId": "cpSti00000000001",
+                        "identifier": "00000000000000",
+                        "locatedAt": [],
+                        "stableTargetId": "00000000000000",
+                        "title": [],
+                        "unitInCharge": [],
+                        "version": None,
                     }
                 ],
                 "total": 7,
             },
         ),
         (
-            "?entityType=ExtractedContactPoint",  # stopgap mx-1382 (search for MergedContactPoint instead)
+            "?limit=1&skip=4",
             {
                 "items": [
                     {
                         "$type": "MergedContactPoint",
                         "email": ["info@rki.de"],
-                        "identifier": "cpId000000000001",
-                        "stableTargetId": "cpSti00000000001",
+                        "identifier": "bFQoRhcVH5DHUu",
+                        "stableTargetId": "bFQoRhcVH5DHUv",
+                    }
+                ],
+                "total": 7,
+            },
+        ),
+        (
+            "?entityType=MergedContactPoint",
+            {
+                "items": [
+                    {
+                        "$type": "MergedContactPoint",
+                        "email": ["info@rki.de"],
+                        "identifier": "bFQoRhcVH5DHUu",
+                        "stableTargetId": "bFQoRhcVH5DHUv",
                     },
                     {
                         "$type": "MergedContactPoint",
                         "email": ["mex@rki.de"],
-                        "identifier": "cpId000000000002",
-                        "stableTargetId": "cpSti00000000002",
+                        "identifier": "bFQoRhcVH5DHUw",
+                        "stableTargetId": "bFQoRhcVH5DHUx",
                     },
                 ],
                 "total": 2,
@@ -130,9 +111,9 @@ def test_search_merged_items_mocked(
                         "contact": [],
                         "description": [],
                         "documentation": [],
-                        "identifier": "psId000000000002",
+                        "identifier": "bFQoRhcVH5DHUs",
                         "locatedAt": [],
-                        "stableTargetId": "psSti00000000002",
+                        "stableTargetId": "bFQoRhcVH5DHUt",
                         "title": [
                             {"language": None, "value": "A cool and searchable title"}
                         ],
@@ -144,35 +125,23 @@ def test_search_merged_items_mocked(
             },
         ),
         (
-            "?stableTargetId=ouSti00000000001",
+            "?stableTargetId=bFQoRhcVH5DHUz",
             {
                 "items": [
                     {
                         "$type": "MergedOrganizationalUnit",
                         "alternativeName": [],
                         "email": [],
-                        "identifier": "ouId000000000001",
+                        "identifier": "bFQoRhcVH5DHUy",
                         "name": [{"language": "en", "value": "Unit 1"}],
                         "parentUnit": None,
                         "shortName": [],
-                        "stableTargetId": "ouSti00000000001",
+                        "stableTargetId": "bFQoRhcVH5DHUz",
                         "unitOf": [],
                         "website": [],
-                    },
-                    {
-                        "$type": "MergedOrganizationalUnit",
-                        "alternativeName": [],
-                        "email": [],
-                        "identifier": "ouId000000000002",
-                        "name": [{"language": "en", "value": "Unit 2"}],
-                        "parentUnit": None,
-                        "shortName": [],
-                        "stableTargetId": "ouSti00000000001",
-                        "unitOf": [],
-                        "website": [],
-                    },
+                    }
                 ],
-                "total": 2,
+                "total": 1,
             },
         ),
     ],

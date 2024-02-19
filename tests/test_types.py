@@ -1,6 +1,13 @@
 import secrets
+from enum import Enum
 
-from mex.backend.types import APIKey, APIKeyDatabase, APIUserDatabase, APIUserPassword
+from mex.backend.types import (
+    APIKey,
+    APIKeyDatabase,
+    APIUserDatabase,
+    APIUserPassword,
+    DynamicStrEnum,
+)
 
 
 def test_api_key_database() -> None:
@@ -27,3 +34,14 @@ def test_api_user_database() -> None:
     db = APIUserDatabase(**data_dict)
     assert db.read["foo"].get_secret_value() == "test-pw"
     assert db.read == {"foo": APIUserPassword("test-pw")}
+
+
+def test_dynamic_str_enum() -> None:
+    class Dummy(Enum, metaclass=DynamicStrEnum):
+        __names__ = ["foo", "Bar", "LoremIpsum"]
+
+    assert {d.name: d.value for d in Dummy} == {
+        "FOO": "foo",
+        "BAR": "Bar",
+        "LOREM_IPSUM": "LoremIpsum",
+    }

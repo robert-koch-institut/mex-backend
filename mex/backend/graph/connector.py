@@ -24,7 +24,13 @@ from mex.backend.graph.transform import (
 from mex.common.connector import BaseConnector
 from mex.common.exceptions import MExError
 from mex.common.logging import logger
-from mex.common.models import EXTRACTED_MODEL_CLASSES_BY_NAME
+from mex.common.models import (
+    EXTRACTED_MODEL_CLASSES_BY_NAME,
+    MEX_PRIMARY_SOURCE_IDENTIFIER,
+    MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
+    MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    ExtractedPrimarySource,
+)
 from mex.common.types import Identifier
 
 
@@ -48,6 +54,7 @@ class GraphConnector(BaseConnector):
         self._check_connectivity_and_authentication()
         self._seed_constraints()
         self._seed_indices()
+        self._seed_primary_source()
 
     def _check_connectivity_and_authentication(self) -> None:
         """Check the connectivity and authentication to the graph."""
@@ -86,6 +93,16 @@ class GraphConnector(BaseConnector):
                 "fulltext.analyzer": "german",
             },
         )
+
+    def _seed_primary_source(self) -> Identifier:
+        """Ensure the primary source `mex` is seeded and linked to itself."""
+        mex_primary_source = ExtractedPrimarySource.model_construct(
+            hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+            identifier=MEX_PRIMARY_SOURCE_IDENTIFIER,
+            identifierInPrimarySource=MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
+            stableTargetId=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+        )
+        return self.ingest([mex_primary_source])[0]
 
     def mcommit(
         self, *statements_with_parameters: tuple[str, dict[str, Any] | None]

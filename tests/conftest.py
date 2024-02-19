@@ -1,6 +1,7 @@
 import json
 from base64 import b64encode
 from functools import partial
+from itertools import count
 from unittest.mock import MagicMock, Mock
 
 import pytest
@@ -8,14 +9,22 @@ from fastapi.testclient import TestClient
 from neo4j import GraphDatabase
 from pytest import MonkeyPatch
 
-from mex.backend.extracted.models import EXTRACTED_MODEL_CLASSES_BY_NAME
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.main import app
 from mex.backend.settings import BackendSettings
 from mex.backend.types import APIKeyDatabase, APIUserDatabase
-from mex.common.models import BaseExtractedData
+from mex.common.models import (
+    MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    BaseExtractedData,
+    ExtractedActivity,
+    ExtractedContactPoint,
+    ExtractedOrganizationalUnit,
+    ExtractedPerson,
+    ExtractedPrimarySource,
+)
 from mex.common.transform import MExEncoder
 from mex.common.types import Identifier, Link, Text, TextLanguage
+from mex.common.types.identifier import IdentifierT
 
 pytest_plugins = ("mex.common.testing.plugin",)
 
@@ -97,6 +106,18 @@ def mocked_graph(monkeypatch: MonkeyPatch) -> MagicMock:
 
 
 @pytest.fixture(autouse=True)
+def isolate_identifier_seeds(monkeypatch: MonkeyPatch) -> None:
+    """Ensure the identifier class produces deterministic IDs."""
+    counter = count()
+    original_generate = Identifier.generate
+
+    def generate(cls: type[IdentifierT], seed: int | None = None) -> IdentifierT:
+        return cls(original_generate(seed or next(counter)))
+
+    monkeypatch.setattr(Identifier, "generate", classmethod(generate))
+
+
+@pytest.fixture(autouse=True)
 def isolate_graph_database(
     is_integration_test: bool, settings: BackendSettings
 ) -> None:
@@ -111,12 +132,14 @@ def isolate_graph_database(
             database=settings.graph_db,
         ) as driver:
             driver.execute_query("MATCH (n) DETACH DELETE n;")
+            driver.execute_query("DROP INDEX text_fields IF EXISTS;")
+            driver.execute_query("DROP CONSTRAINT identifier_uniqueness IF EXISTS;")
 
 
 @pytest.fixture
 def extracted_person() -> BaseExtractedData:
     """Return an extracted person with static dummy values."""
-    return EXTRACTED_MODEL_CLASSES_BY_NAME["ExtractedPerson"](
+    return ExtractedPerson.model_construct(
         identifier=Identifier.generate(seed=6),
         stableTargetId=Identifier.generate(seed=66),
         affiliation=[
@@ -138,63 +161,54 @@ def extracted_person() -> BaseExtractedData:
 @pytest.fixture
 def load_dummy_data() -> None:
     """Ingest dummy data into Graph Database."""
+    primary_source_1 = ExtractedPrimarySource(
+        hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+        identifierInPrimarySource="ps-1",
+    )
+    primary_source_2 = ExtractedPrimarySource(
+        hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+        identifierInPrimarySource="ps-2",
+        title=[Text(value="A cool and searchable title", language=None)],
+    )
+    contact_point_1 = ExtractedContactPoint(
+        email="info@rki.de",
+        hadPrimarySource=primary_source_1.stableTargetId,
+        identifierInPrimarySource="cp-1",
+    )
+    contact_point_2 = ExtractedContactPoint(
+        email="mex@rki.de",
+        hadPrimarySource=primary_source_1.stableTargetId,
+        identifierInPrimarySource="cp-2",
+    )
+    organizational_unit_1 = ExtractedOrganizationalUnit(
+        hadPrimarySource=primary_source_2.stableTargetId,
+        identifierInPrimarySource="ou-1",
+        name="Unit 1",
+    )
+    activity_1 = ExtractedActivity(
+        abstract=[
+            Text(value="An active activity.", language=TextLanguage.EN),
+            Text(value="Mumble bumble boo.", language=None),
+        ],
+        contact=[
+            contact_point_1.stableTargetId,
+            contact_point_2.stableTargetId,
+            organizational_unit_1.stableTargetId,
+        ],
+        hadPrimarySource=primary_source_1.stableTargetId,
+        identifierInPrimarySource="a-1",
+        responsibleUnit=[organizational_unit_1.stableTargetId],
+        theme=["https://mex.rki.de/item/theme-3"],
+        title=["Activity 1"],
+        website=[Link(title="Activity Homepage", url="https://activity-1")],
+    )
     GraphConnector.get().ingest(
         [
-            EXTRACTED_MODEL_CLASSES_BY_NAME["ExtractedPrimarySource"](
-                hadPrimarySource="psSti00000000001",
-                identifier="psId000000000001",
-                identifierInPrimarySource="ps-1",
-                stableTargetId="psSti00000000001",
-            ),
-            EXTRACTED_MODEL_CLASSES_BY_NAME["ExtractedPrimarySource"](
-                hadPrimarySource="psSti00000000001",
-                identifier="psId000000000002",
-                identifierInPrimarySource="ps-2",
-                stableTargetId="psSti00000000002",
-                title=[Text(value="A cool and searchable title", language=None)],
-            ),
-            EXTRACTED_MODEL_CLASSES_BY_NAME["ExtractedContactPoint"](
-                email="info@rki.de",
-                hadPrimarySource="psSti00000000001",
-                identifier="cpId000000000001",
-                identifierInPrimarySource="cp-1",
-                stableTargetId="cpSti00000000001",
-            ),
-            EXTRACTED_MODEL_CLASSES_BY_NAME["ExtractedContactPoint"](
-                email="mex@rki.de",
-                hadPrimarySource="psSti00000000001",
-                identifier="cpId000000000002",
-                identifierInPrimarySource="cp-2",
-                stableTargetId="cpSti00000000002",
-            ),
-            EXTRACTED_MODEL_CLASSES_BY_NAME["ExtractedOrganizationalUnit"](
-                hadPrimarySource="psSti00000000002",
-                identifier="ouId000000000001",
-                identifierInPrimarySource="ou-1",
-                name="Unit 1",
-                stableTargetId="ouSti00000000001",
-            ),
-            EXTRACTED_MODEL_CLASSES_BY_NAME["ExtractedOrganizationalUnit"](
-                hadPrimarySource="psSti00000000001",
-                identifier="ouId000000000002",
-                identifierInPrimarySource="ou-2",
-                name="Unit 2",
-                stableTargetId="ouSti00000000001",
-            ),
-            EXTRACTED_MODEL_CLASSES_BY_NAME["ExtractedActivity"](
-                abstract=[
-                    Text(value="An active activity.", language=TextLanguage.EN),
-                    Text(value="Mumble bumble boo.", language=None),
-                ],
-                contact=["cpSti00000000001", "cpSti00000000002", "ouSti00000000001"],
-                hadPrimarySource="psSti00000000001",
-                identifier="aId0000000000001",
-                identifierInPrimarySource="a-1",
-                responsibleUnit=["ouSti00000000001"],
-                stableTargetId="aSti000000000001",
-                theme=["https://mex.rki.de/item/theme-3"],
-                title=["Activity 1"],
-                website=[Link(title="Activity Homepage", url="https://activity-1")],
-            ),
+            primary_source_1,
+            primary_source_2,
+            contact_point_1,
+            contact_point_2,
+            organizational_unit_1,
+            activity_1,
         ]
     )

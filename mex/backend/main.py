@@ -30,7 +30,14 @@ from mex.common.types.identifier import MEX_ID_PATTERN
 
 
 def create_openapi_schema() -> dict[str, Any]:
-    """Create an OpenAPI schema for the backend."""
+    """Create an OpenAPI schema for the backend.
+
+    Settings:
+        backend_api_url: MEx backend API url.
+
+    Returns:
+        OpenApi schema as dictionary
+    """
     if app.openapi_schema:
         return app.openapi_schema
 
@@ -70,7 +77,7 @@ def close_connectors() -> None:
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     """Async context manager to execute setup and teardown of the FastAPI app."""
     yield None
     close_connectors()
