@@ -1,3 +1,20 @@
+<# Fetches extracted items, including their nested objects and referenced identifiers.
+
+Globals:
+    extracted_labels: List of all extracted class labels
+    merged_labels: List of all merged class labels
+    nested_labels: List of labels for all nestable objects
+
+Args:
+    query_string: Whether the final query should accept a full text query string
+    stable_target_id: Whether the final query should filter by stableTargetId
+    labels: Whether the final query should filter by entity type labels
+
+Returns:
+    total: Count of all items found by this query
+    items: List of extracted data items, with an extra attribute `_refs` that contains
+           the values of nested objects as well as the identifiers of referenced items
+-#>
 CALL {
 <%- block match_clause -%>
 <%- if query_string %>

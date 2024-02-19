@@ -1,3 +1,21 @@
+<# Merge all edges from a single extracted item to all connected merged items.
+
+This statement also prunes all edges originating from a given node that are not
+part of the references to be merged during this operation.
+
+Globals:
+    merged_labels: List of all merged class labels
+
+Args:
+    extracted_label: Label of the extracted item that is the source of all edges being
+                     merged in this statement
+    ref_labels: Ordered list of merged item labels of the edges being merged
+
+Returns:
+    merged: Number of merged edges
+    pruned: Number of pruned edges
+    edges: List of the merged edge objects
+-#>
 MATCH (source:<<extracted_label>> {identifier: $identifier})
 CALL {
 <%- if ref_labels %>
