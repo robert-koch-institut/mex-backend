@@ -55,6 +55,5 @@ class QueryBuilder(BaseConnector):
         return template.render
 
     def close(self) -> None:
-        """Clean up the underlying jinja environment."""
-        if cache := self._env.cache:
-            cache.clear()
+        """Clean up the connector."""
+        pass  # no clean-up needed
