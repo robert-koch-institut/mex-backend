@@ -154,15 +154,15 @@ class GraphConnector(BaseConnector):
         """
         query_builder = QueryBuilder.get()
         query = query_builder.fetch_extracted_data(
-            query_string=bool(query_string),
-            stable_target_id=bool(stable_target_id),
-            labels=bool(entity_type),
+            filter_by_query_string=bool(query_string),
+            filter_by_stable_target_id=bool(stable_target_id),
+            filter_by_labels=bool(entity_type),
         )
         result = self.commit(
             query,
             query_string=query_string,
-            labels=entity_type,
             stable_target_id=stable_target_id,
+            labels=entity_type,
             skip=skip,
             limit=limit,
         )
@@ -193,9 +193,9 @@ class GraphConnector(BaseConnector):
         """
         query_builder = QueryBuilder.get()
         query = query_builder.fetch_identities(
-            had_primary_source=bool(had_primary_source),
-            identifier_in_primary_source=bool(identifier_in_primary_source),
-            stable_target_id=bool(stable_target_id),
+            filter_by_had_primary_source=bool(had_primary_source),
+            filter_by_identifier_in_primary_source=bool(identifier_in_primary_source),
+            filter_by_stable_target_id=bool(stable_target_id),
         )
         return self.commit(
             query,

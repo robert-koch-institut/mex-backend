@@ -2,7 +2,7 @@ from functools import cache
 
 from mex.backend.graph.connector import GraphConnector
 from mex.common.identity import BaseProvider, Identity
-from mex.common.types import Identifier, PrimarySourceID
+from mex.common.types import Identifier, MergedPrimarySourceIdentifier
 
 
 class GraphIdentityProvider(BaseProvider, GraphConnector):
@@ -11,7 +11,7 @@ class GraphIdentityProvider(BaseProvider, GraphConnector):
     @cache
     def assign(
         self,
-        had_primary_source: PrimarySourceID,
+        had_primary_source: MergedPrimarySourceIdentifier,
         identifier_in_primary_source: str,
     ) -> Identity:
         """Find an Identity in the database or assign a new one."""

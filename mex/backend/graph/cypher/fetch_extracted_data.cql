@@ -6,36 +6,37 @@ Globals:
     nested_labels: List of labels for all nestable objects
 
 Args:
-    query_string: Whether the final query should accept a full text query string
-    stable_target_id: Whether the final query should filter by stableTargetId
-    labels: Whether the final query should filter by entity type labels
+    filter_by_query_string: Whether the final query should accept a full text query string
+    filter_by_stable_target_id: Whether the final query should filter by stableTargetId
+    filter_by_labels: Whether the final query should filter by entity type labels
 
 Returns:
     total: Count of all items found by this query
-    items: List of extracted data items, with an extra attribute `_refs` that contains
-           the values of nested objects as well as the identifiers of referenced items
+    items: List of extracted data items, each item has an extra attribute `_refs` that
+           contains the values of nested objects as well as the identifiers of
+           referenced items
 -#>
 CALL {
 <%- block match_clause -%>
-<%- if query_string %>
+<%- if filter_by_query_string %>
     CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
 <%- endif %>
-<%- if stable_target_id %>
+<%- if filter_by_stable_target_id %>
     MATCH (n:<<extracted_labels|join("|")>>)-[:stableTargetId]->(m:<<merged_labels|join("|")>>)
 <%- else %>
     MATCH (n:<<extracted_labels|join("|")>>)
 <%- endif %>
-<%- if query_string or stable_target_id or labels -%>
+<%- if filter_by_query_string or filter_by_stable_target_id or filter_by_labels -%>
 <%- set and_ = joiner("AND ") %>
     WHERE
-    <%- if query_string %>
+    <%- if filter_by_query_string %>
         <<and_()>>elementId(hit) = elementId(n)
     <%- endif %>
-    <%- if stable_target_id %>
+    <%- if filter_by_stable_target_id %>
         <<and_()>>m.identifier = $stable_target_id
     <%- endif %>
-    <%- if labels %>
+    <%- if filter_by_labels %>
         <<and_()>>ANY(label IN labels(n) WHERE label IN $labels)
     <%- endif %>
 <%- endif %>

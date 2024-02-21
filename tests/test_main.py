@@ -27,8 +27,8 @@ def test_openapi_schema(client: TestClient) -> None:
     schema = response.json()
     assert schema["info"]["title"] == "mex-backend"
     assert schema["servers"] == [{"url": "http://localhost:8080/"}]
-    assert schema["components"]["schemas"]["PersonID"] == {
-        "title": "PersonID",
+    assert schema["components"]["schemas"]["MergedPersonIdentifier"] == {
+        "title": "MergedPersonIdentifier",
         "type": "string",
         "description": "Identifier for merged persons.",
         "pattern": "^[a-zA-Z0-9]{14,22}$",

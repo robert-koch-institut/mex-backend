@@ -15,7 +15,7 @@ from pydantic.fields import FieldInfo
 
 from mex.backend.types import LiteralStringType
 from mex.common.models import EXTRACTED_MODEL_CLASSES_BY_NAME
-from mex.common.types import Identifier, Link, Text
+from mex.common.types import MERGED_IDENTIFIER_CLASSES, Link, Text
 
 
 def _get_inner_types(annotation: Any) -> Generator[type, None, None]:
@@ -29,29 +29,14 @@ def _get_inner_types(annotation: Any) -> Generator[type, None, None]:
         yield annotation
 
 
-def _has_true_subclass_type(field: FieldInfo, type_: type) -> bool:
-    """Return whether a field is annotated as a true subclass of the given type.
-
-    A "true" subclass is defined as not being identical to the provided `type_` itself.
-    Optional annotations and unions with `None` are allowed as long as at least one
-    non-`NoneType` type is present in the annotation.
-    """
-    if inner_types := list(_get_inner_types(field.annotation)):
-        return all(
-            isinstance(t, type) and issubclass(t, type_) and t is not type_
-            for t in inner_types
-        )
-    return False
-
-
-def _has_exact_type(field: FieldInfo, type_: type) -> bool:
-    """Return whether a field is annotated as exactly the given type.
+def _has_any_type(field: FieldInfo, *types: type) -> bool:
+    """Return whether a field is annotated as one of the given types.
 
     Lists and unions with `NoneType` are allowed and only the non-`NoneType` annotation
-    is considered.
+    is considered for the type-check.
     """
     if inner_types := list(_get_inner_types(field.annotation)):
-        return all(isinstance(t, type) and t is type_ for t in inner_types)
+        return all(inner_type in types for inner_type in inner_types)
     return False
 
 
@@ -83,27 +68,27 @@ LITERAL_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
     lambda field_info: isinstance(field_info.annotation, LiteralStringType),
 )
 
-# fields typed as subclasses of `Identifier` containing references to merged items
+# fields typed as merged identifiers containing references to merged items
 REFERENCE_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
     EXTRACTED_MODEL_CLASSES_BY_NAME,
-    lambda field_info: _has_true_subclass_type(field_info, Identifier),
+    lambda field_info: _has_any_type(field_info, *MERGED_IDENTIFIER_CLASSES),
 )
 
 # nested fields that contain `Text` objects
 TEXT_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
     EXTRACTED_MODEL_CLASSES_BY_NAME,
-    lambda field_info: _has_exact_type(field_info, Text),
+    lambda field_info: _has_any_type(field_info, Text),
 )
 
 # nested fields that contain `Link` objects
 LINK_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
     EXTRACTED_MODEL_CLASSES_BY_NAME,
-    lambda field_info: _has_exact_type(field_info, Link),
+    lambda field_info: _has_any_type(field_info, Link),
 )
 
 # fields annotated as `str` type
 STRING_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
-    EXTRACTED_MODEL_CLASSES_BY_NAME, lambda field_info: _has_exact_type(field_info, str)
+    EXTRACTED_MODEL_CLASSES_BY_NAME, lambda field_info: _has_any_type(field_info, str)
 )
 
 # fields that should be indexed as searchable fields

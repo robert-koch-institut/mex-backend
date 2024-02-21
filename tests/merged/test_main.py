@@ -23,14 +23,12 @@ def test_search_merged_items_mocked(
     )
     mocked_graph.return_value = [
         {
-            "total": 14,
             "items": [
                 {
-                    "identifier": unit.identifier,
+                    "identifier": unit.stableTargetId,
                     "identifierInPrimarySource": unit.identifierInPrimarySource,
                     "stableTargetId": unit.stableTargetId,
                     "email": ["test@foo.bar"],
-                    # stopgap mx-1382 (search for ExtractedOrganizationalUnit instead)
                     "entityType": "ExtractedOrganizationalUnit",
                     "_refs": [
                         {
@@ -54,6 +52,7 @@ def test_search_merged_items_mocked(
                     ],
                 }
             ],
+            "total": 14,
         }
     ]
 
@@ -65,14 +64,13 @@ def test_search_merged_items_mocked(
                 "$type": "MergedOrganizationalUnit",
                 "alternativeName": [],
                 "email": ["test@foo.bar"],
-                "identifier": unit.identifier,
+                "identifier": unit.stableTargetId,
                 "name": [
                     {"language": "de", "value": "Eine unit von einer Org."},
                     {"language": "en", "value": "A unit of an org."},
                 ],
                 "parentUnit": None,
                 "shortName": [],
-                "stableTargetId": unit.stableTargetId,
                 "unitOf": [],
                 "website": [],
             }
@@ -96,7 +94,6 @@ def test_search_merged_items_mocked(
                         "documentation": [],
                         "identifier": "00000000000000",
                         "locatedAt": [],
-                        "stableTargetId": "00000000000000",
                         "title": [],
                         "unitInCharge": [],
                         "version": None,
@@ -110,10 +107,9 @@ def test_search_merged_items_mocked(
             {
                 "items": [
                     {
-                        "$type": "MergedContactPoint",
-                        "email": ["info@contact-point.one"],
                         "identifier": "bFQoRhcVH5DHUu",
-                        "stableTargetId": "bFQoRhcVH5DHUv",
+                        "email": ["info@contact-point.one"],
+                        "$type": "MergedContactPoint",
                     }
                 ],
                 "total": 7,
@@ -124,16 +120,14 @@ def test_search_merged_items_mocked(
             {
                 "items": [
                     {
-                        "$type": "MergedContactPoint",
-                        "email": ["info@contact-point.one"],
                         "identifier": "bFQoRhcVH5DHUu",
-                        "stableTargetId": "bFQoRhcVH5DHUv",
+                        "email": ["info@contact-point.one"],
+                        "$type": "MergedContactPoint",
                     },
                     {
-                        "$type": "MergedContactPoint",
-                        "email": ["help@contact-point.two"],
                         "identifier": "bFQoRhcVH5DHUw",
-                        "stableTargetId": "bFQoRhcVH5DHUx",
+                        "email": ["help@contact-point.two"],
+                        "$type": "MergedContactPoint",
                     },
                 ],
                 "total": 2,
@@ -151,7 +145,6 @@ def test_search_merged_items_mocked(
                         "documentation": [],
                         "identifier": "bFQoRhcVH5DHUs",
                         "locatedAt": [],
-                        "stableTargetId": "bFQoRhcVH5DHUt",
                         "title": [],
                         "unitInCharge": [],
                         "version": "Cool Version v2.13",
@@ -161,7 +154,7 @@ def test_search_merged_items_mocked(
             },
         ),
         (
-            "?stableTargetId=bFQoRhcVH5DHUz",
+            "?identifier=bFQoRhcVH5DHUy",
             {
                 "items": [
                     {
@@ -172,7 +165,6 @@ def test_search_merged_items_mocked(
                         "name": [{"language": "en", "value": "Unit 1"}],
                         "parentUnit": None,
                         "shortName": [],
-                        "stableTargetId": "bFQoRhcVH5DHUz",
                         "unitOf": [],
                         "website": [],
                     }
@@ -186,7 +178,7 @@ def test_search_merged_items_mocked(
         "skip 1",
         "entity type contact points",
         "full text search",
-        "stable target id filter",
+        "identifier filter",
     ],
 )
 @pytest.mark.usefixtures("load_dummy_data")

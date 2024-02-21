@@ -24,7 +24,6 @@ def test_search_extracted_items_mocked(
     )
     mocked_graph.return_value = [
         {
-            "total": 14,
             "items": [
                 {
                     "identifier": unit.identifier,
@@ -54,6 +53,7 @@ def test_search_extracted_items_mocked(
                     ],
                 }
             ],
+            "total": 14,
         }
     ]
 
@@ -93,12 +93,12 @@ def test_search_extracted_items_mocked(
             {
                 "items": [
                     {
-                        "$type": "ExtractedContactPoint",
-                        "email": ["info@contact-point.one"],
-                        "hadPrimarySource": "bFQoRhcVH5DHUr",
-                        "identifier": "bFQoRhcVH5DHUu",
+                        "identifier": "bFQoRhcVH5DHUv",
+                        "hadPrimarySource": "bFQoRhcVH5DHUq",
                         "identifierInPrimarySource": "cp-1",
-                        "stableTargetId": "bFQoRhcVH5DHUv",
+                        "stableTargetId": "bFQoRhcVH5DHUu",
+                        "email": ["info@contact-point.one"],
+                        "$type": "ExtractedContactPoint",
                     }
                 ],
                 "total": 7,
@@ -109,20 +109,20 @@ def test_search_extracted_items_mocked(
             {
                 "items": [
                     {
-                        "$type": "ExtractedContactPoint",
-                        "email": ["info@contact-point.one"],
-                        "hadPrimarySource": "bFQoRhcVH5DHUr",
-                        "identifier": "bFQoRhcVH5DHUu",
+                        "identifier": "bFQoRhcVH5DHUv",
+                        "hadPrimarySource": "bFQoRhcVH5DHUq",
                         "identifierInPrimarySource": "cp-1",
-                        "stableTargetId": "bFQoRhcVH5DHUv",
+                        "stableTargetId": "bFQoRhcVH5DHUu",
+                        "email": ["info@contact-point.one"],
+                        "$type": "ExtractedContactPoint",
                     },
                     {
-                        "$type": "ExtractedContactPoint",
-                        "email": ["help@contact-point.two"],
-                        "hadPrimarySource": "bFQoRhcVH5DHUr",
-                        "identifier": "bFQoRhcVH5DHUw",
+                        "identifier": "bFQoRhcVH5DHUx",
+                        "hadPrimarySource": "bFQoRhcVH5DHUq",
                         "identifierInPrimarySource": "cp-2",
-                        "stableTargetId": "bFQoRhcVH5DHUx",
+                        "stableTargetId": "bFQoRhcVH5DHUw",
+                        "email": ["help@contact-point.two"],
+                        "$type": "ExtractedContactPoint",
                     },
                 ],
                 "total": 2,
@@ -139,10 +139,10 @@ def test_search_extracted_items_mocked(
                         "description": [],
                         "documentation": [],
                         "hadPrimarySource": "00000000000000",
-                        "identifier": "bFQoRhcVH5DHUs",
+                        "identifier": "bFQoRhcVH5DHUt",
                         "identifierInPrimarySource": "ps-2",
                         "locatedAt": [],
-                        "stableTargetId": "bFQoRhcVH5DHUt",
+                        "stableTargetId": "bFQoRhcVH5DHUs",
                         "title": [],
                         "unitInCharge": [],
                         "version": "Cool Version v2.13",
@@ -152,20 +152,20 @@ def test_search_extracted_items_mocked(
             },
         ),
         (
-            "?stableTargetId=bFQoRhcVH5DHUz",
+            "?stableTargetId=bFQoRhcVH5DHUy",
             {
                 "items": [
                     {
                         "$type": "ExtractedOrganizationalUnit",
                         "alternativeName": [],
                         "email": [],
-                        "hadPrimarySource": "bFQoRhcVH5DHUt",
-                        "identifier": "bFQoRhcVH5DHUy",
+                        "hadPrimarySource": "bFQoRhcVH5DHUs",
+                        "identifier": "bFQoRhcVH5DHUz",
                         "identifierInPrimarySource": "ou-1",
                         "name": [{"language": "en", "value": "Unit 1"}],
                         "parentUnit": None,
                         "shortName": [],
-                        "stableTargetId": "bFQoRhcVH5DHUz",
+                        "stableTargetId": "bFQoRhcVH5DHUy",
                         "unitOf": [],
                         "website": [],
                     }

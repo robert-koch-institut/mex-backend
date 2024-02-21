@@ -53,7 +53,12 @@ YIELD currentStatus;"""
 
 
 @pytest.mark.parametrize(
-    ("query_string", "stable_target_id", "labels", "expected"),
+    (
+        "filter_by_query_string",
+        "filter_by_stable_target_id",
+        "filter_by_labels",
+        "expected",
+    ),
     [
         (
             True,
@@ -160,24 +165,24 @@ RETURN collect(n) AS items, total;""",
 )
 def test_fetch_extracted_data(
     query_builder: QueryBuilder,
-    query_string: bool,
-    stable_target_id: bool,
-    labels: bool,
+    filter_by_query_string: bool,
+    filter_by_stable_target_id: bool,
+    filter_by_labels: bool,
     expected: str,
 ) -> None:
     query = query_builder.fetch_extracted_data(
-        query_string=query_string,
-        stable_target_id=stable_target_id,
-        labels=labels,
+        filter_by_query_string=filter_by_query_string,
+        filter_by_stable_target_id=filter_by_stable_target_id,
+        filter_by_labels=filter_by_labels,
     )
     assert query == expected
 
 
 @pytest.mark.parametrize(
     (
-        "had_primary_source",
-        "identifier_in_primary_source",
-        "stable_target_id",
+        "filter_by_had_primary_source",
+        "filter_by_identifier_in_primary_source",
+        "filter_by_stable_target_id",
         "expected",
     ),
     [
@@ -237,15 +242,15 @@ LIMIT $limit;""",
 )
 def test_fetch_identities(
     query_builder: QueryBuilder,
-    had_primary_source: bool,
-    identifier_in_primary_source: bool,
-    stable_target_id: bool,
+    filter_by_had_primary_source: bool,
+    filter_by_identifier_in_primary_source: bool,
+    filter_by_stable_target_id: bool,
     expected: str,
 ) -> None:
     query = query_builder.fetch_identities(
-        had_primary_source=had_primary_source,
-        identifier_in_primary_source=identifier_in_primary_source,
-        stable_target_id=stable_target_id,
+        filter_by_had_primary_source=filter_by_had_primary_source,
+        filter_by_identifier_in_primary_source=filter_by_identifier_in_primary_source,
+        filter_by_stable_target_id=filter_by_stable_target_id,
     )
     assert query == expected
 

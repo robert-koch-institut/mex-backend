@@ -113,10 +113,10 @@ def test_assign_identity_inconsistency_mocked(
                 "identifierInPrimarySource": "cp-2",
             },
             {
-                "identifier": "bFQoRhcVH5DHUw",
+                "identifier": "bFQoRhcVH5DHUC",
                 "hadPrimarySource": "bFQoRhcVH5DHUr",
                 "identifierInPrimarySource": "cp-2",
-                "stableTargetId": "bFQoRhcVH5DHUx",
+                "stableTargetId": "bFQoRhcVH5DHUD",
             },
         ),
         (
@@ -231,24 +231,24 @@ def test_fetch_identities_mocked(
             {
                 "items": [
                     {
+                        "identifier": "bFQoRhcVH5DHUr",
                         "hadPrimarySource": "00000000000000",
-                        "identifier": "bFQoRhcVH5DHUq",
                         "identifierInPrimarySource": "ps-1",
-                        "stableTargetId": "bFQoRhcVH5DHUr",
-                    },
+                        "stableTargetId": "bFQoRhcVH5DHUq",
+                    }
                 ],
                 "total": 1,
             },
         ),
         (
-            "?stableTargetId=bFQoRhcVH5DHUz",
+            "?stableTargetId=bFQoRhcVH5DHUy",
             {
                 "items": [
                     {
-                        "identifier": "bFQoRhcVH5DHUy",
-                        "hadPrimarySource": "bFQoRhcVH5DHUt",
+                        "identifier": "bFQoRhcVH5DHUz",
+                        "hadPrimarySource": "bFQoRhcVH5DHUs",
                         "identifierInPrimarySource": "ou-1",
-                        "stableTargetId": "bFQoRhcVH5DHUz",
+                        "stableTargetId": "bFQoRhcVH5DHUy",
                     }
                 ],
                 "total": 1,

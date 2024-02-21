@@ -1,12 +1,12 @@
 from mex.common.identity.models import Identity
 from mex.common.models import BaseModel
-from mex.common.types import PrimarySourceID
+from mex.common.types import MergedPrimarySourceIdentifier
 
 
 class IdentityAssignRequest(BaseModel):
     """Request body for identity upsert requests."""
 
-    hadPrimarySource: PrimarySourceID
+    hadPrimarySource: MergedPrimarySourceIdentifier
     identifierInPrimarySource: str
 
 

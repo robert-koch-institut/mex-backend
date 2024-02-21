@@ -7,7 +7,11 @@ from pytest import MonkeyPatch
 from mex.backend.graph.connector import MEX_EXTRACTED_PRIMARY_SOURCE, GraphConnector
 from mex.backend.graph.query import QueryBuilder
 from mex.common.models import AnyExtractedModel
-from mex.common.types import Identifier, PrimarySourceID
+from mex.common.types import (
+    ExtractedPrimarySourceIdentifier,
+    Identifier,
+    MergedPrimarySourceIdentifier,
+)
 from tests.conftest import MockedGraph
 
 
@@ -100,8 +104,8 @@ merge_node(
     nested_node_labels=[],
 )""",
         {
-            "identifier": Identifier("00000000000000"),
-            "stable_target_id": PrimarySourceID("00000000000000"),
+            "identifier": ExtractedPrimarySourceIdentifier("00000000000000"),
+            "stable_target_id": MergedPrimarySourceIdentifier("00000000000000"),
             "on_match": {"version": None},
             "on_create": {
                 "version": None,
@@ -119,11 +123,65 @@ merge_edges(
     ref_labels=["hadPrimarySource", "stableTargetId"],
 )""",
         {
-            "identifier": Identifier("00000000000000"),
+            "identifier": "00000000000000",
             "ref_identifiers": ["00000000000000", "00000000000000"],
             "ref_positions": [0, 0],
         },
     )
+
+
+@pytest.mark.usefixtures("mocked_query_builder")
+def test_mocked_graph_query_nodes(mocked_graph: MockedGraph) -> None:
+    mocked_graph.return_value = [
+        {
+            "items": [
+                {
+                    "entityType": "ExtractedThis",
+                    "inlineProperty": ["foo", "bar"],
+                    "_refs": [
+                        {"value": "second", "position": 1, "label": "nestedProperty"},
+                        {"value": "first", "position": 0, "label": "nestedProperty"},
+                    ],
+                }
+            ],
+            "total": 1,
+        }
+    ]
+    graph = GraphConnector.get()
+    result = graph.query_nodes(
+        query_string="my-query",
+        stable_target_id=Identifier.generate(99),
+        entity_type=[],
+        skip=10,
+        limit=100,
+    )
+
+    assert mocked_graph.call_args_list[-1].args == (
+        """\
+fetch_extracted_data(
+    filter_by_query_string=True,
+    filter_by_stable_target_id=True,
+    filter_by_labels=False,
+)""",
+        {
+            "labels": [],
+            "limit": 100,
+            "query_string": "my-query",
+            "skip": 10,
+            "stable_target_id": "bFQoRhcVH5DHV1",
+        },
+    )
+
+    assert result.one() == {
+        "items": [
+            {
+                "entityType": "ExtractedThis",
+                "inlineProperty": ["foo", "bar"],
+                "nestedProperty": ["first", "second"],
+            }
+        ],
+        "total": 1,
+    }
 
 
 @pytest.mark.usefixtures("mocked_query_builder")
@@ -134,9 +192,9 @@ def test_mocked_graph_fetch_identities(mocked_graph: MockedGraph) -> None:
     assert mocked_graph.call_args_list[-1].args == (
         """\
 fetch_identities(
-    had_primary_source=False,
-    identifier_in_primary_source=False,
-    stable_target_id=True,
+    filter_by_had_primary_source=False,
+    filter_by_identifier_in_primary_source=False,
+    filter_by_stable_target_id=True,
 )""",
         {
             "had_primary_source": None,
@@ -153,9 +211,9 @@ fetch_identities(
     assert mocked_graph.call_args_list[-1].args == (
         """\
 fetch_identities(
-    had_primary_source=True,
-    identifier_in_primary_source=True,
-    stable_target_id=False,
+    filter_by_had_primary_source=True,
+    filter_by_identifier_in_primary_source=True,
+    filter_by_stable_target_id=False,
 )""",
         {
             "had_primary_source": Identifier.generate(101),
@@ -170,9 +228,9 @@ fetch_identities(
     assert mocked_graph.call_args_list[-1].args == (
         """\
 fetch_identities(
-    had_primary_source=False,
-    identifier_in_primary_source=True,
-    stable_target_id=False,
+    filter_by_had_primary_source=False,
+    filter_by_identifier_in_primary_source=True,
+    filter_by_stable_target_id=False,
 )""",
         {
             "had_primary_source": None,
