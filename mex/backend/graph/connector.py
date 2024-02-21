@@ -288,7 +288,7 @@ class GraphConnector(BaseConnector):
 
         for field, identifiers in to_key_and_values(ref_values):
             for position, identifier in enumerate(identifiers):
-                ref_identifiers.append(str(identifier))
+                ref_identifiers.append(identifier)
                 ref_positions.append(position)
                 ref_labels.append(field)
 
