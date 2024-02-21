@@ -132,7 +132,7 @@ class GraphConnector(BaseConnector):
             logger.info("\n%s", message)
         return result
 
-    def query_nodes(
+    def fetch_extracted_data(
         self,
         query_string: str | None,
         stable_target_id: str | None,

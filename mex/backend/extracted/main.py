@@ -20,7 +20,7 @@ def search_extracted_items(
 ) -> ExtractedItemSearchResponse:
     """Search for extracted items by query text or by type and id."""
     graph = GraphConnector.get()
-    result = graph.query_nodes(
+    result = graph.fetch_extracted_data(
         q,
         stableTargetId,
         [str(t.value) for t in entityType or ExtractedType],

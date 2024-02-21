@@ -24,7 +24,7 @@ def search_merged_items_facade(
     # XXX We just search for extracted items and pretend they are already merged
     #     as a stopgap for MX-1382.
     graph = GraphConnector.get()
-    result = graph.query_nodes(
+    result = graph.fetch_extracted_data(
         q,
         identifier or stableTargetId,
         [
