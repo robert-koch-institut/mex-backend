@@ -17,7 +17,7 @@ class Result:
     def __init__(self, result: Neo4jResult) -> None:
         """Wrap a neo4j result object in a mex-backend result."""
         self._records, self._summary, _ = result.to_eager_result()
-        self._data = [None] * len(self._records)
+        self._get_cached_data = cache(self._record_to_data)
 
     def __getitem__(self, key: str) -> Any:
         """Proxy a getitem instruction to the first record if exactly one exists."""
@@ -25,7 +25,7 @@ class Result:
 
     def __iter__(self) -> Iterator[dict[str, Any]]:
         """Return an iterator over all records."""
-        yield from (self._record_to_data(index) for index in range(len(self._records)))
+        yield from (self._get_cached_data(index) for index in range(len(self._records)))
 
     def __repr__(self) -> str:
         """Return a human-readable representation of this result object."""
@@ -34,13 +34,12 @@ class Result:
             representation = f"{representation[:50]}... ...{representation[-50:]}"
         return representation
 
-    @cache
     def _record_to_data(self, record_index: int) -> dict[str, Any]:
         """Cache the data retrieval for each record."""
         try:
             return self._records[record_index].data()
         except IndexError:
-            raise NoResultFoundError
+            raise NoResultFoundError from None
 
     def all(self) -> list[dict[str, Any]]:
         """Return all records as a list."""
@@ -50,11 +49,11 @@ class Result:
         """Return exactly one record or raise an exception."""
         match len(self._records):
             case 1:
-                return self._record_to_data(0)
+                return self._get_cached_data(0)
             case 0:
-                raise NoResultFoundError
+                raise NoResultFoundError from None
             case _:
-                raise MultipleResultsFoundError
+                raise MultipleResultsFoundError from None
 
     def one_or_none(self) -> dict[str, Any] | None:
         """Return at most one result or raise an exception.
@@ -64,7 +63,7 @@ class Result:
         """
         match len(self._records):
             case 1:
-                return self._record_to_data(0)
+                return self._get_cached_data(0)
             case 0:
                 return None
             case _:

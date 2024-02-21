@@ -8,7 +8,7 @@ from mex.common.types import Identifier, MergedPrimarySourceIdentifier
 class GraphIdentityProvider(BaseProvider, GraphConnector):
     """Identity provider that communicates with the graph database."""
 
-    @cache
+    @cache  # noqa: B019
     def assign(
         self,
         had_primary_source: MergedPrimarySourceIdentifier,

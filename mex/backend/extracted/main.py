@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Annotated, Sequence
 
 from fastapi import APIRouter, Query
 
@@ -12,11 +12,13 @@ router = APIRouter()
 
 @router.get("/extracted-item", tags=["editor"])
 def search_extracted_items(
-    q: str = Query("", max_length=1000),
-    stableTargetId: Identifier | None = Query(None),  # noqa: N803
-    entityType: Sequence[ExtractedType] = Query([]),  # noqa: N803
-    skip: int = Query(0, ge=0, le=10e10),
-    limit: int = Query(10, ge=1, le=100),
+    q: Annotated[str, Query(max_length=100)] = "",
+    stableTargetId: Identifier | None = None,  # noqa: N803
+    entityType: Annotated[  # noqa: N803
+        Sequence[ExtractedType], Query(max_length=len(ExtractedType))
+    ] = [],
+    skip: Annotated[int, Query(ge=0, le=10e10)] = 0,
+    limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> ExtractedItemSearchResponse:
     """Search for extracted items by query text or by type and id."""
     graph = GraphConnector.get()

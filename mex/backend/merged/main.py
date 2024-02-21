@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Annotated, Sequence
 
 from fastapi import APIRouter, Query
 
@@ -13,12 +13,16 @@ router = APIRouter()
 
 @router.get("/merged-item", tags=["editor", "public"])
 def search_merged_items_facade(
-    q: str = Query("", max_length=1000),
-    stableTargetId: Identifier | None = Query(None, deprecated=True),  # noqa: N803
-    identifier: Identifier | None = Query(None),
-    entityType: Sequence[MergedType | UnprefixedType] = Query([]),  # noqa: N803
-    skip: int = Query(0, ge=0, le=10e10),
-    limit: int = Query(10, ge=1, le=100),
+    q: Annotated[str, Query(max_length=100)] = "",
+    stableTargetId: Annotated[  # noqa: N803
+        Identifier | None, Query(deprecated=True)
+    ] = None,
+    identifier: Identifier | None = None,
+    entityType: Annotated[  # noqa: N803
+        Sequence[MergedType | UnprefixedType], Query(max_length=len(MergedType))
+    ] = [],
+    skip: Annotated[int, Query(ge=0, le=10e10)] = 0,
+    limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> MergedItemSearchResponse:
     """Facade for retrieving merged items."""
     # XXX We just search for extracted items and pretend they are already merged
