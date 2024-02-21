@@ -12,8 +12,8 @@ WITH extracted,
     [<<range(nested_edge_labels|count)|map("ensure_prefix", "edge_")|join(", ")>>] as edges,
     [<<range(nested_edge_labels|count)|map("ensure_prefix", "value_")|join(", ")>>] as values
 CALL {
-    WITH values
-    MATCH (:<<extracted_label>> {identifier: $identifier})-[]->(gc:<<nested_labels|join("|")>>)
+    WITH extracted, values
+    MATCH (extracted)-[]->(gc:<<nested_labels|join("|")>>)
     WHERE NOT gc IN values
     DETACH DELETE gc
     RETURN count(gc) as pruned

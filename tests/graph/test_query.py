@@ -344,8 +344,8 @@ WITH extracted,
     [edge_0, edge_1, edge_2] as edges,
     [value_0, value_1, value_2] as values
 CALL {
-    WITH values
-    MATCH (:ExtractedThat {identifier: $identifier})-[]->(gc:Link|Text|Location)
+    WITH extracted, values
+    MATCH (extracted)-[]->(gc:Link|Text|Location)
     WHERE NOT gc IN values
     DETACH DELETE gc
     RETURN count(gc) as pruned
@@ -364,8 +364,8 @@ WITH extracted,
     [] as edges,
     [] as values
 CALL {
-    WITH values
-    MATCH (:ExtractedThat {identifier: $identifier})-[]->(gc:Link|Text|Location)
+    WITH extracted, values
+    MATCH (extracted)-[]->(gc:Link|Text|Location)
     WHERE NOT gc IN values
     DETACH DELETE gc
     RETURN count(gc) as pruned
