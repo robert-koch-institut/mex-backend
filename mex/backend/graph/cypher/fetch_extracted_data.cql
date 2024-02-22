@@ -47,11 +47,11 @@ CALL {
     <<-self.match_clause()>>
     CALL {
         WITH n
-        MATCH (n:<<extracted_labels|join("|")>>)-[r]->(t:<<merged_labels|join("|")>>)
+        MATCH (n)-[r]->(t:<<merged_labels|join("|")>>)
         RETURN type(r) as label, r.position as position, t.identifier as value
     UNION
         WITH n
-        MATCH (n:<<extracted_labels|join("|")>>)-[r]->(t:<<nested_labels|join("|")>>)
+        MATCH (n)-[r]->(t:<<nested_labels|join("|")>>)
         RETURN type(r) as label, r.position as position, properties(t) as value
     }
     WITH n, collect({label: label, position: position, value: value}) as refs

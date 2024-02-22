@@ -85,11 +85,11 @@ CALL {
         AND ANY(label IN labels(n) WHERE label IN $labels)
     CALL {
         WITH n
-        MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[r]->(t:MergedThis|MergedThat|MergedOther)
+        MATCH (n)-[r]->(t:MergedThis|MergedThat|MergedOther)
         RETURN type(r) as label, r.position as position, t.identifier as value
     UNION
         WITH n
-        MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[r]->(t:Link|Text|Location)
+        MATCH (n)-[r]->(t:Link|Text|Location)
         RETURN type(r) as label, r.position as position, properties(t) as value
     }
     WITH n, collect({label: label, position: position, value: value}) as refs
@@ -113,11 +113,11 @@ CALL {
     MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)
     CALL {
         WITH n
-        MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[r]->(t:MergedThis|MergedThat|MergedOther)
+        MATCH (n)-[r]->(t:MergedThis|MergedThat|MergedOther)
         RETURN type(r) as label, r.position as position, t.identifier as value
     UNION
         WITH n
-        MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[r]->(t:Link|Text|Location)
+        MATCH (n)-[r]->(t:Link|Text|Location)
         RETURN type(r) as label, r.position as position, properties(t) as value
     }
     WITH n, collect({label: label, position: position, value: value}) as refs
@@ -145,11 +145,11 @@ CALL {
         ANY(label IN labels(n) WHERE label IN $labels)
     CALL {
         WITH n
-        MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[r]->(t:MergedThis|MergedThat|MergedOther)
+        MATCH (n)-[r]->(t:MergedThis|MergedThat|MergedOther)
         RETURN type(r) as label, r.position as position, t.identifier as value
     UNION
         WITH n
-        MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[r]->(t:Link|Text|Location)
+        MATCH (n)-[r]->(t:Link|Text|Location)
         RETURN type(r) as label, r.position as position, properties(t) as value
     }
     WITH n, collect({label: label, position: position, value: value}) as refs
