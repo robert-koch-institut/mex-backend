@@ -58,6 +58,4 @@ jobs:
         run: make install
 
       - name: Run test suite
-        env:
-          MEX_IDENTITY_PROVIDER: graph
         run: make pytest
