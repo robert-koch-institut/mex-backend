@@ -91,8 +91,15 @@ class GraphConnector(BaseConnector):
         ]
 
     def _seed_indices(self) -> Result:
-        """Ensure there are full text search indices for all text fields."""
+        """Ensure there is a full text search index for all searchable fields."""
         query_builder = QueryBuilder.get()
+        result = self.commit(query_builder.fetch_full_text_search_index())
+        if (index := result.one_or_none()) and (
+            set(index["node_labels"]) != set(SEARCHABLE_CLASSES)
+            or set(index["search_fields"]) != set(SEARCHABLE_FIELDS)
+        ):
+            # only drop the index if the classes or fields have changed
+            self.commit(query_builder.drop_full_text_search_index())
         return self.commit(
             query_builder.create_full_text_search_index(
                 node_labels=SEARCHABLE_CLASSES,

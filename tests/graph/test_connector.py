@@ -4,6 +4,7 @@ import pytest
 from black import Mode, format_str
 from pytest import MonkeyPatch
 
+from mex.backend.graph import connector as connector_module
 from mex.backend.graph.connector import MEX_EXTRACTED_PRIMARY_SOURCE, GraphConnector
 from mex.backend.graph.query import QueryBuilder
 from mex.common.models import AnyExtractedModel
@@ -38,48 +39,54 @@ def test_mocked_graph_seed_constraints(mocked_graph: MockedGraph) -> None:
 
 
 @pytest.mark.usefixtures("mocked_query_builder")
-def test_mocked_graph_seed_indices(mocked_graph: MockedGraph) -> None:
+def test_mocked_graph_seed_indices(
+    mocked_graph: MockedGraph, monkeypatch: MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        connector_module, "SEARCHABLE_CLASSES", ["ExtractedThis", "ExtractedThat"]
+    )
+    monkeypatch.setattr(
+        connector_module,
+        "SEARCHABLE_FIELDS",
+        ["title", "name", "keyword", "description"],
+    )
     graph = GraphConnector.get()
     graph._seed_indices()
 
     assert mocked_graph.call_args_list[-1].args == (
         """\
 create_full_text_search_index(
-    node_labels=[
-        "ExtractedAccessPlatform",
-        "ExtractedActivity",
-        "ExtractedContactPoint",
-        "ExtractedDistribution",
-        "ExtractedOrganization",
-        "ExtractedOrganizationalUnit",
-        "ExtractedPerson",
-        "ExtractedPrimarySource",
-        "ExtractedResource",
-        "ExtractedVariable",
-        "ExtractedVariableGroup",
-    ],
-    search_fields=[
-        "codingSystem",
-        "familyName",
-        "fullName",
-        "fundingProgram",
-        "geprisId",
-        "givenName",
-        "gndId",
-        "icd10code",
-        "identifierInPrimarySource",
-        "isniId",
-        "loincId",
-        "meshId",
-        "orcidId",
-        "rorId",
-        "sizeOfDataBasis",
-        "title",
-        "valueSet",
-        "version",
-        "viafId",
-        "wikidataId",
-    ],
+    node_labels=["ExtractedThis", "ExtractedThat"],
+    search_fields=["title", "name", "keyword", "description"],
+)""",
+        {
+            "index_config": {
+                "fulltext.eventually_consistent": True,
+                "fulltext.analyzer": "german",
+            }
+        },
+    )
+
+    mocked_graph.return_value = [
+        {
+            "node_labels": ["ExtractedThis", "ExtractedThat"],
+            "search_fields": ["title", "name", "keyword", "description"],
+        }
+    ]
+    monkeypatch.setattr(
+        connector_module,
+        "SEARCHABLE_CLASSES",
+        ["ExtractedThis", "ExtractedThat", "ExtractedOther"],
+    )
+
+    graph._seed_indices()
+
+    assert mocked_graph.call_args_list[-2].args == ("drop_full_text_search_index()", {})
+    assert mocked_graph.call_args_list[-1].args == (
+        """\
+create_full_text_search_index(
+    node_labels=["ExtractedThis", "ExtractedThat", "ExtractedOther"],
+    search_fields=["title", "name", "keyword", "description"],
 )""",
         {
             "index_config": {

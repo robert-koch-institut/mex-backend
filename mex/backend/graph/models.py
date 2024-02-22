@@ -17,7 +17,7 @@ class Result:
     def __init__(self, result: Neo4jResult) -> None:
         """Wrap a neo4j result object in a mex-backend result."""
         self._records, self._summary, _ = result.to_eager_result()
-        self._get_cached_data = cache(self._record_to_data)
+        self._get_cached_data = cache(lambda i: self._records[i].data())
 
     def __getitem__(self, key: str) -> Any:
         """Proxy a getitem instruction to the first record if exactly one exists."""
@@ -33,13 +33,6 @@ class Result:
         if len(representation) > 90:
             representation = f"{representation[:40]}... ...{representation[-40:]}"
         return representation
-
-    def _record_to_data(self, record_index: int) -> dict[str, Any]:
-        """Cache the data retrieval for each record."""
-        try:
-            return self._records[record_index].data()
-        except IndexError:
-            raise NoResultFoundError from None
 
     def all(self) -> list[dict[str, Any]]:
         """Return all records as a list."""
