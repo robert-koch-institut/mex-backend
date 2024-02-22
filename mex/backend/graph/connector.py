@@ -126,7 +126,7 @@ class GraphConnector(BaseConnector):
         except Exception as error:
             logger.error("\n%s\n%s", message, error)
             raise
-        if counters := result.update_counters:
+        if counters := result.get_update_counters():
             logger.info("\n%s\n%s", message, json.dumps(counters, indent=4))
         else:
             logger.info("\n%s", message)

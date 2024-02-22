@@ -30,8 +30,8 @@ class Result:
     def __repr__(self) -> str:
         """Return a human-readable representation of this result object."""
         representation = f"Result({self.all()!r})"
-        if len(representation) > 120:
-            representation = f"{representation[:50]}... ...{representation[-50:]}"
+        if len(representation) > 90:
+            representation = f"{representation[:40]}... ...{representation[-40:]}"
         return representation
 
     def _record_to_data(self, record_index: int) -> dict[str, Any]:
@@ -69,7 +69,6 @@ class Result:
             case _:
                 raise MultipleResultsFoundError
 
-    @property
-    def update_counters(self) -> dict[str, int]:
+    def get_update_counters(self) -> dict[str, int]:
         """Return a summary of counters for operations the query triggered."""
         return {k: v for k, v in vars(self._summary.counters).items() if v}
