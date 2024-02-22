@@ -1,4 +1,4 @@
-<# Merge an extracted item with its accociated merged item and all nested objects.
+<# Upsert an extracted item with its accociated merged item and all nested objects.
 
 One extracted item is created (or updated) along with its accociated merged item.
 In addition, all nested objects of the extracted item are created as their own

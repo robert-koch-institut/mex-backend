@@ -212,10 +212,17 @@ class GraphConnector(BaseConnector):
             limit=limit,
         )
 
-    def merge_node(self, model: AnyExtractedModel) -> Result:
-        """Convert a model into a node and merge it into the graph.
+    def _merge_node(self, model: AnyExtractedModel) -> Result:
+        """Upsert an extracted model including merged item and nested objects.
 
-        Existing nodes will be updated, a new node will be created otherwise.
+        The given model is created or updated with all its inline properties.
+        All nested properties (like Text or Link) are created as their own nodes
+        and linked via edges. For multi-valued fields, the position of each nested
+        object is stored as a property on the outbound edge.
+        Any nested objects that are found in the graph, gut are not present on the
+        model any more are purged.
+        In addition, a merged item is created (if it does not exist yet) and linked
+        to the extracted item via an edge of the label `stableTargetId`.
 
         Args:
             model: Model to merge into the graph as a node
@@ -272,11 +279,14 @@ class GraphConnector(BaseConnector):
             nested_positions=nested_positions,
         )
 
-    def merge_edges(self, model: AnyExtractedModel) -> Result:
-        """Merge edges into the graph for all relations in the given model.
+    def _merge_edges(self, model: AnyExtractedModel) -> Result:
+        """Merge edges into the graph for all relations originating from one model.
 
-        All fields containing references will be iterated over. When the targeted node
+        All fields containing references will be iterated over. When the referenced node
         is found and no such relation exists yet, it will be created.
+        A position attribute is added to all edges, that stores the index the reference
+        had in list of references on the originating model. This way, we can preserve
+        the order for example of `contact` persons referenced on an activity.
 
         Args:
             model: Model to ensure all edges are created in the graph
@@ -314,16 +324,21 @@ class GraphConnector(BaseConnector):
     def ingest(self, models: list[AnyExtractedModel]) -> list[Identifier]:
         """Ingest a list of models into the graph as nodes and connect all edges.
 
+        This is a two-step process: first all extracted and merged items are created
+        along with their nested objects (like Text and Link); then all edges that
+        represent references (like hadPrimarySource, parentUnit, etc.) are added to
+        the graph in a second step.
+
         Args:
-            models: List of extracted items
+            models: List of extracted models
 
         Returns:
-            List of identifiers from the ingested models
+            List of identifiers of the ingested models
         """
         for model in models:
-            self.merge_node(model)
+            self._merge_node(model)
 
         for model in models:
-            self.merge_edges(model)
+            self._merge_edges(model)
 
         return [m.identifier for m in models]

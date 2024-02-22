@@ -254,7 +254,7 @@ def test_mocked_graph_merges_node(
 ) -> None:
     extracted_organizational_unit = dummy_data[4]
     graph = GraphConnector.get()
-    graph.merge_node(extracted_organizational_unit)
+    graph._merge_node(extracted_organizational_unit)
 
     assert mocked_graph.call_args_list[-1].args == (
         """\
@@ -285,7 +285,7 @@ def test_mocked_graph_merges_edges(
 ) -> None:
     extracted_activity = dummy_data[4]
     graph = GraphConnector.get()
-    graph.merge_edges(extracted_activity)
+    graph._merge_edges(extracted_activity)
 
     assert mocked_graph.call_args_list[-1].args == (
         """\
