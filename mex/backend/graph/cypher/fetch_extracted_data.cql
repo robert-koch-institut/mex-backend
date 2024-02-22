@@ -23,7 +23,7 @@ CALL {
     YIELD node AS hit, score
 <%- endif %>
 <%- if filter_by_stable_target_id %>
-    MATCH (n:<<extracted_labels|join("|")>>)-[:stableTargetId]->(m:<<merged_labels|join("|")>>)
+    MATCH (n:<<extracted_labels|join("|")>>)-[:stableTargetId]->(merged:<<merged_labels|join("|")>>)
 <%- else %>
     MATCH (n:<<extracted_labels|join("|")>>)
 <%- endif %>
@@ -34,7 +34,7 @@ CALL {
         <<and_()>>elementId(hit) = elementId(n)
     <%- endif %>
     <%- if filter_by_stable_target_id %>
-        <<and_()>>m.identifier = $stable_target_id
+        <<and_()>>merged.identifier = $stable_target_id
     <%- endif %>
     <%- if filter_by_labels %>
         <<and_()>>ANY(label IN labels(n) WHERE label IN $labels)
@@ -47,12 +47,12 @@ CALL {
     <<-self.match_clause()>>
     CALL {
         WITH n
-        MATCH (n)-[r]->(t:<<merged_labels|join("|")>>)
-        RETURN type(r) as label, r.position as position, t.identifier as value
+        MATCH (n)-[r]->(merged:<<merged_labels|join("|")>>)
+        RETURN type(r) as label, r.position as position, merged.identifier as value
     UNION
         WITH n
-        MATCH (n)-[r]->(t:<<nested_labels|join("|")>>)
-        RETURN type(r) as label, r.position as position, properties(t) as value
+        MATCH (n)-[r]->(nested:<<nested_labels|join("|")>>)
+        RETURN type(r) as label, r.position as position, properties(nested) as value
     }
     WITH n, collect({label: label, position: position, value: value}) as refs
     RETURN n{.*, entityType: head(labels(n)), _refs: refs}

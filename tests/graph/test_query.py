@@ -68,29 +68,29 @@ YIELD currentStatus;"""
 CALL {
     CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
-    MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(m:MergedThis|MergedThat|MergedOther)
+    MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
     WHERE
         elementId(hit) = elementId(n)
-        AND m.identifier = $stable_target_id
+        AND merged.identifier = $stable_target_id
         AND ANY(label IN labels(n) WHERE label IN $labels)
     RETURN COUNT(n) AS total
 }
 CALL {
     CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
-    MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(m:MergedThis|MergedThat|MergedOther)
+    MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
     WHERE
         elementId(hit) = elementId(n)
-        AND m.identifier = $stable_target_id
+        AND merged.identifier = $stable_target_id
         AND ANY(label IN labels(n) WHERE label IN $labels)
     CALL {
         WITH n
-        MATCH (n)-[r]->(t:MergedThis|MergedThat|MergedOther)
-        RETURN type(r) as label, r.position as position, t.identifier as value
+        MATCH (n)-[r]->(merged:MergedThis|MergedThat|MergedOther)
+        RETURN type(r) as label, r.position as position, merged.identifier as value
     UNION
         WITH n
-        MATCH (n)-[r]->(t:Link|Text|Location)
-        RETURN type(r) as label, r.position as position, properties(t) as value
+        MATCH (n)-[r]->(nested:Link|Text|Location)
+        RETURN type(r) as label, r.position as position, properties(nested) as value
     }
     WITH n, collect({label: label, position: position, value: value}) as refs
     RETURN n{.*, entityType: head(labels(n)), _refs: refs}
@@ -113,12 +113,12 @@ CALL {
     MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)
     CALL {
         WITH n
-        MATCH (n)-[r]->(t:MergedThis|MergedThat|MergedOther)
-        RETURN type(r) as label, r.position as position, t.identifier as value
+        MATCH (n)-[r]->(merged:MergedThis|MergedThat|MergedOther)
+        RETURN type(r) as label, r.position as position, merged.identifier as value
     UNION
         WITH n
-        MATCH (n)-[r]->(t:Link|Text|Location)
-        RETURN type(r) as label, r.position as position, properties(t) as value
+        MATCH (n)-[r]->(nested:Link|Text|Location)
+        RETURN type(r) as label, r.position as position, properties(nested) as value
     }
     WITH n, collect({label: label, position: position, value: value}) as refs
     RETURN n{.*, entityType: head(labels(n)), _refs: refs}
@@ -145,12 +145,12 @@ CALL {
         ANY(label IN labels(n) WHERE label IN $labels)
     CALL {
         WITH n
-        MATCH (n)-[r]->(t:MergedThis|MergedThat|MergedOther)
-        RETURN type(r) as label, r.position as position, t.identifier as value
+        MATCH (n)-[r]->(merged:MergedThis|MergedThat|MergedOther)
+        RETURN type(r) as label, r.position as position, merged.identifier as value
     UNION
         WITH n
-        MATCH (n)-[r]->(t:Link|Text|Location)
-        RETURN type(r) as label, r.position as position, properties(t) as value
+        MATCH (n)-[r]->(nested:Link|Text|Location)
+        RETURN type(r) as label, r.position as position, properties(nested) as value
     }
     WITH n, collect({label: label, position: position, value: value}) as refs
     RETURN n{.*, entityType: head(labels(n)), _refs: refs}
@@ -191,15 +191,15 @@ def test_fetch_extracted_data(
             True,
             True,
             """\
-MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(m:MergedThis|MergedThat|MergedOther)
-MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[:hadPrimarySource]->(p:MergedPrimarySource)
+MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
+MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[:hadPrimarySource]->(primary_source:MergedPrimarySource)
 WHERE
-    p.identifier = $had_primary_source
+    primary_source.identifier = $had_primary_source
     AND n.identifierInPrimarySource = $identifier_in_primary_source
-    AND m.identifier = $stable_target_id
+    AND merged.identifier = $stable_target_id
 RETURN
-    m.identifier as stableTargetId,
-    p.identifier as hadPrimarySource,
+    merged.identifier as stableTargetId,
+    primary_source.identifier as hadPrimarySource,
     n.identifierInPrimarySource as identifierInPrimarySource,
     n.identifier as identifier
 ORDER BY n.identifier ASC
@@ -210,11 +210,11 @@ LIMIT $limit;""",
             False,
             False,
             """\
-MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(m:MergedThis|MergedThat|MergedOther)
-MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[:hadPrimarySource]->(p:MergedPrimarySource)
+MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
+MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[:hadPrimarySource]->(primary_source:MergedPrimarySource)
 RETURN
-    m.identifier as stableTargetId,
-    p.identifier as hadPrimarySource,
+    merged.identifier as stableTargetId,
+    primary_source.identifier as hadPrimarySource,
     n.identifierInPrimarySource as identifierInPrimarySource,
     n.identifier as identifier
 ORDER BY n.identifier ASC
@@ -225,13 +225,13 @@ LIMIT $limit;""",
             False,
             True,
             """\
-MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(m:MergedThis|MergedThat|MergedOther)
-MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[:hadPrimarySource]->(p:MergedPrimarySource)
+MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
+MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[:hadPrimarySource]->(primary_source:MergedPrimarySource)
 WHERE
-    m.identifier = $stable_target_id
+    merged.identifier = $stable_target_id
 RETURN
-    m.identifier as stableTargetId,
-    p.identifier as hadPrimarySource,
+    merged.identifier as stableTargetId,
+    primary_source.identifier as hadPrimarySource,
     n.identifierInPrimarySource as identifierInPrimarySource,
     n.identifier as identifier
 ORDER BY n.identifier ASC

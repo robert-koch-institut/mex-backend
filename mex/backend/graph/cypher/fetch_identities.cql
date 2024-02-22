@@ -14,24 +14,24 @@ Args:
 Returns:
     List of identity objects.
 -#>
-MATCH (n:<<extracted_labels|join("|")>>)-[:stableTargetId]->(m:<<merged_labels|join("|")>>)
-MATCH (n:<<extracted_labels|join("|")>>)-[:hadPrimarySource]->(p:MergedPrimarySource)
+MATCH (n:<<extracted_labels|join("|")>>)-[:stableTargetId]->(merged:<<merged_labels|join("|")>>)
+MATCH (n:<<extracted_labels|join("|")>>)-[:hadPrimarySource]->(primary_source:MergedPrimarySource)
 <%- if filter_by_had_primary_source or filter_by_identifier_in_primary_source or filter_by_stable_target_id %>
 WHERE
     <%- set and_ = joiner("AND ") -%>
     <%- if filter_by_had_primary_source %>
-    <<and_()>>p.identifier = $had_primary_source
+    <<and_()>>primary_source.identifier = $had_primary_source
     <%- endif %>
     <%- if filter_by_identifier_in_primary_source %>
     <<and_()>>n.identifierInPrimarySource = $identifier_in_primary_source
     <%- endif -%>
     <%- if filter_by_stable_target_id %>
-    <<and_()>>m.identifier = $stable_target_id
+    <<and_()>>merged.identifier = $stable_target_id
     <%- endif -%>
 <%- endif %>
 RETURN
-    m.identifier as stableTargetId,
-    p.identifier as hadPrimarySource,
+    merged.identifier as stableTargetId,
+    primary_source.identifier as hadPrimarySource,
     n.identifierInPrimarySource as identifierInPrimarySource,
     n.identifier as identifier
 ORDER BY n.identifier ASC
