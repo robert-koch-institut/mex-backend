@@ -13,7 +13,7 @@ python = "^3.11"
 fastapi = "^0.109.2"
 httpx = "^0.26.0"
 mex-common = { git = "https://github.com/robert-koch-institut/mex-common.git", rev = "0.19.3" }
-neo4j = "^5.17.0"
+neo4j = "^5.18.0"
 pydantic = "2.6.1"
 uvicorn = { version = "^0.27.0", extras = ["standard"] }
 
