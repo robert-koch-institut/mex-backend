@@ -70,7 +70,7 @@ def close_connectors() -> None:
     for connector_type, connector in context.items():
         try:
             connector.close()
-        except Exception:
+        except Exception:  # noqa: PERF203
             logger.exception("Error closing %s", connector_type)
         else:
             logger.info("Closed %s", connector_type)

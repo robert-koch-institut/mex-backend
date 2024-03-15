@@ -39,5 +39,5 @@ def fetch_identity(
             stable_target_id=stableTargetId,
         )
     except MExError as error:
-        raise HTTPException(400, error.args)
+        raise HTTPException(400, error.args) from None
     return IdentityFetchResponse(items=identities, total=len(identities))
