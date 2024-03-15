@@ -26,7 +26,7 @@ def transform_graph_results_to_extracted_item_search_response(
         try:
             model = transform_search_result_to_model(result)
             items.append(model)
-        except Neo4jError as error:  # pragma: no cover
+        except Neo4jError as error:  # noqa: PERF203
             logger.exception(
                 "%s\n__node__\n  %s\n__refs__\n%s\n",
                 error,

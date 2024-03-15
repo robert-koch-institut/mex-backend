@@ -37,7 +37,7 @@ def transform_graph_results_to_merged_item_search_response_facade(
             )
             model_class = MERGED_MODEL_CLASSES_BY_NAME[model_dict["entityType"]]
             items.append(model_class.model_validate(model_dict))
-        except Neo4jError as error:  # pragma: no cover
+        except Neo4jError as error:  # noqa: PERF203
             logger.exception(
                 "%s\n__node__\n  %s\n__refs__\n%s\n",
                 error,

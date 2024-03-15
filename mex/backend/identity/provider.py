@@ -10,7 +10,7 @@ from mex.common.types import Identifier, PrimarySourceID
 class GraphIdentityProvider(BaseProvider, GraphConnector):
     """Identity provider that communicates with the neo4j graph database."""
 
-    @cache
+    @cache  # noqa: B019
     def assign(
         self,
         had_primary_source: PrimarySourceID,
