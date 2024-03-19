@@ -18,7 +18,7 @@ hooks:
 install: setup hooks
 	# install packages from lock file in local virtual environment
 	@ echo installing package; \
-	poetry install --no-interaction --sync; \
+	pdm sync --clean --group dev; \
 
 linter:
 	# run the linter hooks from pre-commit on all files
@@ -61,5 +61,5 @@ start: container
 docs:
 	# use sphinx to auto-generate html docs from code
 	@ echo generating api docs; \
-	poetry run sphinx-apidoc -f -o docs/source mex; \
-	poetry run sphinx-build -aE -b dirhtml docs docs/dist; \
+	pdm run sphinx-apidoc -f -o docs/source mex; \
+	pdm run sphinx-build -aE -b dirhtml docs docs/dist; \
