@@ -13,6 +13,7 @@ from typing import (
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 
+from mex.backend.rules.models import RuleSet
 from mex.backend.types import LiteralStringType
 from mex.common.models import EXTRACTED_MODEL_CLASSES_BY_NAME
 from mex.common.types import MERGED_IDENTIFIER_CLASSES, Link, Text
@@ -70,7 +71,10 @@ LITERAL_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
 
 # fields typed as merged identifiers containing references to merged items
 REFERENCE_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
-    EXTRACTED_MODEL_CLASSES_BY_NAME,
+    {
+        **EXTRACTED_MODEL_CLASSES_BY_NAME,
+        "RuleSet": RuleSet
+    },
     lambda field_info: _has_any_type(field_info, *MERGED_IDENTIFIER_CLASSES),
 )
 
