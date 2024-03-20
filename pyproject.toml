@@ -1,34 +1,33 @@
-[tool.poetry]
+[project]
 name = "mex-backend"
 version = "0.11.0"
 description = "Backend server for the RKI metadata exchange."
-authors = ["RKI MEx Team <mex@rki.de>"]
-readme = "README.md"
-license = "MIT"
-repository = "https://github.com/robert-koch-institut/mex-backend"
-packages = [{ include = "mex" }]
+authors = [{ name = "MEx Team", email = "mex@rki.de" }]
+readme = { file = "README.md", content-type = "text/markdown" }
+license = { file = "LICENSE" }
+urls = { Repository = "https://github.com/robert-koch-institut/mex-backend" }
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110.0",
+    "httpx>=0.27.0",
+    "mex-common@git+https://github.com/robert-koch-institut/mex-common.git@0.19.3",
+    "neo4j>=5.17.0",
+    "pydantic>=2.6.4",
+    "uvicorn[standard]>=0.27.0",
+]
+optional-dependencies.dev = [
+    "black>=24.3.0",
+    "ipdb>=0.13.13",
+    "mypy>=1.9.0",
+    "pytest>=8.1.1",
+    "pytest-cov>=4.1.0",
+    "pytest-random-order>=1.1.1",
+    "ruff>=0.3.3",
+    "types-pytz>=2024.1.0",
+    "sphinx>=7.2.6",
+]
 
-[tool.poetry.dependencies]
-python = "^3.11"
-fastapi = "^0.110.0"
-httpx = "^0.27.0"
-mex-common = { git = "https://github.com/robert-koch-institut/mex-common.git", rev = "0.19.3" }
-neo4j = "^5.17.0"
-pydantic = "2.6.4"
-uvicorn = { version = "^0.27.0", extras = ["standard"] }
-
-[tool.poetry.group.dev.dependencies]
-black = "^24.3.0"
-ipdb = "^0.13.13"
-mypy = "^1.9.0"
-pytest = "^8.1.1"
-pytest-cov = "^4.1.0"
-pytest-random-order = "^1.1.1"
-ruff = "^0.3.3"
-types-pytz = "^2024.1.0"
-sphinx = "^7.2.6"
-
-[tool.poetry.scripts]
+[project.scripts]
 backend = "mex.backend.main:main"
 
 [tool.cruft]
