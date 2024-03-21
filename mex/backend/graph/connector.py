@@ -18,6 +18,7 @@ from mex.backend.graph.query import QueryBuilder
 from mex.backend.graph.transform import (
     expand_references_in_search_result,
 )
+from mex.backend.rules.models import RuleSet
 from mex.backend.transform import to_primitive
 from mex.common.connector import BaseConnector
 from mex.common.exceptions import MExError
@@ -319,6 +320,30 @@ class GraphConnector(BaseConnector):
             identifier=model.identifier,
             ref_identifiers=ref_identifiers,
             ref_positions=ref_positions,
+        )
+
+    def merge_rule_set(self, model: RuleSet) -> Result:
+        query_builder = QueryBuilder.get()
+        stable_target_id = Identifier.generate()
+
+        mutable_fields = set(MUTABLE_FIELDS_BY_CLASS_NAME["ExtractedActivity"])
+        final_fields = set(FINAL_FIELDS_BY_CLASS_NAME["ExtractedActivity"])
+
+        additive = model.addValues
+        mutable_values = to_primitive(additive, include=mutable_fields)
+        final_values = to_primitive(additive, include=final_fields)
+        all_values = {**mutable_values, **final_values}
+
+        query = query_builder.merge_rule_set(
+            merged_label="MergedActivity",
+            additive_label="AddActivityValues",
+        )
+
+        return self.commit(
+            query,
+            on_create=all_values,
+            on_match=mutable_values,
+            stable_target_id=stable_target_id,
         )
 
     def ingest(self, models: list[AnyExtractedModel]) -> list[Identifier]:

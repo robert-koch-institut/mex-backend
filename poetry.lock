@@ -733,16 +733,16 @@ langdetect = "^1.0.9"
 ldap3 = "^2.9.1"
 numpy = "^1.26.4"
 pandas = "^2.2.0"
-pyarrow = "^15.0.0"
-pydantic = "^2.6.1"
+pyarrow = "^15.0.1"
+pydantic = "^2.6.4"
 pydantic-settings = "^2.1.0"
 requests = "^2.31.0"
 
 [package.source]
 type = "git"
 url = "https://github.com/robert-koch-institut/mex-common.git"
-reference = "0.21.0"
-resolved_reference = "6030a3a8b3610bbca649a24f01a227a21c495a1d"
+reference = "feature/mx-1571-prep-rules"
+resolved_reference = "7d8ac821adb86d6e24215b71cf617346c9297fcf"
 
 [[package]]
 name = "mypy"
@@ -1959,4 +1959,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "50aaca5568501a37afa6992b8d03225b306196d3ccf17dc8e0665ba87c8f6a68"
+content-hash = "7f534ffa7f466c63f6ead170ccd1714d8306f4aef83e923ad64e07252c11d625"

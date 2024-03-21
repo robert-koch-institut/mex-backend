@@ -12,7 +12,7 @@ packages = [{ include = "mex" }]
 python = "^3.11"
 fastapi = "^0.110.0"
 httpx = "^0.27.0"
-mex-common = { git = "https://github.com/robert-koch-institut/mex-common.git", rev = "0.21.0" }
+mex-common = { git = "https://github.com/robert-koch-institut/mex-common.git", rev = "feature/mx-1571-prep-rules" }
 neo4j = "^5.17.0"
 pydantic = "2.6.4"
 uvicorn = { version = "^0.27.0", extras = ["standard"] }
