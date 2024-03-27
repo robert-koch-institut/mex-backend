@@ -1,6 +1,6 @@
 import json
 from string import Template
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from neo4j import Driver, GraphDatabase
 
@@ -18,6 +18,7 @@ from mex.backend.graph.query import QueryBuilder
 from mex.backend.graph.transform import (
     expand_references_in_search_result,
 )
+from mex.backend.rules.models import ActivityRuleSet, VariableRuleSet
 from mex.backend.transform import to_primitive
 from mex.common.connector import BaseConnector
 from mex.common.exceptions import MExError
@@ -28,11 +29,19 @@ from mex.common.models import (
     MEX_PRIMARY_SOURCE_IDENTIFIER,
     MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    AdditiveActivity,
     AnyExtractedModel,
     ExtractedPrimarySource,
 )
+from mex.common.models.rule_set import BlockingRule
 from mex.common.transform import to_key_and_values
 from mex.common.types import Identifier, Link, Text
+
+if TYPE_CHECKING:
+    BlockingActivity = BlockingRule
+    BlockingVariable = BlockingRule
+else:
+    from mex.common.models import BlockingActivity
 
 MEX_EXTRACTED_PRIMARY_SOURCE = ExtractedPrimarySource.model_construct(
     hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -320,6 +329,103 @@ class GraphConnector(BaseConnector):
             ref_identifiers=ref_identifiers,
             ref_positions=ref_positions,
         )
+
+    def _merge_rule_set(
+        self,
+        model: AdditiveActivity | BlockingActivity,
+        stable_target_id: Identifier,
+    ) -> None:
+        query_builder = QueryBuilder.get()
+
+        text_fields = set(TEXT_FIELDS_BY_CLASS_NAME["ExtractedActivity"])
+        link_fields = set(LINK_FIELDS_BY_CLASS_NAME["ExtractedActivity"])
+        mutable_fields = set(MUTABLE_FIELDS_BY_CLASS_NAME["ExtractedActivity"])
+        final_fields = set(FINAL_FIELDS_BY_CLASS_NAME["ExtractedActivity"])
+
+        mutable_values = to_primitive(model, include=mutable_fields)
+        final_values = to_primitive(model, include=final_fields)
+        all_values = {**mutable_values, **final_values}
+
+        text_values = to_primitive(model, include=text_fields)
+        link_values = to_primitive(model, include=link_fields)
+
+        nested_edge_labels: list[str] = []
+        nested_node_labels: list[str] = []
+        nested_positions: list[int] = []
+        nested_values: list[dict[str, Any]] = []
+
+        for nested_node_label, raws in [
+            (Text.__name__, text_values),
+            (Link.__name__, link_values),
+        ]:
+            for nested_edge_label, raw_values in to_key_and_values(raws):
+                for position, raw_value in enumerate(raw_values):
+                    nested_edge_labels.append(nested_edge_label)
+                    nested_node_labels.append(nested_node_label)
+                    nested_positions.append(position)
+                    nested_values.append(raw_value)
+
+        query = query_builder.merge_rule_set(
+            rule_label=model.entityType,
+            merged_label="MergedActivity",
+            nested_edge_labels=nested_edge_labels,
+            nested_node_labels=nested_node_labels,
+        )
+
+        self.commit(
+            query,
+            stable_target_id=stable_target_id,
+            on_match=mutable_values,
+            on_create=all_values,
+            nested_values=nested_values,
+            nested_positions=nested_positions,
+        )
+
+    def _merge_rule_set_edges(
+        self,
+        model: AdditiveActivity | BlockingActivity,
+        stable_target_id: Identifier,
+    ) -> None:
+        query_builder = QueryBuilder.get()
+        ref_fields = REFERENCE_FIELDS_BY_CLASS_NAME["ExtractedActivity"]
+        ref_values = to_primitive(model, include=set(ref_fields))
+
+        ref_labels: list[str] = []
+        ref_identifiers: list[str] = []
+        ref_positions: list[int] = []
+
+        for field, identifiers in to_key_and_values(ref_values):
+            for position, identifier in enumerate(identifiers):
+                ref_identifiers.append(identifier)
+                ref_positions.append(position)
+                ref_labels.append(field)
+
+        ref_labels.append("hadPrimarySource")
+        ref_identifiers.append(MEX_PRIMARY_SOURCE_STABLE_TARGET_ID)
+        ref_positions.append(0)
+
+        ref_labels.append("stableTargetId")
+        ref_identifiers.append(stable_target_id)
+        ref_positions.append(0)
+
+        query = query_builder.merge_rule_set_edges(
+            rule_set_label=model.entityType,
+            merged_label="MergedActivity",
+            ref_labels=ref_labels,
+        )
+
+        self.commit(
+            query,
+            stable_target_id=stable_target_id,
+            ref_identifiers=ref_identifiers,
+            ref_positions=ref_positions,
+        )
+
+    def create_rule_set(self, rule_set: ActivityRuleSet) -> None:
+        stable_target_id = Identifier.generate()
+        for rule in (rule_set.addValues, rule_set.blockValues):
+            self._merge_rule_set(rule, stable_target_id)
+            self._merge_rule_set_edges(rule, stable_target_id)
 
     def ingest(self, models: list[AnyExtractedModel]) -> list[Identifier]:
         """Ingest a list of models into the graph as nodes and connect all edges.

@@ -56,39 +56,42 @@ def _group_fields_by_class_name(
         for name, cls in model_classes_by_name.items()
     }
 
+MODEL_CLASSES_BY_NAME = {
+    **EXTRACTED_MODEL_CLASSES_BY_NAME,
+}
 
 # fields that are immutable and can only be set once
 FROZEN_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
-    EXTRACTED_MODEL_CLASSES_BY_NAME, lambda field_info: field_info.frozen is True
+    MODEL_CLASSES_BY_NAME, lambda field_info: field_info.frozen is True
 )
 
 # static fields that are set once on class-level to a literal type
 LITERAL_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
-    EXTRACTED_MODEL_CLASSES_BY_NAME,
+    MODEL_CLASSES_BY_NAME,
     lambda field_info: isinstance(field_info.annotation, LiteralStringType),
 )
 
 # fields typed as merged identifiers containing references to merged items
 REFERENCE_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
-    EXTRACTED_MODEL_CLASSES_BY_NAME,
+    MODEL_CLASSES_BY_NAME,
     lambda field_info: _has_any_type(field_info, *MERGED_IDENTIFIER_CLASSES),
 )
 
 # nested fields that contain `Text` objects
 TEXT_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
-    EXTRACTED_MODEL_CLASSES_BY_NAME,
+    MODEL_CLASSES_BY_NAME,
     lambda field_info: _has_any_type(field_info, Text),
 )
 
 # nested fields that contain `Link` objects
 LINK_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
-    EXTRACTED_MODEL_CLASSES_BY_NAME,
+    MODEL_CLASSES_BY_NAME,
     lambda field_info: _has_any_type(field_info, Link),
 )
 
 # fields annotated as `str` type
 STRING_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
-    EXTRACTED_MODEL_CLASSES_BY_NAME, lambda field_info: _has_any_type(field_info, str)
+    MODEL_CLASSES_BY_NAME, lambda field_info: _has_any_type(field_info, str)
 )
 
 # fields that should be indexed as searchable fields
@@ -120,7 +123,7 @@ MUTABLE_FIELDS_BY_CLASS_NAME = {
             )
         }
     )
-    for name, cls in EXTRACTED_MODEL_CLASSES_BY_NAME.items()
+    for name, cls in MODEL_CLASSES_BY_NAME.items()
 }
 
 # fields with values that should be set once but are neither literal nor references
@@ -137,5 +140,5 @@ FINAL_FIELDS_BY_CLASS_NAME = {
             )
         }
     )
-    for name, cls in EXTRACTED_MODEL_CLASSES_BY_NAME.items()
+    for name, cls in MODEL_CLASSES_BY_NAME.items()
 }

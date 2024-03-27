@@ -5,10 +5,9 @@ import uvicorn
 from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ValidationError
-from starlette.requests import Request
 
+from mex.backend.exceptions import handle_uncaught_exception, handle_validation_error
 from mex.backend.extracted.main import router as extracted_router
 from mex.backend.identity.main import router as identity_router
 from mex.backend.ingest.main import router as ingest_router
@@ -17,10 +16,8 @@ from mex.backend.merged.main import router as merged_router
 from mex.backend.rules.main import router as rules_router
 from mex.backend.security import has_read_access, has_write_access
 from mex.backend.settings import BackendSettings
-from mex.backend.transform import to_primitive
 from mex.common.cli import entrypoint
 from mex.common.connector import ConnectorContext
-from mex.common.exceptions import MExError
 from mex.common.logging import logger
 from mex.common.types import Identifier
 from mex.common.types.identifier import MEX_ID_PATTERN
@@ -101,7 +98,7 @@ router.include_router(extracted_router, dependencies=[Depends(has_read_access)])
 router.include_router(identity_router, dependencies=[Depends(has_write_access)])
 router.include_router(ingest_router, dependencies=[Depends(has_write_access)])
 router.include_router(merged_router, dependencies=[Depends(has_read_access)])
-router.include_router(rules_router, dependencies=[Depends(has_read_access)])
+router.include_router(rules_router, dependencies=[Depends(has_write_access)])
 
 
 class SystemStatus(BaseModel):
@@ -116,20 +113,8 @@ def check_system_status() -> SystemStatus:
     return SystemStatus(status="ok")
 
 
-def handle_uncaught_exception(request: Request, exc: Exception) -> JSONResponse:
-    """Handle uncaught errors and provide some debugging clues."""
-    logger.exception("Error %s", exc)
-    if isinstance(exc, ValidationError):
-        errors: list[Any] = exc.errors()
-    else:
-        errors = [dict(type=type(exc).__name__)]
-    body = dict(message=str(exc), debug=dict(errors=errors))
-    return JSONResponse(to_primitive(body), 500)
-
-
 app.include_router(router)
-app.add_exception_handler(ValidationError, handle_uncaught_exception)
-app.add_exception_handler(MExError, handle_uncaught_exception)
+app.add_exception_handler(ValidationError, handle_validation_error)
 app.add_exception_handler(Exception, handle_uncaught_exception)
 app.add_middleware(
     CORSMiddleware,

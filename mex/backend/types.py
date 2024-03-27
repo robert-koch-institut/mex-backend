@@ -4,7 +4,6 @@ from typing import Literal
 from pydantic import SecretStr
 
 from mex.common.models import (
-    BASE_MODEL_CLASSES_BY_NAME,
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
     BaseModel,
@@ -68,7 +67,7 @@ class DynamicStrEnum(EnumMeta):
 class UnprefixedType(Enum, metaclass=DynamicStrEnum):
     """Enumeration of possible types without any prefix."""
 
-    __names__ = list(m.removeprefix("Base") for m in BASE_MODEL_CLASSES_BY_NAME)
+    __names__ = list(m.removeprefix("Extracted") for m in EXTRACTED_MODEL_CLASSES_BY_NAME)
 
 
 class ExtractedType(Enum, metaclass=DynamicStrEnum):
