@@ -219,10 +219,10 @@ class GraphConnector(BaseConnector):
         All nested properties (like Text or Link) are created as their own nodes
         and linked via edges. For multi-valued fields, the position of each nested
         object is stored as a property on the outbound edge.
-        Any nested objects that are found in the graph, gut are not present on the
+        Any nested objects that are found in the graph, but are not present on the
         model any more are purged.
-        In addition, a merged item is created (if it does not exist yet) and linked
-        to the extracted item via an edge of the label `stableTargetId`.
+        In addition, a merged item is created (if it does not exist yet) and the
+        extracted is linked it via an edge of the label `stableTargetId`.
 
         Args:
             model: Model to merge into the graph as a node
