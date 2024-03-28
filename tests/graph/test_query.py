@@ -284,10 +284,10 @@ CALL {
 WITH source, collect(edge) as edges
 CALL {
     WITH source, edges
-    MATCH (source)-[gc]->(:MergedThis|MergedThat|MergedOther)
-    WHERE NOT gc IN edges
-    DELETE gc
-    RETURN count(gc) as pruned
+    MATCH (source)-[outdated_edge]->(:MergedThis|MergedThat|MergedOther)
+    WHERE NOT outdated_edge IN edges
+    DELETE outdated_edge
+    RETURN count(outdated_edge) as pruned
 }
 RETURN count(edges) as merged, pruned, edges;""",
         ),
@@ -301,10 +301,10 @@ CALL {
 WITH source, collect(edge) as edges
 CALL {
     WITH source, edges
-    MATCH (source)-[gc]->(:MergedThis|MergedThat|MergedOther)
-    WHERE NOT gc IN edges
-    DELETE gc
-    RETURN count(gc) as pruned
+    MATCH (source)-[outdated_edge]->(:MergedThis|MergedThat|MergedOther)
+    WHERE NOT outdated_edge IN edges
+    DELETE outdated_edge
+    RETURN count(outdated_edge) as pruned
 }
 RETURN count(edges) as merged, pruned, edges;""",
         ),
@@ -345,10 +345,10 @@ WITH extracted,
     [value_0, value_1, value_2] as values
 CALL {
     WITH extracted, values
-    MATCH (extracted)-[]->(gc:Link|Text|Location)
-    WHERE NOT gc IN values
-    DETACH DELETE gc
-    RETURN count(gc) as pruned
+    MATCH (extracted)-[]->(outdated_node:Link|Text|Location)
+    WHERE NOT outdated_node IN values
+    DETACH DELETE outdated_node
+    RETURN count(outdated_node) as pruned
 }
 RETURN extracted, edges, values, pruned;""",
         ),
@@ -365,10 +365,10 @@ WITH extracted,
     [] as values
 CALL {
     WITH extracted, values
-    MATCH (extracted)-[]->(gc:Link|Text|Location)
-    WHERE NOT gc IN values
-    DETACH DELETE gc
-    RETURN count(gc) as pruned
+    MATCH (extracted)-[]->(outdated_node:Link|Text|Location)
+    WHERE NOT outdated_node IN values
+    DETACH DELETE outdated_node
+    RETURN count(outdated_node) as pruned
 }
 RETURN extracted, edges, values, pruned;""",
         ),

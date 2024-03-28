@@ -34,9 +34,9 @@ CALL {
 WITH source, collect(edge) as edges
 CALL {
     WITH source, edges
-    MATCH (source)-[gc]->(:<<merged_labels|join("|")>>)
-    WHERE NOT gc IN edges
-    DELETE gc
-    RETURN count(gc) as pruned
+    MATCH (source)-[outdated_edge]->(:<<merged_labels|join("|")>>)
+    WHERE NOT outdated_edge IN edges
+    DELETE outdated_edge
+    RETURN count(outdated_edge) as pruned
 }
 RETURN count(edges) as merged, pruned, edges;

@@ -39,9 +39,9 @@ WITH extracted,
     [<<range(nested_edge_labels|count)|map("ensure_prefix", "value_")|join(", ")>>] as values
 CALL {
     WITH extracted, values
-    MATCH (extracted)-[]->(gc:<<nested_labels|join("|")>>)
-    WHERE NOT gc IN values
-    DETACH DELETE gc
-    RETURN count(gc) as pruned
+    MATCH (extracted)-[]->(outdated_node:<<nested_labels|join("|")>>)
+    WHERE NOT outdated_node IN values
+    DETACH DELETE outdated_node
+    RETURN count(outdated_node) as pruned
 }
 RETURN extracted, edges, values, pruned;
