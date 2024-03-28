@@ -7,10 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ValidationError
-from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
-from starlette.responses import Response
-from starlette.types import ASGIApp
 
 from mex.backend.extracted.main import router as extracted_router
 from mex.backend.identity.main import router as identity_router
@@ -24,7 +21,6 @@ from mex.common.cli import entrypoint
 from mex.common.connector import ConnectorContext
 from mex.common.exceptions import MExError
 from mex.common.logging import logger
-from mex.common.settings import SettingsContext
 from mex.common.types import Identifier
 from mex.common.types.identifier import MEX_ID_PATTERN
 
@@ -56,7 +52,7 @@ def create_openapi_schema() -> dict[str, Any]:
         openapi_schema["components"]["schemas"][name] = {
             "title": name,
             "type": "string",
-            "description": f"Identifier for {name.replace('ID', '')} items.",
+            "description": subclass.__doc__,
             "pattern": MEX_ID_PATTERN,
         }
 
@@ -129,22 +125,6 @@ def handle_uncaught_exception(request: Request, exc: Exception) -> JSONResponse:
     return JSONResponse(to_primitive(body), 500)
 
 
-class SettingsMiddleware(BaseHTTPMiddleware):
-    """Middleware to inject the settings into requests contexts."""
-
-    def __init__(self, app: ASGIApp) -> None:
-        """Store the settings on the middleware."""
-        super().__init__(app)
-        self.settings = BackendSettings.get()
-
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
-        """Dispatch a new request with settings injected into its context."""
-        SettingsContext.set(self.settings)
-        return await call_next(request)
-
-
 app.include_router(router)
 app.add_exception_handler(ValidationError, handle_uncaught_exception)
 app.add_exception_handler(MExError, handle_uncaught_exception)
@@ -156,7 +136,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_origins=["*"],
 )
-app.add_middleware(SettingsMiddleware)
 
 
 @entrypoint(BackendSettings)

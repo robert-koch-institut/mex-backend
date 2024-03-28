@@ -1,48 +1,65 @@
 from typing import Any
-from unittest.mock import MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
 
+from mex.backend.transform import to_primitive
+from mex.common.models import ExtractedOrganizationalUnit
+from tests.conftest import MockedGraph
+
 
 def test_search_extracted_items_mocked(
-    client_with_api_key_read_permission: TestClient, mocked_graph: MagicMock
+    client_with_api_key_read_permission: TestClient, mocked_graph: MockedGraph
 ) -> None:
+    unit = ExtractedOrganizationalUnit.model_validate(
+        {
+            "hadPrimarySource": "2222222222222222",
+            "identifierInPrimarySource": "unit-1",
+            "email": ["test@foo.bar"],
+            "name": [
+                {"value": "Eine unit von einer Org.", "language": "de"},
+                {"value": "A unit of an org.", "language": "en"},
+            ],
+        }
+    )
     mocked_graph.return_value = [
         {
-            "c": 1,
-            "l": "ExtractedContactPoint",
-            "r": [{"key": "hadPrimarySource", "value": ["2222222222222222"]}],
-            "n": {
-                "stableTargetId": "0000000000000000",
-                "identifier": "1111111111111111",
-                "identifierInPrimarySource": "test",
-                "email": "test@foo.bar",
-            },
-            "i": {
-                "stableTargetId": "0000000000000000",
-                "hadPrimarySource": "2222222222222222",
-                "identifierInPrimarySource": "test",
-                "identifier": "1111111111111111",
-            },
-        },
+            "items": [
+                {
+                    "identifier": unit.identifier,
+                    "identifierInPrimarySource": unit.identifierInPrimarySource,
+                    "stableTargetId": unit.stableTargetId,
+                    "email": ["test@foo.bar"],
+                    "entityType": "ExtractedOrganizationalUnit",
+                    "_refs": [
+                        {
+                            "label": "hadPrimarySource",
+                            "position": 0,
+                            "value": "2222222222222222",
+                        },
+                        {
+                            "label": "name",
+                            "position": 0,
+                            "value": {
+                                "value": "Eine unit von einer Org.",
+                                "language": "de",
+                            },
+                        },
+                        {
+                            "label": "name",
+                            "position": 1,
+                            "value": {"value": "A unit of an org.", "language": "en"},
+                        },
+                    ],
+                }
+            ],
+            "total": 14,
+        }
     ]
 
     response = client_with_api_key_read_permission.get("/v0/extracted-item")
     assert response.status_code == 200, response.text
-    assert response.json() == {
-        "items": [
-            {
-                "$type": "ExtractedContactPoint",
-                "email": ["test@foo.bar"],
-                "hadPrimarySource": "2222222222222222",
-                "identifier": "1111111111111111",
-                "identifierInPrimarySource": "test",
-                "stableTargetId": "0000000000000000",
-            }
-        ],
-        "total": 1,
-    }
+    assert response.json() == {"items": [to_primitive(unit)], "total": 14}
 
 
 @pytest.mark.parametrize(
@@ -76,12 +93,12 @@ def test_search_extracted_items_mocked(
             {
                 "items": [
                     {
-                        "$type": "ExtractedContactPoint",
-                        "email": ["info@rki.de"],
-                        "hadPrimarySource": "bFQoRhcVH5DHUr",
-                        "identifier": "bFQoRhcVH5DHUu",
+                        "identifier": "bFQoRhcVH5DHUv",
+                        "hadPrimarySource": "bFQoRhcVH5DHUq",
                         "identifierInPrimarySource": "cp-1",
-                        "stableTargetId": "bFQoRhcVH5DHUv",
+                        "stableTargetId": "bFQoRhcVH5DHUu",
+                        "email": ["info@contact-point.one"],
+                        "$type": "ExtractedContactPoint",
                     }
                 ],
                 "total": 7,
@@ -92,20 +109,20 @@ def test_search_extracted_items_mocked(
             {
                 "items": [
                     {
-                        "$type": "ExtractedContactPoint",
-                        "email": ["info@rki.de"],
-                        "hadPrimarySource": "bFQoRhcVH5DHUr",
-                        "identifier": "bFQoRhcVH5DHUu",
+                        "identifier": "bFQoRhcVH5DHUv",
+                        "hadPrimarySource": "bFQoRhcVH5DHUq",
                         "identifierInPrimarySource": "cp-1",
-                        "stableTargetId": "bFQoRhcVH5DHUv",
+                        "stableTargetId": "bFQoRhcVH5DHUu",
+                        "email": ["info@contact-point.one"],
+                        "$type": "ExtractedContactPoint",
                     },
                     {
-                        "$type": "ExtractedContactPoint",
-                        "email": ["mex@rki.de"],
-                        "hadPrimarySource": "bFQoRhcVH5DHUr",
-                        "identifier": "bFQoRhcVH5DHUw",
+                        "identifier": "bFQoRhcVH5DHUx",
+                        "hadPrimarySource": "bFQoRhcVH5DHUq",
                         "identifierInPrimarySource": "cp-2",
-                        "stableTargetId": "bFQoRhcVH5DHUx",
+                        "stableTargetId": "bFQoRhcVH5DHUw",
+                        "email": ["help@contact-point.two"],
+                        "$type": "ExtractedContactPoint",
                     },
                 ],
                 "total": 2,
@@ -122,35 +139,33 @@ def test_search_extracted_items_mocked(
                         "description": [],
                         "documentation": [],
                         "hadPrimarySource": "00000000000000",
-                        "identifier": "bFQoRhcVH5DHUs",
+                        "identifier": "bFQoRhcVH5DHUt",
                         "identifierInPrimarySource": "ps-2",
                         "locatedAt": [],
-                        "stableTargetId": "bFQoRhcVH5DHUt",
-                        "title": [
-                            {"language": None, "value": "A cool and searchable title"}
-                        ],
+                        "stableTargetId": "bFQoRhcVH5DHUs",
+                        "title": [],
                         "unitInCharge": [],
-                        "version": None,
+                        "version": "Cool Version v2.13",
                     }
                 ],
                 "total": 1,
             },
         ),
         (
-            "?stableTargetId=bFQoRhcVH5DHUz",
+            "?stableTargetId=bFQoRhcVH5DHUy",
             {
                 "items": [
                     {
                         "$type": "ExtractedOrganizationalUnit",
                         "alternativeName": [],
                         "email": [],
-                        "hadPrimarySource": "bFQoRhcVH5DHUt",
-                        "identifier": "bFQoRhcVH5DHUy",
+                        "hadPrimarySource": "bFQoRhcVH5DHUs",
+                        "identifier": "bFQoRhcVH5DHUz",
                         "identifierInPrimarySource": "ou-1",
                         "name": [{"language": "en", "value": "Unit 1"}],
                         "parentUnit": None,
                         "shortName": [],
-                        "stableTargetId": "bFQoRhcVH5DHUz",
+                        "stableTargetId": "bFQoRhcVH5DHUy",
                         "unitOf": [],
                         "website": [],
                     }

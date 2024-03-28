@@ -2,11 +2,9 @@ from typing import Annotated, Sequence
 
 from fastapi import APIRouter, Query
 
-from mex.backend.extracted.models import ExtractedItemSearchResponse, ExtractedType
-from mex.backend.extracted.transform import (
-    transform_graph_results_to_extracted_item_search_response,
-)
+from mex.backend.extracted.models import ExtractedItemSearchResponse
 from mex.backend.graph.connector import GraphConnector
+from mex.backend.types import ExtractedType
 from mex.common.types import Identifier
 
 router = APIRouter()
@@ -24,11 +22,11 @@ def search_extracted_items(
 ) -> ExtractedItemSearchResponse:
     """Search for extracted items by query text or by type and id."""
     graph = GraphConnector.get()
-    query_results = graph.query_nodes(
+    result = graph.fetch_extracted_data(
         q,
         stableTargetId,
         [str(t.value) for t in entityType or ExtractedType],
         skip,
         limit,
     )
-    return transform_graph_results_to_extracted_item_search_response(query_results)
+    return ExtractedItemSearchResponse.model_validate(result.one())

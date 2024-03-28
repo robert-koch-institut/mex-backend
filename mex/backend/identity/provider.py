@@ -1,30 +1,26 @@
 from functools import cache
 
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.graph.transform import transform_identity_result_to_identity
-from mex.common.exceptions import MExError
 from mex.common.identity import BaseProvider, Identity
-from mex.common.types import Identifier, PrimarySourceID
+from mex.common.types import Identifier, MergedPrimarySourceIdentifier
 
 
 class GraphIdentityProvider(BaseProvider, GraphConnector):
-    """Identity provider that communicates with the neo4j graph database."""
+    """Identity provider that communicates with the graph database."""
 
     @cache  # noqa: B019
     def assign(
         self,
-        had_primary_source: PrimarySourceID,
+        had_primary_source: MergedPrimarySourceIdentifier,
         identifier_in_primary_source: str,
     ) -> Identity:
         """Find an Identity in the database or assign a new one."""
-        graph_result = self.fetch_identities(
+        result = self.fetch_identities(
             had_primary_source=had_primary_source,
             identifier_in_primary_source=identifier_in_primary_source,
         )
-        if len(graph_result.data) > 1:
-            raise MExError("found multiple identities indicating graph inconsistency")
-        if len(graph_result.data) == 1:
-            return transform_identity_result_to_identity(graph_result.data[0])
+        if record := result.one_or_none():
+            return Identity.model_validate(record)
         return Identity(
             hadPrimarySource=had_primary_source,
             identifier=Identifier.generate(),
@@ -44,12 +40,9 @@ class GraphIdentityProvider(BaseProvider, GraphConnector):
         Either provide `stable_target_id` or `had_primary_source`
         and `identifier_in_primary_source` together to get a unique result.
         """
-        graph_result = self.fetch_identities(
+        result = self.fetch_identities(
             had_primary_source=had_primary_source,
             identifier_in_primary_source=identifier_in_primary_source,
             stable_target_id=stable_target_id,
         )
-        return [
-            transform_identity_result_to_identity(result)
-            for result in graph_result.data
-        ]
+        return [Identity.model_validate(result) for result in result]
