@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Annotated, Any
 
 import pytest
 from pydantic import BaseModel
@@ -21,6 +21,7 @@ from mex.common.types import (
         (str | None, [str]),
         (str | int, [str, int]),
         (list[str | int | list[str]], [str, int, str]),
+        (Annotated[list[str | int], "some-annotation"], [str, int]),
         (None, []),
     ),
     ids=[
@@ -28,6 +29,7 @@ from mex.common.types import (
         "optional type",
         "type union",
         "complex nested types",
+        "annotated list",
         "static None",
     ],
 )
