@@ -18,6 +18,7 @@ from mex.backend.graph.query import QueryBuilder
 from mex.backend.graph.transform import (
     expand_references_in_search_result,
 )
+from mex.backend.settings import BackendSettings
 from mex.backend.transform import to_primitive
 from mex.common.connector import BaseConnector
 from mex.common.exceptions import MExError
@@ -55,9 +56,6 @@ class GraphConnector(BaseConnector):
 
     def _init_driver(self) -> Driver:
         """Initialize and return a database driver."""
-        # break import cycle, sigh
-        from mex.backend.settings import BackendSettings
-
         settings = BackendSettings.get()
         return GraphDatabase.driver(
             settings.graph_url,
