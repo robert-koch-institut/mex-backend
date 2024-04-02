@@ -11,9 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- re-implemented queries as templated cql files
+- updated graph connector for new queries
+- improved isolation of neo4j dependency
+- improved documentation and code-readability
+
 ### Deprecated
 
 ### Removed
+
+- trashed hydration module
 
 ### Fixed
 
