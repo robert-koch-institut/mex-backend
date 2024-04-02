@@ -13,8 +13,8 @@ For example, a new model class or changing model fields are automatically handle
 and don't require rewriting any cypher query.
 
 Some of these use-cases could be covered by neo4j's [APOC](https://neo4j.com/labs/apoc/)
-extensions. However, APOC is not included in the official neo4j base image.
-So to keep deployment simple for now, the use of APOC was avoided.
+add-on (e.g. `expand_references_in_search_result`). However, APOC is not included in the
+official neo4j docker image. So, to keep deployment simple, the use of APOC was avoided.
 
 Contrary to the jinja default tags that are centered around curly braces, we use
 less/greater signs that do not collide with cypher syntax that often.
