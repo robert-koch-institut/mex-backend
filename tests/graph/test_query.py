@@ -192,7 +192,7 @@ def test_fetch_extracted_data(
             True,
             """\
 MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
-MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[:hadPrimarySource]->(primary_source:MergedPrimarySource)
+MATCH (n)-[:hadPrimarySource]->(primary_source:MergedPrimarySource)
 WHERE
     primary_source.identifier = $had_primary_source
     AND n.identifierInPrimarySource = $identifier_in_primary_source
@@ -211,7 +211,7 @@ LIMIT $limit;""",
             False,
             """\
 MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
-MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[:hadPrimarySource]->(primary_source:MergedPrimarySource)
+MATCH (n)-[:hadPrimarySource]->(primary_source:MergedPrimarySource)
 RETURN
     merged.identifier as stableTargetId,
     primary_source.identifier as hadPrimarySource,
@@ -226,7 +226,7 @@ LIMIT $limit;""",
             True,
             """\
 MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
-MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[:hadPrimarySource]->(primary_source:MergedPrimarySource)
+MATCH (n)-[:hadPrimarySource]->(primary_source:MergedPrimarySource)
 WHERE
     merged.identifier = $stable_target_id
 RETURN
