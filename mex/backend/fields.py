@@ -29,7 +29,7 @@ def _get_inner_types(annotation: Any) -> Generator[type, None, None]:
         yield annotation
 
 
-def _has_any_type(field: FieldInfo, *types: type) -> bool:
+def _contains_only_types(field: FieldInfo, *types: type) -> bool:
     """Return whether a field is annotated as one of the given types.
 
     Lists and unions with `NoneType` are allowed and only the non-`NoneType` annotation
@@ -71,24 +71,25 @@ LITERAL_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
 # fields typed as merged identifiers containing references to merged items
 REFERENCE_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
     EXTRACTED_MODEL_CLASSES_BY_NAME,
-    lambda field_info: _has_any_type(field_info, *MERGED_IDENTIFIER_CLASSES),
+    lambda field_info: _contains_only_types(field_info, *MERGED_IDENTIFIER_CLASSES),
 )
 
 # nested fields that contain `Text` objects
 TEXT_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
     EXTRACTED_MODEL_CLASSES_BY_NAME,
-    lambda field_info: _has_any_type(field_info, Text),
+    lambda field_info: _contains_only_types(field_info, Text),
 )
 
 # nested fields that contain `Link` objects
 LINK_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
     EXTRACTED_MODEL_CLASSES_BY_NAME,
-    lambda field_info: _has_any_type(field_info, Link),
+    lambda field_info: _contains_only_types(field_info, Link),
 )
 
 # fields annotated as `str` type
 STRING_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
-    EXTRACTED_MODEL_CLASSES_BY_NAME, lambda field_info: _has_any_type(field_info, str)
+    EXTRACTED_MODEL_CLASSES_BY_NAME,
+    lambda field_info: _contains_only_types(field_info, str),
 )
 
 # fields that should be indexed as searchable fields
