@@ -70,6 +70,7 @@ def close_connectors() -> None:
             logger.exception("Error closing %s", connector_type)
         else:
             logger.info("Closed %s", connector_type)
+    context.clear()
 
 
 @asynccontextmanager

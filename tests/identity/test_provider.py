@@ -9,7 +9,11 @@ from mex.common.models import (
     MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
 )
-from mex.common.types import Identifier, MergedPrimarySourceIdentifier
+from mex.common.types import (
+    Identifier,
+    MergedOrganizationalUnitIdentifier,
+    MergedPrimarySourceIdentifier,
+)
 from tests.conftest import MockedGraph
 
 
@@ -106,10 +110,10 @@ def test_assign_identity_inconsistency_mocked(
             "bFQoRhcVH5DHUr",
             "cp-2",
             {
-                "identifier": "bFQoRhcVH5DHUC",
+                "identifier": "bFQoRhcVH5DHUw",
                 "hadPrimarySource": "bFQoRhcVH5DHUr",
                 "identifierInPrimarySource": "cp-2",
-                "stableTargetId": "bFQoRhcVH5DHUD",
+                "stableTargetId": "bFQoRhcVH5DHUx",
             },
         ),
         (
@@ -241,22 +245,22 @@ def test_fetch_identities_mocked(
             [
                 {
                     "hadPrimarySource": "00000000000000",
-                    "identifier": "bFQoRhcVH5DHUr",
+                    "identifier": "bFQoRhcVH5DHUq",
                     "identifierInPrimarySource": "ps-1",
-                    "stableTargetId": "bFQoRhcVH5DHUq",
+                    "stableTargetId": "bFQoRhcVH5DHUr",
                 }
             ],
         ),
         (
             None,
             None,
-            Identifier("bFQoRhcVH5DHUy"),
+            MergedOrganizationalUnitIdentifier("bFQoRhcVH5DHUz"),
             [
                 {
-                    "identifier": "bFQoRhcVH5DHUz",
-                    "hadPrimarySource": "bFQoRhcVH5DHUs",
+                    "identifier": "bFQoRhcVH5DHUy",
+                    "hadPrimarySource": "bFQoRhcVH5DHUt",
                     "identifierInPrimarySource": "ou-1",
-                    "stableTargetId": "bFQoRhcVH5DHUy",
+                    "stableTargetId": "bFQoRhcVH5DHUz",
                 }
             ],
         ),

@@ -1,12 +1,12 @@
 from enum import Enum
-from typing import Any, Callable
+from typing import Any, Callable, Final
 
 from fastapi.encoders import jsonable_encoder
 
 from mex.common.types import Identifier, TemporalEntity
 
-JSON_ENCODERS = {
-    Enum: lambda obj: obj.value,
+JSON_ENCODERS: Final[dict[type, Callable[[Any], str]]] = {
+    Enum: lambda obj: str(obj.value),
     Identifier: lambda obj: str(obj),
     TemporalEntity: lambda obj: str(obj),
 }

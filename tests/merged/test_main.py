@@ -107,9 +107,9 @@ def test_search_merged_items_mocked(
             {
                 "items": [
                     {
-                        "identifier": "bFQoRhcVH5DHUu",
-                        "email": ["info@contact-point.one"],
                         "$type": "MergedContactPoint",
+                        "email": ["info@contact-point.one"],
+                        "identifier": "bFQoRhcVH5DHUv",
                     }
                 ],
                 "total": 7,
@@ -120,14 +120,14 @@ def test_search_merged_items_mocked(
             {
                 "items": [
                     {
-                        "identifier": "bFQoRhcVH5DHUu",
-                        "email": ["info@contact-point.one"],
                         "$type": "MergedContactPoint",
+                        "email": ["info@contact-point.one"],
+                        "identifier": "bFQoRhcVH5DHUv",
                     },
                     {
-                        "identifier": "bFQoRhcVH5DHUw",
-                        "email": ["help@contact-point.two"],
                         "$type": "MergedContactPoint",
+                        "email": ["help@contact-point.two"],
+                        "identifier": "bFQoRhcVH5DHUx",
                     },
                 ],
                 "total": 2,
@@ -143,7 +143,7 @@ def test_search_merged_items_mocked(
                         "contact": [],
                         "description": [],
                         "documentation": [],
-                        "identifier": "bFQoRhcVH5DHUs",
+                        "identifier": "bFQoRhcVH5DHUt",
                         "locatedAt": [],
                         "title": [],
                         "unitInCharge": [],
@@ -154,14 +154,14 @@ def test_search_merged_items_mocked(
             },
         ),
         (
-            "?identifier=bFQoRhcVH5DHUy",
+            "?identifier=bFQoRhcVH5DHUz",
             {
                 "items": [
                     {
                         "$type": "MergedOrganizationalUnit",
                         "alternativeName": [],
                         "email": [],
-                        "identifier": "bFQoRhcVH5DHUy",
+                        "identifier": "bFQoRhcVH5DHUz",
                         "name": [{"language": "en", "value": "Unit 1"}],
                         "parentUnit": None,
                         "shortName": [],

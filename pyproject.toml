@@ -108,6 +108,9 @@ select = [
     "N807", # Allow mocking `__init__` for tests
     "S101", # Allow use of `assert` in tests
 ]
+"**/main.py" = [
+    "N803", # Allow dromedaryCase query parameters
+]
 
 [tool.ruff.lint.isort]
 known-first-party = ["mex", "tests"]

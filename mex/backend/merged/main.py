@@ -14,11 +14,9 @@ router = APIRouter()
 @router.get("/merged-item", tags=["editor", "public"])
 def search_merged_items_facade(
     q: Annotated[str, Query(max_length=100)] = "",
-    stableTargetId: Annotated[  # noqa: N803
-        Identifier | None, Query(deprecated=True)
-    ] = None,
+    stableTargetId: Annotated[Identifier | None, Query(deprecated=True)] = None,
     identifier: Identifier | None = None,
-    entityType: Annotated[  # noqa: N803
+    entityType: Annotated[
         Sequence[MergedType | UnprefixedType], Query(max_length=len(MergedType))
     ] = [],
     skip: Annotated[int, Query(ge=0, le=10e10)] = 0,

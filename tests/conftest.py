@@ -22,10 +22,12 @@ from mex.common.models import (
     ExtractedOrganizationalUnit,
     ExtractedPrimarySource,
 )
+from mex.common.settings import BaseSettings
 from mex.common.transform import MExEncoder
 from mex.common.types import (
     Email,
     Identifier,
+    IdentityProvider,
     Link,
     Text,
     TextLanguage,
@@ -107,7 +109,7 @@ class MockedGraph:
         self.run = session_run
 
     @property
-    def return_value(self) -> list[Any]:
+    def return_value(self) -> list[Any]:  # pragma: no cover
         return self.records
 
     @return_value.setter
@@ -147,11 +149,19 @@ def isolate_identifier_seeds(monkeypatch: MonkeyPatch) -> None:
 
 
 @pytest.fixture(autouse=True)
+def set_identity_provider(is_integration_test: bool) -> None:
+    """Ensure the identifier provider is set to `MEMORY` in unit tests."""
+    if not is_integration_test:
+        settings = BaseSettings.get()
+        settings.identity_provider = IdentityProvider.MEMORY
+
+
+@pytest.fixture(autouse=True)
 def isolate_graph_database(
     is_integration_test: bool, settings: BackendSettings
 ) -> None:
     """Automatically flush the graph database for integration testing."""
-    if is_integration_test:  # pragma: no cover
+    if is_integration_test:
         with GraphDatabase.driver(
             settings.graph_url,
             auth=(

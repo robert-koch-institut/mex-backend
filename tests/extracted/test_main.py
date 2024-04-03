@@ -93,12 +93,12 @@ def test_search_extracted_items_mocked(
             {
                 "items": [
                     {
-                        "identifier": "bFQoRhcVH5DHUv",
-                        "hadPrimarySource": "bFQoRhcVH5DHUq",
-                        "identifierInPrimarySource": "cp-1",
-                        "stableTargetId": "bFQoRhcVH5DHUu",
-                        "email": ["info@contact-point.one"],
                         "$type": "ExtractedContactPoint",
+                        "email": ["info@contact-point.one"],
+                        "hadPrimarySource": "bFQoRhcVH5DHUr",
+                        "identifier": "bFQoRhcVH5DHUu",
+                        "identifierInPrimarySource": "cp-1",
+                        "stableTargetId": "bFQoRhcVH5DHUv",
                     }
                 ],
                 "total": 7,
@@ -109,20 +109,20 @@ def test_search_extracted_items_mocked(
             {
                 "items": [
                     {
-                        "identifier": "bFQoRhcVH5DHUv",
-                        "hadPrimarySource": "bFQoRhcVH5DHUq",
-                        "identifierInPrimarySource": "cp-1",
-                        "stableTargetId": "bFQoRhcVH5DHUu",
-                        "email": ["info@contact-point.one"],
                         "$type": "ExtractedContactPoint",
+                        "email": ["info@contact-point.one"],
+                        "hadPrimarySource": "bFQoRhcVH5DHUr",
+                        "identifier": "bFQoRhcVH5DHUu",
+                        "identifierInPrimarySource": "cp-1",
+                        "stableTargetId": "bFQoRhcVH5DHUv",
                     },
                     {
-                        "identifier": "bFQoRhcVH5DHUx",
-                        "hadPrimarySource": "bFQoRhcVH5DHUq",
-                        "identifierInPrimarySource": "cp-2",
-                        "stableTargetId": "bFQoRhcVH5DHUw",
-                        "email": ["help@contact-point.two"],
                         "$type": "ExtractedContactPoint",
+                        "email": ["help@contact-point.two"],
+                        "hadPrimarySource": "bFQoRhcVH5DHUr",
+                        "identifier": "bFQoRhcVH5DHUw",
+                        "identifierInPrimarySource": "cp-2",
+                        "stableTargetId": "bFQoRhcVH5DHUx",
                     },
                 ],
                 "total": 2,
@@ -139,10 +139,10 @@ def test_search_extracted_items_mocked(
                         "description": [],
                         "documentation": [],
                         "hadPrimarySource": "00000000000000",
-                        "identifier": "bFQoRhcVH5DHUt",
+                        "identifier": "bFQoRhcVH5DHUs",
                         "identifierInPrimarySource": "ps-2",
                         "locatedAt": [],
-                        "stableTargetId": "bFQoRhcVH5DHUs",
+                        "stableTargetId": "bFQoRhcVH5DHUt",
                         "title": [],
                         "unitInCharge": [],
                         "version": "Cool Version v2.13",
@@ -152,20 +152,20 @@ def test_search_extracted_items_mocked(
             },
         ),
         (
-            "?stableTargetId=bFQoRhcVH5DHUy",
+            "?stableTargetId=bFQoRhcVH5DHUz",
             {
                 "items": [
                     {
                         "$type": "ExtractedOrganizationalUnit",
                         "alternativeName": [],
                         "email": [],
-                        "hadPrimarySource": "bFQoRhcVH5DHUs",
-                        "identifier": "bFQoRhcVH5DHUz",
+                        "hadPrimarySource": "bFQoRhcVH5DHUt",
+                        "identifier": "bFQoRhcVH5DHUy",
                         "identifierInPrimarySource": "ou-1",
                         "name": [{"language": "en", "value": "Unit 1"}],
                         "parentUnit": None,
                         "shortName": [],
-                        "stableTargetId": "bFQoRhcVH5DHUy",
+                        "stableTargetId": "bFQoRhcVH5DHUz",
                         "unitOf": [],
                         "website": [],
                     }
