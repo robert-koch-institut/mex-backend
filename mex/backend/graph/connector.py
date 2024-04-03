@@ -220,7 +220,7 @@ class GraphConnector(BaseConnector):
         Any nested objects that are found in the graph, but are not present on the
         model any more are purged.
         In addition, a merged item is created (if it does not exist yet) and the
-        extracted is linked it via an edge of the label `stableTargetId`.
+        extracted item is linked to it via an edge with the label `stableTargetId`.
 
         Args:
             model: Model to merge into the graph as a node
