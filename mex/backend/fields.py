@@ -19,7 +19,14 @@ from mex.common.types import MERGED_IDENTIFIER_CLASSES, Link, Text
 
 
 def _get_inner_types(annotation: Any) -> Generator[type, None, None]:
-    """Yield all inner types from unions, lists and optional annotations."""
+    """Yield all inner types from unions, lists and type annotations (except NoneType).
+
+    Args:
+        annotation: A valid python type annotation
+
+    Returns:
+        A generator for all (non-NoneType) types found in the annotation
+    """
     if get_origin(annotation) == Annotated:
         yield from _get_inner_types(get_args(annotation)[0])
     elif get_origin(annotation) in (Union, UnionType, list):
@@ -30,10 +37,17 @@ def _get_inner_types(annotation: Any) -> Generator[type, None, None]:
 
 
 def _contains_only_types(field: FieldInfo, *types: type) -> bool:
-    """Return whether a field is annotated as one of the given types.
+    """Return whether a `field` is annotated as one of the given `types`.
 
-    Lists and unions with `NoneType` are allowed and only the non-`NoneType` annotation
-    is considered for the type-check.
+    Unions, lists and type annotations are checked for their inner types and only the
+    non-`NoneType` types are considered for the type-check.
+
+    Args:
+        field: A pydantic `FieldInfo` object
+        types: Types to look for in the field's annotation
+
+    Returns:
+        Whether the field contains any of the given types
     """
     if inner_types := list(_get_inner_types(field.annotation)):
         return all(inner_type in types for inner_type in inner_types)
@@ -44,7 +58,15 @@ def _group_fields_by_class_name(
     model_classes_by_name: Mapping[str, type[BaseModel]],
     predicate: Callable[[FieldInfo], bool],
 ) -> dict[str, list[str]]:
-    """Group the field names by model class and filter them by the given predicate."""
+    """Group the field names by model class and filter them by the given predicate.
+
+    Args:
+        model_classes_by_name: Map from class names to model classes
+        predicate: Function to filter the fields of the classes by
+
+    Returns:
+        Dictionary mapping class names to a list of field names filtered by `predicate`
+    """
     return {
         name: sorted(
             {
