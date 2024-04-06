@@ -1,13 +1,14 @@
-.PHONY: all test setup hooks install linter pytest wheel container run start docs
+.PHONY: all test setup hooks install linter pytest wheel image run start docs
 all: install test
 test: linter pytest
 
 LATEST = $(shell git describe --tags $(shell git rev-list --tags --max-count=1))
+PWD = $(shell pwd)
 
 setup:
 	# install meta requirements system-wide
 	@ echo installing requirements; \
-	python -m pip --quiet --disable-pip-version-check install --force-reinstall -r requirements.txt; \
+	pip --disable-pip-version-check install --force-reinstall -r requirements.txt; \
 
 hooks:
 	# install pre-commit hooks when not in CI
@@ -43,7 +44,7 @@ container:
 		--tag rki/mex-backend:${LATEST} \
 		--tag rki/mex-backend:latest .; \
 
-run: container
+run: image
 	# run the service as a docker container
 	@ echo running docker container mex-backend:${LATEST}; \
 	docker run \

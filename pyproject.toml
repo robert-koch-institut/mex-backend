@@ -44,6 +44,25 @@ show_error_codes = true
 strict = true
 plugins = ["pydantic.mypy"]
 
+[tool.pdm]
+distribution = true
+
+[tool.pdm.scripts]
+update-all = { cmd = "pdm update --group :all --update-eager --save-minimum" }
+lock-all = { cmd = "pdm lock --group :all" }
+install-all = { cmd = "pdm install --group :all" }
+export-all = { cmd = "pdm export --all :all -f requirements" }
+apidoc = { cmd = "pdm run sphinx-apidoc -f -o docs/source mex" }
+sphinx = { cmd = "pdm run sphinx-build -aE -b dirhtml docs docs/dist" }
+doc = { composite = ["apidoc", "sphinx"] }
+wheel = { cmd = "pdm build --no-sdist" }
+mypy-daemon = { cmd = "pdm run dmypy run --timeout 7200 -- mex" }
+lint = { cmd = "pre-commit run --all-files" }
+unit = { cmd = "pdm run pytest -m 'not integration'" }
+test = { cmd = "pdm run pytest --numprocesses=auto --dist=worksteal" }
+all = { composite = ["install-all", "lint", "test", "doc"] }
+
+
 [tool.pydantic-mypy]
 warn_untyped_fields = true
 
@@ -116,5 +135,5 @@ known-first-party = ["mex", "tests"]
 convention = "google"
 
 [build-system]
-requires = ["poetry-core>=1.9.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["pdm-backend>=2.1.8"]
+build-backend = "pdm.backend"

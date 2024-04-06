@@ -36,6 +36,7 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 # Unit test / coverage reports
+tests/
 htmlcov/
 .tox/
 .nox/
@@ -133,8 +134,7 @@ data/
 .pydocstyle
 Makefile
 mex.bat
-pdm.lock
-poetry.lock
+*.lock
 poetry.toml
 pytest.ini
 requirements.txt

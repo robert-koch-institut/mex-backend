@@ -2,10 +2,12 @@
 
 Backend server for the RKI metadata exchange.
 
-[![testing](https://github.com/robert-koch-institut/mex-backend/actions/workflows/testing.yml/badge.svg)](https://github.com/robert-koch-institut/mex-backend/actions/workflows/testing.yml)
-[![linting](https://github.com/robert-koch-institut/mex-backend/actions/workflows/linting.yml/badge.svg)](https://github.com/robert-koch-institut/mex-backend/actions/workflows/linting.yml)
+[![cookiecutter](https://github.com/robert-koch-institut/mex-backend/actions/workflows/cookiecutter.yml/badge.svg)](https://github.com/robert-koch-institut/mex-template)
 [![cve-scan](https://github.com/robert-koch-institut/mex-backend/actions/workflows/cve-scan.yml/badge.svg)](https://github.com/robert-koch-institut/mex-backend/actions/workflows/cve-scan.yml)
 [![documentation](https://github.com/robert-koch-institut/mex-backend/actions/workflows/documentation.yml/badge.svg)](https://robert-koch-institut.github.io/mex-backend)
+[![linting](https://github.com/robert-koch-institut/mex-backend/actions/workflows/linting.yml/badge.svg)](https://github.com/robert-koch-institut/mex-backend/actions/workflows/linting.yml)
+[![open-code](https://github.com/robert-koch-institut/mex-backend/actions/workflows/open-code.yml/badge.svg)](https://gitlab.opencode.de/robert-koch-institut/mex/mex-backend)
+[![testing](https://github.com/robert-koch-institut/mex-backend/actions/workflows/testing.yml/badge.svg)](https://github.com/robert-koch-institut/mex-backend/actions/workflows/testing.yml)
 
 ## project
 
@@ -63,20 +65,16 @@ components of the MEx project are open-sourced under the same license as well.
 
 ### linting and testing
 
-- on unix run `make test`
-- on windows run `.\mex.bat test`
-- or run manually
-  - linter checks via `pre-commit run --all-files`
-  - all tests via `poetry run pytest`
-  - just unit tests via `poetry run pytest -m "not integration"`
+- run all linters with `pdm lint`
+- run only unit tests with `pdm unit`
+- run unit and integration tests with `pdm test`
 
 ### updating dependencies
 
 - update boilerplate files with `cruft update`
 - update global requirements in `requirements.txt` manually
 - update git hooks with `pre-commit autoupdate`
-- show outdated dependencies with `poetry show --outdated`
-- update dependencies in poetry using `poetry update --lock`
+- update package dependencies using `pdm update-all`
 - update github actions in `.github/workflows/*.yml` manually
 
 ### creating release
@@ -88,14 +86,14 @@ components of the MEx project are open-sourced under the same license as well.
 
 ### container workflow
 
-- build container with `make container`
+- build image with `make image`
 - run directly using docker `make run`
-- start with docker-compose `make start`
+- start with docker compose `make start`
 
 ## commands
 
-- run `poetry run {command} --help` to print instructions
-- run `poetry run {command} --debug` for interactive debugging
+- run `pdm run {command} --help` to print instructions
+- run `pdm run {command} --debug` for interactive debugging
 
 ### backend
 
