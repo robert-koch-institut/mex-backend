@@ -1,4 +1,4 @@
-from typing import Callable
+from collections.abc import Callable
 
 from jinja2 import Environment, PackageLoader, StrictUndefined, select_autoescape
 

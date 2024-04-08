@@ -1,10 +1,8 @@
+from collections.abc import Callable, Generator, Mapping
 from types import NoneType, UnionType
 from typing import (
     Annotated,
     Any,
-    Callable,
-    Generator,
-    Mapping,
     Union,
     get_args,
     get_origin,
