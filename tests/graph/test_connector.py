@@ -1,56 +1,95 @@
-from unittest.mock import MagicMock, call
+from typing import Callable
 
 import pytest
+from black import Mode, format_str
+from pytest import MonkeyPatch
 
-from mex.backend.graph.connector import GraphConnector
-from mex.backend.graph.queries import (
-    HAD_PRIMARY_SOURCE_AND_IDENTIFIER_IN_PRIMARY_SOURCE_IDENTITY_QUERY,
-    STABLE_TARGET_ID_IDENTITY_QUERY,
+from mex.backend.graph import connector as connector_module
+from mex.backend.graph.connector import MEX_EXTRACTED_PRIMARY_SOURCE, GraphConnector
+from mex.backend.graph.query import QueryBuilder
+from mex.common.models import AnyExtractedModel
+from mex.common.types import (
+    ExtractedPrimarySourceIdentifier,
+    Identifier,
+    MergedPrimarySourceIdentifier,
 )
-from mex.common.exceptions import MExError
-from mex.common.models import ExtractedPerson
-from mex.common.types import Identifier
+from tests.conftest import MockedGraph
 
 
-@pytest.mark.usefixtures("mocked_graph")
-def test_mocked_graph_init() -> None:
-    graph = GraphConnector.get()
-    result = graph.commit("MATCH (this);")
-    assert result.model_dump() == {"data": []}
+@pytest.fixture
+def mocked_query_builder(monkeypatch: MonkeyPatch) -> None:
+    def __getattr__(_: QueryBuilder, query: str) -> Callable[..., str]:
+        return lambda **parameters: format_str(
+            f"{query}({','.join(f'{k}={v!r}' for k, v in parameters.items())})",
+            mode=Mode(line_length=78),
+        ).strip()
+
+    monkeypatch.setattr(QueryBuilder, "__getattr__", __getattr__)
 
 
-def test_mocked_graph_seed_constraints(mocked_graph: MagicMock) -> None:
+@pytest.mark.usefixtures("mocked_query_builder")
+def test_mocked_graph_seed_constraints(mocked_graph: MockedGraph) -> None:
     graph = GraphConnector.get()
     graph._seed_constraints()
 
-    assert mocked_graph.run.call_args_list[-1] == call(
-        """
-CREATE CONSTRAINT identifier_uniqueness IF NOT EXISTS
-FOR (n:ExtractedVariableGroup)
-REQUIRE n.identifier IS UNIQUE;
-""",
-        None,
+    assert mocked_graph.call_args_list[-1].args == (
+        'create_identifier_uniqueness_constraint(node_label="MergedVariableGroup")',
+        {},
     )
 
 
-def test_mocked_graph_seed_indices(mocked_graph: MagicMock) -> None:
+@pytest.mark.usefixtures("mocked_query_builder")
+def test_mocked_graph_seed_indices(
+    mocked_graph: MockedGraph, monkeypatch: MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        connector_module, "SEARCHABLE_CLASSES", ["ExtractedThis", "ExtractedThat"]
+    )
+    monkeypatch.setattr(
+        connector_module,
+        "SEARCHABLE_FIELDS",
+        ["title", "name", "keyword", "description"],
+    )
     graph = GraphConnector.get()
     graph._seed_indices()
 
-    assert mocked_graph.run.call_args_list[-1] == call(
-        """
-CREATE FULLTEXT INDEX text_fields IF NOT EXISTS
-FOR (n:ExtractedAccessPlatform|ExtractedActivity|ExtractedContactPoint|ExtractedDistribution|ExtractedOrganization|\
-ExtractedOrganizationalUnit|ExtractedPerson|ExtractedPrimarySource|ExtractedResource|ExtractedVariable|ExtractedVariableGroup)
-ON EACH [n.abstract_value, n.alternativeName_value, n.alternativeTitle_value, \
-n.description_value, n.instrumentToolOrApparatus_value, n.keyword_value, \
-n.label_value, n.methodDescription_value, n.method_value, n.name_value, \
-n.officialName_value, n.qualityInformation_value, n.resourceTypeSpecific_value, \
-n.rights_value, n.shortName_value, n.spatial_value, n.title_value]
-OPTIONS {indexConfig: $config};
-""",
+    assert mocked_graph.call_args_list[-1].args == (
+        """\
+create_full_text_search_index(
+    node_labels=["ExtractedThis", "ExtractedThat"],
+    search_fields=["title", "name", "keyword", "description"],
+)""",
         {
-            "config": {
+            "index_config": {
+                "fulltext.eventually_consistent": True,
+                "fulltext.analyzer": "german",
+            }
+        },
+    )
+
+    mocked_graph.return_value = [
+        {
+            "node_labels": ["ExtractedThis", "ExtractedThat"],
+            "search_fields": ["title", "name", "keyword", "description"],
+        }
+    ]
+    monkeypatch.setattr(
+        connector_module,
+        "SEARCHABLE_CLASSES",
+        ["ExtractedThis", "ExtractedThat", "ExtractedOther"],
+    )
+
+    graph._seed_indices()
+
+    assert mocked_graph.call_args_list[-2].args == ("drop_full_text_search_index()", {})
+    assert mocked_graph.call_args_list[-1].args == (
+        """\
+create_full_text_search_index(
+    node_labels=["ExtractedThis", "ExtractedThat", "ExtractedOther"],
+    search_fields=["title", "name", "keyword", "description"],
+)""",
+        {
+            "index_config": {
                 "fulltext.eventually_consistent": True,
                 "fulltext.analyzer": "german",
             }
@@ -58,12 +97,112 @@ OPTIONS {indexConfig: $config};
     )
 
 
-def test_mocked_graph_fetch_identities(mocked_graph: MagicMock) -> None:
+@pytest.mark.usefixtures("mocked_query_builder")
+def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
     graph = GraphConnector.get()
+    graph._seed_data()
 
+    assert mocked_graph.call_args_list[-2].args == (
+        """\
+merge_node(
+    extracted_label="ExtractedPrimarySource",
+    merged_label="MergedPrimarySource",
+    nested_edge_labels=[],
+    nested_node_labels=[],
+)""",
+        {
+            "identifier": ExtractedPrimarySourceIdentifier("00000000000000"),
+            "stable_target_id": MergedPrimarySourceIdentifier("00000000000000"),
+            "on_match": {"version": None},
+            "on_create": {
+                "version": None,
+                "identifier": "00000000000000",
+                "identifierInPrimarySource": "mex",
+            },
+            "nested_positions": [],
+            "nested_values": [],
+        },
+    )
+    assert mocked_graph.call_args_list[-1].args == (
+        """\
+merge_edges(
+    extracted_label="ExtractedPrimarySource",
+    ref_labels=["hadPrimarySource", "stableTargetId"],
+)""",
+        {
+            "identifier": "00000000000000",
+            "ref_identifiers": ["00000000000000", "00000000000000"],
+            "ref_positions": [0, 0],
+        },
+    )
+
+
+@pytest.mark.usefixtures("mocked_query_builder")
+def test_mocked_graph_fetch_extracted_data(mocked_graph: MockedGraph) -> None:
+    mocked_graph.return_value = [
+        {
+            "items": [
+                {
+                    "entityType": "ExtractedThis",
+                    "inlineProperty": ["foo", "bar"],
+                    "_refs": [
+                        {"value": "second", "position": 1, "label": "nestedProperty"},
+                        {"value": "first", "position": 0, "label": "nestedProperty"},
+                    ],
+                }
+            ],
+            "total": 1,
+        }
+    ]
+    graph = GraphConnector.get()
+    result = graph.fetch_extracted_data(
+        query_string="my-query",
+        stable_target_id=Identifier.generate(99),
+        entity_type=[],
+        skip=10,
+        limit=100,
+    )
+
+    assert mocked_graph.call_args_list[-1].args == (
+        """\
+fetch_extracted_data(
+    filter_by_query_string=True,
+    filter_by_stable_target_id=True,
+    filter_by_labels=False,
+)""",
+        {
+            "labels": [],
+            "limit": 100,
+            "query_string": "my-query",
+            "skip": 10,
+            "stable_target_id": "bFQoRhcVH5DHV1",
+        },
+    )
+
+    assert result.one() == {
+        "items": [
+            {
+                "entityType": "ExtractedThis",
+                "inlineProperty": ["foo", "bar"],
+                "nestedProperty": ["first", "second"],
+            }
+        ],
+        "total": 1,
+    }
+
+
+@pytest.mark.usefixtures("mocked_query_builder")
+def test_mocked_graph_fetch_identities(mocked_graph: MockedGraph) -> None:
+    graph = GraphConnector.get()
     graph.fetch_identities(stable_target_id=Identifier.generate(99))
-    assert mocked_graph.run.call_args.args == (
-        STABLE_TARGET_ID_IDENTITY_QUERY,
+
+    assert mocked_graph.call_args_list[-1].args == (
+        """\
+fetch_identities(
+    filter_by_had_primary_source=False,
+    filter_by_identifier_in_primary_source=False,
+    filter_by_stable_target_id=True,
+)""",
         {
             "had_primary_source": None,
             "identifier_in_primary_source": None,
@@ -75,8 +214,14 @@ def test_mocked_graph_fetch_identities(mocked_graph: MagicMock) -> None:
     graph.fetch_identities(
         had_primary_source=Identifier.generate(101), identifier_in_primary_source="one"
     )
-    assert mocked_graph.run.call_args.args == (
-        HAD_PRIMARY_SOURCE_AND_IDENTIFIER_IN_PRIMARY_SOURCE_IDENTITY_QUERY,
+
+    assert mocked_graph.call_args_list[-1].args == (
+        """\
+fetch_identities(
+    filter_by_had_primary_source=True,
+    filter_by_identifier_in_primary_source=True,
+    filter_by_stable_target_id=False,
+)""",
         {
             "had_primary_source": Identifier.generate(101),
             "identifier_in_primary_source": "one",
@@ -85,157 +230,106 @@ def test_mocked_graph_fetch_identities(mocked_graph: MagicMock) -> None:
         },
     )
 
-    with pytest.raises(MExError, match="invalid identity query parameters"):
-        graph.fetch_identities(identifier_in_primary_source="two")
+    graph.fetch_identities(identifier_in_primary_source="two")
+
+    assert mocked_graph.call_args_list[-1].args == (
+        """\
+fetch_identities(
+    filter_by_had_primary_source=False,
+    filter_by_identifier_in_primary_source=True,
+    filter_by_stable_target_id=False,
+)""",
+        {
+            "had_primary_source": None,
+            "identifier_in_primary_source": "two",
+            "stable_target_id": None,
+            "limit": 1000,
+        },
+    )
 
 
+@pytest.mark.usefixtures("mocked_query_builder")
 def test_mocked_graph_merges_node(
-    mocked_graph: MagicMock, extracted_person: ExtractedPerson
+    mocked_graph: MockedGraph, dummy_data: list[AnyExtractedModel]
 ) -> None:
+    extracted_organizational_unit = dummy_data[4]
     graph = GraphConnector.get()
-    graph.merge_node(extracted_person)
+    graph._merge_node(extracted_organizational_unit)
 
-    assert (
-        mocked_graph.run.call_args.args[0]
-        == """
-MERGE (n:ExtractedPerson {identifier:$identifier})
-ON CREATE SET n = $on_create
-ON MATCH SET n += $on_match
-RETURN n;
-"""
-    )
-    assert mocked_graph.run.call_args.args[1] == {
-        "identifier": str(extracted_person.identifier),
-        "on_create": {
-            "email": ["fictitiousf@rki.de", "info@rki.de"],
-            "familyName": ["Fictitious"],
-            "fullName": ["Fictitious, Frieda, Dr."],
-            "givenName": ["Frieda"],
-            "identifier": "bFQoRhcVH5DHUw",
-            "identifierInPrimarySource": "frieda",
-            "isniId": [],
-            "orcidId": [],
-            "stableTargetId": "bFQoRhcVH5DHVu",
-        },
-        "on_match": {
-            "email": ["fictitiousf@rki.de", "info@rki.de"],
-            "familyName": ["Fictitious"],
-            "fullName": ["Fictitious, Frieda, Dr."],
-            "givenName": ["Frieda"],
-            "isniId": [],
-            "orcidId": [],
-        },
-    }
-
-
-def test_mocked_graph_merges_edges(
-    mocked_graph: MagicMock, extracted_person: ExtractedPerson
-) -> None:
-    graph = GraphConnector.get()
-    graph.merge_edges(extracted_person)
-    mocked_graph.assert_has_calls(
-        [
-            call.run(
-                """
-MATCH (s {identifier:$fromID})
-MATCH (t {stableTargetId:$toSTI})
-MERGE (s)-[e:hadPrimarySource]->(t)
-RETURN e;
-""",
-                {
-                    "fromID": str(extracted_person.identifier),
-                    "toSTI": str(extracted_person.hadPrimarySource),
-                },
-            )
-        ]
-    )
-
-
-def test_mocked_graph_ingests_models(
-    mocked_graph: MagicMock, extracted_person: ExtractedPerson
-) -> None:
-    graph = GraphConnector.get()
-    identifiers = graph.ingest([extracted_person])
-
-    assert identifiers == [extracted_person.identifier]
-
-    # expect node is created
-    assert mocked_graph.run.call_args_list[-5:][0][0] == (
-        """
-MERGE (n:ExtractedPerson {identifier:$identifier})
-ON CREATE SET n = $on_create
-ON MATCH SET n += $on_match
-RETURN n;
-""",
+    assert mocked_graph.call_args_list[-1].args == (
+        """\
+merge_node(
+    extracted_label="ExtractedOrganizationalUnit",
+    merged_label="MergedOrganizationalUnit",
+    nested_edge_labels=["name"],
+    nested_node_labels=["Text"],
+)""",
         {
-            "identifier": "bFQoRhcVH5DHUw",
+            "identifier": extracted_organizational_unit.identifier,
+            "nested_positions": [0],
+            "nested_values": [{"language": "en", "value": "Unit 1"}],
             "on_create": {
-                "stableTargetId": "bFQoRhcVH5DHVu",
-                "email": ["fictitiousf@rki.de", "info@rki.de"],
-                "familyName": ["Fictitious"],
-                "fullName": ["Fictitious, Frieda, Dr."],
-                "givenName": ["Frieda"],
-                "isniId": [],
-                "orcidId": [],
-                "identifier": "bFQoRhcVH5DHUw",
-                "identifierInPrimarySource": "frieda",
+                "email": [],
+                "identifier": extracted_organizational_unit.identifier,
+                "identifierInPrimarySource": "ou-1",
             },
-            "on_match": {
-                "email": ["fictitiousf@rki.de", "info@rki.de"],
-                "familyName": ["Fictitious"],
-                "fullName": ["Fictitious, Frieda, Dr."],
-                "givenName": ["Frieda"],
-                "isniId": [],
-                "orcidId": [],
-            },
+            "on_match": {"email": []},
+            "stable_target_id": extracted_organizational_unit.stableTargetId,
         },
     )
-    # expect edges are created
-    assert mocked_graph.run.call_args_list[-5:][1][0] == (
-        """
-MATCH (s {identifier:$fromID})
-MATCH (t {stableTargetId:$toSTI})
-MERGE (s)-[e:hadPrimarySource]->(t)
-RETURN e;
-""",
+
+
+@pytest.mark.usefixtures("mocked_query_builder")
+def test_mocked_graph_merges_edges(
+    mocked_graph: MockedGraph, dummy_data: list[AnyExtractedModel]
+) -> None:
+    extracted_activity = dummy_data[4]
+    graph = GraphConnector.get()
+    graph._merge_edges(extracted_activity)
+
+    assert mocked_graph.call_args_list[-1].args == (
+        """\
+merge_edges(
+    extracted_label="ExtractedOrganizationalUnit",
+    ref_labels=["hadPrimarySource", "stableTargetId"],
+)""",
         {
-            "fromID": str(extracted_person.identifier),
-            "toSTI": str(extracted_person.hadPrimarySource),
+            "identifier": extracted_activity.identifier,
+            "ref_identifiers": [
+                extracted_activity.hadPrimarySource,
+                extracted_activity.stableTargetId,
+            ],
+            "ref_positions": [0, 0],
         },
     )
-    assert mocked_graph.run.call_args_list[-5:][2][0] == (
-        """
-MATCH (s {identifier:$fromID})
-MATCH (t {stableTargetId:$toSTI})
-MERGE (s)-[e:affiliation]->(t)
-RETURN e;
-""",
+
+
+@pytest.mark.usefixtures("mocked_graph")
+def test_mocked_graph_ingests_models(dummy_data: list[AnyExtractedModel]) -> None:
+    graph = GraphConnector.get()
+    identifiers = graph.ingest(dummy_data)
+
+    assert identifiers == [d.identifier for d in dummy_data]
+
+
+@pytest.mark.usefixtures("load_dummy_data")
+@pytest.mark.integration
+def test_fetch_extracted_data() -> None:
+    connector = GraphConnector.get()
+
+    result = connector.fetch_extracted_data(None, None, None, 0, 1)
+
+    assert result.all() == [
         {
-            "fromID": str(extracted_person.identifier),
-            "toSTI": str(extracted_person.affiliation[0]),
-        },
-    )
-    assert mocked_graph.run.call_args_list[-5:][3][0] == (
-        """
-MATCH (s {identifier:$fromID})
-MATCH (t {stableTargetId:$toSTI})
-MERGE (s)-[e:affiliation]->(t)
-RETURN e;
-""",
-        {
-            "fromID": str(extracted_person.identifier),
-            "toSTI": str(extracted_person.affiliation[1]),
-        },
-    )
-    assert mocked_graph.run.call_args_list[-5:][4][0] == (
-        """
-MATCH (s {identifier:$fromID})
-MATCH (t {stableTargetId:$toSTI})
-MERGE (s)-[e:memberOf]->(t)
-RETURN e;
-""",
-        {
-            "fromID": str(extracted_person.identifier),
-            "toSTI": str(extracted_person.memberOf[0]),
-        },
-    )
+            "items": [
+                {
+                    "entityType": MEX_EXTRACTED_PRIMARY_SOURCE.entityType,
+                    "hadPrimarySource": [MEX_EXTRACTED_PRIMARY_SOURCE.hadPrimarySource],
+                    "identifier": MEX_EXTRACTED_PRIMARY_SOURCE.identifier,
+                    "identifierInPrimarySource": MEX_EXTRACTED_PRIMARY_SOURCE.identifierInPrimarySource,
+                    "stableTargetId": [MEX_EXTRACTED_PRIMARY_SOURCE.stableTargetId],
+                }
+            ],
+            "total": 7,
+        }
+    ]

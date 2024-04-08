@@ -1,16 +1,20 @@
 from typing import Any
-from unittest.mock import MagicMock
 
 import pytest
 
+from mex.backend.graph.exceptions import MultipleResultsFoundError
 from mex.backend.identity.provider import GraphIdentityProvider
-from mex.common.exceptions import MExError
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_IDENTIFIER,
     MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
 )
-from mex.common.types import Identifier, PrimarySourceID
+from mex.common.types import (
+    Identifier,
+    MergedOrganizationalUnitIdentifier,
+    MergedPrimarySourceIdentifier,
+)
+from tests.conftest import MockedGraph
 
 
 @pytest.mark.parametrize(
@@ -18,7 +22,7 @@ from mex.common.types import Identifier, PrimarySourceID
     [
         (
             [],
-            PrimarySourceID("psSti00000000001"),
+            MergedPrimarySourceIdentifier("psSti00000000001"),
             "new-item",
             {
                 "hadPrimarySource": "psSti00000000001",
@@ -30,15 +34,13 @@ from mex.common.types import Identifier, PrimarySourceID
         (
             [
                 {
-                    "i": {
-                        "hadPrimarySource": "psSti00000000001",
-                        "identifier": "cpId000000000002",
-                        "identifierInPrimarySource": "existing-item",
-                        "stableTargetId": "cpSti00000000002",
-                    }
+                    "hadPrimarySource": "psSti00000000001",
+                    "identifier": "cpId000000000002",
+                    "identifierInPrimarySource": "existing-item",
+                    "stableTargetId": "cpSti00000000002",
                 }
             ],
-            PrimarySourceID("psSti00000000001"),
+            MergedPrimarySourceIdentifier("psSti00000000001"),
             "existing-item",
             {
                 "hadPrimarySource": "psSti00000000001",
@@ -51,9 +53,9 @@ from mex.common.types import Identifier, PrimarySourceID
     ids=["new item", "existing item"],
 )
 def test_assign_identity_mocked(
-    mocked_graph: MagicMock,
+    mocked_graph: MockedGraph,
     mocked_return: list[dict[str, str]],
-    had_primary_source: PrimarySourceID,
+    had_primary_source: MergedPrimarySourceIdentifier,
     identifier_in_primary_source: str,
     expected: dict[str, Any],
 ) -> None:
@@ -67,30 +69,26 @@ def test_assign_identity_mocked(
 
 
 def test_assign_identity_inconsistency_mocked(
-    mocked_graph: MagicMock,
+    mocked_graph: MockedGraph,
 ) -> None:
     mocked_graph.return_value = [
         {
-            "i": {
-                "hadPrimarySource": "psSti00000000001",
-                "identifier": "cpId000000000002",
-                "identifierInPrimarySource": "existing-item",
-                "stableTargetId": "cpSti00000000002",
-            }
+            "hadPrimarySource": "psSti00000000001",
+            "identifier": "cpId000000000002",
+            "identifierInPrimarySource": "existing-item",
+            "stableTargetId": "cpSti00000000002",
         },
         {
-            "i": {
-                "hadPrimarySource": "psSti00000000001",
-                "identifier": "cpId000000000098",
-                "identifierInPrimarySource": "existing-item",
-                "stableTargetId": "cpSti00000000099",
-            }
+            "hadPrimarySource": "psSti00000000001",
+            "identifier": "cpId000000000098",
+            "identifierInPrimarySource": "existing-item",
+            "stableTargetId": "cpSti00000000099",
         },
     ]
     provider = GraphIdentityProvider.get()
-    with pytest.raises(MExError, match="graph inconsistency"):
+    with pytest.raises(MultipleResultsFoundError):
         provider.assign(
-            had_primary_source=PrimarySourceID("psSti00000000001"),
+            had_primary_source=MergedPrimarySourceIdentifier("psSti00000000001"),
             identifier_in_primary_source="existing-item",
         )
 
@@ -134,7 +132,7 @@ def test_assign_identity_inconsistency_mocked(
 @pytest.mark.usefixtures("load_dummy_data")
 @pytest.mark.integration
 def test_assign_identity(
-    had_primary_source: PrimarySourceID,
+    had_primary_source: MergedPrimarySourceIdentifier,
     identifier_in_primary_source: str,
     expected: dict[str, Any],
 ) -> None:
@@ -159,15 +157,13 @@ def test_assign_identity(
         (
             [
                 {
-                    "i": {
-                        "hadPrimarySource": "28282828282828",
-                        "identifier": "7878787878787878777",
-                        "identifierInPrimarySource": "one",
-                        "stableTargetId": "949494949494949494",
-                    }
+                    "hadPrimarySource": "28282828282828",
+                    "identifier": "7878787878787878777",
+                    "identifierInPrimarySource": "one",
+                    "stableTargetId": "949494949494949494",
                 }
             ],
-            PrimarySourceID("28282828282828"),
+            MergedPrimarySourceIdentifier("28282828282828"),
             "one",
             None,
             [
@@ -182,20 +178,16 @@ def test_assign_identity(
         (
             [
                 {
-                    "i": {
-                        "hadPrimarySource": "28282828282828",
-                        "identifier": "62626262626266262",
-                        "identifierInPrimarySource": "two",
-                        "stableTargetId": "949494949494949494",
-                    }
+                    "hadPrimarySource": "28282828282828",
+                    "identifier": "62626262626266262",
+                    "identifierInPrimarySource": "two",
+                    "stableTargetId": "949494949494949494",
                 },
                 {
-                    "i": {
-                        "hadPrimarySource": "39393939393939",
-                        "identifier": "7878787878787878777",
-                        "identifierInPrimarySource": "duo",
-                        "stableTargetId": "949494949494949494",
-                    }
+                    "hadPrimarySource": "39393939393939",
+                    "identifier": "7878787878787878777",
+                    "identifierInPrimarySource": "duo",
+                    "stableTargetId": "949494949494949494",
                 },
             ],
             None,
@@ -220,9 +212,9 @@ def test_assign_identity(
     ids=["nothing found", "one item", "two items"],
 )
 def test_fetch_identities_mocked(
-    mocked_graph: MagicMock,
+    mocked_graph: MockedGraph,
     mocked_return: list[dict[str, str]],
-    had_primary_source: PrimarySourceID | None,
+    had_primary_source: MergedPrimarySourceIdentifier | None,
     identifier_in_primary_source: str | None,
     stable_target_id: Identifier | None,
     expected: list[dict[str, Any]],
@@ -247,7 +239,7 @@ def test_fetch_identities_mocked(
     [
         (None, None, Identifier("thisDoesNotExist"), []),
         (
-            PrimarySourceID("00000000000000"),
+            MergedPrimarySourceIdentifier("00000000000000"),
             "ps-1",
             None,
             [
@@ -256,13 +248,13 @@ def test_fetch_identities_mocked(
                     "identifier": "bFQoRhcVH5DHUq",
                     "identifierInPrimarySource": "ps-1",
                     "stableTargetId": "bFQoRhcVH5DHUr",
-                },
+                }
             ],
         ),
         (
             None,
             None,
-            Identifier("bFQoRhcVH5DHUz"),
+            MergedOrganizationalUnitIdentifier("bFQoRhcVH5DHUz"),
             [
                 {
                     "identifier": "bFQoRhcVH5DHUy",
@@ -282,7 +274,7 @@ def test_fetch_identities_mocked(
 @pytest.mark.usefixtures("load_dummy_data")
 @pytest.mark.integration
 def test_fetch_identities(
-    had_primary_source: PrimarySourceID | None,
+    had_primary_source: MergedPrimarySourceIdentifier | None,
     identifier_in_primary_source: str | None,
     stable_target_id: Identifier | None,
     expected: list[dict[str, Any]],

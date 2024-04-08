@@ -1,30 +1,58 @@
 from typing import Any
-from unittest.mock import MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
 
+from mex.common.models import ExtractedOrganizationalUnit
+from tests.conftest import MockedGraph
+
 
 def test_search_merged_items_mocked(
-    client_with_api_key_read_permission: TestClient, mocked_graph: MagicMock
+    client_with_api_key_read_permission: TestClient, mocked_graph: MockedGraph
 ) -> None:
+    unit = ExtractedOrganizationalUnit.model_validate(
+        {
+            "hadPrimarySource": "2222222222222222",
+            "identifierInPrimarySource": "unit-1",
+            "email": ["test@foo.bar"],
+            "name": [
+                {"value": "Eine unit von einer Org.", "language": "de"},
+                {"value": "A unit of an org.", "language": "en"},
+            ],
+        }
+    )
     mocked_graph.return_value = [
         {
-            "c": 0,
-            "l": "ExtractedContactPoint",  # stopgap mx-1382 (search for MergedContactPoint instead)
-            "r": [{"key": "hadPrimarySource", "value": ["2222222222222222"]}],
-            "n": {
-                "stableTargetId": "0000000000000000",
-                "identifier": "1111111111111111",
-                "identifierInPrimarySource": "test",
-                "email": "test@foo.bar",
-            },
-            "i": {
-                "stableTargetId": "0000000000000000",
-                "identifier": "1111111111111111",
-                "identifierInPrimarySource": "test",
-                "hadPrimarySource": "2222222222222222",
-            },
+            "items": [
+                {
+                    "identifier": unit.stableTargetId,
+                    "identifierInPrimarySource": unit.identifierInPrimarySource,
+                    "stableTargetId": unit.stableTargetId,
+                    "email": ["test@foo.bar"],
+                    "entityType": "ExtractedOrganizationalUnit",
+                    "_refs": [
+                        {
+                            "label": "hadPrimarySource",
+                            "position": 0,
+                            "value": "2222222222222222",
+                        },
+                        {
+                            "label": "name",
+                            "position": 0,
+                            "value": {
+                                "value": "Eine unit von einer Org.",
+                                "language": "de",
+                            },
+                        },
+                        {
+                            "label": "name",
+                            "position": 1,
+                            "value": {"value": "A unit of an org.", "language": "en"},
+                        },
+                    ],
+                }
+            ],
+            "total": 14,
         }
     ]
 
@@ -33,13 +61,21 @@ def test_search_merged_items_mocked(
     assert response.json() == {
         "items": [
             {
-                "$type": "MergedContactPoint",
+                "$type": "MergedOrganizationalUnit",
+                "alternativeName": [],
                 "email": ["test@foo.bar"],
-                "identifier": "1111111111111111",
-                "stableTargetId": "0000000000000000",
+                "identifier": unit.stableTargetId,
+                "name": [
+                    {"language": "de", "value": "Eine unit von einer Org."},
+                    {"language": "en", "value": "A unit of an org."},
+                ],
+                "parentUnit": None,
+                "shortName": [],
+                "unitOf": [],
+                "website": [],
             }
         ],
-        "total": 0,
+        "total": 14,
     }
 
 
@@ -58,7 +94,6 @@ def test_search_merged_items_mocked(
                         "documentation": [],
                         "identifier": "00000000000000",
                         "locatedAt": [],
-                        "stableTargetId": "00000000000000",
                         "title": [],
                         "unitInCharge": [],
                         "version": None,
@@ -73,9 +108,8 @@ def test_search_merged_items_mocked(
                 "items": [
                     {
                         "$type": "MergedContactPoint",
-                        "email": ["info@rki.de"],
-                        "identifier": "bFQoRhcVH5DHUu",
-                        "stableTargetId": "bFQoRhcVH5DHUv",
+                        "email": ["info@contact-point.one"],
+                        "identifier": "bFQoRhcVH5DHUv",
                     }
                 ],
                 "total": 7,
@@ -87,15 +121,13 @@ def test_search_merged_items_mocked(
                 "items": [
                     {
                         "$type": "MergedContactPoint",
-                        "email": ["info@rki.de"],
-                        "identifier": "bFQoRhcVH5DHUu",
-                        "stableTargetId": "bFQoRhcVH5DHUv",
+                        "email": ["info@contact-point.one"],
+                        "identifier": "bFQoRhcVH5DHUv",
                     },
                     {
                         "$type": "MergedContactPoint",
-                        "email": ["mex@rki.de"],
-                        "identifier": "bFQoRhcVH5DHUw",
-                        "stableTargetId": "bFQoRhcVH5DHUx",
+                        "email": ["help@contact-point.two"],
+                        "identifier": "bFQoRhcVH5DHUx",
                     },
                 ],
                 "total": 2,
@@ -111,32 +143,28 @@ def test_search_merged_items_mocked(
                         "contact": [],
                         "description": [],
                         "documentation": [],
-                        "identifier": "bFQoRhcVH5DHUs",
+                        "identifier": "bFQoRhcVH5DHUt",
                         "locatedAt": [],
-                        "stableTargetId": "bFQoRhcVH5DHUt",
-                        "title": [
-                            {"language": None, "value": "A cool and searchable title"}
-                        ],
+                        "title": [],
                         "unitInCharge": [],
-                        "version": None,
+                        "version": "Cool Version v2.13",
                     }
                 ],
                 "total": 1,
             },
         ),
         (
-            "?stableTargetId=bFQoRhcVH5DHUz",
+            "?identifier=bFQoRhcVH5DHUz",
             {
                 "items": [
                     {
                         "$type": "MergedOrganizationalUnit",
                         "alternativeName": [],
                         "email": [],
-                        "identifier": "bFQoRhcVH5DHUy",
+                        "identifier": "bFQoRhcVH5DHUz",
                         "name": [{"language": "en", "value": "Unit 1"}],
                         "parentUnit": None,
                         "shortName": [],
-                        "stableTargetId": "bFQoRhcVH5DHUz",
                         "unitOf": [],
                         "website": [],
                     }
@@ -150,7 +178,7 @@ def test_search_merged_items_mocked(
         "skip 1",
         "entity type contact points",
         "full text search",
-        "stable target id filter",
+        "identifier filter",
     ],
 )
 @pytest.mark.usefixtures("load_dummy_data")

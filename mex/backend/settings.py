@@ -42,22 +42,22 @@ class BackendSettings(BaseSettings):
     )
     graph_url: str = Field(
         "neo4j://localhost:7687",
-        description="URL of the neo4j HTTP API endpoint including the graph name.",
+        description="URL for connecting to the graph database.",
         validation_alias="MEX_GRAPH_URL",
     )
     graph_db: str = Field(
         "neo4j",
-        description="Name of the neo4j graph database.",
+        description="Name of the default graph database.",
         validation_alias="MEX_GRAPH_NAME",
     )
     graph_user: SecretStr = Field(
         SecretStr("neo4j"),
-        description="Username for authenticating with the neo4j graph.",
+        description="Username for authenticating with the graph database.",
         validation_alias="MEX_GRAPH_USER",
     )
     graph_password: SecretStr = Field(
         SecretStr("password"),
-        description="Password for authenticating with the neo4j graph.",
+        description="Password for authenticating with the graph database.",
         validation_alias="MEX_GRAPH_PASSWORD",
     )
     backend_api_key_database: APIKeyDatabase = Field(
