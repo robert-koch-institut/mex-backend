@@ -1,5 +1,4 @@
 from typing import Any
-from unittest.mock import MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -9,6 +8,7 @@ from mex.common.models import (
     MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
 )
+from tests.conftest import MockedGraph
 
 
 @pytest.mark.parametrize(
@@ -30,12 +30,10 @@ from mex.common.models import (
         (
             [
                 {
-                    "i": {
-                        "hadPrimarySource": "psSti00000000001",
-                        "identifier": "cpId000000000002",
-                        "identifierInPrimarySource": "cp-2",
-                        "stableTargetId": "cpSti00000000002",
-                    }
+                    "hadPrimarySource": "psSti00000000001",
+                    "identifier": "cpId000000000002",
+                    "identifierInPrimarySource": "cp-2",
+                    "stableTargetId": "cpSti00000000002",
                 }
             ],
             {
@@ -54,7 +52,7 @@ from mex.common.models import (
 )
 def test_assign_identity_mocked(
     client_with_api_key_write_permission: TestClient,
-    mocked_graph: MagicMock,
+    mocked_graph: MockedGraph,
     mocked_return: list[dict[str, str]],
     post_body: dict[str, str],
     expected: dict[str, Any],
@@ -67,24 +65,20 @@ def test_assign_identity_mocked(
 
 def test_assign_identity_inconsistency_mocked(
     client_with_api_key_write_permission: TestClient,
-    mocked_graph: MagicMock,
+    mocked_graph: MockedGraph,
 ) -> None:
     mocked_graph.return_value = [
         {
-            "i": {
-                "hadPrimarySource": "psSti00000000001",
-                "identifier": "cpId000000000002",
-                "identifierInPrimarySource": "cp-2",
-                "stableTargetId": "cpSti00000000002",
-            }
+            "hadPrimarySource": "psSti00000000001",
+            "identifier": "cpId000000000002",
+            "identifierInPrimarySource": "cp-2",
+            "stableTargetId": "cpSti00000000002",
         },
         {
-            "i": {
-                "hadPrimarySource": "psSti00000000001",
-                "identifier": "cpId000000000098",
-                "identifierInPrimarySource": "cp-2",
-                "stableTargetId": "cpSti00000000099",
-            }
+            "hadPrimarySource": "psSti00000000001",
+            "identifier": "cpId000000000098",
+            "identifierInPrimarySource": "cp-2",
+            "stableTargetId": "cpSti00000000099",
         },
     ]
     response = client_with_api_key_write_permission.post(
@@ -94,19 +88,8 @@ def test_assign_identity_inconsistency_mocked(
             "identifierInPrimarySource": "cp-2",
         },
     )
-    assert response.status_code == 500
-    assert "graph inconsistency" in response.text
-
-
-@pytest.mark.usefixtures("mocked_graph")
-def test_fetch_identity_invalid_query_params_mocked(
-    client_with_api_key_write_permission: TestClient,
-) -> None:
-    response = client_with_api_key_write_permission.get(
-        "/v0/identity",
-    )
-    assert response.status_code == 400
-    assert "invalid identity query parameters" in response.text
+    assert response.status_code == 500, response.text
+    assert "MultipleResultsFoundError" in response.text
 
 
 @pytest.mark.parametrize(
@@ -130,8 +113,8 @@ def test_fetch_identity_invalid_query_params_mocked(
                 "identifierInPrimarySource": "cp-2",
             },
             {
-                "identifier": "bFQoRhcVH5DHUw",
                 "hadPrimarySource": "bFQoRhcVH5DHUr",
+                "identifier": "bFQoRhcVH5DHUw",
                 "identifierInPrimarySource": "cp-2",
                 "stableTargetId": "bFQoRhcVH5DHUx",
             },
@@ -170,12 +153,10 @@ def test_assign_identity(
         (
             [
                 {
-                    "i": {
-                        "hadPrimarySource": "28282828282828",
-                        "identifier": "7878787878787878777",
-                        "identifierInPrimarySource": "one",
-                        "stableTargetId": "949494949494949494",
-                    }
+                    "hadPrimarySource": "28282828282828",
+                    "identifier": "7878787878787878777",
+                    "identifierInPrimarySource": "one",
+                    "stableTargetId": "949494949494949494",
                 }
             ],
             "?hadPrimarySource=28282828282828&identifierInPrimarySource=one",
@@ -194,20 +175,16 @@ def test_assign_identity(
         (
             [
                 {
-                    "i": {
-                        "hadPrimarySource": "28282828282828",
-                        "identifier": "62626262626266262",
-                        "identifierInPrimarySource": "two",
-                        "stableTargetId": "949494949494949494",
-                    }
+                    "hadPrimarySource": "28282828282828",
+                    "identifier": "62626262626266262",
+                    "identifierInPrimarySource": "two",
+                    "stableTargetId": "949494949494949494",
                 },
                 {
-                    "i": {
-                        "hadPrimarySource": "39393939393939",
-                        "identifier": "7878787878787878777",
-                        "identifierInPrimarySource": "duo",
-                        "stableTargetId": "949494949494949494",
-                    }
+                    "hadPrimarySource": "39393939393939",
+                    "identifier": "7878787878787878777",
+                    "identifierInPrimarySource": "duo",
+                    "stableTargetId": "949494949494949494",
                 },
             ],
             "?stableTargetId=949494949494949494",
@@ -234,7 +211,7 @@ def test_assign_identity(
 )
 def test_fetch_identities_mocked(
     client_with_api_key_write_permission: TestClient,
-    mocked_graph: MagicMock,
+    mocked_graph: MockedGraph,
     mocked_return: list[dict[str, str]],
     query_string: str,
     expected: dict[str, Any],
@@ -258,7 +235,7 @@ def test_fetch_identities_mocked(
                         "identifier": "bFQoRhcVH5DHUq",
                         "identifierInPrimarySource": "ps-1",
                         "stableTargetId": "bFQoRhcVH5DHUr",
-                    },
+                    }
                 ],
                 "total": 1,
             },

@@ -2,11 +2,12 @@ import json
 from base64 import b64encode
 from functools import partial
 from itertools import count
+from typing import Any
 from unittest.mock import MagicMock, Mock
 
 import pytest
 from fastapi.testclient import TestClient
-from neo4j import GraphDatabase
+from neo4j import GraphDatabase, SummaryCounters
 from pytest import MonkeyPatch
 
 from mex.backend.graph.connector import GraphConnector
@@ -15,15 +16,23 @@ from mex.backend.settings import BackendSettings
 from mex.backend.types import APIKeyDatabase, APIUserDatabase
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-    BaseExtractedData,
+    AnyExtractedModel,
     ExtractedActivity,
     ExtractedContactPoint,
     ExtractedOrganizationalUnit,
-    ExtractedPerson,
     ExtractedPrimarySource,
 )
+from mex.common.settings import BaseSettings
 from mex.common.transform import MExEncoder
-from mex.common.types import Identifier, Link, Text, TextLanguage
+from mex.common.types import (
+    Email,
+    Identifier,
+    IdentityProvider,
+    Link,
+    Text,
+    TextLanguage,
+    Theme,
+)
 from mex.common.types.identifier import IdentifierT
 
 pytest_plugins = ("mex.common.testing.plugin",)
@@ -44,13 +53,14 @@ def settings() -> BackendSettings:
 
 @pytest.fixture(autouse=True)
 def skip_integration_test_in_ci(is_integration_test: bool) -> None:
-    """Overwrite fixture from plugin to not skip int tests in ci."""
+    """Overwrite fixture from plugin to not skip integration tests in ci."""
 
 
 @pytest.fixture
 def client() -> TestClient:
     """Return a fastAPI test client initialized with our app."""
-    return TestClient(app)
+    with TestClient(app) as test_client:
+        return test_client
 
 
 @pytest.fixture
@@ -93,16 +103,37 @@ def patch_test_client_json_encoder(monkeypatch: MonkeyPatch) -> None:
     )
 
 
+class MockedGraph:
+    def __init__(self, records: list[Any], session_run: MagicMock) -> None:
+        self.records = records
+        self.run = session_run
+
+    @property
+    def return_value(self) -> list[Any]:  # pragma: no cover
+        return self.records
+
+    @return_value.setter
+    def return_value(self, value: list[Any]) -> None:
+        self.records[:] = [Mock(data=MagicMock(return_value=v)) for v in value]
+
+    @property
+    def call_args_list(self) -> list[Any]:
+        return self.run.call_args_list
+
+
 @pytest.fixture
-def mocked_graph(monkeypatch: MonkeyPatch) -> MagicMock:
+def mocked_graph(monkeypatch: MonkeyPatch) -> MockedGraph:
     """Mock the graph connector and return the mocked `run` for easy manipulation."""
-    data = MagicMock(return_value=[])
-    run = MagicMock(return_value=Mock(data=data))
-    data.run = run  # make the call_args available in tests
+    records: list[Any] = []
+    summary = Mock(counters=SummaryCounters({}))
+    result = Mock(to_eager_result=MagicMock(return_value=(records, summary, None)))
+    run = MagicMock(return_value=result)
     session = MagicMock(__enter__=MagicMock(return_value=Mock(run=run)))
     driver = Mock(session=MagicMock(return_value=session))
-    monkeypatch.setattr(GraphDatabase, "driver", lambda _, **__: driver)
-    return data
+    monkeypatch.setattr(
+        GraphConnector, "__init__", lambda self: setattr(self, "driver", driver)
+    )
+    return MockedGraph(records, run)
 
 
 @pytest.fixture(autouse=True)
@@ -118,11 +149,19 @@ def isolate_identifier_seeds(monkeypatch: MonkeyPatch) -> None:
 
 
 @pytest.fixture(autouse=True)
+def set_identity_provider(is_integration_test: bool) -> None:
+    """Ensure the identifier provider is set to `MEMORY` in unit tests."""
+    if not is_integration_test:
+        settings = BaseSettings.get()
+        settings.identity_provider = IdentityProvider.MEMORY
+
+
+@pytest.fixture(autouse=True)
 def isolate_graph_database(
     is_integration_test: bool, settings: BackendSettings
 ) -> None:
-    """Automatically flush the neo4j database for integration testing."""
-    if is_integration_test:  # pragma: no cover
+    """Automatically flush the graph database for integration testing."""
+    if is_integration_test:
         with GraphDatabase.driver(
             settings.graph_url,
             auth=(
@@ -132,35 +171,15 @@ def isolate_graph_database(
             database=settings.graph_db,
         ) as driver:
             driver.execute_query("MATCH (n) DETACH DELETE n;")
-            driver.execute_query("DROP INDEX text_fields IF EXISTS;")
-            driver.execute_query("DROP CONSTRAINT identifier_uniqueness IF EXISTS;")
+            for row in driver.execute_query("SHOW ALL CONSTRAINTS;").records:
+                driver.execute_query(f"DROP CONSTRAINT {row['name']};")
+            for row in driver.execute_query("SHOW ALL INDEXES;").records:
+                driver.execute_query(f"DROP INDEX {row['name']};")
 
 
 @pytest.fixture
-def extracted_person() -> BaseExtractedData:
-    """Return an extracted person with static dummy values."""
-    return ExtractedPerson.model_construct(
-        identifier=Identifier.generate(seed=6),
-        stableTargetId=Identifier.generate(seed=66),
-        affiliation=[
-            Identifier.generate(seed=255),
-            Identifier.generate(seed=3810),
-        ],
-        email=["fictitiousf@rki.de", "info@rki.de"],
-        familyName=["Fictitious"],
-        givenName=["Frieda"],
-        identifierInPrimarySource="frieda",
-        fullName=["Fictitious, Frieda, Dr."],
-        hadPrimarySource=Identifier.generate(seed=64),
-        memberOf=[
-            Identifier.generate(seed=35),
-        ],
-    )
-
-
-@pytest.fixture
-def load_dummy_data() -> None:
-    """Ingest dummy data into Graph Database."""
+def dummy_data() -> list[AnyExtractedModel]:
+    """Create a set of interlinked dummy data."""
     primary_source_1 = ExtractedPrimarySource(
         hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
         identifierInPrimarySource="ps-1",
@@ -168,27 +187,27 @@ def load_dummy_data() -> None:
     primary_source_2 = ExtractedPrimarySource(
         hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
         identifierInPrimarySource="ps-2",
-        title=[Text(value="A cool and searchable title", language=None)],
+        version="Cool Version v2.13",
     )
     contact_point_1 = ExtractedContactPoint(
-        email="info@rki.de",
+        email=[Email("info@contact-point.one")],
         hadPrimarySource=primary_source_1.stableTargetId,
         identifierInPrimarySource="cp-1",
     )
     contact_point_2 = ExtractedContactPoint(
-        email="mex@rki.de",
+        email=[Email("help@contact-point.two")],
         hadPrimarySource=primary_source_1.stableTargetId,
         identifierInPrimarySource="cp-2",
     )
     organizational_unit_1 = ExtractedOrganizationalUnit(
         hadPrimarySource=primary_source_2.stableTargetId,
         identifierInPrimarySource="ou-1",
-        name="Unit 1",
+        name=[Text(value="Unit 1", language=TextLanguage.EN)],
     )
     activity_1 = ExtractedActivity(
         abstract=[
             Text(value="An active activity.", language=TextLanguage.EN),
-            Text(value="Mumble bumble boo.", language=None),
+            Text(value="Une activité active.", language=None),
         ],
         contact=[
             contact_point_1.stableTargetId,
@@ -198,17 +217,22 @@ def load_dummy_data() -> None:
         hadPrimarySource=primary_source_1.stableTargetId,
         identifierInPrimarySource="a-1",
         responsibleUnit=[organizational_unit_1.stableTargetId],
-        theme=["https://mex.rki.de/item/theme-3"],
-        title=["Activity 1"],
+        theme=[Theme["DIGITAL_PUBLIC_HEALTH"]],
+        title=[Text(value="Aktivität 1", language=TextLanguage.DE)],
         website=[Link(title="Activity Homepage", url="https://activity-1")],
     )
-    GraphConnector.get().ingest(
-        [
-            primary_source_1,
-            primary_source_2,
-            contact_point_1,
-            contact_point_2,
-            organizational_unit_1,
-            activity_1,
-        ]
-    )
+    return [
+        primary_source_1,
+        primary_source_2,
+        contact_point_1,
+        contact_point_2,
+        organizational_unit_1,
+        activity_1,
+    ]
+
+
+@pytest.fixture
+def load_dummy_data(dummy_data: list[AnyExtractedModel]) -> list[AnyExtractedModel]:
+    """Ingest dummy data into the graph."""
+    GraphConnector.get().ingest(dummy_data)
+    return dummy_data

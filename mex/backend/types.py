@@ -1,9 +1,17 @@
 from enum import Enum, EnumMeta, _EnumDict
+from typing import Literal
 
 from pydantic import SecretStr
 
-from mex.common.models import BaseModel
+from mex.common.models import (
+    BASE_MODEL_CLASSES_BY_NAME,
+    EXTRACTED_MODEL_CLASSES_BY_NAME,
+    MERGED_MODEL_CLASSES_BY_NAME,
+    BaseModel,
+)
 from mex.common.transform import dromedary_to_snake
+
+LiteralStringType = type(Literal["str"])
 
 
 class AccessLevel(Enum):
@@ -55,3 +63,21 @@ class DynamicStrEnum(EnumMeta):
         for name in dct.pop("__names__"):
             dct[dromedary_to_snake(name).upper()] = name
         return super().__new__(cls, name, bases, dct)
+
+
+class UnprefixedType(Enum, metaclass=DynamicStrEnum):
+    """Enumeration of possible types without any prefix."""
+
+    __names__ = list(m.removeprefix("Base") for m in BASE_MODEL_CLASSES_BY_NAME)
+
+
+class ExtractedType(Enum, metaclass=DynamicStrEnum):
+    """Enumeration of possible types for extracted items."""
+
+    __names__ = list(EXTRACTED_MODEL_CLASSES_BY_NAME)
+
+
+class MergedType(Enum, metaclass=DynamicStrEnum):
+    """Enumeration of possible types for merged items."""
+
+    __names__ = list(MERGED_MODEL_CLASSES_BY_NAME)
