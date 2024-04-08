@@ -27,9 +27,9 @@ linter:
 	pdm lint; \
 
 pytest:
-	# run the pytest test suite with unit tests only
-	@ echo running unit tests; \
-	pdm unit; \
+	# run the pytest test suite with all tests
+	@ echo running all tests; \
+	pdm test; \
 
 wheel:
 	# build the python package
