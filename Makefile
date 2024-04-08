@@ -19,24 +19,24 @@ hooks:
 install: setup hooks
 	# install packages from lock file in local virtual environment
 	@ echo installing package; \
-	poetry install --no-interaction --sync; \
+	pdm install-all; \
 
 linter:
 	# run the linter hooks from pre-commit on all files
 	@ echo linting all files; \
-	pre-commit run --all-files; \
+	pdm lint; \
 
 pytest:
 	# run the pytest test suite with unit tests only
 	@ echo running unit tests; \
-	poetry run pytest; \
+	pdm unit; \
 
 wheel:
 	# build the python package
 	@ echo building wheel; \
-	poetry build --no-interaction --format wheel; \
+	pdm wheel; \
 
-container:
+image:
 	# build the docker image
 	@ echo building docker image mex-backend:${LATEST}; \
 	export DOCKER_BUILDKIT=1; \
@@ -52,15 +52,14 @@ run: image
 		--publish 8080:8080 \
 		rki/mex-backend:${LATEST}; \
 
-start: container
-	# start the service using docker-compose
-	@ echo running docker-compose with mex-backend:${LATEST}; \
+start: image
+	# start the service using docker compose
+	@ echo start mex-backend:${LATEST} with compose; \
 	export DOCKER_BUILDKIT=1; \
 	export COMPOSE_DOCKER_CLI_BUILD=1; \
-	docker-compose up; \
+	docker compose up --remove-orphans; \
 
 docs:
 	# use sphinx to auto-generate html docs from code
-	@ echo generating api docs; \
-	poetry run sphinx-apidoc -f -o docs/source mex; \
-	poetry run sphinx-build -aE -b dirhtml docs docs/dist; \
+	@ echo generating docs; \
+	pdm doc; \
