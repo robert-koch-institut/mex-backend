@@ -1,5 +1,6 @@
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import Any, AsyncIterator
+from typing import Any
 
 import uvicorn
 from fastapi import APIRouter, Depends, FastAPI
@@ -66,7 +67,7 @@ def close_connectors() -> None:
     for connector_type, connector in context.items():
         try:
             connector.close()
-        except Exception:  # noqa: PERF203
+        except Exception:
             logger.exception("Error closing %s", connector_type)
         else:
             logger.info("Closed %s", connector_type)

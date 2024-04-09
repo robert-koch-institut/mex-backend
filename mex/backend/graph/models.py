@@ -1,5 +1,6 @@
+from collections.abc import Iterator
 from functools import cache
-from typing import Any, Iterator
+from typing import Any
 
 from neo4j import Result as Neo4jResult
 
