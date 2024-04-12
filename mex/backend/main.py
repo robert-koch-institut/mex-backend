@@ -1,5 +1,6 @@
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import Any, AsyncIterator
+from typing import Any
 
 import uvicorn
 from fastapi import APIRouter, Depends, FastAPI
@@ -17,8 +18,7 @@ from mex.backend.rules.main import router as rules_router
 from mex.backend.security import has_read_access, has_write_access
 from mex.backend.settings import BackendSettings
 from mex.common.cli import entrypoint
-from mex.common.connector import ConnectorContext
-from mex.common.logging import logger
+from mex.common.connector import CONNECTOR_STORE
 from mex.common.types import Identifier
 from mex.common.types.identifier import MEX_ID_PATTERN
 
@@ -58,23 +58,11 @@ def create_openapi_schema() -> dict[str, Any]:
     return app.openapi_schema
 
 
-def close_connectors() -> None:
-    """Try to close all connectors in the current context."""
-    context = ConnectorContext.get()
-    for connector_type, connector in context.items():
-        try:
-            connector.close()
-        except Exception:  # noqa: PERF203
-            logger.exception("Error closing %s", connector_type)
-        else:
-            logger.info("Closed %s", connector_type)
-
-
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     """Async context manager to execute setup and teardown of the FastAPI app."""
     yield None
-    close_connectors()
+    CONNECTOR_STORE.reset()
 
 
 app = FastAPI(

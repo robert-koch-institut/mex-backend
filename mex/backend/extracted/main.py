@@ -1,4 +1,5 @@
-from typing import Annotated, Sequence
+from collections.abc import Sequence
+from typing import Annotated
 
 from fastapi import APIRouter, Query
 
@@ -13,8 +14,8 @@ router = APIRouter()
 @router.get("/extracted-item", tags=["editor"])
 def search_extracted_items(
     q: Annotated[str, Query(max_length=100)] = "",
-    stableTargetId: Identifier | None = None,  # noqa: N803
-    entityType: Annotated[  # noqa: N803
+    stableTargetId: Identifier | None = None,
+    entityType: Annotated[
         Sequence[ExtractedType], Query(max_length=len(ExtractedType))
     ] = [],
     skip: Annotated[int, Query(ge=0, le=10e10)] = 0,

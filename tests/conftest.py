@@ -22,10 +22,12 @@ from mex.common.models import (
     ExtractedOrganizationalUnit,
     ExtractedPrimarySource,
 )
+from mex.common.settings import BaseSettings
 from mex.common.transform import MExEncoder
 from mex.common.types import (
     Email,
     Identifier,
+    IdentityProvider,
     Link,
     Text,
     TextLanguage,
@@ -57,7 +59,8 @@ def skip_integration_test_in_ci(is_integration_test: bool) -> None:
 @pytest.fixture
 def client() -> TestClient:
     """Return a fastAPI test client initialized with our app."""
-    return TestClient(app)
+    with TestClient(app) as test_client:
+        return test_client
 
 
 @pytest.fixture
@@ -106,7 +109,7 @@ class MockedGraph:
         self.run = session_run
 
     @property
-    def return_value(self) -> list[Any]:
+    def return_value(self) -> list[Any]:  # pragma: no cover
         return self.records
 
     @return_value.setter
@@ -143,6 +146,14 @@ def isolate_identifier_seeds(monkeypatch: MonkeyPatch) -> None:
         return cls(original_generate(seed or next(counter)))
 
     monkeypatch.setattr(Identifier, "generate", classmethod(generate))
+
+
+@pytest.fixture(autouse=True)
+def set_identity_provider(is_integration_test: bool) -> None:
+    """Ensure the identifier provider is set to `MEMORY` in unit tests."""
+    if not is_integration_test:
+        settings = BaseSettings.get()
+        settings.identity_provider = IdentityProvider.MEMORY
 
 
 @pytest.fixture(autouse=True)

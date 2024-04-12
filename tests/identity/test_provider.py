@@ -9,7 +9,11 @@ from mex.common.models import (
     MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
 )
-from mex.common.types import Identifier, MergedPrimarySourceIdentifier
+from mex.common.types import (
+    Identifier,
+    MergedOrganizationalUnitIdentifier,
+    MergedPrimarySourceIdentifier,
+)
 from tests.conftest import MockedGraph
 
 
@@ -243,14 +247,14 @@ def test_fetch_identities_mocked(
                     "hadPrimarySource": "00000000000000",
                     "identifier": "bFQoRhcVH5DHUr",
                     "identifierInPrimarySource": "ps-1",
-                    "stableTargetId": "bFQoRhcVH5DHUq",
+                    "stableTargetId": "bFQoRhcVH5DHUr",
                 }
             ],
         ),
         (
             None,
             None,
-            Identifier("bFQoRhcVH5DHUy"),
+            MergedOrganizationalUnitIdentifier("bFQoRhcVH5DHUz"),
             [
                 {
                     "identifier": "bFQoRhcVH5DHUz",

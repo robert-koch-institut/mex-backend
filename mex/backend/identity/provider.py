@@ -1,4 +1,4 @@
-from functools import cache
+from functools import lru_cache
 
 from mex.backend.graph.connector import GraphConnector
 from mex.common.identity import BaseProvider, Identity
@@ -8,8 +8,21 @@ from mex.common.types import Identifier, MergedPrimarySourceIdentifier
 class GraphIdentityProvider(BaseProvider, GraphConnector):
     """Identity provider that communicates with the graph database."""
 
-    @cache  # noqa: B019
+    def __init__(self) -> None:
+        """Create a new graph identity provider."""
+        super().__init__()
+        # mitigating https://docs.astral.sh/ruff/rules/cached-instance-method
+        self._cached_assign = lru_cache(5000)(self._do_assign)
+
     def assign(
+        self,
+        had_primary_source: MergedPrimarySourceIdentifier,
+        identifier_in_primary_source: str,
+    ) -> Identity:
+        """Return a cached Identity from the database or newly assigned one."""
+        return self._cached_assign(had_primary_source, identifier_in_primary_source)
+
+    def _do_assign(
         self,
         had_primary_source: MergedPrimarySourceIdentifier,
         identifier_in_primary_source: str,

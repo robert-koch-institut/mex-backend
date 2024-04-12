@@ -113,8 +113,8 @@ def test_assign_identity_inconsistency_mocked(
                 "identifierInPrimarySource": "cp-2",
             },
             {
-                "identifier": "bFQoRhcVH5DHUC",
                 "hadPrimarySource": "bFQoRhcVH5DHUr",
+                "identifier": "bFQoRhcVH5DHUw",
                 "identifierInPrimarySource": "cp-2",
                 "stableTargetId": "bFQoRhcVH5DHUD",
             },
@@ -234,7 +234,7 @@ def test_fetch_identities_mocked(
                         "identifier": "bFQoRhcVH5DHUr",
                         "hadPrimarySource": "00000000000000",
                         "identifierInPrimarySource": "ps-1",
-                        "stableTargetId": "bFQoRhcVH5DHUq",
+                        "stableTargetId": "bFQoRhcVH5DHUr",
                     }
                 ],
                 "total": 1,

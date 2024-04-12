@@ -44,18 +44,6 @@ def test_create_rule_set(client_with_api_key_write_permission: TestClient) -> No
             },
             "blockPrimarySources": {},
         },
-        # {
-        #     "start": {
-        #         "addValues": ["2025"],
-        #         "blockValues": ["2025-01-01"],
-        #         "blockPrimarySources": [],
-        #     },
-        #     "title": {
-        #         "addValues": [{"value": "A new beginning", "language": "en"}],
-        #         "blockValues": [{"value": "Ein alter Hut", "language": "de"}],
-        #         "blockPrimarySources": [],
-        #     },
-        # },
     )
     assert response.status_code == 204, response.text
 

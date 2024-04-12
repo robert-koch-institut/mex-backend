@@ -1,6 +1,6 @@
 import json
 from string import Template
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from neo4j import Driver, GraphDatabase
 
@@ -18,7 +18,8 @@ from mex.backend.graph.query import QueryBuilder
 from mex.backend.graph.transform import (
     expand_references_in_search_result,
 )
-from mex.backend.rules.models import ActivityRuleSet, VariableRuleSet
+from mex.backend.rules.models import ActivityRuleSet
+from mex.backend.settings import BackendSettings
 from mex.backend.transform import to_primitive
 from mex.common.connector import BaseConnector
 from mex.common.exceptions import MExError
@@ -32,16 +33,10 @@ from mex.common.models import (
     AdditiveActivity,
     AnyExtractedModel,
     ExtractedPrimarySource,
+    SubtractiveActivity,
 )
-from mex.common.models.rule_set import BlockingRule
 from mex.common.transform import to_key_and_values
 from mex.common.types import Identifier, Link, Text
-
-if TYPE_CHECKING:
-    BlockingActivity = BlockingRule
-    BlockingVariable = BlockingRule
-else:
-    from mex.common.models import BlockingActivity
 
 MEX_EXTRACTED_PRIMARY_SOURCE = ExtractedPrimarySource.model_construct(
     hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -64,9 +59,6 @@ class GraphConnector(BaseConnector):
 
     def _init_driver(self) -> Driver:
         """Initialize and return a database driver."""
-        # break import cycle, sigh
-        from mex.backend.settings import BackendSettings
-
         settings = BackendSettings.get()
         return GraphDatabase.driver(
             settings.graph_url,
@@ -228,10 +220,10 @@ class GraphConnector(BaseConnector):
         All nested properties (like Text or Link) are created as their own nodes
         and linked via edges. For multi-valued fields, the position of each nested
         object is stored as a property on the outbound edge.
-        Any nested objects that are found in the graph, gut are not present on the
+        Any nested objects that are found in the graph, but are not present on the
         model any more are purged.
-        In addition, a merged item is created (if it does not exist yet) and linked
-        to the extracted item via an edge of the label `stableTargetId`.
+        In addition, a merged item is created (if it does not exist yet) and the
+        extracted item is linked to it via an edge with the label `stableTargetId`.
 
         Args:
             model: Model to merge into the graph as a node
@@ -332,7 +324,7 @@ class GraphConnector(BaseConnector):
 
     def _merge_rule_set(
         self,
-        model: AdditiveActivity | BlockingActivity,
+        model: AdditiveActivity | SubtractiveActivity,
         stable_target_id: Identifier,
     ) -> None:
         query_builder = QueryBuilder.get()
@@ -383,7 +375,7 @@ class GraphConnector(BaseConnector):
 
     def _merge_rule_set_edges(
         self,
-        model: AdditiveActivity | BlockingActivity,
+        model: AdditiveActivity | SubtractiveActivity,
         stable_target_id: Identifier,
     ) -> None:
         query_builder = QueryBuilder.get()
@@ -422,10 +414,12 @@ class GraphConnector(BaseConnector):
         )
 
     def create_rule_set(self, rule_set: ActivityRuleSet) -> None:
+        """Create a new set of rules to be a applied to one merged item."""
         stable_target_id = Identifier.generate()
-        for rule in (rule_set.addValues, rule_set.blockValues):
-            self._merge_rule_set(rule, stable_target_id)
-            self._merge_rule_set_edges(rule, stable_target_id)
+        self._merge_rule_set(rule_set.addValues, stable_target_id)
+        self._merge_rule_set_edges(rule_set.addValues, stable_target_id)
+        self._merge_rule_set(rule_set.blockValues, stable_target_id)
+        self._merge_rule_set_edges(rule_set.blockValues, stable_target_id)
 
     def ingest(self, models: list[AnyExtractedModel]) -> list[Identifier]:
         """Ingest a list of models into the graph as nodes and connect all edges.

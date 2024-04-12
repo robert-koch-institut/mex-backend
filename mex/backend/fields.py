@@ -1,10 +1,8 @@
+from collections.abc import Callable, Generator, Mapping
 from types import NoneType, UnionType
 from typing import (
     Annotated,
     Any,
-    Callable,
-    Generator,
-    Mapping,
     Union,
     get_args,
     get_origin,
@@ -19,7 +17,14 @@ from mex.common.types import MERGED_IDENTIFIER_CLASSES, Link, Text
 
 
 def _get_inner_types(annotation: Any) -> Generator[type, None, None]:
-    """Yield all inner types from unions, lists and optional annotations."""
+    """Yield all inner types from unions, lists and type annotations (except NoneType).
+
+    Args:
+        annotation: A valid python type annotation
+
+    Returns:
+        A generator for all (non-NoneType) types found in the annotation
+    """
     if get_origin(annotation) == Annotated:
         yield from _get_inner_types(get_args(annotation)[0])
     elif get_origin(annotation) in (Union, UnionType, list):
@@ -29,11 +34,18 @@ def _get_inner_types(annotation: Any) -> Generator[type, None, None]:
         yield annotation
 
 
-def _has_any_type(field: FieldInfo, *types: type) -> bool:
-    """Return whether a field is annotated as one of the given types.
+def _contains_only_types(field: FieldInfo, *types: type) -> bool:
+    """Return whether a `field` is annotated as one of the given `types`.
 
-    Lists and unions with `NoneType` are allowed and only the non-`NoneType` annotation
-    is considered for the type-check.
+    Unions, lists and type annotations are checked for their inner types and only the
+    non-`NoneType` types are considered for the type-check.
+
+    Args:
+        field: A pydantic `FieldInfo` object
+        types: Types to look for in the field's annotation
+
+    Returns:
+        Whether the field contains any of the given types
     """
     if inner_types := list(_get_inner_types(field.annotation)):
         return all(inner_type in types for inner_type in inner_types)
@@ -44,7 +56,15 @@ def _group_fields_by_class_name(
     model_classes_by_name: Mapping[str, type[BaseModel]],
     predicate: Callable[[FieldInfo], bool],
 ) -> dict[str, list[str]]:
-    """Group the field names by model class and filter them by the given predicate."""
+    """Group the field names by model class and filter them by the given predicate.
+
+    Args:
+        model_classes_by_name: Map from class names to model classes
+        predicate: Function to filter the fields of the classes by
+
+    Returns:
+        Dictionary mapping class names to a list of field names filtered by `predicate`
+    """
     return {
         name: sorted(
             {
@@ -55,6 +75,7 @@ def _group_fields_by_class_name(
         )
         for name, cls in model_classes_by_name.items()
     }
+
 
 MODEL_CLASSES_BY_NAME = {
     **EXTRACTED_MODEL_CLASSES_BY_NAME,
@@ -74,24 +95,24 @@ LITERAL_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
 # fields typed as merged identifiers containing references to merged items
 REFERENCE_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
     MODEL_CLASSES_BY_NAME,
-    lambda field_info: _has_any_type(field_info, *MERGED_IDENTIFIER_CLASSES),
+    lambda field_info: _contains_only_types(field_info, *MERGED_IDENTIFIER_CLASSES),
 )
 
 # nested fields that contain `Text` objects
 TEXT_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
     MODEL_CLASSES_BY_NAME,
-    lambda field_info: _has_any_type(field_info, Text),
+    lambda field_info: _contains_only_types(field_info, Text),
 )
 
 # nested fields that contain `Link` objects
 LINK_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
     MODEL_CLASSES_BY_NAME,
-    lambda field_info: _has_any_type(field_info, Link),
+    lambda field_info: _contains_only_types(field_info, Link),
 )
 
 # fields annotated as `str` type
 STRING_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
-    MODEL_CLASSES_BY_NAME, lambda field_info: _has_any_type(field_info, str)
+    MODEL_CLASSES_BY_NAME, lambda field_info: _contains_only_types(field_info, str)
 )
 
 # fields that should be indexed as searchable fields

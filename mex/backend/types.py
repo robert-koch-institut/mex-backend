@@ -67,7 +67,7 @@ class DynamicStrEnum(EnumMeta):
 class UnprefixedType(Enum, metaclass=DynamicStrEnum):
     """Enumeration of possible types without any prefix."""
 
-    __names__ = list(m.removeprefix("Extracted") for m in EXTRACTED_MODEL_CLASSES_BY_NAME)
+    __names__ = [m.removeprefix("Extracted") for m in EXTRACTED_MODEL_CLASSES_BY_NAME]
 
 
 class ExtractedType(Enum, metaclass=DynamicStrEnum):

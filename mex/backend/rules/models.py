@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Annotated, Literal
+from typing import Annotated, Literal
 
 from pydantic import Field
 
@@ -6,16 +6,11 @@ from mex.common.models import (
     AdditiveActivity,
     AdditiveVariable,
     BaseModel,
+    PreventiveActivity,
+    PreventiveVariable,
     SubtractiveActivity,
     SubtractiveVariable,
 )
-from mex.common.models.rule_set import BlockingRule
-
-if TYPE_CHECKING:
-    BlockingActivity = BlockingRule
-    BlockingVariable = BlockingRule
-else:
-    from mex.common.models import BlockingActivity, BlockingVariable
 
 
 class ActivityRuleSet(BaseModel):
@@ -27,16 +22,16 @@ class ActivityRuleSet(BaseModel):
 
     addValues: AdditiveActivity = AdditiveActivity()
     blockValues: SubtractiveActivity = SubtractiveActivity()
-    blockPrimarySources: BlockingActivity = BlockingActivity()
+    blockPrimarySources: PreventiveActivity = PreventiveActivity()
 
 
 class VariableRuleSet(BaseModel):
     """Set of rules to be applied to one merged variable item."""
 
-    entityType: Annotated[Literal["RuleSet"], Field(alias="$type", frozen=True)] = (
-        "RuleSet"
-    )
+    entityType: Annotated[
+        Literal["VariableRuleSet"], Field(alias="$type", frozen=True)
+    ] = "VariableRuleSet"
 
     addValues: AdditiveVariable = AdditiveVariable()
     blockValues: SubtractiveVariable = SubtractiveVariable()
-    blockPrimarySources: BlockingVariable = BlockingVariable()
+    blockPrimarySources: PreventiveVariable = PreventiveVariable()

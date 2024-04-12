@@ -1,11 +1,11 @@
-from typing import Any
+from typing import Annotated, Any
 
 import pytest
 from pydantic import BaseModel
 
 from mex.backend.fields import (
+    _contains_only_types,
     _get_inner_types,
-    _has_any_type,
 )
 from mex.common.types import (
     MERGED_IDENTIFIER_CLASSES,
@@ -21,6 +21,7 @@ from mex.common.types import (
         (str | None, [str]),
         (str | int, [str, int]),
         (list[str | int | list[str]], [str, int, str]),
+        (Annotated[list[str | int], "some-annotation"], [str, int]),
         (None, []),
     ),
     ids=[
@@ -28,6 +29,7 @@ from mex.common.types import (
         "optional type",
         "type union",
         "complex nested types",
+        "annotated list",
         "static None",
     ],
 )
@@ -56,8 +58,12 @@ def test_get_inner_types(annotation: Any, expected_types: list[type]) -> None:
         "optional identifier",
     ],
 )
-def test_has_any_type(annotation: Any, types: list[type], expected: bool) -> None:
+def test_contains_only_types(
+    annotation: Any, types: list[type], expected: bool
+) -> None:
     class DummyModel(BaseModel):
         attribute: annotation
 
-    assert _has_any_type(DummyModel.model_fields["attribute"], *types) == expected
+    assert (
+        _contains_only_types(DummyModel.model_fields["attribute"], *types) == expected
+    )

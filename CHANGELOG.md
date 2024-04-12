@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changes
+
+- re-implemented queries as templated cql files
+- updated graph connector for new queries
+- improved isolation of neo4j dependency
+- improved documentation and code-readability
+
+### Deprecated
+
+### Removed
+
+- trashed hydration module
+
+### Fixed
+
+### Security
+
+## [0.12.0] - 2024.04.02
+
+### Added
+
 - pull request template
 - sphinx documentation
 - publish cve results
@@ -28,8 +49,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add module name to dynamic models for better debugging
 - allow 'MergedThing' as well as 'Thing' as entityType query parameter
 
-### Deprecated
-
 ### Removed
 
 - remove dynamic extracted model classes and use those from mex-common
@@ -37,5 +56,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - don't allow identifierInPrimarySource changes on node updates
-
-### Security
