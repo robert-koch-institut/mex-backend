@@ -78,6 +78,7 @@ def _group_fields_by_class_name(
 
 
 MODEL_CLASSES_BY_NAME = {
+    # TODO: add other models too
     **EXTRACTED_MODEL_CLASSES_BY_NAME,
 }
 
