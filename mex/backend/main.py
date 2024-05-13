@@ -19,7 +19,7 @@ from mex.backend.security import has_read_access, has_write_access
 from mex.backend.settings import BackendSettings
 from mex.backend.transform import to_primitive
 from mex.common.cli import entrypoint
-from mex.common.connector import ConnectorContext
+from mex.common.connector import CONNECTOR_STORE
 from mex.common.exceptions import MExError
 from mex.common.logging import logger
 from mex.common.types import Identifier
@@ -63,15 +63,14 @@ def create_openapi_schema() -> dict[str, Any]:
 
 def close_connectors() -> None:
     """Try to close all connectors in the current context."""
-    context = ConnectorContext.get()
-    for connector_type, connector in context.items():
+    for connector in CONNECTOR_STORE:
         try:
             connector.close()
         except Exception:
-            logger.exception("Error closing %s", connector_type)
+            logger.exception("Error closing %s", type(connector))
         else:
-            logger.info("Closed %s", connector_type)
-    context.clear()
+            logger.info("Closed %s", type(connector))
+    CONNECTOR_STORE.reset()
 
 
 @asynccontextmanager
