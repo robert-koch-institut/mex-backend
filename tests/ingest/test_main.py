@@ -6,7 +6,6 @@ from fastapi.testclient import TestClient
 
 from mex.backend.graph.connector import GraphConnector
 from mex.common.models import AnyExtractedModel
-from mex.common.testing import Joker
 from tests.conftest import MockedGraph
 
 Payload = dict[str, list[dict[str, Any]]]
@@ -67,7 +66,6 @@ def test_bulk_insert_malformed(
                 "loc": ["body", "ExtractedContactPoint", 0, 1],
                 "msg": "Input should be a valid dictionary",
                 "input": "FAIL!",
-                "url": Joker(),
             }
         ]
     }

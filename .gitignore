@@ -119,3 +119,7 @@ dmypy.json
 
 # Default exports
 *.ndjson
+data/
+identity.csv
+schema.json
+work/
