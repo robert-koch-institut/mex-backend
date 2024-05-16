@@ -26,9 +26,9 @@ from tests.conftest import MockedGraph
             "new-item",
             {
                 "hadPrimarySource": "psSti00000000001",
-                "identifier": "bFQoRhcVH5DHUq",
+                "identifier": "sMgFvmdtJyegb9vkebq04",
                 "identifierInPrimarySource": "new-item",
-                "stableTargetId": "bFQoRhcVH5DHUr",
+                "stableTargetId": "gGdOIbDIHRt35He616Fv5q",
             },
         ),
         (
@@ -101,9 +101,9 @@ def test_assign_identity_inconsistency_mocked(
             "new-item",
             {
                 "hadPrimarySource": "bFQoRhcVH5DHUr",
-                "identifier": "bFQoRhcVH5DHUC",
+                "identifier": "bFQoRhcVH5DHUq",
                 "identifierInPrimarySource": "new-item",
-                "stableTargetId": "bFQoRhcVH5DHUD",
+                "stableTargetId": "bFQoRhcVH5DHUr",
             },
         ),
         (

@@ -33,7 +33,6 @@ from mex.common.types import (
     TextLanguage,
     Theme,
 )
-from mex.common.types.identifier import IdentifierT
 
 pytest_plugins = ("mex.common.testing.plugin",)
 
@@ -142,7 +141,7 @@ def isolate_identifier_seeds(monkeypatch: MonkeyPatch) -> None:
     counter = count()
     original_generate = Identifier.generate
 
-    def generate(cls: type[IdentifierT], seed: int | None = None) -> IdentifierT:
+    def generate(cls: type[Identifier], seed: int | None = None) -> Identifier:
         return cls(original_generate(seed or next(counter)))
 
     monkeypatch.setattr(Identifier, "generate", classmethod(generate))
