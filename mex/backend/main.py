@@ -6,9 +6,9 @@ import uvicorn
 from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 
-from mex.backend.exceptions import handle_uncaught_exception, handle_validation_error
+from mex.backend.exceptions import handle_uncaught_exception
 from mex.backend.extracted.main import router as extracted_router
 from mex.backend.identity.main import router as identity_router
 from mex.backend.ingest.main import router as ingest_router
@@ -100,7 +100,6 @@ def check_system_status() -> SystemStatus:
 
 
 app.include_router(router)
-app.add_exception_handler(ValidationError, handle_validation_error)
 app.add_exception_handler(Exception, handle_uncaught_exception)
 app.add_middleware(
     CORSMiddleware,

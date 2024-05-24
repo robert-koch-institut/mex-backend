@@ -26,9 +26,9 @@ from tests.conftest import MockedGraph
             "new-item",
             {
                 "hadPrimarySource": "psSti00000000001",
-                "identifier": "sMgFvmdtJyegb9vkebq04",
+                "identifier": "bFQoRhcVH5DHUq",
                 "identifierInPrimarySource": "new-item",
-                "stableTargetId": "gGdOIbDIHRt35He616Fv5q",
+                "stableTargetId": "bFQoRhcVH5DHUr",
             },
         ),
         (
@@ -110,10 +110,10 @@ def test_assign_identity_inconsistency_mocked(
             "bFQoRhcVH5DHUr",
             "cp-2",
             {
-                "identifier": "bFQoRhcVH5DHUw",
+                "identifier": "bFQoRhcVH5DHUq",
                 "hadPrimarySource": "bFQoRhcVH5DHUr",
                 "identifierInPrimarySource": "cp-2",
-                "stableTargetId": "bFQoRhcVH5DHUx",
+                "stableTargetId": "bFQoRhcVH5DHUr",
             },
         ),
         (
@@ -244,23 +244,23 @@ def test_fetch_identities_mocked(
             None,
             [
                 {
+                    "identifier": "sMgFvmdtJyegb9vkebq04",
                     "hadPrimarySource": "00000000000000",
-                    "identifier": "bFQoRhcVH5DHUq",
                     "identifierInPrimarySource": "ps-1",
-                    "stableTargetId": "bFQoRhcVH5DHUr",
+                    "stableTargetId": "gGdOIbDIHRt35He616Fv5q",
                 }
             ],
         ),
         (
             None,
             None,
-            MergedOrganizationalUnitIdentifier("bFQoRhcVH5DHUz"),
+            MergedOrganizationalUnitIdentifier("cWWm02l1c6cucKjIhkFqY4"),
             [
                 {
-                    "identifier": "bFQoRhcVH5DHUy",
-                    "hadPrimarySource": "bFQoRhcVH5DHUt",
+                    "identifier": "gIyDlXYbq0JwItPRU0NcFN",
+                    "hadPrimarySource": "bbTqJnQc3TA8dBJmLMBimb",
                     "identifierInPrimarySource": "ou-1",
-                    "stableTargetId": "bFQoRhcVH5DHUz",
+                    "stableTargetId": "cWWm02l1c6cucKjIhkFqY4",
                 }
             ],
         ),

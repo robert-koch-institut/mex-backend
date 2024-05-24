@@ -102,9 +102,9 @@ def test_assign_identity_inconsistency_mocked(
             },
             {
                 "hadPrimarySource": "bFQoRhcVH5DHUr",
-                "identifier": "bFQoRhcVH5DHUC",
+                "identifier": "bFQoRhcVH5DHUq",
                 "identifierInPrimarySource": "new-item",
-                "stableTargetId": "bFQoRhcVH5DHUD",
+                "stableTargetId": "bFQoRhcVH5DHUr",
             },
         ),
         (
@@ -114,9 +114,9 @@ def test_assign_identity_inconsistency_mocked(
             },
             {
                 "hadPrimarySource": "bFQoRhcVH5DHUr",
-                "identifier": "bFQoRhcVH5DHUw",
+                "identifier": "bFQoRhcVH5DHUq",
                 "identifierInPrimarySource": "cp-2",
-                "stableTargetId": "bFQoRhcVH5DHUx",
+                "stableTargetId": "bFQoRhcVH5DHUr",
             },
         ),
         (
@@ -232,23 +232,23 @@ def test_fetch_identities_mocked(
                 "items": [
                     {
                         "hadPrimarySource": "00000000000000",
-                        "identifier": "bFQoRhcVH5DHUq",
+                        "identifier": "sMgFvmdtJyegb9vkebq04",
                         "identifierInPrimarySource": "ps-1",
-                        "stableTargetId": "bFQoRhcVH5DHUr",
+                        "stableTargetId": "gGdOIbDIHRt35He616Fv5q",
                     }
                 ],
                 "total": 1,
             },
         ),
         (
-            "?stableTargetId=bFQoRhcVH5DHUz",
+            "?stableTargetId=cWWm02l1c6cucKjIhkFqY4",
             {
                 "items": [
                     {
-                        "identifier": "bFQoRhcVH5DHUy",
-                        "hadPrimarySource": "bFQoRhcVH5DHUt",
+                        "identifier": "gIyDlXYbq0JwItPRU0NcFN",
+                        "hadPrimarySource": "bbTqJnQc3TA8dBJmLMBimb",
                         "identifierInPrimarySource": "ou-1",
-                        "stableTargetId": "bFQoRhcVH5DHUz",
+                        "stableTargetId": "cWWm02l1c6cucKjIhkFqY4",
                     }
                 ],
                 "total": 1,

@@ -76,7 +76,7 @@ def test_search_extracted_items_mocked(
                         "description": [],
                         "documentation": [],
                         "hadPrimarySource": "00000000000000",
-                        "identifier": "00000000000000",
+                        "identifier": "00000000000001",
                         "identifierInPrimarySource": "mex",
                         "locatedAt": [],
                         "stableTargetId": "00000000000000",
@@ -93,12 +93,12 @@ def test_search_extracted_items_mocked(
             {
                 "items": [
                     {
-                        "$type": "ExtractedContactPoint",
-                        "email": ["info@contact-point.one"],
-                        "hadPrimarySource": "bFQoRhcVH5DHUr",
-                        "identifier": "bFQoRhcVH5DHUu",
+                        "hadPrimarySource": "gGdOIbDIHRt35He616Fv5q",
                         "identifierInPrimarySource": "cp-1",
-                        "stableTargetId": "bFQoRhcVH5DHUv",
+                        "email": ["info@contact-point.one"],
+                        "$type": "ExtractedContactPoint",
+                        "identifier": "gs6yL8KJoXRos9l2ydYFfx",
+                        "stableTargetId": "wEvxYRPlmGVQCbZx9GAbn",
                     }
                 ],
                 "total": 7,
@@ -139,10 +139,10 @@ def test_search_extracted_items_mocked(
                         "description": [],
                         "documentation": [],
                         "hadPrimarySource": "00000000000000",
-                        "identifier": "bFQoRhcVH5DHUs",
+                        "identifier": "d0MGZryflsy7PbsBF3ZGXO",
                         "identifierInPrimarySource": "ps-2",
                         "locatedAt": [],
-                        "stableTargetId": "bFQoRhcVH5DHUt",
+                        "stableTargetId": "bbTqJnQc3TA8dBJmLMBimb",
                         "title": [],
                         "unitInCharge": [],
                         "version": "Cool Version v2.13",
@@ -152,20 +152,20 @@ def test_search_extracted_items_mocked(
             },
         ),
         (
-            "?stableTargetId=bFQoRhcVH5DHUz",
+            "?stableTargetId=cWWm02l1c6cucKjIhkFqY4",
             {
                 "items": [
                     {
                         "$type": "ExtractedOrganizationalUnit",
                         "alternativeName": [],
                         "email": [],
-                        "hadPrimarySource": "bFQoRhcVH5DHUt",
-                        "identifier": "bFQoRhcVH5DHUy",
+                        "hadPrimarySource": "bbTqJnQc3TA8dBJmLMBimb",
+                        "identifier": "gIyDlXYbq0JwItPRU0NcFN",
                         "identifierInPrimarySource": "ou-1",
                         "name": [{"language": "en", "value": "Unit 1"}],
                         "parentUnit": None,
                         "shortName": [],
-                        "stableTargetId": "bFQoRhcVH5DHUz",
+                        "stableTargetId": "cWWm02l1c6cucKjIhkFqY4",
                         "unitOf": [],
                         "website": [],
                     }

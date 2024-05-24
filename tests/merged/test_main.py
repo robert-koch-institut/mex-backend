@@ -122,12 +122,12 @@ def test_search_merged_items_mocked(
                     {
                         "$type": "MergedContactPoint",
                         "email": ["info@contact-point.one"],
-                        "identifier": "bFQoRhcVH5DHUv",
+                        "identifier": "wEvxYRPlmGVQCbZx9GAbn",
                     },
                     {
                         "$type": "MergedContactPoint",
                         "email": ["help@contact-point.two"],
-                        "identifier": "bFQoRhcVH5DHUx",
+                        "identifier": "g32qzYNVH1Ez7JTEk3fvLF",
                     },
                 ],
                 "total": 2,
@@ -143,7 +143,7 @@ def test_search_merged_items_mocked(
                         "contact": [],
                         "description": [],
                         "documentation": [],
-                        "identifier": "bFQoRhcVH5DHUt",
+                        "identifier": "bbTqJnQc3TA8dBJmLMBimb",
                         "locatedAt": [],
                         "title": [],
                         "unitInCharge": [],
@@ -154,14 +154,14 @@ def test_search_merged_items_mocked(
             },
         ),
         (
-            "?identifier=bFQoRhcVH5DHUz",
+            "?identifier=cWWm02l1c6cucKjIhkFqY4",
             {
                 "items": [
                     {
                         "$type": "MergedOrganizationalUnit",
                         "alternativeName": [],
                         "email": [],
-                        "identifier": "bFQoRhcVH5DHUz",
+                        "identifier": "cWWm02l1c6cucKjIhkFqY4",
                         "name": [{"language": "en", "value": "Unit 1"}],
                         "parentUnit": None,
                         "shortName": [],

@@ -111,12 +111,12 @@ merge_node(
     nested_node_labels=[],
 )""",
         {
-            "identifier": ExtractedPrimarySourceIdentifier("00000000000000"),
+            "identifier": ExtractedPrimarySourceIdentifier("00000000000001"),
             "stable_target_id": MergedPrimarySourceIdentifier("00000000000000"),
             "on_match": {"version": None},
             "on_create": {
                 "version": None,
-                "identifier": "00000000000000",
+                "identifier": "00000000000001",
                 "identifierInPrimarySource": "mex",
             },
             "nested_positions": [],
@@ -130,7 +130,7 @@ merge_edges(
     ref_labels=["hadPrimarySource", "stableTargetId"],
 )""",
         {
-            "identifier": "00000000000000",
+            "identifier": "00000000000001",
             "ref_identifiers": ["00000000000000", "00000000000000"],
             "ref_positions": [0, 0],
         },

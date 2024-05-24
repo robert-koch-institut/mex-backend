@@ -8,23 +8,23 @@ license = { file = "LICENSE" }
 urls = { Repository = "https://github.com/robert-koch-institut/mex-backend" }
 requires-python = "<3.13,>=3.11"
 dependencies = [
-    "fastapi>=0.110.1",
-    "httpx>=0.27.0",
-    "mex-common@git+https://github.com/robert-koch-institut/mex-common.git@0.24.0",
-    "neo4j>=5.18.0",
-    "pydantic>=2.7.0",
-    "uvicorn[standard]>=0.29.0",
+    "fastapi==0.111.0",
+    "httpx==0.27.0",
+    "mex-common@git+https://github.com/robert-koch-institut/mex-common.git@feature/mx-1571-prep-rules",
+    "neo4j==5.20.0",
+    "pydantic==2.7.1",
+    "uvicorn[standard]==0.29.0",
 ]
 optional-dependencies.dev = [
-    "black>=24.3.0",
-    "ipdb>=0.13.13",
-    "mypy>=1.9.0",
-    "pytest-cov>=4.1.0",
-    "pytest-random-order>=1.1.1",
-    "pytest>=8.1.1",
-    "ruff>=0.3.7",
-    "sphinx>=7.2.6",
-    "types-pytz>=2024.1.0",
+    "black==24.4.2",
+    "ipdb==0.13.13",
+    "mypy==1.10.0",
+    "pytest-cov==5.0.0",
+    "pytest-random-order==1.1.1",
+    "pytest==8.2.0",
+    "ruff==0.4.4",
+    "sphinx==7.3.7",
+    "types-pytz==2024.1.0.20240417",
 ]
 
 [project.scripts]
@@ -60,7 +60,6 @@ lint = { cmd = "pre-commit run --all-files" }
 unit = { cmd = "pdm run pytest -m 'not integration'" }
 test = { cmd = "pdm run pytest" }
 all = { composite = ["install-all", "lint", "test", "doc"] }
-
 
 [tool.pydantic-mypy]
 warn_untyped_fields = true
@@ -137,5 +136,5 @@ known-first-party = ["mex", "tests"]
 convention = "google"
 
 [build-system]
-requires = ["pdm-backend>=2.1.8"]
+requires = ["pdm-backend==2.3.0"]
 build-backend = "pdm.backend"
