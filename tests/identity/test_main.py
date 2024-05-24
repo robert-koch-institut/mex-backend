@@ -102,9 +102,9 @@ def test_assign_identity_inconsistency_mocked(
             },
             {
                 "hadPrimarySource": "bFQoRhcVH5DHUr",
-                "identifier": "bFQoRhcVH5DHUq",
+                "identifier": "bFQoRhcVH5DHUC",
                 "identifierInPrimarySource": "new-item",
-                "stableTargetId": "bFQoRhcVH5DHUr",
+                "stableTargetId": "bFQoRhcVH5DHUD",
             },
         ),
         (
@@ -114,9 +114,9 @@ def test_assign_identity_inconsistency_mocked(
             },
             {
                 "hadPrimarySource": "bFQoRhcVH5DHUr",
-                "identifier": "bFQoRhcVH5DHUq",
+                "identifier": "bFQoRhcVH5DHUw",
                 "identifierInPrimarySource": "cp-2",
-                "stableTargetId": "bFQoRhcVH5DHUr",
+                "stableTargetId": "bFQoRhcVH5DHUx",
             },
         ),
         (
@@ -232,23 +232,23 @@ def test_fetch_identities_mocked(
                 "items": [
                     {
                         "hadPrimarySource": "00000000000000",
-                        "identifier": "sMgFvmdtJyegb9vkebq04",
+                        "identifier": "bFQoRhcVH5DHUq",
                         "identifierInPrimarySource": "ps-1",
-                        "stableTargetId": "gGdOIbDIHRt35He616Fv5q",
+                        "stableTargetId": "bFQoRhcVH5DHUr",
                     }
                 ],
                 "total": 1,
             },
         ),
         (
-            "?stableTargetId=cWWm02l1c6cucKjIhkFqY4",
+            "?stableTargetId=bFQoRhcVH5DHUz",
             {
                 "items": [
                     {
-                        "identifier": "gIyDlXYbq0JwItPRU0NcFN",
-                        "hadPrimarySource": "bbTqJnQc3TA8dBJmLMBimb",
+                        "identifier": "bFQoRhcVH5DHUy",
+                        "hadPrimarySource": "bFQoRhcVH5DHUt",
                         "identifierInPrimarySource": "ou-1",
-                        "stableTargetId": "cWWm02l1c6cucKjIhkFqY4",
+                        "stableTargetId": "bFQoRhcVH5DHUz",
                     }
                 ],
                 "total": 1,
