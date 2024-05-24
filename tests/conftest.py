@@ -166,7 +166,7 @@ def isolate_graph_database(
     is_integration_test: bool, settings: BackendSettings
 ) -> None:
     """Automatically flush the graph database for integration testing."""
-    if is_integration_test:  # pragma: no cover
+    if is_integration_test:
         with GraphDatabase.driver(
             settings.graph_url,
             auth=(
