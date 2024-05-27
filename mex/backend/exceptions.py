@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import Any
 
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ValidationError
@@ -33,35 +33,23 @@ class ErrorResponse(BaseModel):
     debug: DebuggingInfo
 
 
-def handle_validation_error(request: Request, exc: Exception) -> JSONResponse:
-    """Handle uncaught errors and provide debugging info."""
-    logger.exception("Error %s", exc)
-    return JSONResponse(
-        to_primitive(
-            ErrorResponse(
-                message=str(exc),
-                debug=DebuggingInfo(
-                    errors=cast(ValidationError, exc).errors(),
-                    scope=DebuggingScope(**request.scope),
-                ),
-            )
-        ),
-        400,
-    )
-
-
 def handle_uncaught_exception(request: Request, exc: Exception) -> JSONResponse:
     """Handle uncaught errors and provide debugging info."""
     logger.exception("Error %s", exc)
+    if isinstance(exc, ValidationError):
+        errors = [dict(error) for error in exc.errors()]
+        status_code = 400
+    else:
+        errors = [dict(type=type(exc).__name__)]
+        status_code = 500
     return JSONResponse(
         to_primitive(
             ErrorResponse(
                 message=str(exc),
                 debug=DebuggingInfo(
-                    errors=[dict(type=type(exc).__name__)],
-                    scope=DebuggingScope(**request.scope),
+                    errors=errors, scope=DebuggingScope.model_validate(request.scope)
                 ),
             )
         ),
-        500,
+        status_code,
     )

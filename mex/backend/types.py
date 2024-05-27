@@ -1,5 +1,5 @@
 from enum import Enum, EnumMeta, _EnumDict
-from typing import Literal
+from typing import Literal, cast
 
 from pydantic import SecretStr
 
@@ -38,12 +38,20 @@ class APIKeyDatabase(BaseModel):
     read: list[APIKey] = []
     write: list[APIKey] = []
 
+    def __getitem__(self, key: str) -> list[APIKey]:  # stop-gap: MX-1596
+        """Return an attribute in indexing syntax."""
+        return cast(list[APIKey], getattr(self, key))
+
 
 class APIUserDatabase(BaseModel):
     """Database containing usernames and passwords for backend API."""
 
     read: dict[str, APIUserPassword] = {}
     write: dict[str, APIUserPassword] = {}
+
+    def __getitem__(self, key: str) -> dict[str, APIUserPassword]:  # stop-gap: MX-1596
+        """Return an attribute in indexing syntax."""
+        return cast(dict[str, APIUserPassword], getattr(self, key))
 
 
 class BackendIdentityProvider(Enum):

@@ -61,7 +61,7 @@ class Result:
             case 0:
                 return None
             case _:
-                raise MultipleResultsFoundError
+                raise MultipleResultsFoundError from None
 
     def get_update_counters(self) -> dict[str, int]:
         """Return a summary of counters for operations the query triggered."""

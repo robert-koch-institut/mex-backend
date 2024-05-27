@@ -76,7 +76,7 @@ def test_search_extracted_items_mocked(
                         "description": [],
                         "documentation": [],
                         "hadPrimarySource": "00000000000000",
-                        "identifier": "00000000000000",
+                        "identifier": "00000000000001",
                         "identifierInPrimarySource": "mex",
                         "locatedAt": [],
                         "stableTargetId": "00000000000000",

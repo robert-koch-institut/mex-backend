@@ -13,7 +13,7 @@ from pytest import MonkeyPatch
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.main import app
 from mex.backend.settings import BackendSettings
-from mex.backend.types import APIKeyDatabase, APIUserDatabase
+from mex.backend.types import APIKeyDatabase, APIUserDatabase, BackendIdentityProvider
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     AnyExtractedModel,
@@ -33,7 +33,6 @@ from mex.common.types import (
     TextLanguage,
     Theme,
 )
-from mex.common.types.identifier import IdentifierT
 
 pytest_plugins = ("mex.common.testing.plugin",)
 
@@ -59,7 +58,7 @@ def skip_integration_test_in_ci(is_integration_test: bool) -> None:
 @pytest.fixture
 def client() -> TestClient:
     """Return a fastAPI test client initialized with our app."""
-    with TestClient(app) as test_client:
+    with TestClient(app, raise_server_exceptions=False) as test_client:
         return test_client
 
 
@@ -142,18 +141,24 @@ def isolate_identifier_seeds(monkeypatch: MonkeyPatch) -> None:
     counter = count()
     original_generate = Identifier.generate
 
-    def generate(cls: type[IdentifierT], seed: int | None = None) -> IdentifierT:
+    def generate(cls: type[Identifier], seed: int | None = None) -> Identifier:
         return cls(original_generate(seed or next(counter)))
 
     monkeypatch.setattr(Identifier, "generate", classmethod(generate))
 
 
 @pytest.fixture(autouse=True)
-def set_identity_provider(is_integration_test: bool) -> None:
-    """Ensure the identifier provider is set to `MEMORY` in unit tests."""
-    if not is_integration_test:
-        settings = BaseSettings.get()
-        settings.identity_provider = IdentityProvider.MEMORY
+def set_identity_provider(is_integration_test: bool, monkeypatch: MonkeyPatch) -> None:
+    """Ensure the identifier provider is set correctly for unit and int tests."""
+    settings = BaseSettings.get()
+    if is_integration_test:
+        # yuck, all this needs cleaning up after MX-1596
+        monkeypatch.setitem(settings.model_config, "validate_assignment", False)
+        monkeypatch.setattr(
+            settings, "identity_provider", BackendIdentityProvider.GRAPH
+        )
+    else:
+        monkeypatch.setattr(settings, "identity_provider", IdentityProvider.MEMORY)
 
 
 @pytest.fixture(autouse=True)
