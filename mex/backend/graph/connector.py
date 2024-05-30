@@ -18,9 +18,10 @@ from mex.backend.graph.query import QueryBuilder
 from mex.backend.graph.transform import (
     expand_references_in_search_result,
 )
-from mex.backend.rules.models import ActivityRuleSet
+from mex.backend.rules.transform import rule_entity_type_to_merged_entity_type
 from mex.backend.settings import BackendSettings
 from mex.backend.transform import to_primitive
+from mex.backend.types import AnyRule
 from mex.common.connector import BaseConnector
 from mex.common.exceptions import MExError
 from mex.common.logging import logger
@@ -30,10 +31,8 @@ from mex.common.models import (
     MEX_PRIMARY_SOURCE_IDENTIFIER,
     MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-    AdditiveActivity,
     AnyExtractedModel,
     ExtractedPrimarySource,
-    SubtractiveActivity,
 )
 from mex.common.transform import to_key_and_values
 from mex.common.types import Identifier, Link, Text
@@ -322,24 +321,20 @@ class GraphConnector(BaseConnector):
             ref_positions=ref_positions,
         )
 
-    def _merge_rule_set(
-        self,
-        model: AdditiveActivity | SubtractiveActivity,
-        stable_target_id: Identifier,
-    ) -> None:
+    def _merge_rule_set(self, rule: AnyRule, stable_target_id: Identifier) -> None:
         query_builder = QueryBuilder.get()
 
-        text_fields = set(TEXT_FIELDS_BY_CLASS_NAME["ExtractedActivity"])
-        link_fields = set(LINK_FIELDS_BY_CLASS_NAME["ExtractedActivity"])
-        mutable_fields = set(MUTABLE_FIELDS_BY_CLASS_NAME["ExtractedActivity"])
-        final_fields = set(FINAL_FIELDS_BY_CLASS_NAME["ExtractedActivity"])
+        text_fields = set(TEXT_FIELDS_BY_CLASS_NAME[rule.entityType])
+        link_fields = set(LINK_FIELDS_BY_CLASS_NAME[rule.entityType])
+        mutable_fields = set(MUTABLE_FIELDS_BY_CLASS_NAME[rule.entityType])
+        final_fields = set(FINAL_FIELDS_BY_CLASS_NAME[rule.entityType])
 
-        mutable_values = to_primitive(model, include=mutable_fields)
-        final_values = to_primitive(model, include=final_fields)
+        mutable_values = to_primitive(rule, include=mutable_fields)
+        final_values = to_primitive(rule, include=final_fields)
         all_values = {**mutable_values, **final_values}
 
-        text_values = to_primitive(model, include=text_fields)
-        link_values = to_primitive(model, include=link_fields)
+        text_values = to_primitive(rule, include=text_fields)
+        link_values = to_primitive(rule, include=link_fields)
 
         nested_edge_labels: list[str] = []
         nested_node_labels: list[str] = []
@@ -358,8 +353,8 @@ class GraphConnector(BaseConnector):
                     nested_values.append(raw_value)
 
         query = query_builder.merge_rule_set(
-            rule_label=model.entityType,
-            merged_label="MergedActivity",
+            rule_label=rule.entityType,
+            merged_label=rule_entity_type_to_merged_entity_type(rule.entityType),
             nested_edge_labels=nested_edge_labels,
             nested_node_labels=nested_node_labels,
         )
@@ -374,13 +369,12 @@ class GraphConnector(BaseConnector):
         )
 
     def _merge_rule_set_edges(
-        self,
-        model: AdditiveActivity | SubtractiveActivity,
-        stable_target_id: Identifier,
+        self, rule: AnyRule, stable_target_id: Identifier
     ) -> None:
         query_builder = QueryBuilder.get()
-        ref_fields = REFERENCE_FIELDS_BY_CLASS_NAME["ExtractedActivity"]
-        ref_values = to_primitive(model, include=set(ref_fields))
+
+        ref_fields = REFERENCE_FIELDS_BY_CLASS_NAME[rule.entityType]
+        ref_values = to_primitive(rule, include=set(ref_fields))
 
         ref_labels: list[str] = []
         ref_identifiers: list[str] = []
@@ -401,8 +395,8 @@ class GraphConnector(BaseConnector):
         ref_positions.append(0)
 
         query = query_builder.merge_rule_set_edges(
-            rule_set_label=model.entityType,
-            merged_label="MergedActivity",
+            rule_set_label=rule.entityType,
+            merged_label=rule_entity_type_to_merged_entity_type(rule.entityType),
             ref_labels=ref_labels,
         )
 
@@ -413,13 +407,14 @@ class GraphConnector(BaseConnector):
             ref_positions=ref_positions,
         )
 
-    def create_rule_set(self, rule_set: ActivityRuleSet) -> None:
-        """Create a new set of rules to be a applied to one merged item."""
+    def create_rule(self, rule: AnyRule) -> AnyRule:
+        """Create a new rule to be a applied to one merged item."""
         stable_target_id = Identifier.generate()
-        self._merge_rule_set(rule_set.addValues, stable_target_id)
-        self._merge_rule_set_edges(rule_set.addValues, stable_target_id)
-        self._merge_rule_set(rule_set.blockValues, stable_target_id)
-        self._merge_rule_set_edges(rule_set.blockValues, stable_target_id)
+        self._merge_rule_set(rule, stable_target_id)
+        self._merge_rule_set_edges(rule, stable_target_id)
+        # TODO: read the rule back from the database instead of returning the
+        #       input; to ensure consistency (MX-1416)
+        return rule
 
     def ingest(self, models: list[AnyExtractedModel]) -> list[Identifier]:
         """Ingest a list of models into the graph as nodes and connect all edges.

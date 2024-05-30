@@ -30,19 +30,13 @@ RETURN collect({
 
 
 @pytest.mark.integration
-def test_create_rule_set(client_with_api_key_write_permission: TestClient) -> None:
+def test_create_rule(client_with_api_key_write_permission: TestClient) -> None:
     response = client_with_api_key_write_permission.post(
-        "/v0/rule-set",
+        "/v0/rule",
         json={
-            "addValues": {
-                "start": ["2025"],
-                "title": [{"value": "A new beginning", "language": "en"}],
-            },
-            "blockValues": {
-                "start": ["2025-01-01"],
-                "title": [{"value": "Ein alter Hut", "language": "de"}],
-            },
-            "blockPrimarySources": {},
+            "$type": "AdditiveActivity",
+            "start": ["2025"],
+            "title": [{"value": "A new beginning", "language": "en"}],
         },
     )
     assert response.status_code == 204, response.text
@@ -75,19 +69,6 @@ def test_create_rule_set(client_with_api_key_write_permission: TestClient) -> No
                 "label": "Text",
                 "value": "A new beginning",
             },
-            {
-                "fundingProgram": [],
-                "start": ["2025-01-01"],
-                "end": [],
-                "theme": [],
-                "label": "SubtractiveActivity",
-                "activityType": [],
-            },
-            {
-                "language": "de",
-                "label": "Text",
-                "value": "Ein alter Hut",
-            },
         ],
         "relations": [
             {
@@ -116,24 +97,6 @@ def test_create_rule_set(client_with_api_key_write_permission: TestClient) -> No
             },
             {
                 "start": "AdditiveActivity",
-                "end": "00000000000000",
-                "label": "hadPrimarySource",
-                "position": 0,
-            },
-            {
-                "start": "SubtractiveActivity",
-                "end": "bFQoRhcVH5DHUq",
-                "label": "stableTargetId",
-                "position": 0,
-            },
-            {
-                "start": "SubtractiveActivity",
-                "end": "Text",
-                "label": "title",
-                "position": 0,
-            },
-            {
-                "start": "SubtractiveActivity",
                 "end": "00000000000000",
                 "label": "hadPrimarySource",
                 "position": 0,

@@ -6,11 +6,15 @@ from pydantic import SecretStr
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
+    AnyAdditiveModel,
+    AnyPreventiveModel,
+    AnySubtractiveModel,
     BaseModel,
 )
 from mex.common.transform import dromedary_to_snake
 
 LiteralStringType = type(Literal["str"])
+AnyRule = AnyAdditiveModel | AnySubtractiveModel | AnyPreventiveModel
 
 
 class AccessLevel(Enum):

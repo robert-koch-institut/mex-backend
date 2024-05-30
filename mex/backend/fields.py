@@ -12,7 +12,12 @@ from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 
 from mex.backend.types import LiteralStringType
-from mex.common.models import EXTRACTED_MODEL_CLASSES_BY_NAME
+from mex.common.models import (
+    ADDITIVE_MODEL_CLASSES_BY_NAME,
+    EXTRACTED_MODEL_CLASSES_BY_NAME,
+    PREVENTIVE_MODEL_CLASSES_BY_NAME,
+    SUBTRACTIVE_MODEL_CLASSES_BY_NAME,
+)
 from mex.common.types import MERGED_IDENTIFIER_CLASSES, Link, Text
 
 
@@ -77,43 +82,48 @@ def _group_fields_by_class_name(
     }
 
 
-MODEL_CLASSES_BY_NAME = {
-    # TODO: add other models too
+# models classes that are indexable by the database
+INDEXABLE_MODEL_CLASSES_BY_NAME = {
+    **ADDITIVE_MODEL_CLASSES_BY_NAME,
     **EXTRACTED_MODEL_CLASSES_BY_NAME,
+    **PREVENTIVE_MODEL_CLASSES_BY_NAME,
+    **SUBTRACTIVE_MODEL_CLASSES_BY_NAME,
 }
 
 # fields that are immutable and can only be set once
 FROZEN_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
-    MODEL_CLASSES_BY_NAME, lambda field_info: field_info.frozen is True
+    INDEXABLE_MODEL_CLASSES_BY_NAME,
+    lambda field_info: field_info.frozen is True,
 )
 
 # static fields that are set once on class-level to a literal type
 LITERAL_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
-    MODEL_CLASSES_BY_NAME,
+    INDEXABLE_MODEL_CLASSES_BY_NAME,
     lambda field_info: isinstance(field_info.annotation, LiteralStringType),
 )
 
 # fields typed as merged identifiers containing references to merged items
 REFERENCE_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
-    MODEL_CLASSES_BY_NAME,
+    INDEXABLE_MODEL_CLASSES_BY_NAME,
     lambda field_info: _contains_only_types(field_info, *MERGED_IDENTIFIER_CLASSES),
 )
 
 # nested fields that contain `Text` objects
 TEXT_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
-    MODEL_CLASSES_BY_NAME,
+    INDEXABLE_MODEL_CLASSES_BY_NAME,
     lambda field_info: _contains_only_types(field_info, Text),
 )
 
 # nested fields that contain `Link` objects
 LINK_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
-    MODEL_CLASSES_BY_NAME,
+    INDEXABLE_MODEL_CLASSES_BY_NAME,
     lambda field_info: _contains_only_types(field_info, Link),
 )
 
 # fields annotated as `str` type
 STRING_FIELDS_BY_CLASS_NAME = _group_fields_by_class_name(
-    MODEL_CLASSES_BY_NAME, lambda field_info: _contains_only_types(field_info, str)
+    INDEXABLE_MODEL_CLASSES_BY_NAME,
+    lambda field_info: _contains_only_types(field_info, str),
 )
 
 # fields that should be indexed as searchable fields
@@ -145,7 +155,7 @@ MUTABLE_FIELDS_BY_CLASS_NAME = {
             )
         }
     )
-    for name, cls in MODEL_CLASSES_BY_NAME.items()
+    for name, cls in INDEXABLE_MODEL_CLASSES_BY_NAME.items()
 }
 
 # fields with values that should be set once but are neither literal nor references
@@ -162,5 +172,5 @@ FINAL_FIELDS_BY_CLASS_NAME = {
             )
         }
     )
-    for name, cls in MODEL_CLASSES_BY_NAME.items()
+    for name, cls in INDEXABLE_MODEL_CLASSES_BY_NAME.items()
 }
