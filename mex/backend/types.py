@@ -14,7 +14,10 @@ from mex.common.models import (
 from mex.common.transform import dromedary_to_snake
 
 LiteralStringType = type(Literal["str"])
+
+# XXX move these two to mex-common?
 AnyRule = AnyAdditiveModel | AnySubtractiveModel | AnyPreventiveModel
+PrimitiveType = str | int | float | None
 
 
 class AccessLevel(Enum):

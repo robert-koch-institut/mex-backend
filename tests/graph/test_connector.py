@@ -104,8 +104,8 @@ def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
 
     assert mocked_graph.call_args_list[-2].args == (
         """\
-merge_node(
-    extracted_label="ExtractedPrimarySource",
+merge_extracted_node(
+    current_label="ExtractedPrimarySource",
     merged_label="MergedPrimarySource",
     nested_edge_labels=[],
     nested_node_labels=[],
@@ -125,14 +125,15 @@ merge_node(
     )
     assert mocked_graph.call_args_list[-1].args == (
         """\
-merge_edges(
-    extracted_label="ExtractedPrimarySource",
+merge_extracted_edges(
+    current_label="ExtractedPrimarySource",
     ref_labels=["hadPrimarySource", "stableTargetId"],
 )""",
         {
             "identifier": "00000000000001",
             "ref_identifiers": ["00000000000000", "00000000000000"],
             "ref_positions": [0, 0],
+            "stable_target_id": "00000000000000",
         },
     )
 
@@ -249,17 +250,17 @@ fetch_identities(
 
 
 @pytest.mark.usefixtures("mocked_query_builder")
-def test_mocked_graph_merges_node(
+def test_mocked_graph_merge_extracted_node(
     mocked_graph: MockedGraph, dummy_data: list[AnyExtractedModel]
 ) -> None:
     extracted_organizational_unit = dummy_data[4]
     graph = GraphConnector.get()
-    graph._merge_node(extracted_organizational_unit)
+    graph._merge_extracted_node(extracted_organizational_unit)
 
     assert mocked_graph.call_args_list[-1].args == (
         """\
-merge_node(
-    extracted_label="ExtractedOrganizationalUnit",
+merge_extracted_node(
+    current_label="ExtractedOrganizationalUnit",
     merged_label="MergedOrganizationalUnit",
     nested_edge_labels=["name"],
     nested_node_labels=["Text"],
@@ -280,17 +281,17 @@ merge_node(
 
 
 @pytest.mark.usefixtures("mocked_query_builder")
-def test_mocked_graph_merges_edges(
+def test_mocked_graph_merge_extracted_edges(
     mocked_graph: MockedGraph, dummy_data: list[AnyExtractedModel]
 ) -> None:
     extracted_activity = dummy_data[4]
     graph = GraphConnector.get()
-    graph._merge_edges(extracted_activity)
+    graph._merge_extracted_edges(extracted_activity)
 
     assert mocked_graph.call_args_list[-1].args == (
         """\
-merge_edges(
-    extracted_label="ExtractedOrganizationalUnit",
+merge_extracted_edges(
+    current_label="ExtractedOrganizationalUnit",
     ref_labels=["hadPrimarySource", "stableTargetId"],
 )""",
         {
@@ -300,6 +301,7 @@ merge_edges(
                 extracted_activity.stableTargetId,
             ],
             "ref_positions": [0, 0],
+            "stable_target_id": "cWWm02l1c6cucKjIhkFqY4",
         },
     )
 

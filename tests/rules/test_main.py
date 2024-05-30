@@ -32,14 +32,14 @@ RETURN collect({
 @pytest.mark.integration
 def test_create_rule(client_with_api_key_write_permission: TestClient) -> None:
     response = client_with_api_key_write_permission.post(
-        "/v0/rule",
+        "/v0/rule-item",
         json={
             "$type": "AdditiveActivity",
             "start": ["2025"],
             "title": [{"value": "A new beginning", "language": "en"}],
         },
     )
-    assert response.status_code == 204, response.text
+    assert response.status_code == 200, response.text
 
     assert get_graph() == {
         "nodes": [
