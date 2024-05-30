@@ -1,23 +1,9 @@
-import json
-import logging
-from typing import Any
-from unittest.mock import MagicMock, Mock
-
-import pydantic_core
 import pytest
 from fastapi.testclient import TestClient
 from neo4j import GraphDatabase
-from pydantic import ValidationError
-from pytest import LogCaptureFixture
 
-from mex.backend.main import (
-    app,
-    close_connectors,
-    handle_uncaught_exception,
-)
+from mex.backend.main import app
 from mex.backend.settings import BackendSettings
-from mex.common.connector import ConnectorContext
-from mex.common.exceptions import MExError
 
 
 def test_openapi_schema(client: TestClient) -> None:
@@ -42,71 +28,6 @@ def test_health_check(client: TestClient) -> None:
     response = client.get("/v0/_system/check")
     assert response.status_code == 200, response.text
     assert response.json() == {"status": "ok"}
-
-
-@pytest.mark.parametrize(
-    ("exception", "expected"),
-    [
-        (
-            TypeError("foo"),
-            {"debug": {"errors": [{"type": "TypeError"}]}, "message": "foo"},
-        ),
-        (
-            ValidationError.from_exception_data(
-                "foo",
-                [
-                    {
-                        "type": pydantic_core.PydanticCustomError(
-                            "TestError", "You messed up!"
-                        ),
-                        "loc": ("integerAttribute",),
-                        "input": "mumbojumbo",
-                    }
-                ],
-            ),
-            {
-                "debug": {
-                    "errors": [
-                        {
-                            "input": "mumbojumbo",
-                            "loc": ["integerAttribute"],
-                            "msg": "You messed up!",
-                            "type": "TestError",
-                        }
-                    ]
-                },
-                "message": "1 validation error for foo\n"
-                "integerAttribute\n"
-                "  You messed up! [type=TestError, input_value='mumbojumbo', "
-                "input_type=str]",
-            },
-        ),
-        (
-            MExError("bar"),
-            {"message": "MExError: bar ", "debug": {"errors": [{"type": "MExError"}]}},
-        ),
-    ],
-    ids=["TypeError", "ValidationError", "MExError"],
-)
-def test_handle_uncaught_exception(
-    exception: Exception, expected: dict[str, Any]
-) -> None:
-    response = handle_uncaught_exception(Mock(), exception)
-    assert response.status_code == 500, response.body
-    assert json.loads(response.body) == expected
-
-
-def test_close_all_connectors(caplog: LogCaptureFixture) -> None:
-    context = {
-        "ConnectorA": Mock(close=MagicMock()),
-        "ConnectorB": Mock(close=MagicMock(side_effect=Exception())),
-    }
-    ConnectorContext.set(context)
-
-    with caplog.at_level(logging.INFO):
-        close_connectors()
-    assert "Closed ConnectorA" in caplog.text
-    assert "Error closing ConnectorB" in caplog.text
 
 
 def test_all_endpoints_require_authorization(client: TestClient) -> None:

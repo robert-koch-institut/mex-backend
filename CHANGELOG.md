@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - updated graph connector for new queries
 - improved isolation of neo4j dependency
 - improved documentation and code-readability
+- move exception handling middleware to new module
+- change `identity_provider` default to `MEMORY`
+- add stop-gap code waiting to be resolved by mx-1596
+- migrate to latest `mex-common`
 
 ### Deprecated
 

@@ -8,6 +8,7 @@ from mex.common.types import Identifier, TemporalEntity
 
 JSON_ENCODERS: Final[dict[type, Callable[[Any], str]]] = {
     Enum: lambda obj: str(obj.value),
+    Exception: lambda obj: str(obj),
     Identifier: lambda obj: str(obj),
     TemporalEntity: lambda obj: str(obj),
 }

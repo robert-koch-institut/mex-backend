@@ -71,7 +71,7 @@ class GraphConnector(BaseConnector):
         query_builder = QueryBuilder.get()
         result = self.commit(query_builder.fetch_database_status())
         if (status := result["currentStatus"]) != "online":
-            raise MExError(f"Database is {status}.")
+            raise MExError(f"Database is {status}.") from None
         return result
 
     def _seed_constraints(self) -> list[Result]:
