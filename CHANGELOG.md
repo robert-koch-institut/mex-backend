@@ -17,8 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - improved documentation and code-readability
 - move exception handling middleware to new module
 - change `identity_provider` default to `MEMORY`
-- add some stop-gap code waiting to be resolved by MX-1596
-- migrate to `mex-common` > 0.25.1
+- add stop-gap code waiting to be resolved by mx-1596
+- migrate to latest `mex-common`
 
 ### Deprecated
 
