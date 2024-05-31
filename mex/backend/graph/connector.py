@@ -211,8 +211,13 @@ class GraphConnector(BaseConnector):
             limit=limit,
         )
 
-    def _merge_extracted_node(self, model: AnyExtractedModel) -> Result:
-        """Upsert an extracted model including merged item and nested objects.
+    def _merge_item(
+        self,
+        model: AnyExtractedModel | AnyRuleModel,
+        stable_target_id: Identifier,
+        **constraints: AnyPrimitiveType,
+    ) -> Result:
+        """Upsert an extracted or rule model including merged item and nested objects.
 
         The given model is created or updated with all its inline properties.
         All nested properties (like Text or Link) are created as their own nodes
@@ -225,6 +230,9 @@ class GraphConnector(BaseConnector):
 
         Args:
             model: Model to merge into the graph as a node
+            stable_target_id: Identifier the connected merged item should have
+            constraints: Mapping of field names and values to use as constraints
+                         when finding potential items to update
 
         Returns:
             Graph result instance
@@ -258,7 +266,7 @@ class GraphConnector(BaseConnector):
 
         query = query_builder.merge_item(
             current_label=model.entityType,
-            current_constraints=["identifier"],
+            current_constraints=sorted(constraints),
             merged_label=ensure_prefix(model.stemType, "Merged"),
             nested_edge_labels=nested_edge_labels,
             nested_node_labels=nested_node_labels,
@@ -266,15 +274,21 @@ class GraphConnector(BaseConnector):
 
         return self.commit(
             query,
-            identifier=model.identifier,
-            stable_target_id=model.stableTargetId,
+            **constraints,
+            stable_target_id=stable_target_id,
             on_match=mutable_values,
             on_create=all_values,
             nested_values=nested_values,
             nested_positions=nested_positions,
         )
 
-    def _merge_extracted_edges(self, model: AnyExtractedModel) -> Result:
+    def _merge_edges(
+        self,
+        model: AnyExtractedModel | AnyRuleModel,
+        stable_target_id: Identifier,
+        extra_refs: dict[str, Any] | None = None,
+        **constraints: AnyPrimitiveType,
+    ) -> Result:
         """Merge edges into the graph for all relations originating from one model.
 
         All fields containing references will be iterated over. When the referenced node
@@ -285,7 +299,10 @@ class GraphConnector(BaseConnector):
 
         Args:
             model: Model to ensure all edges are created in the graph
-
+            stable_target_id: Identifier of the connected merged item
+            extra_refs: Optional extra references to inject into the merge
+            constraints: Mapping of field names and values to use as constraints
+                         when finding the current item
         Returns:
             Graph result instance
         """
@@ -293,6 +310,7 @@ class GraphConnector(BaseConnector):
 
         ref_fields = REFERENCE_FIELDS_BY_CLASS_NAME[model.entityType]
         ref_values = to_primitive(model, include=set(ref_fields))
+        ref_values.update(extra_refs or {})
 
         ref_labels: list[str] = []
         ref_identifiers: list[str] = []
@@ -306,113 +324,34 @@ class GraphConnector(BaseConnector):
 
         query = query_builder.merge_edges(
             current_label=model.entityType,
-            current_constraints=["identifier"],
+            current_constraints=sorted(constraints),
+            merged_label=ensure_prefix(model.stemType, "Merged"),
             ref_labels=ref_labels,
         )
 
         return self.commit(
             query,
-            identifier=model.identifier,
-            stable_target_id=model.stableTargetId,
-            ref_identifiers=ref_identifiers,
-            ref_positions=ref_positions,
-        )
-
-    def _merge_rule(self, model: AnyRuleModel, stable_target_id: Identifier) -> Result:
-        query_builder = QueryBuilder.get()
-
-        text_fields = set(TEXT_FIELDS_BY_CLASS_NAME[model.entityType])
-        link_fields = set(LINK_FIELDS_BY_CLASS_NAME[model.entityType])
-        mutable_fields = set(MUTABLE_FIELDS_BY_CLASS_NAME[model.entityType])
-        final_fields = set(FINAL_FIELDS_BY_CLASS_NAME[model.entityType])
-
-        mutable_values = to_primitive(model, include=mutable_fields)
-        final_values = to_primitive(model, include=final_fields)
-        all_values = {**mutable_values, **final_values}
-
-        text_values = to_primitive(model, include=text_fields)
-        link_values = to_primitive(model, include=link_fields)
-
-        nested_edge_labels: list[str] = []
-        nested_node_labels: list[str] = []
-        nested_positions: list[int] = []
-        nested_values: list[dict[str, AnyPrimitiveType]] = []
-
-        for nested_type, raws in [(Text, text_values), (Link, link_values)]:
-            for nested_edge_label, raw_values in to_key_and_values(raws):
-                for position, raw_value in enumerate(raw_values):
-                    nested_edge_labels.append(nested_edge_label)
-                    nested_node_labels.append(nested_type.__name__)
-                    nested_positions.append(position)
-                    nested_values.append(raw_value)
-
-        query = query_builder.merge_item(
-            current_label=model.entityType,
-            current_constraints=[],
-            merged_label=ensure_prefix(model.stemType, "Merged"),
-            nested_edge_labels=nested_edge_labels,
-            nested_node_labels=nested_node_labels,
-        )
-
-        return self.commit(
-            query,
-            # XXX identifier not needed -> difference to extracted
-            stable_target_id=stable_target_id,
-            on_match=mutable_values,
-            on_create=all_values,
-            nested_values=nested_values,
-            nested_positions=nested_positions,
-        )
-
-    def _merge_rule_edges(
-        self, model: AnyRuleModel, stable_target_id: Identifier
-    ) -> None:
-        query_builder = QueryBuilder.get()
-
-        ref_fields = REFERENCE_FIELDS_BY_CLASS_NAME[model.entityType]
-        ref_values = to_primitive(model, include=set(ref_fields))
-
-        ref_labels: list[str] = []
-        ref_identifiers: list[str] = []
-        ref_positions: list[int] = []
-
-        for field, identifiers in to_key_and_values(ref_values):
-            for position, identifier in enumerate(identifiers):
-                ref_identifiers.append(identifier)
-                ref_positions.append(position)
-                ref_labels.append(field)
-
-        # XXX difference to extracted
-        ref_labels.append("hadPrimarySource")
-        ref_identifiers.append(MEX_PRIMARY_SOURCE_STABLE_TARGET_ID)
-        ref_positions.append(0)
-        ref_labels.append("stableTargetId")
-        ref_identifiers.append(stable_target_id)
-        ref_positions.append(0)
-
-        query = query_builder.merge_edges(
-            current_label=model.entityType,
-            current_constraints=[],  # XXX difference to extracted
-            merged_label=ensure_prefix(model.stemType, "Merged"),
-            ref_labels=ref_labels,
-        )
-
-        self.commit(
-            query,
-            # XXX identifier not needed -> difference to extracted
+            **constraints,
             stable_target_id=stable_target_id,
             ref_identifiers=ref_identifiers,
             ref_positions=ref_positions,
         )
 
-    def create_rule(self, rule: AnyRuleModel) -> AnyRuleModel:
+    def create_rule(self, model: AnyRuleModel) -> AnyRuleModel:
         """Create a new rule to be a applied to one merged item."""
         stable_target_id = Identifier.generate()
-        self._merge_rule(rule, stable_target_id)
-        self._merge_rule_edges(rule, stable_target_id)
+        self._merge_item(model, stable_target_id)
+        self._merge_edges(
+            model,
+            stable_target_id,
+            extra_refs=dict(
+                hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+                stableTargetId=stable_target_id,
+            ),
+        )
         # TODO: read the rule back from the database instead of returning the
         #       input; to ensure consistency (MX-1416)
-        return rule
+        return model
 
     def ingest(self, models: list[AnyExtractedModel]) -> list[Identifier]:
         """Ingest a list of models into the graph as nodes and connect all edges.
@@ -429,9 +368,9 @@ class GraphConnector(BaseConnector):
             List of identifiers of the ingested models
         """
         for model in models:
-            self._merge_extracted_node(model)
+            self._merge_item(model, model.stableTargetId, identifier=model.identifier)
 
         for model in models:
-            self._merge_extracted_edges(model)
+            self._merge_edges(model, model.stableTargetId, identifier=model.identifier)
 
         return [m.identifier for m in models]

@@ -252,12 +252,12 @@ fetch_identities(
 
 
 @pytest.mark.usefixtures("mocked_query_builder")
-def test_mocked_graph_merge_extracted_node(
+def test_mocked_graph_merge_extracted_item(
     mocked_graph: MockedGraph, dummy_data: list[AnyExtractedModel]
 ) -> None:
     extracted_organizational_unit = dummy_data[4]
     graph = GraphConnector.get()
-    graph._merge_extracted_node(extracted_organizational_unit)
+    graph._merge_extracted_item(extracted_organizational_unit)
 
     assert mocked_graph.call_args_list[-1].args == (
         """\
