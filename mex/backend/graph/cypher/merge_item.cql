@@ -1,31 +1,32 @@
-<# Upsert an extracted item with its accociated merged item and all nested objects.
+<# Upsert the current item with its accociated merged item and all nested objects.
 
-One extracted item is created (or updated) along with its accociated merged item.
-In addition, all nested objects of the extracted item are created as their own
-nodes and linked to the extracted item via edges that have the field names as labels.
+One extracted or rule item is created (or updated) along with its accociated
+merged item. In addition, all nested objects of the current item are created as their
+own nodes and linked to the current item via edges that have the field names as labels.
 We also prune all connected nodes that have nested labels but are not part of
-the extracted item any more.
+the current item any more.
 
 Globals:
     nested_labels: List of all labels for nested objects
 
 Args:
-    merged_label: Label for the merged item accociated with the extracted item,
+    merged_label: Label for the merged item accociated with the current item,
                   e.g. MergedPerson
-    current_label: Label of the current extracted item, e.g. ExtractedPerson
+    current_label: Label of the current extracted or rule item,
+                   e.g. ExtractedPerson or AdditiveVariable
     nested_edge_labels: Ordered list of field names that contain nested objects
                         e.g. homepage, alternativeName, methodDescription
     nested_node_labels: Ordered list of class names for the `nested_edge_labels`,
                         e.g. Link, Text, Text
 
 Returns:
-    current: The current extracted item with all inline properties
+    current: The current item with all inline properties
     edges: List of edges connecting the current item with its nested objects
     values: List of nested objects that are merged by this statement
     pruned: Number of nested objects that were removed by this statement
 -#>
 MERGE (merged:<<merged_label>> {identifier: $stable_target_id})
-MERGE (current:<<current_label>> {identifier: $identifier})-[stableTargetId:stableTargetId {position: 0}]->(merged)
+MERGE (current:<<current_label>> {<<current_constraints|render_constraints>>})-[stableTargetId:stableTargetId {position: 0}]->(merged)
 ON CREATE SET current = $on_create
 ON MATCH SET current += $on_match
 <%- for edge_label in nested_edge_labels -%>

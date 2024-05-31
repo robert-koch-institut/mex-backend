@@ -106,6 +106,7 @@ def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
         """\
 merge_extracted_node(
     current_label="ExtractedPrimarySource",
+    current_constraints=["identifier"],
     merged_label="MergedPrimarySource",
     nested_edge_labels=[],
     nested_node_labels=[],
@@ -261,6 +262,7 @@ def test_mocked_graph_merge_extracted_node(
         """\
 merge_extracted_node(
     current_label="ExtractedOrganizationalUnit",
+    current_constraints=["identifier"],
     merged_label="MergedOrganizationalUnit",
     nested_edge_labels=["name"],
     nested_node_labels=["Text"],

@@ -256,8 +256,9 @@ class GraphConnector(BaseConnector):
                     nested_positions.append(position)
                     nested_values.append(raw_value)
 
-        query = query_builder.merge_extracted_node(
+        query = query_builder.merge_item(
             current_label=model.entityType,
+            current_constraints=["identifier"],
             merged_label=ensure_prefix(model.stemType, "Merged"),
             nested_edge_labels=nested_edge_labels,
             nested_node_labels=nested_node_labels,
@@ -344,8 +345,9 @@ class GraphConnector(BaseConnector):
                     nested_positions.append(position)
                     nested_values.append(raw_value)
 
-        query = query_builder.merge_rule_node(  # XXX difference to extracted
+        query = query_builder.merge_item(
             current_label=model.entityType,
+            current_constraints=[],
             merged_label=ensure_prefix(model.stemType, "Merged"),
             nested_edge_labels=nested_edge_labels,
             nested_node_labels=nested_node_labels,

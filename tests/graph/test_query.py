@@ -375,14 +375,15 @@ RETURN current, edges, values, pruned;""",
     ],
     ids=["has-nested-labels", "no-nested-labels"],
 )
-def test_merge_extracted_node(
+def test_merge_item(
     query_builder: QueryBuilder,
     nested_edge_labels: list[str],
     nested_node_labels: list[str],
     expected: str,
 ) -> None:
-    query = query_builder.merge_extracted_node(
+    query = query_builder.merge_item(
         current_label="ExtractedThat",
+        current_constraints=["identifier"],
         merged_label="MergedThat",
         nested_edge_labels=nested_edge_labels,
         nested_node_labels=nested_node_labels,
