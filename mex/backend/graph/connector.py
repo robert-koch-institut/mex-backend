@@ -33,7 +33,7 @@ from mex.common.models import (
     AnyRuleModel,
     ExtractedPrimarySource,
 )
-from mex.common.transform import ensure_postfix, to_key_and_values
+from mex.common.transform import ensure_prefix, to_key_and_values
 from mex.common.types import AnyPrimitiveType, Identifier, Link, Text
 
 MEX_EXTRACTED_PRIMARY_SOURCE = ExtractedPrimarySource.model_construct(
@@ -258,7 +258,7 @@ class GraphConnector(BaseConnector):
 
         query = query_builder.merge_extracted_node(
             current_label=model.entityType,
-            merged_label=ensure_postfix(model.entityType, "Merged"),
+            merged_label=ensure_prefix(model.stemType, "Merged"),
             nested_edge_labels=nested_edge_labels,
             nested_node_labels=nested_node_labels,
         )
@@ -346,7 +346,7 @@ class GraphConnector(BaseConnector):
 
         query = query_builder.merge_rule_node(  # XXX difference to extracted
             current_label=model.entityType,
-            merged_label=ensure_postfix(model.entityType, "Merged"),
+            merged_label=ensure_prefix(model.stemType, "Merged"),
             nested_edge_labels=nested_edge_labels,
             nested_node_labels=nested_node_labels,
         )
@@ -389,7 +389,7 @@ class GraphConnector(BaseConnector):
 
         query = query_builder.merge_rule_edges(  # XXX difference to extracted
             current_label=model.entityType,
-            merged_label=ensure_postfix(model.entityType, "Merged"),
+            merged_label=ensure_prefix(model.stemType, "Merged"),
             ref_labels=ref_labels,
         )
 
