@@ -1,23 +1,14 @@
 from enum import Enum, EnumMeta, _EnumDict
-from typing import Literal, cast
+from typing import cast
 
 from pydantic import SecretStr
 
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
-    AnyAdditiveModel,
-    AnyPreventiveModel,
-    AnySubtractiveModel,
     BaseModel,
 )
 from mex.common.transform import dromedary_to_snake
-
-LiteralStringType = type(Literal["str"])
-
-# XXX move these two to mex-common?
-AnyRule = AnyAdditiveModel | AnySubtractiveModel | AnyPreventiveModel
-PrimitiveType = str | int | float | None
 
 
 class AccessLevel(Enum):

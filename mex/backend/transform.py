@@ -27,7 +27,6 @@ def to_primitive(
 ) -> Any:
     """Convert any object into python primitives compatible with JSONification."""
     if isinstance(obj, BaseModel):
-        # XXX sigh
         return obj.__pydantic_serializer__.to_python(
             obj,
             mode="json",

@@ -18,10 +18,8 @@ from mex.backend.graph.query import QueryBuilder
 from mex.backend.graph.transform import (
     expand_references_in_search_result,
 )
-from mex.backend.rules.transform import entity_type_to_merged_entity_type
 from mex.backend.settings import BackendSettings
 from mex.backend.transform import to_primitive
-from mex.backend.types import AnyRule, PrimitiveType
 from mex.common.connector import BaseConnector
 from mex.common.exceptions import MExError
 from mex.common.logging import logger
@@ -32,10 +30,11 @@ from mex.common.models import (
     MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     AnyExtractedModel,
+    AnyRuleModel,
     ExtractedPrimarySource,
 )
-from mex.common.transform import to_key_and_values
-from mex.common.types import Identifier, Link, Text
+from mex.common.transform import ensure_postfix, to_key_and_values
+from mex.common.types import AnyPrimitiveType, Identifier, Link, Text
 
 MEX_EXTRACTED_PRIMARY_SOURCE = ExtractedPrimarySource.model_construct(
     hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -247,7 +246,7 @@ class GraphConnector(BaseConnector):
         nested_edge_labels: list[str] = []
         nested_node_labels: list[str] = []
         nested_positions: list[int] = []
-        nested_values: list[dict[str, PrimitiveType]] = []
+        nested_values: list[dict[str, AnyPrimitiveType]] = []
 
         for nested_type, raws in [(Text, text_values), (Link, link_values)]:
             for nested_edge_label, raw_values in to_key_and_values(raws):
@@ -259,7 +258,7 @@ class GraphConnector(BaseConnector):
 
         query = query_builder.merge_extracted_node(
             current_label=model.entityType,
-            merged_label=entity_type_to_merged_entity_type(model.entityType),
+            merged_label=ensure_postfix(model.entityType, "Merged"),
             nested_edge_labels=nested_edge_labels,
             nested_node_labels=nested_node_labels,
         )
@@ -317,7 +316,7 @@ class GraphConnector(BaseConnector):
             ref_positions=ref_positions,
         )
 
-    def _merge_rule(self, model: AnyRule, stable_target_id: Identifier) -> Result:
+    def _merge_rule(self, model: AnyRuleModel, stable_target_id: Identifier) -> Result:
         query_builder = QueryBuilder.get()
 
         text_fields = set(TEXT_FIELDS_BY_CLASS_NAME[model.entityType])
@@ -335,7 +334,7 @@ class GraphConnector(BaseConnector):
         nested_edge_labels: list[str] = []
         nested_node_labels: list[str] = []
         nested_positions: list[int] = []
-        nested_values: list[dict[str, PrimitiveType]] = []
+        nested_values: list[dict[str, AnyPrimitiveType]] = []
 
         for nested_type, raws in [(Text, text_values), (Link, link_values)]:
             for nested_edge_label, raw_values in to_key_and_values(raws):
@@ -347,7 +346,7 @@ class GraphConnector(BaseConnector):
 
         query = query_builder.merge_rule_node(  # XXX difference to extracted
             current_label=model.entityType,
-            merged_label=entity_type_to_merged_entity_type(model.entityType),
+            merged_label=ensure_postfix(model.entityType, "Merged"),
             nested_edge_labels=nested_edge_labels,
             nested_node_labels=nested_node_labels,
         )
@@ -362,7 +361,9 @@ class GraphConnector(BaseConnector):
             nested_positions=nested_positions,
         )
 
-    def _merge_rule_edges(self, model: AnyRule, stable_target_id: Identifier) -> None:
+    def _merge_rule_edges(
+        self, model: AnyRuleModel, stable_target_id: Identifier
+    ) -> None:
         query_builder = QueryBuilder.get()
 
         ref_fields = REFERENCE_FIELDS_BY_CLASS_NAME[model.entityType]
@@ -388,7 +389,7 @@ class GraphConnector(BaseConnector):
 
         query = query_builder.merge_rule_edges(  # XXX difference to extracted
             current_label=model.entityType,
-            merged_label=entity_type_to_merged_entity_type(model.entityType),
+            merged_label=ensure_postfix(model.entityType, "Merged"),
             ref_labels=ref_labels,
         )
 
@@ -400,7 +401,7 @@ class GraphConnector(BaseConnector):
             ref_positions=ref_positions,
         )
 
-    def create_rule(self, rule: AnyRule) -> AnyRule:
+    def create_rule(self, rule: AnyRuleModel) -> AnyRuleModel:
         """Create a new rule to be a applied to one merged item."""
         stable_target_id = Identifier.generate()
         self._merge_rule(rule, stable_target_id)

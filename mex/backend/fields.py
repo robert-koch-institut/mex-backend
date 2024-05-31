@@ -11,14 +11,13 @@ from typing import (
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 
-from mex.backend.types import LiteralStringType
 from mex.common.models import (
     ADDITIVE_MODEL_CLASSES_BY_NAME,
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     PREVENTIVE_MODEL_CLASSES_BY_NAME,
     SUBTRACTIVE_MODEL_CLASSES_BY_NAME,
 )
-from mex.common.types import MERGED_IDENTIFIER_CLASSES, Link, Text
+from mex.common.types import MERGED_IDENTIFIER_CLASSES, Link, LiteralStringType, Text
 
 
 def _get_inner_types(annotation: Any) -> Generator[type, None, None]:
