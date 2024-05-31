@@ -104,7 +104,7 @@ def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
 
     assert mocked_graph.call_args_list[-2].args == (
         """\
-merge_extracted_node(
+merge_item(
     current_label="ExtractedPrimarySource",
     current_constraints=["identifier"],
     merged_label="MergedPrimarySource",
@@ -126,8 +126,9 @@ merge_extracted_node(
     )
     assert mocked_graph.call_args_list[-1].args == (
         """\
-merge_extracted_edges(
+merge_edges(
     current_label="ExtractedPrimarySource",
+    current_constraints=["identifier"],
     ref_labels=["hadPrimarySource", "stableTargetId"],
 )""",
         {
@@ -260,7 +261,7 @@ def test_mocked_graph_merge_extracted_node(
 
     assert mocked_graph.call_args_list[-1].args == (
         """\
-merge_extracted_node(
+merge_item(
     current_label="ExtractedOrganizationalUnit",
     current_constraints=["identifier"],
     merged_label="MergedOrganizationalUnit",
@@ -292,8 +293,9 @@ def test_mocked_graph_merge_extracted_edges(
 
     assert mocked_graph.call_args_list[-1].args == (
         """\
-merge_extracted_edges(
+merge_edges(
     current_label="ExtractedOrganizationalUnit",
+    current_constraints=["identifier"],
     ref_labels=["hadPrimarySource", "stableTargetId"],
 )""",
         {

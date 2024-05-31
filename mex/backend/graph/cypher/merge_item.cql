@@ -14,6 +14,8 @@ Args:
                   e.g. MergedPerson
     current_label: Label of the current extracted or rule item,
                    e.g. ExtractedPerson or AdditiveVariable
+    current_constraints: List of fields that will render as constraints for merging
+                         the current item
     nested_edge_labels: Ordered list of field names that contain nested objects
                         e.g. homepage, alternativeName, methodDescription
     nested_node_labels: Ordered list of class names for the `nested_edge_labels`,

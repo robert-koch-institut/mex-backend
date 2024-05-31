@@ -311,11 +311,13 @@ RETURN count(edges) as merged, pruned, edges;""",
     ],
     ids=["has-ref-labels", "no-ref-labels"],
 )
-def test_merge_extracted_edges(
+def test_merge_edges(
     query_builder: QueryBuilder, ref_labels: list[str], expected: str
 ) -> None:
-    query = query_builder.merge_extracted_edges(
-        current_label="ExtractedThat", ref_labels=ref_labels
+    query = query_builder.merge_edges(
+        current_label="ExtractedThat",
+        current_constraints=["identifier"],
+        ref_labels=ref_labels,
     )
     assert query == expected
 

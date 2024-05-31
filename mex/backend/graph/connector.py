@@ -304,8 +304,9 @@ class GraphConnector(BaseConnector):
                 ref_positions.append(position)
                 ref_labels.append(field)
 
-        query = query_builder.merge_extracted_edges(
+        query = query_builder.merge_edges(
             current_label=model.entityType,
+            current_constraints=["identifier"],
             ref_labels=ref_labels,
         )
 
@@ -389,8 +390,9 @@ class GraphConnector(BaseConnector):
         ref_identifiers.append(stable_target_id)
         ref_positions.append(0)
 
-        query = query_builder.merge_rule_edges(  # XXX difference to extracted
+        query = query_builder.merge_edges(
             current_label=model.entityType,
+            current_constraints=[],  # XXX difference to extracted
             merged_label=ensure_prefix(model.stemType, "Merged"),
             ref_labels=ref_labels,
         )
