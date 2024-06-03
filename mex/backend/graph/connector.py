@@ -339,7 +339,19 @@ class GraphConnector(BaseConnector):
         )
 
     def create_rule(self, model: AnyRuleModel) -> AnyRuleModel:
-        """Create a new rule to be a applied to one merged item."""
+        """Create a new rule to be a applied to one merged item.
+
+        This is a two-step process: first the rule and merged items are created
+        along with their nested objects (like Text and Link); then all edges that
+        represent references (like hadPrimarySource, parentUnit, etc.) are added to
+        the graph in a second step.
+
+        Args:
+            model: A single rule model
+
+        Returns:
+            The created rule model
+        """
         stable_target_id = Identifier.generate()
         self._merge_item(model, stable_target_id)
         self._merge_edges(

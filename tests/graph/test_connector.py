@@ -11,6 +11,7 @@ from mex.common.models import (
     MEX_PRIMARY_SOURCE_IDENTIFIER,
     MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    AdditiveOrganizationalUnit,
     AnyExtractedModel,
 )
 from mex.common.types import Identifier
@@ -201,6 +202,29 @@ fetch_extracted_data(
     }
 
 
+@pytest.mark.usefixtures("load_dummy_data")
+@pytest.mark.integration
+def test_fetch_extracted_data() -> None:
+    connector = GraphConnector.get()
+
+    result = connector.fetch_extracted_data(None, None, None, 0, 1)
+
+    assert result.all() == [
+        {
+            "items": [
+                {
+                    "entityType": MEX_EXTRACTED_PRIMARY_SOURCE.entityType,
+                    "hadPrimarySource": [MEX_EXTRACTED_PRIMARY_SOURCE.hadPrimarySource],
+                    "identifier": MEX_EXTRACTED_PRIMARY_SOURCE.identifier,
+                    "identifierInPrimarySource": MEX_EXTRACTED_PRIMARY_SOURCE.identifierInPrimarySource,
+                    "stableTargetId": [MEX_EXTRACTED_PRIMARY_SOURCE.stableTargetId],
+                }
+            ],
+            "total": 7,
+        }
+    ]
+
+
 @pytest.mark.usefixtures("mocked_query_builder")
 def test_mocked_graph_fetch_identities(mocked_graph: MockedGraph) -> None:
     graph = GraphConnector.get()
@@ -326,32 +350,59 @@ merge_edges(
     )
 
 
+@pytest.mark.usefixtures("mocked_query_builder")
+def test_mocked_graph_creates_rule(
+    mocked_graph: MockedGraph,
+    additive_organizational_unit: AdditiveOrganizationalUnit,
+) -> None:
+    graph = GraphConnector.get()
+    result = graph.create_rule(additive_organizational_unit)
+
+    assert result is additive_organizational_unit  # MX-1416 stopgap
+
+    assert mocked_graph.call_args_list[-2].args == (
+        """\
+merge_item(
+    current_label="AdditiveOrganizationalUnit",
+    current_constraints=[],
+    merged_label="MergedOrganizationalUnit",
+    nested_edge_labels=["name", "website"],
+    nested_node_labels=["Text", "Link"],
+)""",
+        {
+            "stable_target_id": "bFQoRhcVH5DHUq",
+            "on_match": {"email": []},
+            "on_create": {"email": []},
+            "nested_values": [
+                {"value": "Unit 1.7", "language": "en"},
+                {"language": None, "title": "Unit Homepage", "url": "https://unit-1-7"},
+            ],
+            "nested_positions": [0, 0],
+        },
+    )
+    assert mocked_graph.call_args_list[-1].args == (
+        """\
+merge_edges(
+    current_label="AdditiveOrganizationalUnit",
+    current_constraints=[],
+    merged_label="MergedOrganizationalUnit",
+    ref_labels=["parentUnit", "hadPrimarySource", "stableTargetId"],
+)""",
+        {
+            "stable_target_id": "bFQoRhcVH5DHUq",
+            "ref_identifiers": [
+                "cWWm02l1c6cucKjIhkFqY4",
+                "00000000000000",
+                "bFQoRhcVH5DHUq",
+            ],
+            "ref_positions": [0, 0, 0],
+        },
+    )
+
+
 @pytest.mark.usefixtures("mocked_graph")
 def test_mocked_graph_ingests_models(dummy_data: list[AnyExtractedModel]) -> None:
     graph = GraphConnector.get()
     identifiers = graph.ingest(dummy_data)
 
     assert identifiers == [d.identifier for d in dummy_data]
-
-
-@pytest.mark.usefixtures("load_dummy_data")
-@pytest.mark.integration
-def test_fetch_extracted_data() -> None:
-    connector = GraphConnector.get()
-
-    result = connector.fetch_extracted_data(None, None, None, 0, 1)
-
-    assert result.all() == [
-        {
-            "items": [
-                {
-                    "entityType": MEX_EXTRACTED_PRIMARY_SOURCE.entityType,
-                    "hadPrimarySource": [MEX_EXTRACTED_PRIMARY_SOURCE.hadPrimarySource],
-                    "identifier": MEX_EXTRACTED_PRIMARY_SOURCE.identifier,
-                    "identifierInPrimarySource": MEX_EXTRACTED_PRIMARY_SOURCE.identifierInPrimarySource,
-                    "stableTargetId": [MEX_EXTRACTED_PRIMARY_SOURCE.stableTargetId],
-                }
-            ],
-            "total": 7,
-        }
-    ]
