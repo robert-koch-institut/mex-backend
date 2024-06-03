@@ -13,7 +13,8 @@ def get_graph() -> dict[str, Any]:
 MATCH (n)
 RETURN collect(n{
     .*, label: head(labels(n))
-}) AS nodes;
+}) AS nodes
+ORDER BY nodes;
 """
     )
     relations = connector.commit(
@@ -23,7 +24,8 @@ RETURN collect({
     label: type(r), position: r.position,
     start: coalesce(startNode(r).identifier, head(labels(startNode(r)))),
     end: coalesce(endNode(r).identifier, head(labels(endNode(r))))
-}) AS relations;
+}) AS relations
+ORDER BY relations;
 """
     )
     return {**nodes.one(), **relations.one()}
