@@ -7,12 +7,13 @@ from pytest import MonkeyPatch
 from mex.backend.graph import connector as connector_module
 from mex.backend.graph.connector import MEX_EXTRACTED_PRIMARY_SOURCE, GraphConnector
 from mex.backend.graph.query import QueryBuilder
-from mex.common.models import AnyExtractedModel
-from mex.common.types import (
-    ExtractedPrimarySourceIdentifier,
-    Identifier,
-    MergedPrimarySourceIdentifier,
+from mex.common.models import (
+    MEX_PRIMARY_SOURCE_IDENTIFIER,
+    MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
+    MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    AnyExtractedModel,
 )
+from mex.common.types import Identifier
 from tests.conftest import MockedGraph
 
 
@@ -112,13 +113,15 @@ merge_item(
     nested_node_labels=[],
 )""",
         {
-            "identifier": ExtractedPrimarySourceIdentifier("00000000000001"),
-            "stable_target_id": MergedPrimarySourceIdentifier("00000000000000"),
+            "identifier": MEX_PRIMARY_SOURCE_IDENTIFIER,
+            "stable_target_id": MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
             "on_match": {"version": None},
             "on_create": {
                 "version": None,
-                "identifier": "00000000000001",
-                "identifierInPrimarySource": "mex",
+                "identifier": MEX_PRIMARY_SOURCE_IDENTIFIER,
+                "identifierInPrimarySource": (
+                    MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE
+                ),
             },
             "nested_positions": [],
             "nested_values": [],
@@ -129,13 +132,17 @@ merge_item(
 merge_edges(
     current_label="ExtractedPrimarySource",
     current_constraints=["identifier"],
+    merged_label="MergedPrimarySource",
     ref_labels=["hadPrimarySource", "stableTargetId"],
 )""",
         {
-            "identifier": "00000000000001",
-            "ref_identifiers": ["00000000000000", "00000000000000"],
+            "identifier": MEX_PRIMARY_SOURCE_IDENTIFIER,
+            "ref_identifiers": [
+                MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+                MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+            ],
             "ref_positions": [0, 0],
-            "stable_target_id": "00000000000000",
+            "stable_target_id": MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
         },
     )
 
@@ -252,12 +259,16 @@ fetch_identities(
 
 
 @pytest.mark.usefixtures("mocked_query_builder")
-def test_mocked_graph_merge_extracted_item(
+def test_mocked_graph_merge_item(
     mocked_graph: MockedGraph, dummy_data: list[AnyExtractedModel]
 ) -> None:
     extracted_organizational_unit = dummy_data[4]
     graph = GraphConnector.get()
-    graph._merge_extracted_item(extracted_organizational_unit)
+    graph._merge_item(
+        extracted_organizational_unit,
+        extracted_organizational_unit.stableTargetId,
+        identifier=extracted_organizational_unit.identifier,
+    )
 
     assert mocked_graph.call_args_list[-1].args == (
         """\
@@ -284,18 +295,23 @@ merge_item(
 
 
 @pytest.mark.usefixtures("mocked_query_builder")
-def test_mocked_graph_merge_extracted_edges(
+def test_mocked_graph_merge_edges(
     mocked_graph: MockedGraph, dummy_data: list[AnyExtractedModel]
 ) -> None:
     extracted_activity = dummy_data[4]
     graph = GraphConnector.get()
-    graph._merge_extracted_edges(extracted_activity)
+    graph._merge_edges(
+        extracted_activity,
+        extracted_activity.stableTargetId,
+        identifier=extracted_activity.identifier,
+    )
 
     assert mocked_graph.call_args_list[-1].args == (
         """\
 merge_edges(
     current_label="ExtractedOrganizationalUnit",
     current_constraints=["identifier"],
+    merged_label="MergedOrganizationalUnit",
     ref_labels=["hadPrimarySource", "stableTargetId"],
 )""",
         {
