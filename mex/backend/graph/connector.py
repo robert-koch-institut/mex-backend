@@ -303,6 +303,7 @@ class GraphConnector(BaseConnector):
             extra_refs: Optional extra references to inject into the merge
             constraints: Mapping of field names and values to use as constraints
                          when finding the current item
+
         Returns:
             Graph result instance
         """
