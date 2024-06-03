@@ -1,6 +1,7 @@
 import pytest
+from pydantic import ValidationError
 
-from mex.backend.graph.query import QueryBuilder
+from mex.backend.graph.query import QueryBuilder, render_constraints
 
 
 @pytest.fixture
@@ -12,6 +13,15 @@ def query_builder() -> QueryBuilder:
         nested_labels=["Link", "Text", "Location"],
     )
     return builder
+
+
+def test_render_constraints() -> None:
+    with pytest.raises(ValidationError):
+        render_constraints(["this-fi5ld doesn't match the p4tt3rn!", "thisIsOk"])
+
+    assert render_constraints(["someField", "another"]) == (
+        "someField: $someField, another: $another"
+    )
 
 
 def test_create_full_text_search_index(query_builder: QueryBuilder) -> None:
