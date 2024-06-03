@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [0.14.0] - 2024-06-03
+
+### Changes
+
 - re-implemented queries as templated cql files
 - updated graph connector for new queries
 - improved isolation of neo4j dependency
@@ -20,15 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add stop-gap code waiting to be resolved by mx-1596
 - migrate to latest `mex-common`
 
-### Deprecated
-
 ### Removed
 
 - trashed hydration module
-
-### Fixed
-
-### Security
 
 ## [0.12.0] - 2024.04.02
 
