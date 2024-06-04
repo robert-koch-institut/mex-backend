@@ -29,6 +29,7 @@ optional-dependencies.dev = [
 
 [project.scripts]
 backend = "mex.backend.main:main"
+purge-db = "mex.scripts.purge:purge_db"
 
 [tool.cruft]
 template = "https://github.com/robert-koch-institut/mex-template"
