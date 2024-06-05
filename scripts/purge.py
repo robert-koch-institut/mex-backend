@@ -2,10 +2,8 @@ import click
 from neo4j import GraphDatabase
 
 from mex.backend.settings import BackendSettings
-from mex.common.cli import entrypoint
 
 
-@entrypoint(BackendSettings)
 def purge_db() -> None:
     """Purge graph db."""
     settings = BackendSettings.get()
