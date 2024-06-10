@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add `INDEXABLE_MODEL_CLASSES_BY_NAME` lookup to fields module
 - add `render_constraints` jinja filter
 - implement new `POST /rule-item` endpoint
+- db purge script
 
 ### Changes
 
