@@ -1,3 +1,4 @@
+import json
 from typing import Any
 
 import pytest
@@ -6,29 +7,31 @@ from fastapi.testclient import TestClient
 from mex.backend.graph.connector import GraphConnector
 
 
-def get_graph() -> dict[str, Any]:
+def get_graph() -> list[dict[str, Any]]:
     connector = GraphConnector.get()
-    nodes = connector.commit(
+    graph = connector.commit(
         """
-MATCH (n)
-RETURN collect(n{
-    .*, label: head(labels(n))
-}) AS nodes
-ORDER BY nodes;
+CALL {
+    MATCH (n)
+    RETURN collect(n{
+        .*, label: head(labels(n))
+    }) as nodes
+}
+CALL {
+    MATCH ()-[r]->()
+    RETURN collect({
+        label: type(r), position: r.position,
+        start: coalesce(startNode(r).identifier, head(labels(startNode(r)))),
+        end: coalesce(endNode(r).identifier, head(labels(endNode(r))))
+    }) as relations
+}
+RETURN nodes, relations;
 """
+    ).one()
+    return sorted(
+        graph["nodes"] + graph["relations"],
+        key=lambda i: json.dumps(i, sort_keys=True),
     )
-    relations = connector.commit(
-        """
-MATCH ()-[r]->()
-RETURN collect({
-    label: type(r), position: r.position,
-    start: coalesce(startNode(r).identifier, head(labels(startNode(r)))),
-    end: coalesce(endNode(r).identifier, head(labels(endNode(r))))
-}) AS relations
-ORDER BY relations;
-"""
-    )
-    return {**nodes.one(), **relations.one()}
 
 
 @pytest.mark.integration
@@ -43,65 +46,61 @@ def test_create_rule(client_with_api_key_write_permission: TestClient) -> None:
     )
     assert response.status_code == 200, response.text
 
-    assert get_graph() == {
-        "nodes": [
-            {
-                "identifier": "00000000000000",
-                "label": "MergedPrimarySource",
-            },
-            {
-                "identifier": "00000000000001",
-                "identifierInPrimarySource": "mex",
-                "label": "ExtractedPrimarySource",
-            },
-            {
-                "identifier": "bFQoRhcVH5DHUq",
-                "label": "MergedActivity",
-            },
-            {
-                "fundingProgram": [],
-                "start": ["2025"],
-                "end": [],
-                "theme": [],
-                "label": "AdditiveActivity",
-                "activityType": [],
-            },
-            {
-                "language": "en",
-                "label": "Text",
-                "value": "A new beginning",
-            },
-        ],
-        "relations": [
-            {
-                "start": "00000000000001",
-                "end": "00000000000000",
-                "label": "stableTargetId",
-                "position": 0,
-            },
-            {
-                "start": "00000000000001",
-                "end": "00000000000000",
-                "label": "hadPrimarySource",
-                "position": 0,
-            },
-            {
-                "start": "AdditiveActivity",
-                "end": "bFQoRhcVH5DHUq",
-                "label": "stableTargetId",
-                "position": 0,
-            },
-            {
-                "start": "AdditiveActivity",
-                "end": "Text",
-                "label": "title",
-                "position": 0,
-            },
-            {
-                "start": "AdditiveActivity",
-                "end": "00000000000000",
-                "label": "hadPrimarySource",
-                "position": 0,
-            },
-        ],
-    }
+    assert get_graph() == [
+        {
+            "fundingProgram": [],
+            "start": ["2025"],
+            "end": [],
+            "theme": [],
+            "label": "AdditiveActivity",
+            "activityType": [],
+        },
+        {
+            "start": "00000000000001",
+            "end": "00000000000000",
+            "label": "hadPrimarySource",
+            "position": 0,
+        },
+        {
+            "start": "AdditiveActivity",
+            "end": "00000000000000",
+            "label": "hadPrimarySource",
+            "position": 0,
+        },
+        {
+            "start": "00000000000001",
+            "end": "00000000000000",
+            "label": "stableTargetId",
+            "position": 0,
+        },
+        {
+            "start": "AdditiveActivity",
+            "end": "Text",
+            "label": "title",
+            "position": 0,
+        },
+        {
+            "start": "AdditiveActivity",
+            "end": "bFQoRhcVH5DHUq",
+            "label": "stableTargetId",
+            "position": 0,
+        },
+        {
+            "identifier": "00000000000000",
+            "label": "MergedPrimarySource",
+        },
+        {
+            "identifier": "00000000000001",
+            "identifierInPrimarySource": "mex",
+            "label": "ExtractedPrimarySource",
+        },
+        {
+            "identifier": "bFQoRhcVH5DHUq",
+            "label": "MergedActivity",
+        },
+        {
+            "language": "en",
+            "label": "Text",
+            "value": "A new beginning",
+        },
+    ]
