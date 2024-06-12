@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
-      version: ${{ steps.release.outputs.version }}
+      tag: ${{ steps.release.outputs.tag }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -62,7 +62,7 @@ jobs:
           git config --global user.name 'RKIMetadataExchange'
           git config --global user.email 'mex@rki.de'
           pdm release ${{ inputs.version }}
-          echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          echo "tag=$(git describe --abbrev=0 --tags)" >> "$GITHUB_OUTPUT"
 
   docker:
     runs-on: ubuntu-latest
@@ -72,4 +72,4 @@ jobs:
       - name: Build, tag and push docker image to ghcr
         uses: GlueOps/github-actions-build-push-containers@v0.4.2
         with:
-          tags: "${{ github.sha }},${{ github.ref_name }},${{ needs.release.outputs.version }},latest"
+          tags: "${{ github.sha }},${{ github.ref_name }},${{ needs.release.outputs.tag }},latest"

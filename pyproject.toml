@@ -5,7 +5,7 @@ description = "Backend server for the RKI metadata exchange."
 authors = [{ name = "MEx Team", email = "mex@rki.de" }]
 readme = { file = "README.md", content-type = "text/markdown" }
 license = { file = "LICENSE" }
-urls = { Repository = "https://github.com/robert-koch-institut/mex-backend" }
+urls = { Repository = "https://github.com/cutoffthetop/mex-backend" }
 requires-python = "<3.13,>=3.11"
 dependencies = [
     "fastapi==0.111.0",
