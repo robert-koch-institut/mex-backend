@@ -3,7 +3,6 @@ name: Docker
 on:
   push:
     tags: ["**"]
-    branches: ["main"]
   workflow_dispatch:
     inputs:
       tags:
@@ -24,4 +23,4 @@ jobs:
       - name: Build, tag and push docker image to ghcr
         uses: GlueOps/github-actions-build-push-containers@v0.4.2
         with:
-          tags: ${SHA},${SHORT_SHA},${REF_NAME},${{ inputs.tags }}
+          tags: "${SHA},${SHORT_SHA},${REF_NAME},${{ inputs.tags }}"
