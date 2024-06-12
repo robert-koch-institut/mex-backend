@@ -1,14 +1,22 @@
 name: Docker
 
 on:
-  push:
-    tags: ["**"]
+  workflow_run:
+    workflows: [Release]
+    types:
+      - completed
 
 jobs:
   docker:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+
+      - name: debug
+        shell: bash
+        run: |
+          echo "Event payload: ${{ toJson(github.event) }}"
+
       - name: Build, tag and push docker image to ghcr
         uses: GlueOps/github-actions-build-push-containers@v0.4.2
         with:
