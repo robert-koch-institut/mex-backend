@@ -106,9 +106,10 @@ jobs:
       - name: Build wheel and sdist distros and create a github release
         env:
           GH_TOKEN: ${{ github.token }}
+          PDM_CHECK_UPDATE: False
         run: |
           pdm build --dest dist
           gh release create ${{ needs.release.outputs.tag }} --generate-notes --latest --verify-tag
-          for filename in dist; do
-            gh release upload ${{ needs.release.outputs.tag }} "${filename}";
+          for filename in dist/*; do
+            gh release upload ${{ needs.release.outputs.tag }} ${filename};
           done
