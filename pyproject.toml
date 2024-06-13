@@ -11,8 +11,8 @@ dependencies = [
     "fastapi==0.111.0",
     "httpx==0.27.0",
     "mex-common@git+https://github.com/robert-koch-institut/mex-common.git@0.26.1",
-    "neo4j==5.20.0",
-    "pydantic==2.7.2",
+    "neo4j==5.21.0",
+    "pydantic==2.7.4",
     "uvicorn[standard]==0.29.0",
 ]
 optional-dependencies.dev = [
@@ -22,7 +22,7 @@ optional-dependencies.dev = [
     "pytest-cov==5.0.0",
     "pytest-random-order==1.1.1",
     "pytest==8.2.1",
-    "ruff==0.4.6",
+    "ruff==0.4.8",
     "sphinx==7.3.7",
     "types-pytz==2024.1.0.20240417",
 ]
