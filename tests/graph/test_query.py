@@ -1,6 +1,7 @@
 import pytest
+from pydantic import ValidationError
 
-from mex.backend.graph.query import QueryBuilder
+from mex.backend.graph.query import QueryBuilder, render_constraints
 
 
 @pytest.fixture
@@ -12,6 +13,15 @@ def query_builder() -> QueryBuilder:
         nested_labels=["Link", "Text", "Location"],
     )
     return builder
+
+
+def test_render_constraints() -> None:
+    with pytest.raises(ValidationError):
+        render_constraints(["this-fi5ld doesn't match the p4tt3rn!", "thisIsOk"])
+
+    assert render_constraints(["someField", "another"]) == (
+        "someField: $someField, another: $another"
+    )
 
 
 def test_create_full_text_search_index(query_builder: QueryBuilder) -> None:
@@ -264,7 +274,7 @@ def test_fetch_identities(
         (
             ["personInCharge", "meetingScheduledBy", "agendaSignedOff"],
             """\
-MATCH (source:ExtractedThat {identifier: $identifier})
+MATCH (source:ExtractedThat {identifier: $identifier})-[stableTargetId:stableTargetId]->({identifier: $stable_target_id})
 CALL {
     WITH source
     MATCH (target_0 {identifier: $ref_identifiers[0]})
@@ -294,7 +304,7 @@ RETURN count(edges) as merged, pruned, edges;""",
         (
             [],
             """\
-MATCH (source:ExtractedThat {identifier: $identifier})
+MATCH (source:ExtractedThat {identifier: $identifier})-[stableTargetId:stableTargetId]->({identifier: $stable_target_id})
 CALL {
     RETURN null as edge
 }
@@ -315,7 +325,9 @@ def test_merge_edges(
     query_builder: QueryBuilder, ref_labels: list[str], expected: str
 ) -> None:
     query = query_builder.merge_edges(
-        extracted_label="ExtractedThat", ref_labels=ref_labels
+        current_label="ExtractedThat",
+        current_constraints=["identifier"],
+        ref_labels=ref_labels,
     )
     assert query == expected
 
@@ -328,61 +340,62 @@ def test_merge_edges(
             ["Text", "Link", "Location"],
             """\
 MERGE (merged:MergedThat {identifier: $stable_target_id})
-MERGE (extracted:ExtractedThat {identifier: $identifier})-[stableTargetId:stableTargetId {position: 0}]->(merged)
-ON CREATE SET extracted = $on_create
-ON MATCH SET extracted += $on_match
-MERGE (extracted)-[edge_0:description {position: $nested_positions[0]}]->(value_0:Text)
+MERGE (current:ExtractedThat {identifier: $identifier})-[stableTargetId:stableTargetId {position: 0}]->(merged)
+ON CREATE SET current = $on_create
+ON MATCH SET current += $on_match
+MERGE (current)-[edge_0:description {position: $nested_positions[0]}]->(value_0:Text)
 ON CREATE SET value_0 = $nested_values[0]
 ON MATCH SET value_0 += $nested_values[0]
-MERGE (extracted)-[edge_1:homepage {position: $nested_positions[1]}]->(value_1:Link)
+MERGE (current)-[edge_1:homepage {position: $nested_positions[1]}]->(value_1:Link)
 ON CREATE SET value_1 = $nested_values[1]
 ON MATCH SET value_1 += $nested_values[1]
-MERGE (extracted)-[edge_2:geoLocation {position: $nested_positions[2]}]->(value_2:Location)
+MERGE (current)-[edge_2:geoLocation {position: $nested_positions[2]}]->(value_2:Location)
 ON CREATE SET value_2 = $nested_values[2]
 ON MATCH SET value_2 += $nested_values[2]
-WITH extracted,
+WITH current,
     [edge_0, edge_1, edge_2] as edges,
     [value_0, value_1, value_2] as values
 CALL {
-    WITH extracted, values
-    MATCH (extracted)-[]->(outdated_node:Link|Text|Location)
+    WITH current, values
+    MATCH (current)-[]->(outdated_node:Link|Text|Location)
     WHERE NOT outdated_node IN values
     DETACH DELETE outdated_node
     RETURN count(outdated_node) as pruned
 }
-RETURN extracted, edges, values, pruned;""",
+RETURN current, edges, values, pruned;""",
         ),
         (
             [],
             [],
             """\
 MERGE (merged:MergedThat {identifier: $stable_target_id})
-MERGE (extracted:ExtractedThat {identifier: $identifier})-[stableTargetId:stableTargetId {position: 0}]->(merged)
-ON CREATE SET extracted = $on_create
-ON MATCH SET extracted += $on_match
-WITH extracted,
+MERGE (current:ExtractedThat {identifier: $identifier})-[stableTargetId:stableTargetId {position: 0}]->(merged)
+ON CREATE SET current = $on_create
+ON MATCH SET current += $on_match
+WITH current,
     [] as edges,
     [] as values
 CALL {
-    WITH extracted, values
-    MATCH (extracted)-[]->(outdated_node:Link|Text|Location)
+    WITH current, values
+    MATCH (current)-[]->(outdated_node:Link|Text|Location)
     WHERE NOT outdated_node IN values
     DETACH DELETE outdated_node
     RETURN count(outdated_node) as pruned
 }
-RETURN extracted, edges, values, pruned;""",
+RETURN current, edges, values, pruned;""",
         ),
     ],
     ids=["has-nested-labels", "no-nested-labels"],
 )
-def test_merge_node(
+def test_merge_item(
     query_builder: QueryBuilder,
     nested_edge_labels: list[str],
     nested_node_labels: list[str],
     expected: str,
 ) -> None:
-    query = query_builder.merge_node(
-        extracted_label="ExtractedThat",
+    query = query_builder.merge_item(
+        current_label="ExtractedThat",
+        current_constraints=["identifier"],
         merged_label="MergedThat",
         nested_edge_labels=nested_edge_labels,
         nested_node_labels=nested_node_labels,

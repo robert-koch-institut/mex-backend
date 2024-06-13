@@ -16,6 +16,7 @@ from mex.backend.settings import BackendSettings
 from mex.backend.types import APIKeyDatabase, APIUserDatabase, BackendIdentityProvider
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    AdditiveOrganizationalUnit,
     AnyExtractedModel,
     ExtractedActivity,
     ExtractedContactPoint,
@@ -241,3 +242,15 @@ def load_dummy_data(dummy_data: list[AnyExtractedModel]) -> list[AnyExtractedMod
     """Ingest dummy data into the graph."""
     GraphConnector.get().ingest(dummy_data)
     return dummy_data
+
+
+@pytest.fixture
+def additive_organizational_unit(
+    dummy_data: list[AnyExtractedModel],
+) -> AdditiveOrganizationalUnit:
+    organizational_unit_1 = dummy_data[4]
+    return AdditiveOrganizationalUnit(
+        name=[Text(value="Unit 1.7", language=TextLanguage.EN)],
+        website=[Link(title="Unit Homepage", url="https://unit-1-7")],
+        parentUnit=organizational_unit_1.stableTargetId,
+    )

@@ -7,12 +7,14 @@ from pytest import MonkeyPatch
 from mex.backend.graph import connector as connector_module
 from mex.backend.graph.connector import MEX_EXTRACTED_PRIMARY_SOURCE, GraphConnector
 from mex.backend.graph.query import QueryBuilder
-from mex.common.models import AnyExtractedModel
-from mex.common.types import (
-    ExtractedPrimarySourceIdentifier,
-    Identifier,
-    MergedPrimarySourceIdentifier,
+from mex.common.models import (
+    MEX_PRIMARY_SOURCE_IDENTIFIER,
+    MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
+    MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    AdditiveOrganizationalUnit,
+    AnyExtractedModel,
 )
+from mex.common.types import Identifier
 from tests.conftest import MockedGraph
 
 
@@ -104,20 +106,23 @@ def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
 
     assert mocked_graph.call_args_list[-2].args == (
         """\
-merge_node(
-    extracted_label="ExtractedPrimarySource",
+merge_item(
+    current_label="ExtractedPrimarySource",
+    current_constraints=["identifier"],
     merged_label="MergedPrimarySource",
     nested_edge_labels=[],
     nested_node_labels=[],
 )""",
         {
-            "identifier": ExtractedPrimarySourceIdentifier("00000000000001"),
-            "stable_target_id": MergedPrimarySourceIdentifier("00000000000000"),
+            "identifier": MEX_PRIMARY_SOURCE_IDENTIFIER,
+            "stable_target_id": MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
             "on_match": {"version": None},
             "on_create": {
                 "version": None,
-                "identifier": "00000000000001",
-                "identifierInPrimarySource": "mex",
+                "identifier": MEX_PRIMARY_SOURCE_IDENTIFIER,
+                "identifierInPrimarySource": (
+                    MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE
+                ),
             },
             "nested_positions": [],
             "nested_values": [],
@@ -126,13 +131,19 @@ merge_node(
     assert mocked_graph.call_args_list[-1].args == (
         """\
 merge_edges(
-    extracted_label="ExtractedPrimarySource",
+    current_label="ExtractedPrimarySource",
+    current_constraints=["identifier"],
+    merged_label="MergedPrimarySource",
     ref_labels=["hadPrimarySource", "stableTargetId"],
 )""",
         {
-            "identifier": "00000000000001",
-            "ref_identifiers": ["00000000000000", "00000000000000"],
+            "identifier": MEX_PRIMARY_SOURCE_IDENTIFIER,
+            "ref_identifiers": [
+                MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+                MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+            ],
             "ref_positions": [0, 0],
+            "stable_target_id": MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
         },
     )
 
@@ -189,6 +200,29 @@ fetch_extracted_data(
         ],
         "total": 1,
     }
+
+
+@pytest.mark.usefixtures("load_dummy_data")
+@pytest.mark.integration
+def test_fetch_extracted_data() -> None:
+    connector = GraphConnector.get()
+
+    result = connector.fetch_extracted_data(None, None, None, 0, 1)
+
+    assert result.all() == [
+        {
+            "items": [
+                {
+                    "entityType": MEX_EXTRACTED_PRIMARY_SOURCE.entityType,
+                    "hadPrimarySource": [MEX_EXTRACTED_PRIMARY_SOURCE.hadPrimarySource],
+                    "identifier": MEX_EXTRACTED_PRIMARY_SOURCE.identifier,
+                    "identifierInPrimarySource": MEX_EXTRACTED_PRIMARY_SOURCE.identifierInPrimarySource,
+                    "stableTargetId": [MEX_EXTRACTED_PRIMARY_SOURCE.stableTargetId],
+                }
+            ],
+            "total": 7,
+        }
+    ]
 
 
 @pytest.mark.usefixtures("mocked_query_builder")
@@ -249,17 +283,22 @@ fetch_identities(
 
 
 @pytest.mark.usefixtures("mocked_query_builder")
-def test_mocked_graph_merges_node(
+def test_mocked_graph_merge_item(
     mocked_graph: MockedGraph, dummy_data: list[AnyExtractedModel]
 ) -> None:
     extracted_organizational_unit = dummy_data[4]
     graph = GraphConnector.get()
-    graph._merge_node(extracted_organizational_unit)
+    graph._merge_item(
+        extracted_organizational_unit,
+        extracted_organizational_unit.stableTargetId,
+        identifier=extracted_organizational_unit.identifier,
+    )
 
     assert mocked_graph.call_args_list[-1].args == (
         """\
-merge_node(
-    extracted_label="ExtractedOrganizationalUnit",
+merge_item(
+    current_label="ExtractedOrganizationalUnit",
+    current_constraints=["identifier"],
     merged_label="MergedOrganizationalUnit",
     nested_edge_labels=["name"],
     nested_node_labels=["Text"],
@@ -280,17 +319,23 @@ merge_node(
 
 
 @pytest.mark.usefixtures("mocked_query_builder")
-def test_mocked_graph_merges_edges(
+def test_mocked_graph_merge_edges(
     mocked_graph: MockedGraph, dummy_data: list[AnyExtractedModel]
 ) -> None:
     extracted_activity = dummy_data[4]
     graph = GraphConnector.get()
-    graph._merge_edges(extracted_activity)
+    graph._merge_edges(
+        extracted_activity,
+        extracted_activity.stableTargetId,
+        identifier=extracted_activity.identifier,
+    )
 
     assert mocked_graph.call_args_list[-1].args == (
         """\
 merge_edges(
-    extracted_label="ExtractedOrganizationalUnit",
+    current_label="ExtractedOrganizationalUnit",
+    current_constraints=["identifier"],
+    merged_label="MergedOrganizationalUnit",
     ref_labels=["hadPrimarySource", "stableTargetId"],
 )""",
         {
@@ -300,6 +345,57 @@ merge_edges(
                 extracted_activity.stableTargetId,
             ],
             "ref_positions": [0, 0],
+            "stable_target_id": "cWWm02l1c6cucKjIhkFqY4",
+        },
+    )
+
+
+@pytest.mark.usefixtures("mocked_query_builder")
+def test_mocked_graph_creates_rule(
+    mocked_graph: MockedGraph,
+    additive_organizational_unit: AdditiveOrganizationalUnit,
+) -> None:
+    graph = GraphConnector.get()
+    result = graph.create_rule(additive_organizational_unit)
+
+    assert result is additive_organizational_unit  # MX-1416 stopgap
+
+    assert mocked_graph.call_args_list[-2].args == (
+        """\
+merge_item(
+    current_label="AdditiveOrganizationalUnit",
+    current_constraints=[],
+    merged_label="MergedOrganizationalUnit",
+    nested_edge_labels=["name", "website"],
+    nested_node_labels=["Text", "Link"],
+)""",
+        {
+            "stable_target_id": "bFQoRhcVH5DHUq",
+            "on_match": {"email": []},
+            "on_create": {"email": []},
+            "nested_values": [
+                {"value": "Unit 1.7", "language": "en"},
+                {"language": None, "title": "Unit Homepage", "url": "https://unit-1-7"},
+            ],
+            "nested_positions": [0, 0],
+        },
+    )
+    assert mocked_graph.call_args_list[-1].args == (
+        """\
+merge_edges(
+    current_label="AdditiveOrganizationalUnit",
+    current_constraints=[],
+    merged_label="MergedOrganizationalUnit",
+    ref_labels=["parentUnit", "hadPrimarySource", "stableTargetId"],
+)""",
+        {
+            "stable_target_id": "bFQoRhcVH5DHUq",
+            "ref_identifiers": [
+                "cWWm02l1c6cucKjIhkFqY4",
+                "00000000000000",
+                "bFQoRhcVH5DHUq",
+            ],
+            "ref_positions": [0, 0, 0],
         },
     )
 
@@ -310,26 +406,3 @@ def test_mocked_graph_ingests_models(dummy_data: list[AnyExtractedModel]) -> Non
     identifiers = graph.ingest(dummy_data)
 
     assert identifiers == [d.identifier for d in dummy_data]
-
-
-@pytest.mark.usefixtures("load_dummy_data")
-@pytest.mark.integration
-def test_fetch_extracted_data() -> None:
-    connector = GraphConnector.get()
-
-    result = connector.fetch_extracted_data(None, None, None, 0, 1)
-
-    assert result.all() == [
-        {
-            "items": [
-                {
-                    "entityType": MEX_EXTRACTED_PRIMARY_SOURCE.entityType,
-                    "hadPrimarySource": [MEX_EXTRACTED_PRIMARY_SOURCE.hadPrimarySource],
-                    "identifier": MEX_EXTRACTED_PRIMARY_SOURCE.identifier,
-                    "identifierInPrimarySource": MEX_EXTRACTED_PRIMARY_SOURCE.identifierInPrimarySource,
-                    "stableTargetId": [MEX_EXTRACTED_PRIMARY_SOURCE.stableTargetId],
-                }
-            ],
-            "total": 7,
-        }
-    ]

@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Any, Final
 
 from fastapi.encoders import jsonable_encoder
+from pydantic import BaseModel
 
 from mex.common.types import Identifier, TemporalEntity
 
@@ -25,6 +26,18 @@ def to_primitive(
     custom_encoder: dict[Any, Callable[[Any], Any]] = JSON_ENCODERS,
 ) -> Any:
     """Convert any object into python primitives compatible with JSONification."""
+    if isinstance(obj, BaseModel):
+        return obj.__pydantic_serializer__.to_python(
+            obj,
+            mode="json",
+            by_alias=by_alias,
+            include=include,
+            exclude=exclude,
+            exclude_unset=exclude_unset,
+            exclude_defaults=exclude_defaults,
+            exclude_none=exclude_none,
+            fallback=str,
+        )
     return jsonable_encoder(
         obj=obj,
         include=include,

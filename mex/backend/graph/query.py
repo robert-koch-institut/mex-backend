@@ -1,6 +1,8 @@
 from collections.abc import Callable
+from typing import Annotated
 
 from jinja2 import Environment, PackageLoader, StrictUndefined, select_autoescape
+from pydantic import StringConstraints, validate_call
 
 from mex.backend.settings import BackendSettings
 from mex.common.connector import BaseConnector
@@ -11,11 +13,20 @@ from mex.common.models import (
 from mex.common.transform import (
     dromedary_to_kebab,
     dromedary_to_snake,
+    ensure_postfix,
     ensure_prefix,
     kebab_to_camel,
     snake_to_dromedary,
 )
 from mex.common.types import NESTED_MODEL_CLASSES_BY_NAME
+
+
+@validate_call
+def render_constraints(
+    fields: list[Annotated[str, StringConstraints(pattern=r"^[a-zA-Z]{1,255}$")]]
+) -> str:
+    """Convert a list of field names into cypher node/edge constraints."""
+    return ", ".join(f"{f}: ${f}" for f in fields)
 
 
 class QueryBuilder(BaseConnector):
@@ -42,6 +53,8 @@ class QueryBuilder(BaseConnector):
             dromedary_to_kebab=dromedary_to_kebab,
             kebab_to_camel=kebab_to_camel,
             ensure_prefix=ensure_prefix,
+            ensure_postfix=ensure_postfix,
+            render_constraints=render_constraints,
         )
         self._env.globals.update(
             extracted_labels=list(EXTRACTED_MODEL_CLASSES_BY_NAME),

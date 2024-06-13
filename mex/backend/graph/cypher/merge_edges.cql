@@ -1,14 +1,17 @@
-<# Merge all edges from a single extracted item to all connected merged items.
+<# Merge all edges from a single item to all connected merged items.
 
-This statement also prunes all edges originating from a given node that are not
+The current item can either be an extracted item or a rule.
+This statement also prunes all edges originating from the current item that are not
 part of the references to be merged during this operation.
 
 Globals:
     merged_labels: List of all merged class labels
 
 Args:
-    extracted_label: Label of the extracted item that is the source of all edges being
-                     merged in this statement
+    current_label: Label of the current item that is the source of all edges
+                   being merged in this statement
+    current_constraints: List of fields that will render as constraints for matching
+                         the current item
     ref_labels: Ordered list of merged item labels of the edges being merged
 
 Returns:
@@ -16,7 +19,7 @@ Returns:
     pruned: Number of pruned edges
     edges: List of the merged edge objects
 -#>
-MATCH (source:<<extracted_label>> {identifier: $identifier})
+MATCH (source:<<current_label>> {<<current_constraints|render_constraints>>})-[stableTargetId:stableTargetId]->({identifier: $stable_target_id})
 CALL {
 <%- if ref_labels %>
 <%- set union = joiner("UNION\n    ") %>
