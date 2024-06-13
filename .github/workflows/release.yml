@@ -72,4 +72,4 @@ jobs:
       - name: Build, tag and push docker image to ghcr
         uses: GlueOps/github-actions-build-push-containers@v0.4.2
         with:
-          tags: "${{ github.sha }},${{ github.ref_name }},${{ needs.release.outputs.tag }},latest"
+          tags: "${{ github.sha }},${{ needs.release.outputs.tag }},latest"
