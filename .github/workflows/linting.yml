@@ -1,0 +1,56 @@
+name: Linting
+
+on:
+  push:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+  workflow_dispatch:
+
+env:
+  PIP_NO_OPTION: on
+  PIP_NO_CLEAN: on
+  PIP_PREFER_BINARY: on
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Cache requirements
+        uses: actions/cache@v4
+        env:
+          cache-name: cache-requirements
+        with:
+          path: ~/.cache/pip
+          key: ${{ env.cache-name }}-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ env.cache-name }}-
+
+      - name: Cache environment
+        uses: actions/cache@v4
+        env:
+          cache-name: cache-environment
+        with:
+          path: ~/.cache/pip
+          key: ${{ env.cache-name }}-${{ hashFiles('*.lock') }}
+          restore-keys: |
+            ${{ env.cache-name }}-
+
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install requirements
+        run: make install
+
+      - name: Run linters
+        run: make linter
