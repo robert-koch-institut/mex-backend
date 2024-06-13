@@ -11,8 +11,8 @@ dependencies = [
     "fastapi==0.111.0",
     "httpx==0.27.0",
     "mex-common@git+https://github.com/robert-koch-institut/mex-common.git@0.26.1",
-    "neo4j==5.20.0",
-    "pydantic==2.7.2",
+    "neo4j==5.21.0",
+    "pydantic==2.7.4",
     "uvicorn[standard]==0.29.0",
 ]
 optional-dependencies.dev = [
@@ -22,7 +22,7 @@ optional-dependencies.dev = [
     "pytest-cov==5.0.0",
     "pytest-random-order==1.1.1",
     "pytest==8.2.1",
-    "ruff==0.4.6",
+    "ruff==0.4.8",
     "sphinx==7.3.7",
     "types-pytz==2024.1.0.20240417",
 ]
@@ -48,10 +48,10 @@ plugins = ["pydantic.mypy"]
 distribution = true
 
 [tool.pdm.scripts]
-update-all = { cmd = "pdm update --group :all --update-eager --save-minimum" }
-lock-all = { cmd = "pdm lock --group :all" }
-install-all = { cmd = "pdm install --group :all" }
-export-all = { cmd = "pdm export --group :all -f requirements" }
+update-all = { cmd = "pdm update --group :all --update-all --save-compatible" }
+lock-all = { cmd = "pdm lock --group :all --refresh" }
+install-all = { cmd = "pdm install --group :all --no-editable --no-lock" }
+export-all = { cmd = "pdm export --group :all --no-hashes -f requirements" }
 apidoc = { cmd = "pdm run sphinx-apidoc -f -o docs/source mex" }
 sphinx = { cmd = "pdm run sphinx-build -aE -b dirhtml docs docs/dist" }
 doc = { composite = ["apidoc", "sphinx"] }
