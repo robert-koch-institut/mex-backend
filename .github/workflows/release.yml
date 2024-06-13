@@ -21,6 +21,7 @@ env:
 
 permissions:
   contents: write
+  packages: write
 
 concurrency:
   group: "release"
@@ -64,7 +65,7 @@ jobs:
           pdm release ${{ inputs.version }}
           echo "tag=$(git describe --abbrev=0 --tags)" >> "$GITHUB_OUTPUT"
 
-  docker:
+  container:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: release
