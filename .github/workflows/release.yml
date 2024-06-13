@@ -80,6 +80,14 @@ jobs:
     timeout-minutes: 10
     needs: release
     steps:
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install requirements
+        run: make setup
+
       - name: Build wheel and sdist distros and create a github release
         run: |
           pdm build --dest dist
