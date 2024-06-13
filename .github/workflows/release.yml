@@ -104,6 +104,8 @@ jobs:
         run: make setup
 
       - name: Build wheel and sdist distros and create a github release
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           pdm build --dest dist
           gh release create ${{ needs.release.outputs.tag }} --generate-notes --latest --verify-tag
