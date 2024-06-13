@@ -65,7 +65,7 @@ jobs:
           pdm release ${{ inputs.version }}
           echo "tag=$(git describe --abbrev=0 --tags)" >> "$GITHUB_OUTPUT"
 
-  container:
+  containerize:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: release
@@ -74,3 +74,16 @@ jobs:
         uses: GlueOps/github-actions-build-push-containers@v0.4.2
         with:
           tags: "${{ github.sha }},${{ needs.release.outputs.tag }},latest"
+
+  distribute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: release
+    steps:
+      - name: Build wheel and sdist distros and create a github release
+        run: |
+          pdm build --dest dist
+          gh release create ${{ needs.release.outputs.tag }} --generate-notes --latest --verify-tag
+          for filename in dist; do
+            gh release upload ${{ needs.release.outputs.tag }} "${filename}";
+          done
