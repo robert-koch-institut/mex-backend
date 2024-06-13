@@ -1,11 +1,11 @@
 [project]
 name = "mex-backend"
-version = "0.25.0"
+version = "0.14.0"
 description = "Backend server for the RKI metadata exchange."
 authors = [{ name = "MEx Team", email = "mex@rki.de" }]
 readme = { file = "README.md", content-type = "text/markdown" }
 license = { file = "LICENSE" }
-urls = { Repository = "https://github.com/cutoffthetop/mex-backend" }
+urls = { Repository = "https://github.com/robert-koch-institut/mex-backend" }
 requires-python = "<3.13,>=3.11"
 dependencies = [
     "fastapi==0.111.0",
