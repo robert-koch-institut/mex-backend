@@ -9,14 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- add `INDEXABLE_MODEL_CLASSES_BY_NAME` lookup to fields module
-- add `render_constraints` jinja filter
-- implement new `POST /rule-item` endpoint
-- db purge script
-
 ### Changes
-
-- update connector and queries to support creating rules (analogous to extracted items)
 
 ### Deprecated
 
@@ -25,6 +18,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [0.15.0] - 2024-06-14
+
+### Added
+
+- add `INDEXABLE_MODEL_CLASSES_BY_NAME` lookup to fields module
+- add `render_constraints` jinja filter
+- implement new `POST /rule-item` endpoint
+- db purge script
+
+### Changes
+
+- update connector and queries to support creating rules (analogous to extracted items)
 
 ## [0.14.0] - 2024-06-03
 
