@@ -11,7 +11,7 @@ from mex.common.types import Text
 
 @pytest.mark.usefixtures("mocked_wikidata")
 def test_search_organization_in_wikidata_mocked(
-    client: TestClient,
+    client_with_api_key_read_permission: TestClient,
     monkeypatch: MonkeyPatch,
 ) -> None:
     def extracted_primary_source_wikidata() -> ExtractedPrimarySource:
@@ -33,7 +33,9 @@ def test_search_organization_in_wikidata_mocked(
         {"value": "Robert Koch-Institut", "language": "de"},
     ]
 
-    organizations = client.get("/v0/wikidata", params={"q": "rki"}).json()
+    organizations = client_with_api_key_read_permission.get(
+        "/v0/wikidata", params={"q": "rki"}
+    ).json()
 
     assert organizations["total"] == expected_total
     assert (
