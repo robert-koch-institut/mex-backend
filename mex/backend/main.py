@@ -88,7 +88,7 @@ router.include_router(identity_router, dependencies=[Depends(has_write_access)])
 router.include_router(ingest_router, dependencies=[Depends(has_write_access)])
 router.include_router(merged_router, dependencies=[Depends(has_read_access)])
 router.include_router(rules_router, dependencies=[Depends(has_write_access)])
-router.include_router(wikidata_router)  # TODO make depend on read access
+router.include_router(wikidata_router, dependencies=[Depends(has_read_access)])
 
 
 class SystemStatus(BaseModel):
