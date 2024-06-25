@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query
 
-from mex.backend.auxiliary.models.wikidata import PagedResponseSchema
+from mex.backend.auxiliary.models import PagedResponseSchema
 from mex.common.models import ExtractedOrganization, ExtractedPrimarySource
 from mex.common.primary_source.extract import extract_seed_primary_sources
 from mex.common.primary_source.transform import (
