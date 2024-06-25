@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from pydantic import BaseModel
 
+from mex.backend.auxiliary.wikidata import router as wikidata_router
 from mex.backend.exceptions import handle_uncaught_exception
 from mex.backend.extracted.main import router as extracted_router
 from mex.backend.identity.main import router as identity_router
@@ -87,6 +88,7 @@ router.include_router(identity_router, dependencies=[Depends(has_write_access)])
 router.include_router(ingest_router, dependencies=[Depends(has_write_access)])
 router.include_router(merged_router, dependencies=[Depends(has_read_access)])
 router.include_router(rules_router, dependencies=[Depends(has_write_access)])
+router.include_router(wikidata_router)  # TODO make depend on read access
 
 
 class SystemStatus(BaseModel):
