@@ -64,4 +64,5 @@ def extracted_primary_source_wikidata() -> ExtractedPrimarySource:
         extracted_primary_sources,
         "wikidata",
     )
+
     return extracted_primary_source_wikidata
