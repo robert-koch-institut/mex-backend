@@ -1,3 +1,4 @@
+from functools import cache
 from typing import Annotated
 
 from fastapi import APIRouter, Query
@@ -52,6 +53,7 @@ def search_organization_in_wikidata(
     )
 
 
+@cache
 def extracted_primary_source_wikidata() -> ExtractedPrimarySource:
     """Load and return wikidata primary source."""
     seed_primary_sources = extract_seed_primary_sources()
