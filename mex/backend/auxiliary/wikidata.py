@@ -11,7 +11,10 @@ from mex.common.primary_source.transform import (
     transform_seed_primary_sources_to_extracted_primary_sources,
 )
 from mex.common.types import TextLanguage
-from mex.common.wikidata.extract import search_organizations_by_label
+from mex.common.wikidata.extract import (
+    get_count_of_found_organizations_by_label,
+    search_organizations_by_label,
+)
 from mex.common.wikidata.transform import (
     transform_wikidata_organizations_to_extracted_organizations,
 )
@@ -37,6 +40,7 @@ def search_organization_in_wikidata(
     Returns:
         Paginated list of ExtractedOrganization
     """
+    total_orgs = get_count_of_found_organizations_by_label(q, lang)
     organizations = search_organizations_by_label(q, offset, limit, lang)
 
     extracted_organizations = list(
@@ -46,7 +50,7 @@ def search_organization_in_wikidata(
     )
 
     return PagedResponseSchema(
-        total=len(extracted_organizations),
+        total=total_orgs,
         offset=offset,
         limit=limit,
         results=[organization for organization in extracted_organizations],
