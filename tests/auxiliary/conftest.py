@@ -65,6 +65,11 @@ def mocked_wikidata(
                     "type": "literal",
                     "value": "German automotive manufacturer, and conglomerate",
                 },
+                "count": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+                    "type": "literal",
+                    "value": "3",
+                },
             },
         ]
 
