@@ -240,7 +240,7 @@ def dummy_data() -> list[AnyExtractedModel]:
 @pytest.fixture
 def load_dummy_data(dummy_data: list[AnyExtractedModel]) -> list[AnyExtractedModel]:
     """Ingest dummy data into the graph."""
-    GraphConnector.get().ingest(dummy_data)
+    GraphConnector.get().ingest_extracted(dummy_data)
     return dummy_data
 
 

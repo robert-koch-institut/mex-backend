@@ -283,6 +283,22 @@ fetch_identities(
 
 
 @pytest.mark.usefixtures("mocked_query_builder")
+def test_mocked_graph_exists_merged_item(mocked_graph: MockedGraph) -> None:
+    mocked_graph.return_value = [{"exists": True}]
+
+    graph = GraphConnector.get()
+    graph.exists_merged_item(
+        stem_type="Person", stable_target_id=Identifier.generate(99)
+    )
+
+    assert mocked_graph.call_args_list[-1].args == (
+        """\
+exists_merged_item(merged_label="MergedPerson")""",
+        {"identifier": Identifier.generate(99)},
+    )
+
+
+@pytest.mark.usefixtures("mocked_query_builder")
 def test_mocked_graph_merge_item(
     mocked_graph: MockedGraph, dummy_data: list[AnyExtractedModel]
 ) -> None:
@@ -351,12 +367,14 @@ merge_edges(
 
 
 @pytest.mark.usefixtures("mocked_query_builder")
-def test_mocked_graph_creates_rule(
+def test_mocked_graph_ingest_rule(
     mocked_graph: MockedGraph,
     additive_organizational_unit: AdditiveOrganizationalUnit,
 ) -> None:
     graph = GraphConnector.get()
-    result = graph.create_rule(additive_organizational_unit)
+    result = graph.ingest_rule(
+        Identifier("bFQoRhcVH5DHUq"), additive_organizational_unit
+    )
 
     assert result is additive_organizational_unit  # MX-1416 stopgap
 
@@ -401,8 +419,8 @@ merge_edges(
 
 
 @pytest.mark.usefixtures("mocked_graph")
-def test_mocked_graph_ingests_models(dummy_data: list[AnyExtractedModel]) -> None:
+def test_mocked_graph_ingest_extracted(dummy_data: list[AnyExtractedModel]) -> None:
     graph = GraphConnector.get()
-    identifiers = graph.ingest(dummy_data)
+    identifiers = graph.ingest_extracted(dummy_data)
 
     assert identifiers == [d.identifier for d in dummy_data]

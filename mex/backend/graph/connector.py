@@ -15,9 +15,7 @@ from mex.backend.fields import (
 )
 from mex.backend.graph.models import Result
 from mex.backend.graph.query import QueryBuilder
-from mex.backend.graph.transform import (
-    expand_references_in_search_result,
-)
+from mex.backend.graph.transform import expand_references_in_search_result
 from mex.backend.settings import BackendSettings
 from mex.backend.transform import to_primitive
 from mex.common.connector import BaseConnector
@@ -34,7 +32,12 @@ from mex.common.models import (
     ExtractedPrimarySource,
 )
 from mex.common.transform import ensure_prefix, to_key_and_values
-from mex.common.types import AnyPrimitiveType, Identifier, Link, Text
+from mex.common.types import (
+    AnyPrimitiveType,
+    Identifier,
+    Link,
+    Text,
+)
 
 MEX_EXTRACTED_PRIMARY_SOURCE = ExtractedPrimarySource.model_construct(
     hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -112,7 +115,7 @@ class GraphConnector(BaseConnector):
 
     def _seed_data(self) -> list[Identifier]:
         """Ensure the primary source `mex` is seeded and linked to itself."""
-        return self.ingest([MEX_EXTRACTED_PRIMARY_SOURCE])
+        return self.ingest_extracted([MEX_EXTRACTED_PRIMARY_SOURCE])
 
     def close(self) -> None:
         """Close the connector's underlying requests session."""
@@ -210,6 +213,23 @@ class GraphConnector(BaseConnector):
             stable_target_id=stable_target_id,
             limit=limit,
         )
+
+    def exists_merged_item(self, stem_type: str, stable_target_id: Identifier) -> bool:
+        """Validate whether a merged item with the given identifier and type exists.
+
+        Args:
+            stem_type: Stem type of the to-be-checked merged item
+            stable_target_id: Identifier of the to-be-checked merged item
+
+        Returns:
+            Boolean representing the existence of the requested item
+        """
+        query_builder = QueryBuilder.get()
+        query = query_builder.exists_merged_item(
+            merged_label=ensure_prefix(stem_type, "Merged"),
+        )
+        result = self.commit(query, identifier=stable_target_id)
+        return bool(result["exists"])
 
     def _merge_item(
         self,
@@ -338,8 +358,12 @@ class GraphConnector(BaseConnector):
             ref_positions=ref_positions,
         )
 
-    def create_rule(self, model: AnyRuleModel) -> AnyRuleModel:
-        """Create a new rule to be a applied to one merged item.
+    def ingest_rule(
+        self,
+        stable_target_id: Identifier,
+        model: AnyRuleModel,
+    ) -> AnyRuleModel:
+        """Ingest a rule model and link it to the given merged item.
 
         This is a two-step process: first the rule and merged items are created
         along with their nested objects (like Text and Link); then all edges that
@@ -347,12 +371,12 @@ class GraphConnector(BaseConnector):
         the graph in a second step.
 
         Args:
+            stable_target_id: Identifier
             model: A single rule model
 
         Returns:
             The created rule model
         """
-        stable_target_id = Identifier.generate()
         self._merge_item(model, stable_target_id)
         self._merge_edges(
             model,
@@ -366,7 +390,7 @@ class GraphConnector(BaseConnector):
         #       input; to ensure consistency (MX-1416)
         return model
 
-    def ingest(self, models: list[AnyExtractedModel]) -> list[Identifier]:
+    def ingest_extracted(self, models: list[AnyExtractedModel]) -> list[Identifier]:
         """Ingest a list of models into the graph as nodes and connect all edges.
 
         This is a two-step process: first all extracted and merged items are created

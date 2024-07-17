@@ -29,7 +29,6 @@ optional-dependencies.dev = [
 
 [project.scripts]
 backend = "mex.backend.main:main"
-purge-db = "scripts.purge:purge_db"
 
 [tool.cruft]
 template = "https://github.com/robert-koch-institut/mex-template"
@@ -48,6 +47,7 @@ plugins = ["pydantic.mypy"]
 distribution = true
 
 [tool.pdm.scripts]
+purge-db = { call = "scripts.purge:purge_db" }
 update-all = { cmd = "pdm update --group :all --update-all --save-compatible" }
 lock-all = { cmd = "pdm lock --group :all --refresh" }
 install-all = { cmd = "pdm install --group :all --frozen-lockfile" }
