@@ -20,6 +20,7 @@ def test_graph_ingest_and_query_roundtrip(
         list[Annotated[AnyExtractedModel, Field(discriminator="entityType")]]
     )
 
-    assert extracted_model_adapter.validate_python(result["items"]) == sorted(
-        seeded_models, key=lambda x: x.identifier
-    )
+    expected = sorted(seeded_models, key=lambda x: x.identifier)
+    fetched = extracted_model_adapter.validate_python(result["items"])
+
+    assert fetched == expected

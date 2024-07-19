@@ -151,15 +151,15 @@ def isolate_identifier_seeds(monkeypatch: MonkeyPatch) -> None:
 @pytest.fixture(autouse=True)
 def set_identity_provider(is_integration_test: bool, monkeypatch: MonkeyPatch) -> None:
     """Ensure the identifier provider is set correctly for unit and int tests."""
-    settings = BaseSettings.get()
-    if is_integration_test:
-        # yuck, all this needs cleaning up after MX-1596
-        monkeypatch.setitem(settings.model_config, "validate_assignment", False)
-        monkeypatch.setattr(
-            settings, "identity_provider", BackendIdentityProvider.GRAPH
-        )
-    else:
-        monkeypatch.setattr(settings, "identity_provider", IdentityProvider.MEMORY)
+    # yuck, all this needs cleaning up after MX-1596
+    for settings in (BaseSettings.get(), BackendSettings.get()):
+        if is_integration_test:
+            monkeypatch.setitem(settings.model_config, "validate_assignment", False)
+            monkeypatch.setattr(
+                settings, "identity_provider", BackendIdentityProvider.GRAPH
+            )
+        else:
+            monkeypatch.setattr(settings, "identity_provider", IdentityProvider.MEMORY)
 
 
 @pytest.fixture(autouse=True)
