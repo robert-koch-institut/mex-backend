@@ -23,7 +23,7 @@ from mex.common.types import NESTED_MODEL_CLASSES_BY_NAME
 
 @validate_call
 def render_constraints(
-    fields: list[Annotated[str, StringConstraints(pattern=r"^[a-zA-Z]{1,255}$")]]
+    fields: list[Annotated[str, StringConstraints(pattern=r"^[a-zA-Z]{1,255}$")]],
 ) -> str:
     """Convert a list of field names into cypher node/edge constraints."""
     return ", ".join(f"{f}: ${f}" for f in fields)
