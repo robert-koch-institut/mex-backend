@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:838547ac3ef46c9911de29154fb7b4c017a0c91469387ffd449237c75d922559"
+content_hash = "sha256:41f67a941b371a2898d16506945a3825f6075411a36111cc6b083ce3d2825e54"
 
 [[metadata.targets]]
 requires_python = ">=3.11,<3.13"
@@ -1228,7 +1228,7 @@ files = [
 
 [[package]]
 name = "sphinx"
-version = "7.4.0"
+version = "7.4.1"
 requires_python = ">=3.9"
 summary = "Python documentation generator"
 groups = ["dev"]
@@ -1253,8 +1253,8 @@ dependencies = [
     "tomli>=2; python_version < \"3.11\"",
 ]
 files = [
-    {file = "sphinx-7.4.0-py3-none-any.whl", hash = "sha256:4bcce443b66139eb9556117ba881246269edce396e7f939e22c5ed85186bfd5b"},
-    {file = "sphinx-7.4.0.tar.gz", hash = "sha256:8385520a28dc129ebf8b5fccfa1beb71215fd4455c6d10fa418e08c3c7a2ff9c"},
+    {file = "sphinx-7.4.1-py3-none-any.whl", hash = "sha256:ae21f3f4337ccc0a1054459bf232a25e495bdf647ccbcd50d3b5e355293ceff3"},
+    {file = "sphinx-7.4.1.tar.gz", hash = "sha256:09539a16d74d1850b123cdd0752b9d24f3adc025ff887d611d1010348cd3648c"},
 ]
 
 [[package]]
