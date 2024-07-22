@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:12295dae1c416baceec976b3b99a1add0a380228b1af03a640a4b6330a7ba092"
+content_hash = "sha256:252a8dac54150ba43507e91b0901d5dd444ab2c5007022cc7240f9dcbecf40fc"
 
 [[metadata.targets]]
 requires_python = ">=3.11,<3.13"
@@ -1241,22 +1241,22 @@ files = [
 
 [[package]]
 name = "sphinx"
-version = "7.3.7"
+version = "7.4.0"
 requires_python = ">=3.9"
 summary = "Python documentation generator"
 groups = ["dev"]
 dependencies = [
-    "Jinja2>=3.0",
-    "Pygments>=2.14",
+    "Jinja2>=3.1",
+    "Pygments>=2.17",
     "alabaster~=0.7.14",
-    "babel>=2.9",
-    "colorama>=0.4.5; sys_platform == \"win32\"",
-    "docutils<0.22,>=0.18.1",
+    "babel>=2.13",
+    "colorama>=0.4.6; sys_platform == \"win32\"",
+    "docutils<0.22,>=0.20",
     "imagesize>=1.3",
-    "importlib-metadata>=4.8; python_version < \"3.10\"",
-    "packaging>=21.0",
-    "requests>=2.25.0",
-    "snowballstemmer>=2.0",
+    "importlib-metadata>=6.0; python_version < \"3.10\"",
+    "packaging>=23.0",
+    "requests>=2.30.0",
+    "snowballstemmer>=2.2",
     "sphinxcontrib-applehelp",
     "sphinxcontrib-devhelp",
     "sphinxcontrib-htmlhelp>=2.0.0",
@@ -1266,8 +1266,8 @@ dependencies = [
     "tomli>=2; python_version < \"3.11\"",
 ]
 files = [
-    {file = "sphinx-7.3.7-py3-none-any.whl", hash = "sha256:413f75440be4cacf328f580b4274ada4565fb2187d696a84970c23f77b64d8c3"},
-    {file = "sphinx-7.3.7.tar.gz", hash = "sha256:a4a7db75ed37531c05002d56ed6948d4c42f473a36f46e1382b0bd76ca9627bc"},
+    {file = "sphinx-7.4.0-py3-none-any.whl", hash = "sha256:4bcce443b66139eb9556117ba881246269edce396e7f939e22c5ed85186bfd5b"},
+    {file = "sphinx-7.4.0.tar.gz", hash = "sha256:8385520a28dc129ebf8b5fccfa1beb71215fd4455c6d10fa418e08c3c7a2ff9c"},
 ]
 
 [[package]]

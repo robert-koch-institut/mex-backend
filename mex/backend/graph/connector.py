@@ -16,9 +16,7 @@ from mex.backend.fields import (
 )
 from mex.backend.graph.models import Result
 from mex.backend.graph.query import QueryBuilder
-from mex.backend.graph.transform import (
-    expand_references_in_search_result,
-)
+from mex.backend.graph.transform import expand_references_in_search_result
 from mex.backend.settings import BackendSettings
 from mex.backend.transform import to_primitive
 from mex.common.connector import BaseConnector
@@ -60,9 +58,7 @@ class MExPrimarySource(BasePrimarySource):
     stableTargetId: MergedPrimarySourceIdentifier = MEX_PRIMARY_SOURCE_STABLE_TARGET_ID
 
 
-MEX_EXTRACTED_PRIMARY_SOURCE: ExtractedPrimarySource = cast(
-    ExtractedPrimarySource, MExPrimarySource()
-)
+MEX_EXTRACTED_PRIMARY_SOURCE = MExPrimarySource()
 
 
 class GraphConnector(BaseConnector):
@@ -133,7 +129,7 @@ class GraphConnector(BaseConnector):
 
     def _seed_data(self) -> list[Identifier]:
         """Ensure the primary source `mex` is seeded and linked to itself."""
-        return self.ingest([MEX_EXTRACTED_PRIMARY_SOURCE])
+        return self.ingest([cast(ExtractedPrimarySource, MEX_EXTRACTED_PRIMARY_SOURCE)])
 
     def close(self) -> None:
         """Close the connector's underlying requests session."""
