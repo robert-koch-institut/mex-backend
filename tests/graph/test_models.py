@@ -18,7 +18,6 @@ from mex.common.testing import Joker
 
 @pytest.fixture
 def summary() -> Mock:
-
     class SummaryCounters:
         def __init__(self) -> None:
             self.nodes_created = 73
