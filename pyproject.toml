@@ -10,9 +10,9 @@ requires-python = "<3.13,>=3.11"
 dependencies = [
     "fastapi==0.111.1",
     "httpx==0.27.0",
-    "mex-common @ git+https://github.com/robert-koch-institut/mex-common.git@feature/computed-field-listyness-fix",
+    "mex-common @ git+https://github.com/robert-koch-institut/mex-common.git@0.32.0",
     "neo4j==5.22.0",
-    "pydantic==2.7.4",
+    "pydantic==2.8.2",
     "uvicorn[standard]==0.30.3",
 ]
 optional-dependencies.dev = [
