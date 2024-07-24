@@ -62,9 +62,12 @@ def test_bulk_insert_malformed(
     assert response.json() == {
         "detail": [
             {
-                "type": "dict_type",
-                "loc": ["body", "ExtractedContactPoint", 0, 1],
-                "msg": "Input should be a valid dictionary",
+                "ctx": {"error": {}},
+                "type": "assertion_error",
+                "loc": ["body", "ExtractedContactPoint", 0],
+                "msg": "Assertion failed, Input should be a valid dictionary, "
+                "validating other types is not supported for models with computed "
+                "fields.",
                 "input": "FAIL!",
             }
         ]

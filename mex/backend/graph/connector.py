@@ -1,8 +1,9 @@
 import json
 from string import Template
-from typing import Any
+from typing import Annotated, Any, Literal, cast
 
 from neo4j import Driver, GraphDatabase
+from pydantic import Field
 
 from mex.backend.fields import (
     FINAL_FIELDS_BY_CLASS_NAME,
@@ -15,9 +16,7 @@ from mex.backend.fields import (
 )
 from mex.backend.graph.models import Result
 from mex.backend.graph.query import QueryBuilder
-from mex.backend.graph.transform import (
-    expand_references_in_search_result,
-)
+from mex.backend.graph.transform import expand_references_in_search_result
 from mex.backend.settings import BackendSettings
 from mex.backend.transform import to_primitive
 from mex.common.connector import BaseConnector
@@ -33,15 +32,33 @@ from mex.common.models import (
     AnyRuleModel,
     ExtractedPrimarySource,
 )
+from mex.common.models.primary_source import BasePrimarySource
 from mex.common.transform import ensure_prefix, to_key_and_values
-from mex.common.types import AnyPrimitiveType, Identifier, Link, Text
-
-MEX_EXTRACTED_PRIMARY_SOURCE = ExtractedPrimarySource.model_construct(
-    hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-    identifier=MEX_PRIMARY_SOURCE_IDENTIFIER,
-    identifierInPrimarySource=MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
-    stableTargetId=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+from mex.common.types import (
+    AnyPrimitiveType,
+    ExtractedPrimarySourceIdentifier,
+    Identifier,
+    Link,
+    MergedPrimarySourceIdentifier,
+    Text,
 )
+
+
+class MExPrimarySource(BasePrimarySource):
+    """An automatically extracted metadata set describing a primary source."""
+
+    entityType: Annotated[
+        Literal["ExtractedPrimarySource"], Field(alias="$type", frozen=True)
+    ] = "ExtractedPrimarySource"
+    hadPrimarySource: MergedPrimarySourceIdentifier = (
+        MEX_PRIMARY_SOURCE_STABLE_TARGET_ID
+    )
+    identifier: ExtractedPrimarySourceIdentifier = MEX_PRIMARY_SOURCE_IDENTIFIER
+    identifierInPrimarySource: str = MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE
+    stableTargetId: MergedPrimarySourceIdentifier = MEX_PRIMARY_SOURCE_STABLE_TARGET_ID
+
+
+MEX_EXTRACTED_PRIMARY_SOURCE = MExPrimarySource()
 
 
 class GraphConnector(BaseConnector):
@@ -112,7 +129,7 @@ class GraphConnector(BaseConnector):
 
     def _seed_data(self) -> list[Identifier]:
         """Ensure the primary source `mex` is seeded and linked to itself."""
-        return self.ingest([MEX_EXTRACTED_PRIMARY_SOURCE])
+        return self.ingest([cast(ExtractedPrimarySource, MEX_EXTRACTED_PRIMARY_SOURCE)])
 
     def close(self) -> None:
         """Close the connector's underlying requests session."""
