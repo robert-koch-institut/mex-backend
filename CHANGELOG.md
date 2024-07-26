@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `/wikidata` endpoint to fetch all matching organizations from wikidata
 - add support for computed fields in graph queries
 
 ### Changes
