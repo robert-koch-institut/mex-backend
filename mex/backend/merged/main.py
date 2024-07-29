@@ -2,9 +2,11 @@ from collections.abc import Sequence
 from typing import Annotated
 
 from fastapi import APIRouter, Query
+from fastapi.responses import JSONResponse
 
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.merged.models import MergedItemSearchResponse
+from mex.backend.transform import to_primitive
 from mex.backend.types import MergedType, UnprefixedType
 from mex.common.transform import ensure_prefix
 from mex.common.types import Identifier
@@ -46,4 +48,5 @@ def search_merged_items_facade(
         item["identifier"] = item.pop("stableTargetId")
         item["entityType"] = item["entityType"].replace("Extracted", "Merged")
 
-    return MergedItemSearchResponse.model_validate(result.one())
+    response = MergedItemSearchResponse.model_validate(result.one())
+    return JSONResponse(to_primitive(response))  # type: ignore[return-value]

@@ -9,9 +9,7 @@ from mex.common.models import (
 from mex.common.types import Text
 
 
-@pytest.mark.usefixtures(
-    "mocked_wikidata",
-)
+@pytest.mark.usefixtures("mocked_wikidata")
 def test_search_organization_in_wikidata_mocked(
     client_with_api_key_read_permission: TestClient, monkeypatch: MonkeyPatch
 ) -> None:
@@ -39,10 +37,9 @@ def test_search_organization_in_wikidata_mocked(
 
     assert organizations["total"] == expected_total
     assert (
-        organizations["results"][0]["identifierInPrimarySource"]
+        organizations["items"][0]["identifierInPrimarySource"]
         == expected_organization_identifier
     )
     assert (
-        organizations["results"][0]["officialName"]
-        == expected_organization_official_name
+        organizations["items"][0]["officialName"] == expected_organization_official_name
     )

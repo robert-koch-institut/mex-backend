@@ -2,13 +2,11 @@ from typing import Generic, TypeVar
 
 from pydantic import BaseModel
 
-T = TypeVar("T")
+ResponseItemT = TypeVar("ResponseItemT", bound=BaseModel)
 
 
-class PagedResponseSchema(BaseModel, Generic[T]):
-    """Response schema for any paged API."""
+class PagedAuxiliaryResponse(BaseModel, Generic[ResponseItemT]):
+    """Response model for any paged aux API."""
 
+    items: list[ResponseItemT]
     total: int
-    offset: int
-    limit: int
-    results: list[T]
