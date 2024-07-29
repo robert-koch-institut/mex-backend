@@ -15,4 +15,4 @@ def ingest_extracted_items(request: BulkIngestRequest) -> BulkIngestResponse:
     models = request.get_all()
     identifiers = connector.ingest(models)
     response = BulkIngestResponse(identifiers=identifiers)
-    return JSONResponse(to_primitive(response))  # type: ignore[return-value]
+    return JSONResponse(to_primitive(response), 201)  # type: ignore[return-value]
