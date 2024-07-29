@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- BREAKING: use `items` instead of `results` in paged wiki response
+
 ### Deprecated
 
 ### Removed
