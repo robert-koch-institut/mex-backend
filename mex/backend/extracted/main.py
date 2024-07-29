@@ -2,9 +2,11 @@ from collections.abc import Sequence
 from typing import Annotated
 
 from fastapi import APIRouter, Query
+from fastapi.responses import JSONResponse
 
 from mex.backend.extracted.models import ExtractedItemSearchResponse
 from mex.backend.graph.connector import GraphConnector
+from mex.backend.transform import to_primitive
 from mex.backend.types import ExtractedType
 from mex.common.types import Identifier
 
@@ -30,4 +32,5 @@ def search_extracted_items(
         skip,
         limit,
     )
-    return ExtractedItemSearchResponse.model_validate(result.one())
+    response = ExtractedItemSearchResponse.model_validate(result.one())
+    return JSONResponse(to_primitive(response))  # type: ignore[return-value]

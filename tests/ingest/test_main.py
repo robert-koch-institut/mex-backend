@@ -11,7 +11,7 @@ from tests.conftest import MockedGraph
 Payload = dict[str, list[dict[str, Any]]]
 
 
-@pytest.fixture
+@pytest.fixture()
 def post_payload(dummy_data: list[AnyExtractedModel]) -> Payload:
     payload = defaultdict(list)
     for model in dummy_data:

@@ -2,8 +2,10 @@ from functools import cache
 from typing import Annotated
 
 from fastapi import APIRouter, Query
+from fastapi.responses import JSONResponse
 
-from mex.backend.auxiliary.models import PagedResponseSchema
+from mex.backend.auxiliary.models import PagedAuxiliaryResponse
+from mex.backend.transform import to_primitive
 from mex.common.models import ExtractedOrganization, ExtractedPrimarySource
 from mex.common.primary_source.extract import extract_seed_primary_sources
 from mex.common.primary_source.transform import (
@@ -22,13 +24,13 @@ from mex.common.wikidata.transform import (
 router = APIRouter()
 
 
-@router.get("/wikidata", status_code=200, tags=["wikidata"])
+@router.get("/wikidata", status_code=200, tags=["editor"])
 def search_organization_in_wikidata(
     q: Annotated[str, Query(min_length=1, max_length=1000)],
     offset: Annotated[int, Query(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
     lang: TextLanguage = TextLanguage.EN,
-) -> PagedResponseSchema[ExtractedOrganization]:
+) -> PagedAuxiliaryResponse[ExtractedOrganization]:
     """Search an organization in wikidata.
 
     Args:
@@ -49,12 +51,10 @@ def search_organization_in_wikidata(
         )
     )
 
-    return PagedResponseSchema(
-        total=total_orgs,
-        offset=offset,
-        limit=limit,
-        results=[organization for organization in extracted_organizations],
+    response = PagedAuxiliaryResponse[ExtractedOrganization](
+        items=extracted_organizations, total=total_orgs
     )
+    return JSONResponse(to_primitive(response))  # type: ignore[return-value]
 
 
 @cache

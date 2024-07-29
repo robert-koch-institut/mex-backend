@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- fix endpoint serializing not working with `mex.common.types`
+
 ### Security
 
 ## [0.15.0] - 2024-06-14

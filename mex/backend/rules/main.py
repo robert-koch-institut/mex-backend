@@ -12,6 +12,5 @@ router = APIRouter()
 def create_rule(rule: AnyRuleModel) -> AnyRuleModel:
     """Create a new rule."""
     connector = GraphConnector.get()
-    return JSONResponse(  # type: ignore[return-value]
-        to_primitive(connector.create_rule(rule)),
-    )
+    response = connector.create_rule(rule)
+    return JSONResponse(to_primitive(response))  # type: ignore[return-value]

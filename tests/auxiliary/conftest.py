@@ -17,14 +17,14 @@ from mex.common.wikidata.models.organization import WikidataOrganization
 TEST_DATA_DIR = Path(__file__).parent / "test_data"
 
 
-@pytest.fixture
+@pytest.fixture()
 def wikidata_organization_raw() -> dict[str, Any]:
     """Return a raw wikidata organization."""
     with open(TEST_DATA_DIR / "wikidata_organization_raw.json") as fh:
         return json.load(fh)
 
 
-@pytest.fixture
+@pytest.fixture()
 def wikidata_organization(
     wikidata_organization_raw: dict[str, Any],
 ) -> WikidataOrganization:
@@ -32,7 +32,7 @@ def wikidata_organization(
     return WikidataOrganization.model_validate(wikidata_organization_raw)
 
 
-@pytest.fixture
+@pytest.fixture()
 def mocked_wikidata(
     monkeypatch: MonkeyPatch, wikidata_organization_raw: dict[str, Any]
 ) -> None:
