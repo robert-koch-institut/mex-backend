@@ -55,9 +55,9 @@ def preview_item(
 
     # TODO: fetch existing rules from database and merge them as well
 
+    mergeable_fields = MERGEABLE_FIELDS_BY_CLASS_NAME[rule.entityType]
     merged_model_name = ensure_prefix(rule.stemType, "Merged")
     merged_model_class = MERGED_MODEL_CLASSES_BY_NAME[merged_model_name]
-    mergeable_fields = MERGEABLE_FIELDS_BY_CLASS_NAME[merged_model_name]
     merged_dict: dict[str, Any] = {"identifier": stableTargetId}
 
     # merge extracted items
