@@ -19,6 +19,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [0.17.0] - 2024-07-29
+
+### Changes
+
+- BREAKING: use `items` instead of `results` in paged wiki response
+- downgrade query logging to log level `debug`
+
+### Fixed
+
+- fix endpoint serializing not working with `mex.common.types`
+
+## [0.16.0] - 2024-07-26
+
+### Added
+
+- `/wikidata` endpoint to fetch all matching organizations from wikidata
+- add support for computed fields in graph queries
+
+### Changes
+
+- BREAKING: make `MEX_EXTRACTED_PRIMARY_SOURCE` an instance of its own class
+  instead of ExtractedPrimarySource in order to set static provenance identifiers
+
 ## [0.15.0] - 2024-06-14
 
 ### Added

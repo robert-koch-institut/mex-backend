@@ -2,10 +2,7 @@ import pytest
 from fastapi import HTTPException
 from fastapi.security import HTTPBasicCredentials
 
-from mex.backend.security import (
-    has_read_access,
-    has_write_access,
-)
+from mex.backend.security import has_read_access, has_write_access
 
 read_credentials = HTTPBasicCredentials(
     **{"username": "Reader", "password": "read_password"}

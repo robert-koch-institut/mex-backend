@@ -11,7 +11,9 @@ from mex.common.models import AnyExtractedModel
 def test_graph_ingest_and_query_roundtrip(
     load_dummy_data: list[AnyExtractedModel],
 ) -> None:
-    seeded_models = [*load_dummy_data, MEX_EXTRACTED_PRIMARY_SOURCE]
+    seeded_models = sorted(
+        [*load_dummy_data, MEX_EXTRACTED_PRIMARY_SOURCE], key=lambda x: x.identifier
+    )
 
     connector = GraphConnector.get()
     result = connector.fetch_extracted_data(None, None, None, 0, len(seeded_models))
@@ -20,6 +22,9 @@ def test_graph_ingest_and_query_roundtrip(
         list[Annotated[AnyExtractedModel, Field(discriminator="entityType")]]
     )
 
-    assert extracted_model_adapter.validate_python(result["items"]) == sorted(
-        seeded_models, key=lambda x: x.identifier
+    expected = extracted_model_adapter.validate_python(
+        [e.model_dump() for e in seeded_models]
     )
+    fetched = extracted_model_adapter.validate_python(result["items"])
+
+    assert fetched == expected

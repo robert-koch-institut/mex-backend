@@ -1,5 +1,6 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from itertools import chain
 from typing import Any
 
 import uvicorn
@@ -8,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from pydantic import BaseModel
 
+from mex.backend.auxiliary.wikidata import router as wikidata_router
 from mex.backend.exceptions import handle_uncaught_exception
 from mex.backend.extracted.main import router as extracted_router
 from mex.backend.identity.main import router as identity_router
@@ -20,7 +22,7 @@ from mex.backend.security import has_read_access, has_write_access
 from mex.backend.settings import BackendSettings
 from mex.common.cli import entrypoint
 from mex.common.connector import CONNECTOR_STORE
-from mex.common.types import Identifier
+from mex.common.types import EXTRACTED_IDENTIFIER_CLASSES, MERGED_IDENTIFIER_CLASSES
 from mex.common.types.identifier import MEX_ID_PATTERN
 
 
@@ -46,12 +48,12 @@ def create_openapi_schema() -> dict[str, Any]:
         routes=app.routes,
         servers=[dict(url=settings.backend_api_url)],
     )
-    for subclass in Identifier.__subclasses__():
-        name = subclass.__name__
+    for identifier in chain(EXTRACTED_IDENTIFIER_CLASSES, MERGED_IDENTIFIER_CLASSES):
+        name = identifier.__name__
         openapi_schema["components"]["schemas"][name] = {
             "title": name,
             "type": "string",
-            "description": subclass.__doc__,
+            "description": identifier.__doc__,
             "pattern": MEX_ID_PATTERN,
         }
 
@@ -87,8 +89,9 @@ router.include_router(extracted_router, dependencies=[Depends(has_read_access)])
 router.include_router(identity_router, dependencies=[Depends(has_write_access)])
 router.include_router(ingest_router, dependencies=[Depends(has_write_access)])
 router.include_router(merged_router, dependencies=[Depends(has_read_access)])
-router.include_router(rules_router, dependencies=[Depends(has_write_access)])
 router.include_router(preview_router, dependencies=[Depends(has_read_access)])
+router.include_router(rules_router, dependencies=[Depends(has_write_access)])
+router.include_router(wikidata_router, dependencies=[Depends(has_read_access)])
 
 
 class SystemStatus(BaseModel):
