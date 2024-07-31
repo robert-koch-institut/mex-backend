@@ -13,5 +13,5 @@ class IdentityAssignRequest(BaseModel):
 class IdentityFetchResponse(BaseModel):
     """Response body for identity fetch requests."""
 
-    items: list[Identity] = []
-    total: int = 0
+    items: list[Identity]
+    total: int

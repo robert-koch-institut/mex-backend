@@ -150,9 +150,9 @@ class GraphConnector(BaseConnector):
             logger.error("\n%s\n%s", message, error)
             raise
         if counters := result.get_update_counters():
-            logger.info("\n%s\n%s", message, json.dumps(counters, indent=4))
+            logger.debug("\n%s\n%s", message, json.dumps(counters, indent=4))
         else:
-            logger.info("\n%s", message)
+            logger.debug("\n%s", message)
         return result
 
     def fetch_extracted_data(
