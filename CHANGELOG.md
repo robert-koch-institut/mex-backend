@@ -11,8 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- BREAKING: make `MEX_EXTRACTED_PRIMARY_SOURCE` an instance of its own class
-  instead of ExtractedPrimarySource in order to set static provenance identifiers
 - BulkIngestRequest contains now one single list "items"
 - tests for ingestion adapted to BulkIngestRequest-Model
 ### Deprecated
