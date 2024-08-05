@@ -11,18 +11,19 @@ from tests.conftest import MockedGraph
 Payload = dict[str, list[dict[str, Any]]]
 
 
-@pytest.fixture
+@pytest.fixture()
 def post_payload(dummy_data: list[AnyExtractedModel]) -> Payload:
     payload = defaultdict(list)
     for model in dummy_data:
-        payload[model.entityType].append(model.model_dump())
+        payload["items"].append(model.model_dump())
     return cast(Payload, dict(payload))
 
 
 @pytest.mark.integration
 def test_bulk_insert_empty(client_with_api_key_write_permission: TestClient) -> None:
-    response = client_with_api_key_write_permission.post("/v0/ingest", json={})
-
+    response = client_with_api_key_write_permission.post(
+        "/v0/ingest", json={"items": []}
+    )
     assert response.status_code == 201, response.text
     assert response.json() == {"identifiers": []}
 
@@ -54,21 +55,23 @@ def test_bulk_insert(
 def test_bulk_insert_malformed(
     client_with_api_key_write_permission: TestClient,
 ) -> None:
+    expected_res = []
+    exp_err = {
+        "ctx": {"error": {}},
+        "input": "FAIL!",
+        "loc": ["body", "items", 0, "function-wrap[fix_listyness()]"],
+        "msg": "Assertion failed, Input should be a valid dictionary, validating "
+        "other types is not supported for models with computed fields.",
+        "type": "assertion_error",
+    }
+    expected_res += [exp_err] * 11
+
     response = client_with_api_key_write_permission.post(
         "/v0/ingest",
-        json={"ExtractedContactPoint": "FAIL!"},
+        json={"items": ["FAIL!"]},
     )
     assert response.status_code == 422, response.text
-    assert response.json() == {
-        "detail": [
-            {
-                "type": "dict_type",
-                "loc": ["body", "ExtractedContactPoint", 0, 1],
-                "msg": "Input should be a valid dictionary",
-                "input": "FAIL!",
-            }
-        ]
-    }
+    assert response.json() == {"detail": expected_res}
 
 
 def test_bulk_insert_mocked(

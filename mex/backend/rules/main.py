@@ -1,8 +1,6 @@
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import JSONResponse
 
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.transform import to_primitive
 from mex.common.models import AnyRuleModel
 from mex.common.types import AnyMergedIdentifier, Identifier
 
@@ -14,9 +12,7 @@ def create_rule(rule: AnyRuleModel) -> AnyRuleModel:
     """Create a new rule."""
     connector = GraphConnector.get()
     stable_target_id = Identifier.generate()
-    return JSONResponse(  # type: ignore[return-value]
-        to_primitive(connector.ingest_rule(stable_target_id, rule)),
-    )
+    return connector.ingest_rule(stable_target_id, rule)
 
 
 @router.put("/rule-item/{stableTargetId}", tags=["editor"])
@@ -29,6 +25,4 @@ def update_rule(
         raise HTTPException(
             412, "Referenced merged item does not exist or is not of correct type."
         )
-    return JSONResponse(  # type: ignore[return-value]
-        to_primitive(connector.ingest_rule(stableTargetId, rule)),
-    )
+    return connector.ingest_rule(stableTargetId, rule)

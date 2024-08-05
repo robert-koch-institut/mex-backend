@@ -10,6 +10,5 @@ router = APIRouter()
 def ingest_extracted_items(request: BulkIngestRequest) -> BulkIngestResponse:
     """Ingest batches of extracted items grouped by their type."""
     connector = GraphConnector.get()
-    models = request.get_all()
-    identifiers = connector.ingest_extracted(models)
+    identifiers = connector.ingest_extracted(request.items)
     return BulkIngestResponse(identifiers=identifiers)

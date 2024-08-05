@@ -18,7 +18,7 @@ from mex.common.types import Identifier
 from tests.conftest import MockedGraph
 
 
-@pytest.fixture
+@pytest.fixture()
 def mocked_query_builder(monkeypatch: MonkeyPatch) -> None:
     def __getattr__(_: QueryBuilder, query: str) -> Callable[..., str]:
         return lambda **parameters: format_str(

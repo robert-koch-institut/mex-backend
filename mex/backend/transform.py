@@ -1,9 +1,11 @@
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from enum import Enum
 from typing import Any, Final
 
 from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from starlette.background import BackgroundTask
 
 from mex.common.types import Identifier, TemporalEntity
 
@@ -13,6 +15,23 @@ JSON_ENCODERS: Final[dict[type, Callable[[Any], str]]] = {
     Identifier: lambda obj: str(obj),
     TemporalEntity: lambda obj: str(obj),
 }
+
+
+class MExJSONResponse(JSONResponse):
+    """Custom JSON response class to correctly handle serializing MEx types."""
+
+    def __init__(
+        self,
+        content: Any,
+        status_code: int = 200,
+        headers: Mapping[str, str] | None = None,
+        media_type: str | None = None,
+        background: BackgroundTask | None = None,
+    ) -> None:
+        """Create a new JSON response with correctly serialized content."""
+        super().__init__(
+            to_primitive(content), status_code, headers, media_type, background
+        )
 
 
 def to_primitive(

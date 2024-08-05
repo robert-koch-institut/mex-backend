@@ -1,22 +1,15 @@
 from collections.abc import Callable, Generator, Mapping
 from types import NoneType, UnionType
-from typing import (
-    Annotated,
-    Any,
-    Union,
-    get_args,
-    get_origin,
-)
-
-from pydantic import BaseModel
-from pydantic.fields import FieldInfo
+from typing import Annotated, Any, Union, get_args, get_origin
 
 from mex.common.models import (
     ADDITIVE_MODEL_CLASSES_BY_NAME,
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     PREVENTIVE_MODEL_CLASSES_BY_NAME,
     SUBTRACTIVE_MODEL_CLASSES_BY_NAME,
+    BaseModel,
 )
+from mex.common.models.base import GenericFieldInfo
 from mex.common.types import MERGED_IDENTIFIER_CLASSES, Link, LiteralStringType, Text
 
 
@@ -38,14 +31,14 @@ def _get_inner_types(annotation: Any) -> Generator[type, None, None]:
         yield annotation
 
 
-def _contains_only_types(field: FieldInfo, *types: type) -> bool:
+def _contains_only_types(field: GenericFieldInfo, *types: type) -> bool:
     """Return whether a `field` is annotated as one of the given `types`.
 
     Unions, lists and type annotations are checked for their inner types and only the
     non-`NoneType` types are considered for the type-check.
 
     Args:
-        field: A pydantic `FieldInfo` object
+        field: A `GenericFieldInfo` instance
         types: Types to look for in the field's annotation
 
     Returns:
@@ -58,7 +51,7 @@ def _contains_only_types(field: FieldInfo, *types: type) -> bool:
 
 def _group_fields_by_class_name(
     model_classes_by_name: Mapping[str, type[BaseModel]],
-    predicate: Callable[[FieldInfo], bool],
+    predicate: Callable[[GenericFieldInfo], bool],
 ) -> dict[str, list[str]]:
     """Group the field names by model class and filter them by the given predicate.
 
@@ -73,7 +66,7 @@ def _group_fields_by_class_name(
         name: sorted(
             {
                 field_name
-                for field_name, field_info in cls.model_fields.items()
+                for field_name, field_info in cls.get_all_fields().items()
                 if predicate(field_info)
             }
         )
@@ -144,7 +137,7 @@ MUTABLE_FIELDS_BY_CLASS_NAME = {
     name: sorted(
         {
             field_name
-            for field_name in cls.model_fields
+            for field_name in cls.get_all_fields()
             if field_name
             not in (
                 *FROZEN_FIELDS_BY_CLASS_NAME[name],
@@ -162,7 +155,7 @@ FINAL_FIELDS_BY_CLASS_NAME = {
     name: sorted(
         {
             field_name
-            for field_name in cls.model_fields
+            for field_name in cls.get_all_fields()
             if field_name in FROZEN_FIELDS_BY_CLASS_NAME[name]
             and field_name
             not in (

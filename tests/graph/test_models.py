@@ -16,9 +16,8 @@ from mex.backend.graph.models import Result
 from mex.common.testing import Joker
 
 
-@pytest.fixture
+@pytest.fixture()
 def summary() -> Mock:
-
     class SummaryCounters:
         def __init__(self) -> None:
             self.nodes_created = 73
@@ -28,7 +27,7 @@ def summary() -> Mock:
     return Mock(spec=Neo4jResultSummary, counters=SummaryCounters())
 
 
-@pytest.fixture
+@pytest.fixture()
 def multiple_results(summary: Mock) -> Mock:
     records = [
         Mock(spec=Neo4jRecord, data=MagicMock(return_value={"num": 40})),
@@ -40,14 +39,14 @@ def multiple_results(summary: Mock) -> Mock:
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def no_result(summary: Mock) -> Mock:
     return Mock(
         spec=Neo4jResult, to_eager_result=MagicMock(return_value=([], summary, []))
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def single_result(summary: Mock) -> Mock:
     records = [
         Mock(
