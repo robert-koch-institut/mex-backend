@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, HTTPException
 from pydantic import PlainSerializer
+from starlette import status
 
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.serialization import to_primitive
@@ -29,6 +30,7 @@ def update_rule(
     connector = GraphConnector.get()
     if not connector.exists_merged_item(stableTargetId, [rule.stemType]):
         raise HTTPException(
-            412, "Referenced merged item does not exist or is not of correct type."
+            status.HTTP_412_PRECONDITION_FAILED,
+            "Referenced merged item does not exist or is not of correct type.",
         )
     return connector.ingest_rule(stableTargetId, rule)

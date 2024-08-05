@@ -24,7 +24,7 @@ from mex.common.wikidata.transform import (
 router = APIRouter()
 
 
-@router.get("/wikidata", status_code=200, tags=["editor"])
+@router.get("/wikidata", tags=["editor"])
 def search_organization_in_wikidata(
     q: Annotated[str, Query(min_length=1, max_length=1000)],
     offset: Annotated[int, Query(ge=0, le=10e10)] = 0,
