@@ -19,7 +19,6 @@ from mex.backend.merged.main import router as merged_router
 from mex.backend.rules.main import router as rules_router
 from mex.backend.security import has_read_access, has_write_access
 from mex.backend.settings import BackendSettings
-from mex.backend.transform import MExJSONResponse
 from mex.common.cli import entrypoint
 from mex.common.connector import CONNECTOR_STORE
 from mex.common.types import EXTRACTED_IDENTIFIER_CLASSES, MERGED_IDENTIFIER_CLASSES
@@ -80,7 +79,6 @@ app = FastAPI(
         email="mex@rki.de",
         url="https://github.com/robert-koch-institut/mex-backend",
     ),
-    default_response_class=MExJSONResponse,
     lifespan=lifespan,
     version="v0",
 )

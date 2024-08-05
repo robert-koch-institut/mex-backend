@@ -2,9 +2,11 @@ from collections.abc import Sequence
 from typing import Annotated
 
 from fastapi import APIRouter, Query
+from pydantic import PlainSerializer
 
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.merged.models import MergedItemSearchResponse
+from mex.backend.serialization import to_primitive
 from mex.backend.types import MergedType, UnprefixedType
 from mex.common.transform import ensure_prefix
 from mex.common.types import Identifier
@@ -22,7 +24,7 @@ def search_merged_items_facade(
     ] = [],
     skip: Annotated[int, Query(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
-) -> MergedItemSearchResponse:
+) -> Annotated[MergedItemSearchResponse, PlainSerializer(to_primitive)]:
     """Facade for retrieving merged items."""
     # XXX We just search for extracted items and pretend they are already merged
     #     as a stopgap for MX-1382.

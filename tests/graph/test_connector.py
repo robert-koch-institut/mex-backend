@@ -288,12 +288,13 @@ def test_mocked_graph_exists_merged_item(mocked_graph: MockedGraph) -> None:
 
     graph = GraphConnector.get()
     graph.exists_merged_item(
-        stem_type="Person", stable_target_id=Identifier.generate(99)
+        stable_target_id=Identifier.generate(99),
+        stem_types=["Person", "ContactPoint"],
     )
 
     assert mocked_graph.call_args_list[-1].args == (
         """\
-exists_merged_item(merged_label="MergedPerson")""",
+exists_merged_item(node_labels=["MergedPerson", "MergedContactPoint"])""",
         {"identifier": Identifier.generate(99)},
     )
 

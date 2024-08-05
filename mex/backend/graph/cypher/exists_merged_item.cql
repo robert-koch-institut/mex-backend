@@ -1,11 +1,11 @@
 <# Validate whether a merged item with the given identifier and type exists.
 
 Args:
-    merged_label: Label of the to-be-checked merged item
+    node_labels: Allowed labels of the to-be-checked merged item
 
 Returns:
     Boolean representing the existence of the requested item.
 -#>
 RETURN EXISTS {
-    MATCH (:<<merged_label>> {identifier: $identifier})
+    MATCH (:<<node_labels|join("|")>> {identifier: $identifier})
 } as exists;

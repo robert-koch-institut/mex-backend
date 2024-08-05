@@ -17,8 +17,8 @@ from mex.backend.fields import (
 from mex.backend.graph.models import Result
 from mex.backend.graph.query import QueryBuilder
 from mex.backend.graph.transform import expand_references_in_search_result
+from mex.backend.serialization import to_primitive
 from mex.backend.settings import BackendSettings
-from mex.backend.transform import to_primitive
 from mex.common.connector import BaseConnector
 from mex.common.exceptions import MExError
 from mex.common.logging import logger
@@ -230,20 +230,24 @@ class GraphConnector(BaseConnector):
             limit=limit,
         )
 
-    def exists_merged_item(self, stem_type: str, stable_target_id: Identifier) -> bool:
+    def exists_merged_item(
+        self, stable_target_id: Identifier, stem_types: list[str] | None = None
+    ) -> bool:
         """Validate whether a merged item with the given identifier and type exists.
 
         Args:
-            stem_type: Stem type of the to-be-checked merged item
             stable_target_id: Identifier of the to-be-checked merged item
+            stem_types: Allowed stem types of the to-be-checked merged item
 
         Returns:
             Boolean representing the existence of the requested item
         """
+        if stem_types:
+            merged_types = [ensure_prefix(t, "Merged") for t in stem_types]
+        else:
+            merged_types = list(MERGED_MODEL_CLASSES_BY_NAME)
         query_builder = QueryBuilder.get()
-        query = query_builder.exists_merged_item(
-            merged_label=ensure_prefix(stem_type, "Merged"),
-        )
+        query = query_builder.exists_merged_item(node_labels=merged_types)
         result = self.commit(query, identifier=stable_target_id)
         return bool(result["exists"])
 
