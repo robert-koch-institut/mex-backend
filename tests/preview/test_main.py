@@ -170,3 +170,22 @@ def test_preview(
     )
     assert response.status_code == 200, response.text
     assert response.json() == expected
+
+
+@pytest.mark.integration
+def test_preview_not_found(
+    client_with_api_key_read_permission: TestClient,
+) -> None:
+    response = client_with_api_key_read_permission.post(
+        "/v0/preview-item/thisIdDoesNotExist",
+        json={
+            "additive": {"$type": "AdditiveActivity"},
+            "preventive": {
+                "$type": "PreventiveActivity",
+            },
+            "subtractive": {
+                "$type": "SubtractiveActivity",
+            },
+        },
+    )
+    assert response.status_code == 404, response.text

@@ -47,7 +47,7 @@ def test_bulk_insert(
 
     # verify the nodes have actually been stored in the database
     graph = GraphConnector.get()
-    result = graph.fetch_extracted_data(None, None, None, 1, len(dummy_data))
+    result = graph.fetch_extracted_items(None, None, None, 1, len(dummy_data))
     assert [i["identifier"] for i in result["items"]] == expected_identifiers
 
 

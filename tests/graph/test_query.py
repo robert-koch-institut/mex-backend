@@ -173,14 +173,14 @@ RETURN collect(n) AS items, total;""",
     ],
     ids=["all-filters", "no-filters", "label-filter"],
 )
-def test_fetch_extracted_data(
+def test_fetch_extracted_items(
     query_builder: QueryBuilder,
     filter_by_query_string: bool,
     filter_by_stable_target_id: bool,
     filter_by_labels: bool,
     expected: str,
 ) -> None:
-    query = query_builder.fetch_extracted_data(
+    query = query_builder.fetch_extracted_items(
         filter_by_query_string=filter_by_query_string,
         filter_by_stable_target_id=filter_by_stable_target_id,
         filter_by_labels=filter_by_labels,

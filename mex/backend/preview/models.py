@@ -25,5 +25,10 @@ class RuleSet(BaseModel):
             == self.preventive.stemType
             == self.subtractive.stemType
         ):
-            raise TypeError("All rules must have same stemType")
+            raise AssertionError("All rules must have same stemType")
         return self
+
+    @property
+    def stemType(self) -> str:  # noqa: N802
+        """Return the stem type of the contained rules."""
+        return self.additive.stemType

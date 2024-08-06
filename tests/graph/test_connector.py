@@ -149,7 +149,7 @@ merge_edges(
 
 
 @pytest.mark.usefixtures("mocked_query_builder")
-def test_mocked_graph_fetch_extracted_data(mocked_graph: MockedGraph) -> None:
+def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
     mocked_graph.return_value = [
         {
             "items": [
@@ -166,7 +166,7 @@ def test_mocked_graph_fetch_extracted_data(mocked_graph: MockedGraph) -> None:
         }
     ]
     graph = GraphConnector.get()
-    result = graph.fetch_extracted_data(
+    result = graph.fetch_extracted_items(
         query_string="my-query",
         stable_target_id=Identifier.generate(99),
         entity_type=[],
@@ -176,7 +176,7 @@ def test_mocked_graph_fetch_extracted_data(mocked_graph: MockedGraph) -> None:
 
     assert mocked_graph.call_args_list[-1].args == (
         """\
-fetch_extracted_data(
+fetch_extracted_items(
     filter_by_query_string=True,
     filter_by_stable_target_id=True,
     filter_by_labels=False,
@@ -204,10 +204,10 @@ fetch_extracted_data(
 
 @pytest.mark.usefixtures("load_dummy_data")
 @pytest.mark.integration
-def test_fetch_extracted_data() -> None:
+def test_fetch_extracted_items() -> None:
     connector = GraphConnector.get()
 
-    result = connector.fetch_extracted_data(None, None, None, 0, 1)
+    result = connector.fetch_extracted_items(None, None, None, 0, 1)
 
     assert result.all() == [
         {

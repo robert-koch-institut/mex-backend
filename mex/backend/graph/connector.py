@@ -155,7 +155,7 @@ class GraphConnector(BaseConnector):
             logger.debug("\n%s", message)
         return result
 
-    def fetch_extracted_data(
+    def fetch_extracted_items(
         self,
         query_string: str | None,
         stable_target_id: str | None,
@@ -163,25 +163,25 @@ class GraphConnector(BaseConnector):
         skip: int,
         limit: int,
     ) -> Result:
-        """Query the graph for nodes.
+        """Query the graph for extracted items.
 
         Args:
-            query_string: Full text search query term
+            query_string: Optional full text search query term
             stable_target_id: Optional stable target ID filter
             entity_type: Optional entity type filter
-            skip: How many nodes to skip for pagination
-            limit: How many nodes to return at most
+            skip: How many items to skip for pagination
+            limit: How many items to return at most
 
         Returns:
             Graph result instance
         """
         query_builder = QueryBuilder.get()
-        query = query_builder.fetch_extracted_data(
+        query = query_builder.fetch_extracted_items(
             filter_by_query_string=bool(query_string),
             filter_by_stable_target_id=bool(stable_target_id),
             filter_by_labels=bool(entity_type),
         )
-        result = self.commit(
+        results = self.commit(
             query,
             query_string=query_string,
             stable_target_id=stable_target_id,
@@ -189,9 +189,10 @@ class GraphConnector(BaseConnector):
             skip=skip,
             limit=limit,
         )
-        for item in result["items"]:
-            expand_references_in_search_result(item)
-        return result
+        for result in results.all():
+            for item in result["items"]:
+                expand_references_in_search_result(item)
+        return results
 
     def fetch_identities(
         self,

@@ -3,9 +3,9 @@ from typing import Annotated, Any
 from fastapi import APIRouter, HTTPException, status
 from pydantic import PlainSerializer
 
-from mex.backend.extracted.models import ExtractedItemSearchResponse
+from mex.backend.extracted.helpers import get_extracted_items_from_graph
 from mex.backend.fields import MERGEABLE_FIELDS_BY_CLASS_NAME
-from mex.backend.graph.connector import GraphConnector
+from mex.backend.graph.exceptions import NoResultFoundError
 from mex.backend.preview.models import RuleSet
 from mex.backend.transform import to_primitive
 from mex.backend.utils import extend_list_in_dict, prune_list_in_dict
@@ -22,24 +22,18 @@ def preview_item(
     ruleSet: RuleSet,
 ) -> Annotated[AnyMergedModel, PlainSerializer(to_primitive)]:
     """Preview the merging result when the given rule would be applied."""
-    connector = GraphConnector.get()
-    graph_result = connector.fetch_extracted_data(
-        query_string=None,
-        stable_target_id=stableTargetId,
-        entity_type=[ensure_prefix(ruleSet.additive.stemType, "Extracted")],
-        skip=0,
-        limit=100,
-    )
-    extracted_items = ExtractedItemSearchResponse.model_validate(
-        graph_result.one()
-    ).items
-    if not extracted_items:
+    try:
+        extracted_items = get_extracted_items_from_graph(
+            stable_target_id=stableTargetId,
+            entity_type=[ensure_prefix(ruleSet.additive.stemType, "Extracted")],
+        )
+    except NoResultFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No extracted items found in database",
-        )
+        ) from None
 
-    merged_model_name = ensure_prefix(ruleSet.additive.stemType, "Merged")
+    merged_model_name = ensure_prefix(ruleSet.stemType, "Merged")
     mergeable_fields = MERGEABLE_FIELDS_BY_CLASS_NAME[merged_model_name]
     merged_model_class = MERGED_MODEL_CLASSES_BY_NAME[merged_model_name]
     merged_dict: dict[str, Any] = {"identifier": stableTargetId}

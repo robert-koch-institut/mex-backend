@@ -1,4 +1,4 @@
-<# Fetches extracted items, including their nested objects and referenced identifiers.
+<# Fetch extracted items, including their nested objects and referenced identifiers.
 
 Globals:
     extracted_labels: List of all extracted class labels
