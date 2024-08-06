@@ -28,8 +28,13 @@ CALL {
 RETURN nodes, relations;
 """
     ).one()
+    from .conftest import draw_labeled_multigraph
+    draw_labeled_multigraph(graph["relations"])
     return sorted(
-        graph["nodes"] + graph["relations"],
+        [
+            {k: v for k, v in d.items() if v not in (None, [])}
+            for d in graph["nodes"] + graph["relations"]
+        ],
         key=lambda i: json.dumps(i, sort_keys=True),
     )
 
@@ -48,12 +53,8 @@ def test_create_rule(client_with_api_key_write_permission: TestClient) -> None:
 
     assert get_graph() == [
         {
-            "fundingProgram": [],
             "start": ["2025"],
-            "end": [],
-            "theme": [],
             "label": "AdditiveActivity",
-            "activityType": [],
         },
         {
             "start": "00000000000001",
