@@ -1,7 +1,7 @@
-from typing import Any
+from typing import Annotated, Any
 
 from fastapi import APIRouter, HTTPException, status
-from fastapi.responses import JSONResponse
+from pydantic import PlainSerializer
 
 from mex.backend.extracted.models import ExtractedItemSearchResponse
 from mex.backend.fields import MERGEABLE_FIELDS_BY_CLASS_NAME
@@ -20,7 +20,7 @@ router = APIRouter()
 def preview_item(
     stableTargetId: Identifier,
     ruleSet: RuleSet,
-) -> AnyMergedModel:
+) -> Annotated[AnyMergedModel, PlainSerializer(to_primitive)]:
     """Preview the merging result when the given rule would be applied."""
     connector = GraphConnector.get()
     graph_result = connector.fetch_extracted_data(
@@ -47,6 +47,11 @@ def preview_item(
     # merge extracted items
     for extracted_item in extracted_items:
         for field_name in mergeable_fields:
+            # apply preventive rule
+            if extracted_item.hadPrimarySource in getattr(
+                ruleSet.preventive, field_name
+            ):
+                continue
             extracted_value = getattr(extracted_item, field_name)
             extend_list_in_dict(merged_dict, field_name, extracted_value)
 
@@ -60,6 +65,4 @@ def preview_item(
         rule_value = getattr(ruleSet.subtractive, field_name)
         prune_list_in_dict(merged_dict, field_name, rule_value)
 
-    return JSONResponse(  # type: ignore[return-value]
-        to_primitive(merged_model_class.model_validate(merged_dict))
-    )
+    return merged_model_class.model_validate(merged_dict)

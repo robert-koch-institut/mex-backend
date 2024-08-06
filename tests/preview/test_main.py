@@ -108,8 +108,55 @@ from mex.common.models import AnyExtractedModel
                 "identifier": "bFQoRhcVH5DHUB",
             },
         ),
+        (
+            {
+                "additive": {"$type": "AdditiveActivity"},
+                "preventive": {
+                    "$type": "PreventiveActivity",
+                    "theme": ["bFQoRhcVH5DHUr"],
+                },
+                "subtractive": {
+                    "$type": "SubtractiveActivity",
+                },
+            },
+            {
+                "$type": "MergedActivity",
+                "contact": ["bFQoRhcVH5DHUv", "bFQoRhcVH5DHUx", "bFQoRhcVH5DHUz"],
+                "responsibleUnit": ["bFQoRhcVH5DHUz"],
+                "title": [
+                    {"value": "Aktivität 1", "language": "de"},
+                ],
+                "abstract": [
+                    {"value": "An active activity.", "language": "en"},
+                    {"value": "Une activité active.", "language": None},
+                ],
+                "activityType": [],
+                "alternativeTitle": [],
+                "documentation": [],
+                "end": [],
+                "externalAssociate": [],
+                "funderOrCommissioner": [],
+                "fundingProgram": [],
+                "involvedPerson": [],
+                "involvedUnit": [],
+                "isPartOfActivity": [],
+                "publication": [],
+                "shortName": [],
+                "start": [],
+                "succeeds": [],
+                "theme": [],
+                "website": [
+                    {
+                        "language": None,
+                        "title": "Activity Homepage",
+                        "url": "https://activity-1",
+                    }
+                ],
+                "identifier": "bFQoRhcVH5DHUB",
+            },
+        ),
     ],
-    ids=["additive", "subtractive"],
+    ids=["additive", "subtractive", "preventive"],
 )
 @pytest.mark.integration
 def test_preview(
