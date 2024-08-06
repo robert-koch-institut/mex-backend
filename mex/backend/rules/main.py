@@ -4,7 +4,7 @@ from fastapi import APIRouter
 from pydantic import PlainSerializer
 
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.transform import to_primitive
+from mex.backend.serialization import to_primitive
 from mex.common.models import AnyRuleModel
 
 router = APIRouter()

@@ -5,7 +5,7 @@ from fastapi import APIRouter, Query
 from pydantic import PlainSerializer
 
 from mex.backend.auxiliary.models import AuxiliarySearch
-from mex.backend.transform import to_primitive
+from mex.backend.serialization import to_primitive
 from mex.common.models import ExtractedOrganization, ExtractedPrimarySource
 from mex.common.primary_source.extract import extract_seed_primary_sources
 from mex.common.primary_source.transform import (

@@ -6,7 +6,7 @@ from starlette import status
 
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.ingest.models import BulkIngestRequest, BulkIngestResponse
-from mex.backend.transform import to_primitive
+from mex.backend.serialization import to_primitive
 
 router = APIRouter()
 

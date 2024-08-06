@@ -6,7 +6,7 @@ from pydantic import PlainSerializer
 
 from mex.backend.extracted.helpers import search_extracted_items_in_graph
 from mex.backend.extracted.models import ExtractedItemSearch
-from mex.backend.transform import to_primitive
+from mex.backend.serialization import to_primitive
 from mex.backend.types import ExtractedType
 from mex.common.types import Identifier
 

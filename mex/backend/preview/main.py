@@ -7,7 +7,7 @@ from mex.backend.extracted.helpers import get_extracted_items_from_graph
 from mex.backend.fields import MERGEABLE_FIELDS_BY_CLASS_NAME
 from mex.backend.graph.exceptions import NoResultFoundError
 from mex.backend.preview.models import RuleSet
-from mex.backend.transform import to_primitive
+from mex.backend.serialization import to_primitive
 from mex.backend.utils import extend_list_in_dict, prune_list_in_dict
 from mex.common.models import MERGED_MODEL_CLASSES_BY_NAME, AnyMergedModel
 from mex.common.transform import ensure_prefix

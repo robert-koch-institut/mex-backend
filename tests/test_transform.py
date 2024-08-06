@@ -1,4 +1,4 @@
-from mex.backend.transform import to_primitive
+from mex.backend.serialization import to_primitive
 from mex.common.types import APIType, MergedActivityIdentifier, YearMonth
 
 

@@ -3,7 +3,7 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
-from mex.backend.transform import to_primitive
+from mex.backend.serialization import to_primitive
 from mex.common.models import ExtractedOrganizationalUnit
 from tests.conftest import MockedGraph
 

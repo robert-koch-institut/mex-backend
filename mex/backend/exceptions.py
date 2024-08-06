@@ -5,7 +5,7 @@ from pydantic import BaseModel, ValidationError
 from starlette import status
 from starlette.requests import Request
 
-from mex.backend.transform import to_primitive
+from mex.backend.serialization import to_primitive
 from mex.common.logging import logger
 
 
