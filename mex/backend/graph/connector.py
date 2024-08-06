@@ -181,7 +181,7 @@ class GraphConnector(BaseConnector):
             filter_by_stable_target_id=bool(stable_target_id),
             filter_by_labels=bool(entity_type),
         )
-        results = self.commit(
+        result = self.commit(
             query,
             query_string=query_string,
             stable_target_id=stable_target_id,
@@ -189,10 +189,10 @@ class GraphConnector(BaseConnector):
             skip=skip,
             limit=limit,
         )
-        for result in results.all():
-            for item in result["items"]:
-                expand_references_in_search_result(item)
-        return results
+        for query_result in result.all():
+            for extracted_item in query_result["items"]:
+                expand_references_in_search_result(extracted_item)
+        return result
 
     def fetch_identities(
         self,
