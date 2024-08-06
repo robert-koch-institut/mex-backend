@@ -23,9 +23,9 @@ CALL {
     YIELD node AS hit, score
 <%- endif %>
 <%- if filter_by_stable_target_id %>
-    MATCH (n:<<extracted_labels|join("|")>>)-[:stableTargetId]->(merged:<<merged_labels|join("|")>>)
+    OPTIONAL MATCH (n:<<extracted_labels|join("|")>>)-[:stableTargetId]->(merged:<<merged_labels|join("|")>>)
 <%- else %>
-    MATCH (n:<<extracted_labels|join("|")>>)
+    OPTIONAL MATCH (n:<<extracted_labels|join("|")>>)
 <%- endif %>
 <%- if filter_by_query_string or filter_by_stable_target_id or filter_by_labels -%>
 <%- set and_ = joiner("AND ") %>
@@ -47,14 +47,22 @@ CALL {
     <<-self.match_clause()>>
     CALL {
         WITH n
-        MATCH (n)-[r]->(merged:<<merged_labels|join("|")>>)
-        RETURN type(r) as label, r.position as position, merged.identifier as value
+        OPTIONAL MATCH (n)-[r]->(referenced:<<merged_labels|join("|")>>)
+        RETURN CASE WHEN referenced IS NOT NULL THEN {
+            label: type(r),
+            position: r.position,
+            value: referenced.identifier
+        } ELSE NULL END as ref
     UNION
         WITH n
-        MATCH (n)-[r]->(nested:<<nested_labels|join("|")>>)
-        RETURN type(r) as label, r.position as position, properties(nested) as value
+        OPTIONAL MATCH (n)-[r]->(nested:<<nested_labels|join("|")>>)
+        RETURN CASE WHEN nested IS NOT NULL THEN {
+            label: type(r),
+            position: r.position,
+            value: properties(nested)
+        } ELSE NULL END as ref
     }
-    WITH n, collect({label: label, position: position, value: value}) as refs
+    WITH n, collect(ref) as refs
     RETURN n{.*, entityType: head(labels(n)), _refs: refs}
     ORDER BY n.identifier ASC
     SKIP $skip

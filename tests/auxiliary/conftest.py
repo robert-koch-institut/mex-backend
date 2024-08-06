@@ -1,6 +1,5 @@
 import json
 from pathlib import Path
-from typing import Any
 from unittest.mock import MagicMock, Mock
 
 import pytest
@@ -12,31 +11,12 @@ from mex.common.wikidata.connector import (
     WikidataAPIConnector,
     WikidataQueryServiceConnector,
 )
-from mex.common.wikidata.models.organization import WikidataOrganization
 
 TEST_DATA_DIR = Path(__file__).parent / "test_data"
 
 
 @pytest.fixture()
-def wikidata_organization_raw() -> dict[str, Any]:
-    """Return a raw wikidata organization."""
-    with open(TEST_DATA_DIR / "wikidata_organization_raw.json") as fh:
-        return json.load(fh)
-
-
-@pytest.fixture()
-def wikidata_organization(
-    wikidata_organization_raw: dict[str, Any],
-) -> WikidataOrganization:
-    """Return a wikidata organization instance."""
-    return WikidataOrganization.model_validate(wikidata_organization_raw)
-
-
-@pytest.fixture()
-def mocked_wikidata(
-    monkeypatch: MonkeyPatch, wikidata_organization_raw: dict[str, Any]
-) -> None:
-    """Mock wikidata connector."""
+def mocked_wikidata(monkeypatch: MonkeyPatch) -> None:
     response_query = Mock(spec=Response, status_code=200)
 
     session = MagicMock(spec=requests.Session)
@@ -78,6 +58,8 @@ def mocked_wikidata(
     )
 
     # mock get_wikidata_org_with_org_id
+    with open(TEST_DATA_DIR / "wikidata_organization_raw.json") as fh:
+        wikidata_organization_raw = json.load(fh)
 
     def get_wikidata_item_details_by_id(
         self: WikidataQueryServiceConnector, item_id: str
