@@ -19,6 +19,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [0.18.0] - 2024-08-05
+
+### Changes
+
+- BulkIngestRequest contains now one single list "items"
+- tests for ingestion adapted to BulkIngestRequest-Model
+- remove stop-gaps for MX-1596
+
+### Removed
+- removed class  _BaseBulkIngestRequest for ingestion model
+
 ## [0.17.0] - 2024-07-29
 
 ### Changes

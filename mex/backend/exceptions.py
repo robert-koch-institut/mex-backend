@@ -2,6 +2,7 @@ from typing import Any
 
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ValidationError
+from starlette import status
 from starlette.requests import Request
 
 from mex.backend.transform import to_primitive
@@ -38,10 +39,10 @@ def handle_uncaught_exception(request: Request, exc: Exception) -> JSONResponse:
     logger.exception("Error %s", exc)
     if isinstance(exc, ValidationError):
         errors = [dict(error) for error in exc.errors()]
-        status_code = 400
+        status_code = status.HTTP_400_BAD_REQUEST
     else:
         errors = [dict(type=type(exc).__name__)]
-        status_code = 500
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     return JSONResponse(
         to_primitive(
             ErrorResponse(

@@ -77,9 +77,9 @@ def has_write_access(
     can_write = False
     if api_key:
         api_key_database = settings.backend_api_key_database
-        can_write = APIKey(api_key) in api_key_database["write"]
+        can_write = APIKey(api_key) in api_key_database.write
     elif credentials:
-        api_write_user_db = settings.backend_user_database["write"]
+        api_write_user_db = settings.backend_user_database.write
         user, pw = credentials.username, credentials.password.encode("utf-8")
         if api_write_user := api_write_user_db.get(user):
             can_write = compare_digest(
@@ -130,9 +130,9 @@ def has_read_access(
     can_read = False
     if api_key:
         api_key_database = settings.backend_api_key_database
-        can_read = APIKey(api_key) in api_key_database["read"]
+        can_read = APIKey(api_key) in api_key_database.read
     elif credentials:
-        api_read_user_db = settings.backend_user_database["read"]
+        api_read_user_db = settings.backend_user_database.read
         user, pw = credentials.username, credentials.password.encode("utf-8")
         if api_read_user := api_read_user_db.get(user):
             can_read = compare_digest(
