@@ -3,11 +3,14 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
+from pydantic import Field, TypeAdapter, ValidationError
 
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.merged.models import MergedItemSearchResponse
 from mex.backend.transform import to_primitive
 from mex.backend.types import MergedType, UnprefixedType
+from mex.common.logging import logger
+from mex.common.models import AnyMergedModel
 from mex.common.transform import ensure_prefix
 from mex.common.types import Identifier
 
@@ -41,12 +44,21 @@ def search_merged_items_facade(
         skip,
         limit,
     )
+    merged_model_adapter: TypeAdapter[AnyMergedModel] = TypeAdapter(
+        Annotated[AnyMergedModel, Field(discriminator="entityType")]
+    )
+    items: list[AnyMergedModel] = []
+    total: int = result["total"]
 
     for item in result["items"]:
-        del item["hadPrimarySource"]
-        del item["identifierInPrimarySource"]
+        item.pop("hadPrimarySource", None)
+        item.pop("identifierInPrimarySource", None)
         item["identifier"] = item.pop("stableTargetId")
         item["entityType"] = item["entityType"].replace("Extracted", "Merged")
+        try:
+            items.append(merged_model_adapter.validate_python(item))
+        except ValidationError as error:
+            logger.error(error)
 
-    response = MergedItemSearchResponse.model_validate(result.one())
+    response = MergedItemSearchResponse(items=items, total=total)
     return JSONResponse(to_primitive(response))  # type: ignore[return-value]
