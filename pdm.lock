@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:6d19e7b3a95d69169ae26d20a98ba43a8056a9bd7eebbe5e045371e39a6e7110"
+content_hash = "sha256:5f902316626656d4a3a5ed2b38dafc8eed834fcd9f8c414b17e159f4f7f9e090"
 
 [[metadata.targets]]
 requires_python = "==3.11.*"
@@ -183,7 +183,7 @@ version = "0.4.6"
 requires_python = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
 summary = "Cross-platform colored terminal text."
 groups = ["default", "dev"]
-marker = "(sys_platform == \"win32\" or platform_system == \"Windows\") and python_version == \"3.11\""
+marker = "platform_system == \"Windows\" and python_version == \"3.11\" or sys_platform == \"win32\" and python_version == \"3.11\""
 files = [
     {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
     {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
@@ -657,7 +657,7 @@ marker = "python_version == \"3.11\""
 
 [[package]]
 name = "mypy"
-version = "1.11.0"
+version = "1.11.1"
 requires_python = ">=3.8"
 summary = "Optional static typing for Python"
 groups = ["dev"]
@@ -668,13 +668,13 @@ dependencies = [
     "typing-extensions>=4.6.0",
 ]
 files = [
-    {file = "mypy-1.11.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:98790025861cb2c3db8c2f5ad10fc8c336ed2a55f4daf1b8b3f877826b6ff2eb"},
-    {file = "mypy-1.11.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:25bcfa75b9b5a5f8d67147a54ea97ed63a653995a82798221cca2a315c0238c1"},
-    {file = "mypy-1.11.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:0bea2a0e71c2a375c9fa0ede3d98324214d67b3cbbfcbd55ac8f750f85a414e3"},
-    {file = "mypy-1.11.0-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:d2b3d36baac48e40e3064d2901f2fbd2a2d6880ec6ce6358825c85031d7c0d4d"},
-    {file = "mypy-1.11.0-cp311-cp311-win_amd64.whl", hash = "sha256:d8e2e43977f0e09f149ea69fd0556623919f816764e26d74da0c8a7b48f3e18a"},
-    {file = "mypy-1.11.0-py3-none-any.whl", hash = "sha256:56913ec8c7638b0091ef4da6fcc9136896914a9d60d54670a75880c3e5b99ace"},
-    {file = "mypy-1.11.0.tar.gz", hash = "sha256:93743608c7348772fdc717af4aeee1997293a1ad04bc0ea6efa15bf65385c538"},
+    {file = "mypy-1.11.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:7b6343d338390bb946d449677726edf60102a1c96079b4f002dedff375953fc5"},
+    {file = "mypy-1.11.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:e4fe9f4e5e521b458d8feb52547f4bade7ef8c93238dfb5bbc790d9ff2d770ca"},
+    {file = "mypy-1.11.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:886c9dbecc87b9516eff294541bf7f3655722bf22bb898ee06985cd7269898de"},
+    {file = "mypy-1.11.1-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:fca4a60e1dd9fd0193ae0067eaeeb962f2d79e0d9f0f66223a0682f26ffcc809"},
+    {file = "mypy-1.11.1-cp311-cp311-win_amd64.whl", hash = "sha256:0bd53faf56de9643336aeea1c925012837432b5faf1701ccca7fde70166ccf72"},
+    {file = "mypy-1.11.1-py3-none-any.whl", hash = "sha256:0624bdb940255d2dd24e829d99a13cfeb72e4e9031f9492148f410ed30bcab54"},
+    {file = "mypy-1.11.1.tar.gz", hash = "sha256:f404a0b069709f18bbdb702eb3dcfe51910602995de00bd39cea3050b5772d08"},
 ]
 
 [[package]]
