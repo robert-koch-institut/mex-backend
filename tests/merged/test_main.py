@@ -172,6 +172,7 @@ def test_search_merged_items_mocked(
                 "total": 1,
             },
         ),
+        ("?identifier=thisIdDoesNotExist", {"items": [], "total": 0}),
     ],
     ids=[
         "limit 1",
@@ -179,6 +180,7 @@ def test_search_merged_items_mocked(
         "entity type contact points",
         "full text search",
         "identifier filter",
+        "empty result",
     ],
 )
 @pytest.mark.usefixtures("load_dummy_data")

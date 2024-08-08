@@ -11,13 +11,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- BREAKING: move `to_primitive` to a more fittingly named `mex.backend.serialization`
+- BREAKING: swap `INDEXABLE_MODEL_CLASSES_BY_NAME` for `ALL_MODEL_CLASSES_BY_NAME`
+  to also include non-indexable models (namely: merged models)
+- BREAKING: rename `fetch_extracted_data` to a more consistent `fetch_extracted_items`
+- harmonize PagedAuxiliaryResponse with Merged- and ExtractedItemSearchResponse
+- use PlainSerializer instead of JSONResponse to fix serializing with a happy mypy
+- move searching and fetching of extracted and merged items to `helpers` module
+  so they can be reused more easily outside of the endpoint code
+- use starlette status code constants instead of plain integers for readability
+
 ### Deprecated
 
 ### Removed
 
+- remove redundant `status_code=200` config on endpoints
+- drop unused `UnprefixedType` support for `entityType` parameters
+
 ### Fixed
 
+- fix empty graph search results not returning empty lists but raising errors
+- move `purge-db` from entrypoints to pdm scripts, because it's not part of the module
+
 ### Security
+
+## [0.18.1] - 2024-08-07
+
+### Fixed
+
+- make merged-items facade endpoint more lenient towards validation errors
 
 ## [0.18.0] - 2024-08-05
 

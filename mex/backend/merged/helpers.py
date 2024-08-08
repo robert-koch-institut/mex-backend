@@ -1,6 +1,11 @@
+from typing import Annotated
+
+from pydantic import Field, TypeAdapter, ValidationError
+
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.merged.models import MergedItemSearch
-from mex.backend.types import MergedType
+from mex.common.logging import logger
+from mex.common.models import AnyMergedModel
 
 
 def search_merged_items_in_graph(
@@ -25,20 +30,31 @@ def search_merged_items_in_graph(
     # XXX We just search for extracted items and pretend they are already merged
     #     as a stopgap for MX-1382.
     graph = GraphConnector.get()
-    graph_result = graph.fetch_extracted_items(
+    result = graph.fetch_extracted_items(
         query_string=query_string,
         stable_target_id=stable_target_id,
-        entity_type=[
-            t.replace("Merged", "Extracted")
-            for t in entity_type or [str(m.value) for m in MergedType]
-        ],
+        entity_type=(
+            None
+            if entity_type is None
+            else [t.replace("Merged", "Extracted") for t in entity_type]
+        ),
         skip=skip,
         limit=limit,
     )
-    search_result = graph_result.one()
-    for item in search_result["items"]:
-        del item["hadPrimarySource"]
-        del item["identifierInPrimarySource"]
+    merged_model_adapter: TypeAdapter[AnyMergedModel] = TypeAdapter(
+        Annotated[AnyMergedModel, Field(discriminator="entityType")]
+    )
+    items: list[AnyMergedModel] = []
+    total: int = result["total"]
+
+    for item in result["items"]:
+        item.pop("hadPrimarySource", None)
+        item.pop("identifierInPrimarySource", None)
         item["identifier"] = item.pop("stableTargetId")
         item["entityType"] = item["entityType"].replace("Extracted", "Merged")
-    return MergedItemSearch.model_validate(search_result)
+        try:
+            items.append(merged_model_adapter.validate_python(item))
+        except ValidationError as error:
+            logger.error(error)
+
+    return MergedItemSearch(items=items, total=total)

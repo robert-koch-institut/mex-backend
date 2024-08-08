@@ -173,6 +173,7 @@ def test_search_extracted_items_mocked(
                 "total": 1,
             },
         ),
+        ("?stableTargetId=thisIdDoesNotExist", {"items": [], "total": 0}),
     ],
     ids=[
         "limit 1",
@@ -180,6 +181,7 @@ def test_search_extracted_items_mocked(
         "entity type contact points",
         "full text search",
         "stable target id filter",
+        "empty result",
     ],
 )
 @pytest.mark.usefixtures("load_dummy_data")
