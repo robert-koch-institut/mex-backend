@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BREAKING: move `to_primitive` to a more fittingly named `mex.backend.serialization`
 - BREAKING: swap `INDEXABLE_MODEL_CLASSES_BY_NAME` for `ALL_MODEL_CLASSES_BY_NAME`
   to also include non-indexable models (namely: merged models)
-- BREAKING: rename `fetch_extracted_data` to a more consistent `fetch_extracted_data`
+- BREAKING: rename `fetch_extracted_data` to a more consistent `fetch_extracted_items`
 - harmonize PagedAuxiliaryResponse with Merged- and ExtractedItemSearchResponse
 - use PlainSerializer instead of JSONResponse to fix serializing with a happy mypy
 - move searching and fetching of extracted and merged items to `helpers` module
