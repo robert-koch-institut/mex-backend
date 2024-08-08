@@ -8,7 +8,7 @@ from mex.common.types import Identifier
 router = APIRouter()
 
 
-@router.post("/identity", status_code=200, tags=["extractors"])
+@router.post("/identity", tags=["extractors"])
 def assign_identity(request: IdentityAssignRequest) -> Identity:
     """Insert a new identity or update an existing one."""
     identity_provider = GraphIdentityProvider.get()
@@ -18,7 +18,7 @@ def assign_identity(request: IdentityAssignRequest) -> Identity:
     )
 
 
-@router.get("/identity", status_code=200, tags=["extractors"])
+@router.get("/identity", tags=["extractors"])
 def fetch_identity(
     hadPrimarySource: Identifier | None = None,
     identifierInPrimarySource: str | None = None,

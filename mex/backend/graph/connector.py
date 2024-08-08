@@ -17,8 +17,8 @@ from mex.backend.fields import (
 from mex.backend.graph.models import Result
 from mex.backend.graph.query import QueryBuilder
 from mex.backend.graph.transform import expand_references_in_search_result
+from mex.backend.serialization import to_primitive
 from mex.backend.settings import BackendSettings
-from mex.backend.transform import to_primitive
 from mex.common.connector import BaseConnector
 from mex.common.exceptions import MExError
 from mex.common.logging import logger
@@ -155,7 +155,7 @@ class GraphConnector(BaseConnector):
             logger.debug("\n%s", message)
         return result
 
-    def fetch_extracted_data(
+    def fetch_extracted_items(
         self,
         query_string: str | None,
         stable_target_id: str | None,
@@ -163,20 +163,20 @@ class GraphConnector(BaseConnector):
         skip: int,
         limit: int,
     ) -> Result:
-        """Query the graph for nodes.
+        """Query the graph for extracted items.
 
         Args:
-            query_string: Full text search query term
+            query_string: Optional full text search query term
             stable_target_id: Optional stable target ID filter
             entity_type: Optional entity type filter
-            skip: How many nodes to skip for pagination
-            limit: How many nodes to return at most
+            skip: How many items to skip for pagination
+            limit: How many items to return at most
 
         Returns:
             Graph result instance
         """
         query_builder = QueryBuilder.get()
-        query = query_builder.fetch_extracted_data(
+        query = query_builder.fetch_extracted_items(
             filter_by_query_string=bool(query_string),
             filter_by_stable_target_id=bool(stable_target_id),
             filter_by_labels=bool(entity_type),
@@ -189,8 +189,9 @@ class GraphConnector(BaseConnector):
             skip=skip,
             limit=limit,
         )
-        for item in result["items"]:
-            expand_references_in_search_result(item)
+        for query_result in result.all():
+            for extracted_item in query_result["items"]:
+                expand_references_in_search_result(extracted_item)
         return result
 
     def fetch_identities(

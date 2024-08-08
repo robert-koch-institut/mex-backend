@@ -2,10 +2,10 @@ from functools import cache
 from typing import Annotated
 
 from fastapi import APIRouter, Query
-from fastapi.responses import JSONResponse
+from pydantic import PlainSerializer
 
-from mex.backend.auxiliary.models import PagedAuxiliaryResponse
-from mex.backend.transform import to_primitive
+from mex.backend.auxiliary.models import AuxiliarySearch
+from mex.backend.serialization import to_primitive
 from mex.common.models import ExtractedOrganization, ExtractedPrimarySource
 from mex.common.primary_source.extract import extract_seed_primary_sources
 from mex.common.primary_source.transform import (
@@ -24,14 +24,14 @@ from mex.common.wikidata.transform import (
 router = APIRouter()
 
 
-@router.get("/wikidata", status_code=200, tags=["editor"])
+@router.get("/wikidata", tags=["editor"])
 def search_organization_in_wikidata(
     q: Annotated[str, Query(min_length=1, max_length=1000)],
     offset: Annotated[int, Query(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
     lang: TextLanguage = TextLanguage.EN,
-) -> PagedAuxiliaryResponse[ExtractedOrganization]:
-    """Search an organization in wikidata.
+) -> Annotated[AuxiliarySearch[ExtractedOrganization], PlainSerializer(to_primitive)]:
+    """Search for organizations in wikidata.
 
     Args:
         q: label of the organization to be searched
@@ -40,7 +40,7 @@ def search_organization_in_wikidata(
         lang: language of the label. Example: en, de
 
     Returns:
-        Paginated list of ExtractedOrganization
+        Paginated list of ExtractedOrganizations
     """
     total_orgs = get_count_of_found_organizations_by_label(q, lang)
     organizations = search_organizations_by_label(q, offset, limit, lang)
@@ -51,10 +51,7 @@ def search_organization_in_wikidata(
         )
     )
 
-    response = PagedAuxiliaryResponse[ExtractedOrganization](
-        items=extracted_organizations, total=total_orgs
-    )
-    return JSONResponse(to_primitive(response))  # type: ignore[return-value]
+    return AuxiliarySearch(items=extracted_organizations, total=total_orgs)
 
 
 @cache

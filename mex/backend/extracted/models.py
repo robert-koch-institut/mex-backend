@@ -5,8 +5,8 @@ from pydantic import Field
 from mex.common.models import AnyExtractedModel, BaseModel
 
 
-class ExtractedItemSearchResponse(BaseModel):
-    """Response body for the extracted item search endpoint."""
+class ExtractedItemSearch(BaseModel):
+    """Result of searching for extracted items in the graph."""
 
     items: list[Annotated[AnyExtractedModel, Field(discriminator="entityType")]]
     total: int

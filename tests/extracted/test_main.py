@@ -3,7 +3,7 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
-from mex.backend.transform import to_primitive
+from mex.backend.serialization import to_primitive
 from mex.common.models import ExtractedOrganizationalUnit
 from tests.conftest import MockedGraph
 
@@ -173,6 +173,7 @@ def test_search_extracted_items_mocked(
                 "total": 1,
             },
         ),
+        ("?stableTargetId=thisIdDoesNotExist", {"items": [], "total": 0}),
     ],
     ids=[
         "limit 1",
@@ -180,6 +181,7 @@ def test_search_extracted_items_mocked(
         "entity type contact points",
         "full text search",
         "stable target id filter",
+        "empty result",
     ],
 )
 @pytest.mark.usefixtures("load_dummy_data")
