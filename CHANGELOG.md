@@ -35,6 +35,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [0.18.1] - 2024-08-07
+
+### Fixed
+
+- make merged-items facade endpoint more lenient towards validation errors
+
 ## [0.18.0] - 2024-08-05
 
 ### Changes

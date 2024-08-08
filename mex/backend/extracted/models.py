@@ -8,5 +8,5 @@ from mex.common.models import AnyExtractedModel, BaseModel
 class ExtractedItemSearch(BaseModel):
     """Result of searching for extracted items in the graph."""
 
-    items: Annotated[list[AnyExtractedModel], Field(discriminator="entityType")]
+    items: list[Annotated[AnyExtractedModel, Field(discriminator="entityType")]]
     total: int
