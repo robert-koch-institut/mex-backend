@@ -13,7 +13,7 @@ dependencies = [
     "mex-common @ git+https://github.com/robert-koch-institut/mex-common.git@0.32.0",
     "neo4j==5.23.0",
     "pydantic==2.8.2",
-    "uvicorn[standard]==0.30.3",
+    "uvicorn[standard]==0.30.4",
 ]
 optional-dependencies.dev = [
     "black==24.4.2",
