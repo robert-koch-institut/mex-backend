@@ -33,7 +33,11 @@ def search_merged_items_in_graph(
     result = graph.fetch_extracted_items(
         query_string=query_string,
         stable_target_id=stable_target_id,
-        entity_type=entity_type,
+        entity_type=(
+            None
+            if entity_type is None
+            else [t.replace("Merged", "Extracted") for t in entity_type]
+        ),
         skip=skip,
         limit=limit,
     )
