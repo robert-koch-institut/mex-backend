@@ -16,9 +16,10 @@ def prune_list_in_dict(dict_: dict[str, list[T]], key: str, item: list[T] | T) -
 
 
 def extend_list_in_dict(dict_: dict[str, list[T]], key: str, item: list[T] | T) -> None:
-    """Extend a list in a dict for a given key with the given item(s)."""
+    """Extend a list in a dict for a given key with the given unique item(s)."""
     list_ = dict_.setdefault(key, [])
-    if isinstance(item, list):
-        list_.extend(item)
-    else:
-        list_.append(item)
+    if not isinstance(item, list):
+        item = [item]
+    for mergeable in item:
+        if mergeable not in item:
+            list_.append(mergeable)

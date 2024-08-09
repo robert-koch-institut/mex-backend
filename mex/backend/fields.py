@@ -9,8 +9,8 @@ from mex.common.models import (
     PREVENTIVE_MODEL_CLASSES_BY_NAME,
     SUBTRACTIVE_MODEL_CLASSES_BY_NAME,
     BaseModel,
+    GenericFieldInfo,
 )
-from mex.common.models.base import GenericFieldInfo
 from mex.common.types import MERGED_IDENTIFIER_CLASSES, Link, LiteralStringType, Text
 
 
