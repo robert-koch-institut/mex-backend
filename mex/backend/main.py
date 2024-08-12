@@ -21,8 +21,11 @@ from mex.backend.security import has_read_access, has_write_access
 from mex.backend.settings import BackendSettings
 from mex.common.cli import entrypoint
 from mex.common.connector import CONNECTOR_STORE
-from mex.common.types import EXTRACTED_IDENTIFIER_CLASSES, MERGED_IDENTIFIER_CLASSES
-from mex.common.types.identifier import MEX_ID_PATTERN
+from mex.common.types import (
+    EXTRACTED_IDENTIFIER_CLASSES,
+    MERGED_IDENTIFIER_CLASSES,
+    MEX_ID_PATTERN,
+)
 
 
 def create_openapi_schema() -> dict[str, Any]:

@@ -30,9 +30,9 @@ from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     AnyExtractedModel,
     AnyRuleModel,
+    BasePrimarySource,
     ExtractedPrimarySource,
 )
-from mex.common.models.primary_source import BasePrimarySource
 from mex.common.transform import ensure_prefix, to_key_and_values
 from mex.common.types import (
     AnyPrimitiveType,
