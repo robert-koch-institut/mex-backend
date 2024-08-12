@@ -23,9 +23,9 @@ CALL {
     YIELD node AS hit, score
 <%- endif %>
 <%- if filter_by_stable_target_id %>
-    OPTIONAL MATCH (n:<<extracted_labels|join("|")>>)-[:stableTargetId]->(merged:<<merged_labels|join("|")>>)
+    OPTIONAL MATCH (n:<<(extracted_labels if base_entity_type == "extracted_item" else rule_labels)|join("|")>>)-[:stableTargetId]->(merged:<<merged_labels|join("|")>>)
 <%- else %>
-    OPTIONAL MATCH (n:<<extracted_labels|join("|")>>)
+    OPTIONAL MATCH (n:<<(extracted_labels if base_entity_type == "extracted_item" else rule_labels)|join("|")>>)
 <%- endif %>
 <%- if filter_by_query_string or filter_by_stable_target_id or filter_by_labels -%>
 <%- set and_ = joiner("AND ") %>

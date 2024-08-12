@@ -176,10 +176,11 @@ class GraphConnector(BaseConnector):
             Graph result instance
         """
         query_builder = QueryBuilder.get()
-        query = query_builder.fetch_extracted_items(
+        query = query_builder.fetch_extracted_or_rule_items(
             filter_by_query_string=bool(query_string),
             filter_by_stable_target_id=bool(stable_target_id),
             filter_by_labels=bool(entity_type),
+            base_entity_type="extracted_item",
         )
         result = self.commit(
             query,
@@ -357,7 +358,7 @@ class GraphConnector(BaseConnector):
         )
 
     def create_rule(self, model: AnyRuleModel) -> AnyRuleModel:
-        """Create a new rule to be a applied to one merged item.
+        """Create a new rule to be applied to one merged item.
 
         This is a two-step process: first the rule and merged items are created
         along with their nested objects (like Text and Link); then all edges that

@@ -180,6 +180,7 @@ fetch_extracted_items(
     filter_by_query_string=True,
     filter_by_stable_target_id=True,
     filter_by_labels=False,
+    base_entity_type="extracted_item",
 )""",
         {
             "labels": [],
