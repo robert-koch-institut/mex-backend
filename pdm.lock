@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:e234bb71db67e69273b0fb8893f287d0b81a01e75e5fd0f9ba475bd2bef2b8ee"
+content_hash = "sha256:8bd05861a05bd6830b54362cc57d850e6b0addafabaf2cf5ad1b220dfa231895"
 
 [[metadata.targets]]
 requires_python = "==3.11.*"
@@ -614,7 +614,7 @@ files = [
 
 [[package]]
 name = "neo4j"
-version = "5.23.0"
+version = "5.23.1"
 requires_python = ">=3.7"
 summary = "Neo4j Bolt driver for Python"
 groups = ["default"]
@@ -623,8 +623,8 @@ dependencies = [
     "pytz",
 ]
 files = [
-    {file = "neo4j-5.23.0-py3-none-any.whl", hash = "sha256:5d8d2f45227c12d6ba564720cbc3e2f57aac472e4fa14fe69270e4f952791020"},
-    {file = "neo4j-5.23.0.tar.gz", hash = "sha256:26b06dac3a4b93d882a61714c5ca8d06fe68f697cbdfe113ab840d651a2d46a2"},
+    {file = "neo4j-5.23.1-py3-none-any.whl", hash = "sha256:97996fbf39421e0677fdcb8afe50b6810cbe8027e055a9dcf81da6070a82a009"},
+    {file = "neo4j-5.23.1.tar.gz", hash = "sha256:e2d3399d1124319489b25d5eda99833ae086e1fffef9946d36241652d26b26a0"},
 ]
 
 [[package]]
