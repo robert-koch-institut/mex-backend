@@ -176,7 +176,7 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
 
     assert mocked_graph.call_args_list[-1].args == (
         """\
-fetch_extracted_items(
+fetch_extracted_or_rule_items(
     filter_by_query_string=True,
     filter_by_stable_target_id=True,
     filter_by_labels=False,
