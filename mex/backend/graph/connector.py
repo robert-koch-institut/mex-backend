@@ -155,6 +155,49 @@ class GraphConnector(BaseConnector):
             logger.debug("\n%s", message)
         return result
 
+    def _fetch_extracted_or_rule_items(
+        self,
+        base_entity_type: Literal["extracted_item", "rule_item"],
+        query_string: str | None,
+        stable_target_id: str | None,
+        entity_type: list[str] | None,
+        skip: int,
+        limit: int,
+    ) -> Result:
+        """Query the graph for extracted or rule items.
+
+        Args:
+            base_entity_type: the base item type to query for, can be "extracted_item"
+                or "rule_item"
+            query_string: Optional full text search query term
+            stable_target_id: Optional stable target ID filter
+            entity_type: Optional entity type filter
+            skip: How many items to skip for pagination
+            limit: How many items to return at most
+
+        Returns:
+            Graph result instance
+        """
+        query_builder = QueryBuilder.get()
+        query = query_builder.fetch_extracted_or_rule_items(
+            filter_by_query_string=bool(query_string),
+            filter_by_stable_target_id=bool(stable_target_id),
+            filter_by_labels=bool(entity_type),
+            base_entity_type=base_entity_type,
+        )
+        result = self.commit(
+            query,
+            query_string=query_string,
+            stable_target_id=stable_target_id,
+            labels=entity_type,
+            skip=skip,
+            limit=limit,
+        )
+        for query_result in result.all():
+            for extracted_item in query_result["items"]:
+                expand_references_in_search_result(extracted_item)
+        return result
+
     def fetch_extracted_items(
         self,
         query_string: str | None,
@@ -175,25 +218,43 @@ class GraphConnector(BaseConnector):
         Returns:
             Graph result instance
         """
-        query_builder = QueryBuilder.get()
-        query = query_builder.fetch_extracted_or_rule_items(
-            filter_by_query_string=bool(query_string),
-            filter_by_stable_target_id=bool(stable_target_id),
-            filter_by_labels=bool(entity_type),
-            base_entity_type="extracted_item",
+        return self._fetch_extracted_or_rule_items(
+            "extracted_item",
+            query_string,
+            stable_target_id,
+            entity_type,
+            skip,
+            limit,
         )
-        result = self.commit(
-            query,
-            query_string=query_string,
-            stable_target_id=stable_target_id,
-            labels=entity_type,
-            skip=skip,
-            limit=limit,
+
+    def fetch_rule_items(
+        self,
+        query_string: str | None,
+        stable_target_id: str | None,
+        entity_type: list[str] | None,
+        skip: int,
+        limit: int,
+    ) -> Result:
+        """Query the graph for rule items.
+
+        Args:
+            query_string: Optional full text search query term
+            stable_target_id: Optional stable target ID filter
+            entity_type: Optional entity type filter
+            skip: How many items to skip for pagination
+            limit: How many items to return at most
+
+        Returns:
+            Graph result instance
+        """
+        return self._fetch_extracted_or_rule_items(
+            "rule_item",
+            query_string,
+            stable_target_id,
+            entity_type,
+            skip,
+            limit,
         )
-        for query_result in result.all():
-            for extracted_item in query_result["items"]:
-                expand_references_in_search_result(extracted_item)
-        return result
 
     def fetch_identities(
         self,

@@ -254,3 +254,11 @@ def additive_organizational_unit(
         website=[Link(title="Unit Homepage", url="https://unit-1-7")],
         parentUnit=organizational_unit_1.stableTargetId,
     )
+
+
+@pytest.fixture()
+def load_dummy_rule(
+    additive_organizational_unit: AdditiveOrganizationalUnit,
+) -> AdditiveOrganizationalUnit:
+    GraphConnector.get().create_rule(additive_organizational_unit)
+    return additive_organizational_unit
