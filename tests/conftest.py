@@ -22,6 +22,9 @@ from mex.common.models import (
     ExtractedContactPoint,
     ExtractedOrganizationalUnit,
     ExtractedPrimarySource,
+    OrganizationalUnitRuleSetRequest,
+    PreventiveOrganizationalUnit,
+    SubtractiveOrganizationalUnit,
 )
 from mex.common.settings import BaseSettings
 from mex.common.transform import MExEncoder
@@ -253,6 +256,17 @@ def additive_organizational_unit(
         name=[Text(value="Unit 1.7", language=TextLanguage.EN)],
         website=[Link(title="Unit Homepage", url="https://unit-1-7")],
         parentUnit=organizational_unit_1.stableTargetId,
+    )
+
+
+@pytest.fixture()
+def organizational_unit_rule_set_request(
+    additive_organizational_unit: AdditiveOrganizationalUnit,
+) -> OrganizationalUnitRuleSetRequest:
+    return OrganizationalUnitRuleSetRequest(
+        additive=additive_organizational_unit,
+        preventive=PreventiveOrganizationalUnit(),
+        subtractive=SubtractiveOrganizationalUnit(),
     )
 
 
