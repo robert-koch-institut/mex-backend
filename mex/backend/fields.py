@@ -152,6 +152,22 @@ MUTABLE_FIELDS_BY_CLASS_NAME = {
     for name, cls in ALL_MODEL_CLASSES_BY_NAME.items()
 }
 
+# fields with mergeable values that are neither literal nor frozen
+MERGEABLE_FIELDS_BY_CLASS_NAME = {
+    name: sorted(
+        {
+            field_name
+            for field_name in cls.model_fields
+            if field_name
+            not in (
+                *FROZEN_FIELDS_BY_CLASS_NAME[name],
+                *LITERAL_FIELDS_BY_CLASS_NAME[name],
+            )
+        }
+    )
+    for name, cls in MERGED_MODEL_CLASSES_BY_NAME.items()
+}
+
 # fields with values that should be set once but are neither literal nor references
 FINAL_FIELDS_BY_CLASS_NAME = {
     name: sorted(

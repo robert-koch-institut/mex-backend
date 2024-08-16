@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add `GraphConnector.fetch_rule_items` to get rule items
 - add `GET /rule-set/{stableTargetId}` endpoint to get rule-sets
 - add a rule-set response to the `create_rule_set` endpoint
+- implement merging logic as a triple of functions corresponding to our rule types
+- add a preview endpoint to perform merge with a submitted rule-set and all found items
 
 ### Changes
 
