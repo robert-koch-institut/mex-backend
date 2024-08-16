@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- implement merging logic as a triple of functions corresponding to our rule types
+- add a preview endpoint to perform merge with a submitted rule-set and all found items
+
 ### Changes
 
 - BREAKING: move `to_primitive` to a more fittingly named `mex.backend.serialization`
