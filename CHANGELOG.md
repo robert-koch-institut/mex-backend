@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- add `GraphConnector.fetch_rule_items` to get rule items
+- add `GET /rule-set/{stableTargetId}` endpoint to get rule-sets
+- add a rule-set response to the `create_rule_set` endpoint
+
 ### Changes
 
 - BREAKING: move `to_primitive` to a more fittingly named `mex.backend.serialization`
@@ -20,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - move searching and fetching of extracted and merged items to `helpers` module
   so they can be reused more easily outside of the endpoint code
 - use starlette status code constants instead of plain integers for readability
+- BREAKING: rework `create_rule` connector method and endpoint to use RuleSets
 
 ### Deprecated
 
