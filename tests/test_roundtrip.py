@@ -16,7 +16,7 @@ def test_graph_ingest_and_query_roundtrip(
     )
 
     connector = GraphConnector.get()
-    result = connector.fetch_extracted_data(None, None, None, 0, len(seeded_models))
+    result = connector.fetch_extracted_items(None, None, None, 0, len(seeded_models))
 
     extracted_model_adapter = TypeAdapter(
         list[Annotated[AnyExtractedModel, Field(discriminator="entityType")]]

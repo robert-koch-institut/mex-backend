@@ -1,12 +1,12 @@
 from typing import Generic, TypeVar
 
-from pydantic import BaseModel
+from mex.common.models import BaseModel, ExtractedData
 
-ResponseItemT = TypeVar("ResponseItemT", bound=BaseModel)
+ExtractedItemT = TypeVar("ExtractedItemT", bound=ExtractedData)
 
 
-class PagedAuxiliaryResponse(BaseModel, Generic[ResponseItemT]):
-    """Response model for any paged aux API."""
+class AuxiliarySearch(BaseModel, Generic[ExtractedItemT]):
+    """Result of searching for extracted items in auxiliary sources."""
 
-    items: list[ResponseItemT]
+    items: list[ExtractedItemT]
     total: int

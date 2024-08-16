@@ -11,6 +11,7 @@ def query_builder() -> QueryBuilder:
         extracted_labels=["ExtractedThis", "ExtractedThat", "ExtractedOther"],
         merged_labels=["MergedThis", "MergedThat", "MergedOther"],
         nested_labels=["Link", "Text", "Location"],
+        rule_labels=["AdditiveThis", "AdditiveThat", "AdditiveOther"],
     )
     return builder
 
@@ -66,19 +67,17 @@ YIELD currentStatus;"""
     (
         "filter_by_query_string",
         "filter_by_stable_target_id",
-        "filter_by_labels",
         "expected",
     ),
     [
         (
             True,
             True,
-            True,
             """\
 CALL {
     CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
-    MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
+    OPTIONAL MATCH (n:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
     WHERE
         elementId(hit) = elementId(n)
         AND merged.identifier = $stable_target_id
@@ -88,21 +87,29 @@ CALL {
 CALL {
     CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
-    MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
+    OPTIONAL MATCH (n:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
     WHERE
         elementId(hit) = elementId(n)
         AND merged.identifier = $stable_target_id
         AND ANY(label IN labels(n) WHERE label IN $labels)
     CALL {
         WITH n
-        MATCH (n)-[r]->(merged:MergedThis|MergedThat|MergedOther)
-        RETURN type(r) as label, r.position as position, merged.identifier as value
+        OPTIONAL MATCH (n)-[r]->(referenced:MergedThis|MergedThat|MergedOther)
+        RETURN CASE WHEN referenced IS NOT NULL THEN {
+            label: type(r),
+            position: r.position,
+            value: referenced.identifier
+        } ELSE NULL END as ref
     UNION
         WITH n
-        MATCH (n)-[r]->(nested:Link|Text|Location)
-        RETURN type(r) as label, r.position as position, properties(nested) as value
+        OPTIONAL MATCH (n)-[r]->(nested:Link|Text|Location)
+        RETURN CASE WHEN nested IS NOT NULL THEN {
+            label: type(r),
+            position: r.position,
+            value: properties(nested)
+        } ELSE NULL END as ref
     }
-    WITH n, collect({label: label, position: position, value: value}) as refs
+    WITH n, collect(ref) as refs
     RETURN n{.*, entityType: head(labels(n)), _refs: refs}
     ORDER BY n.identifier ASC
     SKIP $skip
@@ -113,56 +120,35 @@ RETURN collect(n) AS items, total;""",
         (
             False,
             False,
-            False,
             """\
 CALL {
-    MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)
-    RETURN COUNT(n) AS total
-}
-CALL {
-    MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)
-    CALL {
-        WITH n
-        MATCH (n)-[r]->(merged:MergedThis|MergedThat|MergedOther)
-        RETURN type(r) as label, r.position as position, merged.identifier as value
-    UNION
-        WITH n
-        MATCH (n)-[r]->(nested:Link|Text|Location)
-        RETURN type(r) as label, r.position as position, properties(nested) as value
-    }
-    WITH n, collect({label: label, position: position, value: value}) as refs
-    RETURN n{.*, entityType: head(labels(n)), _refs: refs}
-    ORDER BY n.identifier ASC
-    SKIP $skip
-    LIMIT $limit
-}
-RETURN collect(n) AS items, total;""",
-        ),
-        (
-            False,
-            False,
-            True,
-            """\
-CALL {
-    MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)
+    OPTIONAL MATCH (n:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)
     WHERE
         ANY(label IN labels(n) WHERE label IN $labels)
     RETURN COUNT(n) AS total
 }
 CALL {
-    MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)
+    OPTIONAL MATCH (n:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)
     WHERE
         ANY(label IN labels(n) WHERE label IN $labels)
     CALL {
         WITH n
-        MATCH (n)-[r]->(merged:MergedThis|MergedThat|MergedOther)
-        RETURN type(r) as label, r.position as position, merged.identifier as value
+        OPTIONAL MATCH (n)-[r]->(referenced:MergedThis|MergedThat|MergedOther)
+        RETURN CASE WHEN referenced IS NOT NULL THEN {
+            label: type(r),
+            position: r.position,
+            value: referenced.identifier
+        } ELSE NULL END as ref
     UNION
         WITH n
-        MATCH (n)-[r]->(nested:Link|Text|Location)
-        RETURN type(r) as label, r.position as position, properties(nested) as value
+        OPTIONAL MATCH (n)-[r]->(nested:Link|Text|Location)
+        RETURN CASE WHEN nested IS NOT NULL THEN {
+            label: type(r),
+            position: r.position,
+            value: properties(nested)
+        } ELSE NULL END as ref
     }
-    WITH n, collect({label: label, position: position, value: value}) as refs
+    WITH n, collect(ref) as refs
     RETURN n{.*, entityType: head(labels(n)), _refs: refs}
     ORDER BY n.identifier ASC
     SKIP $skip
@@ -171,19 +157,17 @@ CALL {
 RETURN collect(n) AS items, total;""",
         ),
     ],
-    ids=["all-filters", "no-filters", "label-filter"],
+    ids=["all-filters", "no-filters"],
 )
-def test_fetch_extracted_data(
+def test_fetch_extracted_items(
     query_builder: QueryBuilder,
     filter_by_query_string: bool,
     filter_by_stable_target_id: bool,
-    filter_by_labels: bool,
     expected: str,
 ) -> None:
-    query = query_builder.fetch_extracted_data(
+    query = query_builder.fetch_extracted_or_rule_items(
         filter_by_query_string=filter_by_query_string,
         filter_by_stable_target_id=filter_by_stable_target_id,
-        filter_by_labels=filter_by_labels,
     )
     assert query == expected
 

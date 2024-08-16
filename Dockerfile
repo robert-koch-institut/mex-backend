@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM python:3.11 as base
+FROM python:3.11 AS base
 
 LABEL org.opencontainers.image.authors="mex@rki.de"
 LABEL org.opencontainers.image.description="Backend server for the RKI metadata exchange."
@@ -29,7 +29,7 @@ RUN adduser \
 
 COPY . .
 
-RUN --mount=type=cache,target=/root/.cache/pip pip install .
+RUN --mount=type=cache,target=/root/.cache/pip pip install -r locked-requirements.txt --no-deps
 
 USER mex
 

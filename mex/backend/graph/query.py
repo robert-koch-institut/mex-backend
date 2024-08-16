@@ -9,6 +9,7 @@ from mex.common.connector import BaseConnector
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
+    RULE_MODEL_CLASSES_BY_NAME,
 )
 from mex.common.transform import (
     dromedary_to_kebab,
@@ -60,6 +61,7 @@ class QueryBuilder(BaseConnector):
             extracted_labels=list(EXTRACTED_MODEL_CLASSES_BY_NAME),
             merged_labels=list(MERGED_MODEL_CLASSES_BY_NAME),
             nested_labels=list(NESTED_MODEL_CLASSES_BY_NAME),
+            rule_labels=list(RULE_MODEL_CLASSES_BY_NAME),
         )
 
     def __getattr__(self, name: str) -> Callable[..., str]:

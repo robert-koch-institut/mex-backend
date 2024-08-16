@@ -2,7 +2,7 @@ import json
 from base64 import b64encode
 from functools import partial
 from itertools import count
-from typing import Any
+from typing import Any, cast
 from unittest.mock import MagicMock, Mock
 
 import pytest
@@ -12,6 +12,7 @@ from pytest import MonkeyPatch
 
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.main import app
+from mex.backend.rules.helpers import create_and_get_rule_set
 from mex.backend.settings import BackendSettings
 from mex.backend.types import APIKeyDatabase, APIUserDatabase, BackendIdentityProvider
 from mex.common.models import (
@@ -22,6 +23,10 @@ from mex.common.models import (
     ExtractedContactPoint,
     ExtractedOrganizationalUnit,
     ExtractedPrimarySource,
+    OrganizationalUnitRuleSetRequest,
+    OrganizationalUnitRuleSetResponse,
+    PreventiveOrganizationalUnit,
+    SubtractiveOrganizationalUnit,
 )
 from mex.common.settings import BaseSettings
 from mex.common.transform import MExEncoder
@@ -253,4 +258,25 @@ def additive_organizational_unit(
         name=[Text(value="Unit 1.7", language=TextLanguage.EN)],
         website=[Link(title="Unit Homepage", url="https://unit-1-7")],
         parentUnit=organizational_unit_1.stableTargetId,
+    )
+
+
+@pytest.fixture()
+def organizational_unit_rule_set_request(
+    additive_organizational_unit: AdditiveOrganizationalUnit,
+) -> OrganizationalUnitRuleSetRequest:
+    return OrganizationalUnitRuleSetRequest(
+        additive=additive_organizational_unit,
+        preventive=PreventiveOrganizationalUnit(),
+        subtractive=SubtractiveOrganizationalUnit(),
+    )
+
+
+@pytest.fixture()
+def load_dummy_rule_set(
+    organizational_unit_rule_set_request: OrganizationalUnitRuleSetRequest,
+) -> OrganizationalUnitRuleSetResponse:
+    return cast(
+        OrganizationalUnitRuleSetResponse,
+        create_and_get_rule_set(organizational_unit_rule_set_request),
     )
