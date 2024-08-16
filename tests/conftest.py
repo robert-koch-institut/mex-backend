@@ -2,7 +2,7 @@ import json
 from base64 import b64encode
 from functools import partial
 from itertools import count
-from typing import Any
+from typing import Any, cast
 from unittest.mock import MagicMock, Mock
 
 import pytest
@@ -12,6 +12,7 @@ from pytest import MonkeyPatch
 
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.main import app
+from mex.backend.rules.helpers import create_and_get_rule_set
 from mex.backend.settings import BackendSettings
 from mex.backend.types import APIKeyDatabase, APIUserDatabase, BackendIdentityProvider
 from mex.common.models import (
@@ -23,6 +24,7 @@ from mex.common.models import (
     ExtractedOrganizationalUnit,
     ExtractedPrimarySource,
     OrganizationalUnitRuleSetRequest,
+    OrganizationalUnitRuleSetResponse,
     PreventiveOrganizationalUnit,
     SubtractiveOrganizationalUnit,
 )
@@ -271,8 +273,10 @@ def organizational_unit_rule_set_request(
 
 
 @pytest.fixture()
-def load_dummy_rule(
-    additive_organizational_unit: AdditiveOrganizationalUnit,
-) -> AdditiveOrganizationalUnit:
-    GraphConnector.get().create_rule(additive_organizational_unit)
-    return additive_organizational_unit
+def load_dummy_rule_set(
+    organizational_unit_rule_set_request: OrganizationalUnitRuleSetRequest,
+) -> OrganizationalUnitRuleSetResponse:
+    return cast(
+        OrganizationalUnitRuleSetResponse,
+        create_and_get_rule_set(organizational_unit_rule_set_request),
+    )

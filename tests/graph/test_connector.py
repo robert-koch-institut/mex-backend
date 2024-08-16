@@ -11,10 +11,10 @@ from mex.common.models import (
     MEX_PRIMARY_SOURCE_IDENTIFIER,
     MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-    AdditiveOrganizationalUnit,
     AnyExtractedModel,
+    OrganizationalUnitRuleSetRequest,
+    OrganizationalUnitRuleSetResponse,
 )
-from mex.common.testing import Joker
 from mex.common.types import Identifier
 from tests.conftest import MockedGraph
 
@@ -178,13 +178,22 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
     assert mocked_graph.call_args_list[-1].args == (
         """\
 fetch_extracted_or_rule_items(
-    filter_by_query_string=True,
-    filter_by_stable_target_id=True,
-    filter_by_labels=False,
-    base_entity_type="extracted_item",
+    filter_by_query_string=True, filter_by_stable_target_id=True
 )""",
         {
-            "labels": [],
+            "labels": [
+                "ExtractedAccessPlatform",
+                "ExtractedActivity",
+                "ExtractedContactPoint",
+                "ExtractedDistribution",
+                "ExtractedOrganization",
+                "ExtractedOrganizationalUnit",
+                "ExtractedPerson",
+                "ExtractedPrimarySource",
+                "ExtractedResource",
+                "ExtractedVariable",
+                "ExtractedVariableGroup",
+            ],
             "limit": 100,
             "query_string": "my-query",
             "skip": 10,
@@ -265,13 +274,44 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
     assert mocked_graph.call_args_list[-1].args == (
         """\
 fetch_extracted_or_rule_items(
-    filter_by_query_string=True,
-    filter_by_stable_target_id=True,
-    filter_by_labels=False,
-    base_entity_type="rule_item",
+    filter_by_query_string=True, filter_by_stable_target_id=True
 )""",
         {
-            "labels": [],
+            "labels": [
+                "AdditiveAccessPlatform",
+                "AdditiveActivity",
+                "AdditiveContactPoint",
+                "AdditiveDistribution",
+                "AdditiveOrganization",
+                "AdditiveOrganizationalUnit",
+                "AdditivePerson",
+                "AdditivePrimarySource",
+                "AdditiveResource",
+                "AdditiveVariable",
+                "AdditiveVariableGroup",
+                "SubtractiveAccessPlatform",
+                "SubtractiveActivity",
+                "SubtractiveContactPoint",
+                "SubtractiveDistribution",
+                "SubtractiveOrganization",
+                "SubtractiveOrganizationalUnit",
+                "SubtractivePerson",
+                "SubtractivePrimarySource",
+                "SubtractiveResource",
+                "SubtractiveVariable",
+                "SubtractiveVariableGroup",
+                "PreventiveAccessPlatform",
+                "PreventiveActivity",
+                "PreventiveContactPoint",
+                "PreventiveDistribution",
+                "PreventiveOrganization",
+                "PreventiveOrganizationalUnit",
+                "PreventivePerson",
+                "PreventivePrimarySource",
+                "PreventiveResource",
+                "PreventiveVariable",
+                "PreventiveVariableGroup",
+            ],
             "limit": 100,
             "query_string": "my-query",
             "skip": 10,
@@ -293,7 +333,9 @@ fetch_extracted_or_rule_items(
 
 @pytest.mark.usefixtures("load_dummy_data")
 @pytest.mark.integration
-def test_fetch_rule_items(load_dummy_rule: AdditiveOrganizationalUnit) -> None:
+def test_fetch_rule_items(
+    load_dummy_rule_set: OrganizationalUnitRuleSetResponse,
+) -> None:
     connector = GraphConnector.get()
 
     result = connector.fetch_rule_items(None, None, None, 0, 1)
@@ -304,14 +346,13 @@ def test_fetch_rule_items(load_dummy_rule: AdditiveOrganizationalUnit) -> None:
                 {
                     "email": [],
                     "entityType": "AdditiveOrganizationalUnit",
-                    "hadPrimarySource": [MEX_EXTRACTED_PRIMARY_SOURCE.hadPrimarySource],
                     "name": [dict(value="Unit 1.7", language="en")],
                     "website": [dict(title="Unit Homepage", url="https://unit-1-7")],
-                    "parentUnit": [load_dummy_rule.parentUnit],
-                    "stableTargetId": [Joker()],
+                    "parentUnit": [load_dummy_rule_set.additive.parentUnit],
+                    "stableTargetId": ["bFQoRhcVH5DHUC"],
                 }
             ],
-            "total": 1,
+            "total": 3,
         }
     ]
 
@@ -452,55 +493,43 @@ merge_edges(
 
 
 @pytest.mark.usefixtures("mocked_query_builder")
-def test_mocked_graph_creates_rule(
+def test_mocked_graph_creates_rule_set(
     mocked_graph: MockedGraph,
-    additive_organizational_unit: AdditiveOrganizationalUnit,
+    organizational_unit_rule_set_request: OrganizationalUnitRuleSetRequest,
 ) -> None:
     graph = GraphConnector.get()
-    result = graph.create_rule(additive_organizational_unit)
+    graph.create_rule_set(organizational_unit_rule_set_request, Identifier.generate(42))
 
-    assert result is additive_organizational_unit  # MX-1416 stopgap
-
+    assert len(mocked_graph.call_args_list) == 6
     assert mocked_graph.call_args_list[-2].args == (
         """\
 merge_item(
-    current_label="AdditiveOrganizationalUnit",
+    current_label="PreventiveOrganizationalUnit",
     current_constraints=[],
     merged_label="MergedOrganizationalUnit",
-    nested_edge_labels=["name", "website"],
-    nested_node_labels=["Text", "Link"],
+    nested_edge_labels=[],
+    nested_node_labels=[],
 )""",
         {
-            "stable_target_id": "bFQoRhcVH5DHUq",
-            "on_match": {"email": []},
-            "on_create": {"email": []},
-            "nested_values": [
-                {"value": "Unit 1.7", "language": "en"},
-                {
-                    "language": None,
-                    "title": "Unit Homepage",
-                    "url": "https://unit-1-7",
-                },
-            ],
-            "nested_positions": [0, 0],
+            "stable_target_id": "bFQoRhcVH5DHU6",
+            "on_match": {},
+            "on_create": {},
+            "nested_values": [],
+            "nested_positions": [],
         },
     )
     assert mocked_graph.call_args_list[-1].args == (
         """\
 merge_edges(
-    current_label="AdditiveOrganizationalUnit",
+    current_label="PreventiveOrganizationalUnit",
     current_constraints=[],
     merged_label="MergedOrganizationalUnit",
-    ref_labels=["parentUnit", "hadPrimarySource", "stableTargetId"],
+    ref_labels=["stableTargetId"],
 )""",
         {
-            "stable_target_id": "bFQoRhcVH5DHUq",
-            "ref_identifiers": [
-                "cWWm02l1c6cucKjIhkFqY4",
-                "00000000000000",
-                "bFQoRhcVH5DHUq",
-            ],
-            "ref_positions": [0, 0, 0],
+            "stable_target_id": "bFQoRhcVH5DHU6",
+            "ref_identifiers": ["bFQoRhcVH5DHU6"],
+            "ref_positions": [0],
         },
     )
 

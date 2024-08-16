@@ -1,14 +1,14 @@
-<# Fetch extracted items, including their nested objects and referenced identifiers.
+<# Fetch extracted or rule items including their nested objects and referenced identifiers.
 
 Globals:
     extracted_labels: List of all extracted class labels
+    rule_labels: List of all rule class labels
     merged_labels: List of all merged class labels
     nested_labels: List of labels for all nestable objects
 
 Args:
     filter_by_query_string: Whether the final query should accept a full text query string
     filter_by_stable_target_id: Whether the final query should filter by stableTargetId
-    filter_by_labels: Whether the final query should filter by entity type labels
 
 Returns:
     total: Count of all items found by this query
@@ -22,11 +22,10 @@ CALL {
     CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
 <%- endif %>
-    OPTIONAL MATCH (n:<<(extracted_labels if base_entity_type == "extracted_item" else rule_labels)|join("|")>>)
+    OPTIONAL MATCH (n:<<rule_labels|join("|")>>|<<extracted_labels|join("|")>>)
 <%- if filter_by_stable_target_id -%>
     -[:stableTargetId]->(merged:<<merged_labels|join("|")>>)
 <%- endif %>
-<%- if filter_by_query_string or filter_by_stable_target_id or filter_by_labels -%>
 <%- set and_ = joiner("AND ") %>
     WHERE
     <%- if filter_by_query_string %>
@@ -35,10 +34,7 @@ CALL {
     <%- if filter_by_stable_target_id %>
         <<and_()>>merged.identifier = $stable_target_id
     <%- endif %>
-    <%- if filter_by_labels %>
         <<and_()>>ANY(label IN labels(n) WHERE label IN $labels)
-    <%- endif %>
-<%- endif %>
 <%- endblock %>
     RETURN COUNT(n) AS total
 }

@@ -1,4 +1,5 @@
 import json
+from collections.abc import Sequence
 from string import Template
 from typing import Annotated, Any, Literal, cast
 
@@ -28,8 +29,11 @@ from mex.common.models import (
     MEX_PRIMARY_SOURCE_IDENTIFIER,
     MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    RULE_MODEL_CLASSES_BY_NAME,
     AnyExtractedModel,
     AnyRuleModel,
+    AnyRuleSetRequest,
+    AnyRuleSetResponse,
     BasePrimarySource,
     ExtractedPrimarySource,
 )
@@ -157,21 +161,18 @@ class GraphConnector(BaseConnector):
 
     def _fetch_extracted_or_rule_items(
         self,
-        base_entity_type: Literal["extracted_item", "rule_item"],
         query_string: str | None,
         stable_target_id: str | None,
-        entity_type: list[str] | None,
+        entity_type: Sequence[str],
         skip: int,
         limit: int,
     ) -> Result:
         """Query the graph for extracted or rule items.
 
         Args:
-            base_entity_type: the base item type to query for, can be "extracted_item"
-                or "rule_item"
             query_string: Optional full text search query term
             stable_target_id: Optional stable target ID filter
-            entity_type: Optional entity type filter
+            entity_type: List of allowed entity types
             skip: How many items to skip for pagination
             limit: How many items to return at most
 
@@ -182,8 +183,6 @@ class GraphConnector(BaseConnector):
         query = query_builder.fetch_extracted_or_rule_items(
             filter_by_query_string=bool(query_string),
             filter_by_stable_target_id=bool(stable_target_id),
-            filter_by_labels=bool(entity_type),
-            base_entity_type=base_entity_type,
         )
         result = self.commit(
             query,
@@ -194,15 +193,15 @@ class GraphConnector(BaseConnector):
             limit=limit,
         )
         for query_result in result.all():
-            for extracted_item in query_result["items"]:
-                expand_references_in_search_result(extracted_item)
+            for item in query_result["items"]:
+                expand_references_in_search_result(item)
         return result
 
     def fetch_extracted_items(
         self,
         query_string: str | None,
         stable_target_id: str | None,
-        entity_type: list[str] | None,
+        entity_type: Sequence[str] | None,
         skip: int,
         limit: int,
     ) -> Result:
@@ -219,10 +218,9 @@ class GraphConnector(BaseConnector):
             Graph result instance
         """
         return self._fetch_extracted_or_rule_items(
-            "extracted_item",
             query_string,
             stable_target_id,
-            entity_type,
+            entity_type or list(EXTRACTED_MODEL_CLASSES_BY_NAME),
             skip,
             limit,
         )
@@ -231,7 +229,7 @@ class GraphConnector(BaseConnector):
         self,
         query_string: str | None,
         stable_target_id: str | None,
-        entity_type: list[str] | None,
+        entity_type: Sequence[str] | None,
         skip: int,
         limit: int,
     ) -> Result:
@@ -248,10 +246,9 @@ class GraphConnector(BaseConnector):
             Graph result instance
         """
         return self._fetch_extracted_or_rule_items(
-            "rule_item",
             query_string,
             stable_target_id,
-            entity_type,
+            entity_type or list(RULE_MODEL_CLASSES_BY_NAME),
             skip,
             limit,
         )
@@ -418,8 +415,12 @@ class GraphConnector(BaseConnector):
             ref_positions=ref_positions,
         )
 
-    def create_rule(self, model: AnyRuleModel) -> AnyRuleModel:
-        """Create a new rule to be applied to one merged item.
+    def create_rule_set(
+        self,
+        model: AnyRuleSetRequest | AnyRuleSetResponse,
+        stable_target_id: Identifier,
+    ) -> None:
+        """Create a new rule set to be applied to one merged item.
 
         This is a two-step process: first the rule and merged items are created
         along with their nested objects (like Text and Link); then all edges that
@@ -427,24 +428,16 @@ class GraphConnector(BaseConnector):
         the graph in a second step.
 
         Args:
-            model: A single rule model
-
-        Returns:
-            The created rule model
+            model: A rule-set model
+            stable_target_id: Identifier of the merged item
         """
-        stable_target_id = Identifier.generate()
-        self._merge_item(model, stable_target_id)
-        self._merge_edges(
-            model,
-            stable_target_id,
-            extra_refs=dict(
-                hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-                stableTargetId=stable_target_id,
-            ),
-        )
-        # TODO: read the rule back from the database instead of returning the
-        #       input; to ensure consistency (MX-1416)
-        return model
+        for rule in (model.additive, model.subtractive, model.preventive):
+            self._merge_item(rule, stable_target_id)
+            self._merge_edges(
+                rule,
+                stable_target_id,
+                extra_refs=dict(stableTargetId=stable_target_id),
+            )
 
     def ingest(self, models: list[AnyExtractedModel]) -> list[Identifier]:
         """Ingest a list of models into the graph as nodes and connect all edges.
