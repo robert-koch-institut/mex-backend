@@ -552,7 +552,7 @@ merge_edges(
 
 
 @pytest.mark.usefixtures("mocked_graph")
-def test_mocked_graph_ingest(dummy_data: list[AnyExtractedModel]) -> None:
+def test_mocked_graph_ingests_models(dummy_data: list[AnyExtractedModel]) -> None:
     graph = GraphConnector.get()
     identifiers = graph.ingest(dummy_data)
 
