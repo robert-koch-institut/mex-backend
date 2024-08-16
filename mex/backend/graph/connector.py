@@ -132,9 +132,7 @@ class GraphConnector(BaseConnector):
 
     def _seed_data(self) -> list[Identifier]:
         """Ensure the primary source `mex` is seeded and linked to itself."""
-        return self.ingest_extracted(
-            [cast(ExtractedPrimarySource, MEX_EXTRACTED_PRIMARY_SOURCE)]
-        )
+        return self.ingest([cast(ExtractedPrimarySource, MEX_EXTRACTED_PRIMARY_SOURCE)])
 
     def close(self) -> None:
         """Close the connector's underlying requests session."""
@@ -461,7 +459,7 @@ class GraphConnector(BaseConnector):
                 extra_refs=dict(stableTargetId=stable_target_id),
             )
 
-    def ingest_extracted(self, models: list[AnyExtractedModel]) -> list[Identifier]:
+    def ingest(self, models: list[AnyExtractedModel]) -> list[Identifier]:
         """Ingest a list of models into the graph as nodes and connect all edges.
 
         This is a two-step process: first all extracted and merged items are created

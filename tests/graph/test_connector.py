@@ -552,8 +552,8 @@ merge_edges(
 
 
 @pytest.mark.usefixtures("mocked_graph")
-def test_mocked_graph_ingest_extracted(dummy_data: list[AnyExtractedModel]) -> None:
+def test_mocked_graph_ingest(dummy_data: list[AnyExtractedModel]) -> None:
     graph = GraphConnector.get()
-    identifiers = graph.ingest_extracted(dummy_data)
+    identifiers = graph.ingest(dummy_data)
 
     assert identifiers == [d.identifier for d in dummy_data]

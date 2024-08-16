@@ -17,5 +17,5 @@ def ingest_extracted_items(
 ) -> Annotated[BulkIngestResponse, PlainSerializer(to_primitive)]:
     """Ingest batches of extracted items grouped by their type."""
     connector = GraphConnector.get()
-    identifiers = connector.ingest_extracted(request.items)
+    identifiers = connector.ingest(request.items)
     return BulkIngestResponse(identifiers=identifiers)
