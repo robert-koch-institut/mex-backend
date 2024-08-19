@@ -1,4 +1,7 @@
-from mex.backend.graph.transform import expand_references_in_search_result
+from pydantic import BaseModel
+
+from mex.backend.graph.transform import expand_references_in_search_result, to_primitive
+from mex.common.types import APIType, MergedActivityIdentifier, YearMonth
 
 
 def test_expand_references_in_search_result() -> None:
@@ -62,4 +65,17 @@ def test_expand_references_in_search_result() -> None:
             {"value": "Une activité active."},
         ],
         "title": [{"language": "de", "value": "Aktivität 1"}],
+    }
+
+
+def test_to_primitive() -> None:
+    class Test(BaseModel):
+        api: list[APIType] = [APIType["RPC"]]
+        activity: MergedActivityIdentifier = MergedActivityIdentifier.generate(seed=99)
+        month: YearMonth = YearMonth(2005, 11)
+
+    assert to_primitive(Test()) == {
+        "api": ["https://mex.rki.de/item/api-type-5"],
+        "activity": "bFQoRhcVH5DHV1",
+        "month": "2005-11",
     }

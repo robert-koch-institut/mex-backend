@@ -17,8 +17,7 @@ from mex.backend.fields import (
 )
 from mex.backend.graph.models import Result
 from mex.backend.graph.query import QueryBuilder
-from mex.backend.graph.transform import expand_references_in_search_result
-from mex.backend.serialization import to_primitive
+from mex.backend.graph.transform import expand_references_in_search_result, to_primitive
 from mex.backend.settings import BackendSettings
 from mex.common.connector import BaseConnector
 from mex.common.exceptions import MExError

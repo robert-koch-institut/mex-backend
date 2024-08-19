@@ -24,7 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to also include non-indexable models (namely: merged models)
 - BREAKING: rename `fetch_extracted_data` to a more consistent `fetch_extracted_items`
 - harmonize PagedAuxiliaryResponse with Merged- and ExtractedItemSearchResponse
-- use PlainSerializer instead of JSONResponse to fix serializing with a happy mypy
 - move searching and fetching of extracted and merged items to `helpers` module
   so they can be reused more easily outside of the endpoint code
 - use starlette status code constants instead of plain integers for readability

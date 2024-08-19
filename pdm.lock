@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:ca8ff23f09581e7113976e22b4a6649576bc8fcb8b4d8215a0618783df5a2d48"
+content_hash = "sha256:66f6fc2e715f8ec7a81969d787dcf43980d5c6db372d70e247a9091f775f0b21"
 
 [[metadata.targets]]
 requires_python = "==3.11.*"
@@ -183,7 +183,7 @@ version = "0.4.6"
 requires_python = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
 summary = "Cross-platform colored terminal text."
 groups = ["default", "dev"]
-marker = "sys_platform == \"win32\" and python_version == \"3.11\" or platform_system == \"Windows\" and python_version == \"3.11\""
+marker = "(sys_platform == \"win32\" or platform_system == \"Windows\") and python_version == \"3.11\""
 files = [
     {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
     {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
@@ -548,23 +548,23 @@ name = "mex-common"
 version = "0.34.0"
 requires_python = "<3.13,>=3.11"
 git = "https://github.com/robert-koch-institut/mex-common.git"
-ref = "0.34.0"
-revision = "dcbb7d56c39946e57b9b38f8030b28dd6fad3353"
+ref = "feature/mx-1417-fix-temporal-serialization"
+revision = "6cacba3b22895f8561fd90d4010d5ef98afc2c78"
 summary = "Common library for MEx python projects."
 groups = ["default"]
 marker = "python_version == \"3.11\""
 dependencies = [
-    "backoff==2.2.1",
-    "click==8.1.7",
-    "langdetect==1.0.9",
-    "ldap3==2.9.1",
+    "backoff<3,>=2.2.1",
+    "click<9,>=8.1.7",
+    "langdetect<2,>=1.0.9",
+    "ldap3<3,>=2.9.1",
     "mex-model @ git+https://github.com/robert-koch-institut/mex-model.git@2.5.0",
-    "numpy==2.0.1",
-    "pandas==2.2.2",
-    "pyarrow==17.0.0",
-    "pydantic-settings==2.4.0",
-    "pydantic==2.8.2",
-    "requests==2.32.3",
+    "numpy<3,>=2.0.1",
+    "pandas<3,>=2.2.2",
+    "pyarrow<18,>=17.0.0",
+    "pydantic-settings<3,>=2.4.0",
+    "pydantic<3,>=2.8.2",
+    "requests<3,>=2.32.3",
 ]
 
 [[package]]
