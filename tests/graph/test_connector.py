@@ -440,6 +440,30 @@ exists_merged_item(node_labels=["MergedPerson", "MergedContactPoint"])""",
         {"identifier": Identifier.generate(99)},
     )
 
+    graph.exists_merged_item(
+        stable_target_id=Identifier.generate(99),
+    )
+
+    assert mocked_graph.call_args_list[-1].args == (
+        """\
+exists_merged_item(
+    node_labels=[
+        "MergedAccessPlatform",
+        "MergedActivity",
+        "MergedContactPoint",
+        "MergedDistribution",
+        "MergedOrganization",
+        "MergedOrganizationalUnit",
+        "MergedPerson",
+        "MergedPrimarySource",
+        "MergedResource",
+        "MergedVariable",
+        "MergedVariableGroup",
+    ]
+)""",
+        {"identifier": Identifier.generate(99)},
+    )
+
 
 @pytest.mark.usefixtures("mocked_query_builder")
 def test_mocked_graph_merge_item(

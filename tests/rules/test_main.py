@@ -253,6 +253,21 @@ def test_get_rule_set(
 
 
 @pytest.mark.integration
+def test_update_rule_set_not_found(
+    client_with_api_key_write_permission: TestClient,
+) -> None:
+    response = client_with_api_key_write_permission.put(
+        "/v0/rule-set/thisIdDoesNotExist",
+        json={
+            "additive": {"$type": "AdditiveOrganizationalUnit"},
+            "preventive": {"$type": "PreventiveOrganizationalUnit"},
+            "subtractive": {"$type": "SubtractiveOrganizationalUnit"},
+        },
+    )
+    assert "no merged item found" in response.text
+
+
+@pytest.mark.integration
 def test_update_rule_set(
     client_with_api_key_write_permission: TestClient,
     load_dummy_rule_set: OrganizationalUnitRuleSetResponse,
