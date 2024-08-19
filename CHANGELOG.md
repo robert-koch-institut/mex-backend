@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add a rule-set response to the `create_rule_set` endpoint
 - implement merging logic as a triple of functions corresponding to our rule types
 - add a preview endpoint to perform merge with a submitted rule-set and all found items
+- add GraphConnector.exists_merged_item to verify stableTargetIds exist
+- add PUT endpoint to update rule-sets for existing merged items
 
 ### Changes
 
