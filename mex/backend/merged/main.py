@@ -15,7 +15,8 @@ router = APIRouter()
 def search_merged_items(
     q: Annotated[str, Query(max_length=100)] = "",
     identifier: Identifier | None = None,
-    entityType: Annotated[Sequence[MergedType], Query(max_length=len(MergedType))] = [],
+    entityType: Annotated[Sequence[MergedType], Query(max_length=len(MergedType))]
+    | None = None,
     skip: Annotated[int, Query(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> MergedItemSearch:
