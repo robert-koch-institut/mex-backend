@@ -190,7 +190,7 @@ CALL {
     WHERE
         elementId(hit) = elementId(n)
         AND merged.identifier = $stable_target_id
-        AND ANY(label IN labels(n) WHERE label IN $labels)
+        AND ANY(label IN labels(merged) WHERE label IN $labels)
     WITH DISTINCT merged as merged
     RETURN COUNT(merged) AS total
 }
@@ -201,7 +201,7 @@ CALL {
     WHERE
         elementId(hit) = elementId(n)
         AND merged.identifier = $stable_target_id
-        AND ANY(label IN labels(n) WHERE label IN $labels)
+        AND ANY(label IN labels(merged) WHERE label IN $labels)
     WITH DISTINCT merged as merged
     OPTIONAL MATCH (n)-[:stableTargetId]->(merged)
     CALL {
@@ -237,14 +237,14 @@ LIMIT $limit;""",
 CALL {
     OPTIONAL MATCH (n:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
     WHERE
-        ANY(label IN labels(n) WHERE label IN $labels)
+        ANY(label IN labels(merged) WHERE label IN $labels)
     WITH DISTINCT merged as merged
     RETURN COUNT(merged) AS total
 }
 CALL {
     OPTIONAL MATCH (n:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
     WHERE
-        ANY(label IN labels(n) WHERE label IN $labels)
+        ANY(label IN labels(merged) WHERE label IN $labels)
     WITH DISTINCT merged as merged
     OPTIONAL MATCH (n)-[:stableTargetId]->(merged)
     CALL {

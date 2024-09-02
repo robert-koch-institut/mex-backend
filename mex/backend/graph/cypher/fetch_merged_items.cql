@@ -31,7 +31,7 @@ CALL {
     <%- if filter_by_stable_target_id %>
         <<and_()>>merged.identifier = $stable_target_id
     <%- endif %>
-        <<and_()>>ANY(label IN labels(n) WHERE label IN $labels)
+        <<and_()>>ANY(label IN labels(merged) WHERE label IN $labels)
     WITH DISTINCT merged as merged
 <%- endblock %>
     RETURN COUNT(merged) AS total
