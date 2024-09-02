@@ -253,6 +253,44 @@ class GraphConnector(BaseConnector):
             limit,
         )
 
+    def fetch_merged_items(
+        self,
+        query_string: str | None,
+        stable_target_id: str | None,
+        entity_type: Sequence[str] | None,
+        skip: int,
+        limit: int,
+    ) -> Result:
+        """Query the graph for merged items.
+
+        Args:
+            query_string: Optional full text search query term
+            stable_target_id: Optional stable target ID filter
+            entity_type: Optional merged entity type filter
+            skip: How many items to skip for pagination
+            limit: How many items to return at most
+
+        Returns:
+            Graph result instance
+        """
+        query_builder = QueryBuilder.get()
+        query = query_builder.fetch_merged_items(
+            filter_by_query_string=bool(query_string),
+            filter_by_stable_target_id=bool(stable_target_id),
+        )
+        result = self.commit(
+            query,
+            query_string=query_string,
+            stable_target_id=stable_target_id,
+            labels=entity_type or list(MERGED_MODEL_CLASSES_BY_NAME),
+            skip=skip,
+            limit=limit,
+        )
+        for query_result in result.all():
+            for item in query_result["items"]:
+                expand_references_in_search_result(item)
+        return result
+
     def fetch_identities(
         self,
         had_primary_source: Identifier | None = None,
