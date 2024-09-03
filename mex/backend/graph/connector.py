@@ -288,7 +288,8 @@ class GraphConnector(BaseConnector):
         )
         for query_result in result.all():
             for item in query_result["items"]:
-                expand_references_in_search_result(item)
+                for component in item["components"]:
+                    expand_references_in_search_result(component)
         return result
 
     def fetch_identities(
