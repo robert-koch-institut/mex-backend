@@ -366,6 +366,58 @@ def test_fetch_rule_items_empty() -> None:
     assert result.all() == [{"items": [], "total": 0}]
 
 
+@pytest.mark.usefixtures("load_dummy_data")
+@pytest.mark.integration
+def test_fetch_merged_items(
+    load_dummy_rule_set: OrganizationalUnitRuleSetResponse,
+) -> None:
+    connector = GraphConnector.get()
+
+    result = connector.fetch_merged_items(None, None, None, 1, 1)
+
+    assert result.all() == [
+        {
+            "items": [
+                {
+                    "components": [
+                        {
+                            "email": [],
+                            "entityType": "ExtractedOrganizationalUnit",
+                            "hadPrimarySource": ["bFQoRhcVH5DHUt"],
+                            "identifier": "bFQoRhcVH5DHUA",
+                            "identifierInPrimarySource": "ou-1.6",
+                            "name": [{"language": "en", "value": "Unit 1.6"}],
+                            "parentUnit": ["bFQoRhcVH5DHUv"],
+                            "stableTargetId": ["bFQoRhcVH5DHUB"],
+                        },
+                        {
+                            "entityType": "PreventiveOrganizationalUnit",
+                            "stableTargetId": ["bFQoRhcVH5DHUB"],
+                        },
+                        {
+                            "email": [],
+                            "entityType": "SubtractiveOrganizationalUnit",
+                            "stableTargetId": ["bFQoRhcVH5DHUB"],
+                        },
+                        {
+                            "email": [],
+                            "entityType": "AdditiveOrganizationalUnit",
+                            "name": [{"language": "en", "value": "Unit 1.7"}],
+                            "parentUnit": ["bFQoRhcVH5DHUv"],
+                            "stableTargetId": ["bFQoRhcVH5DHUB"],
+                            "website": [
+                                {"title": "Unit Homepage", "url": "https://unit-1-7"}
+                            ],
+                        },
+                    ],
+                    "entityType": "MergedOrganizationalUnit",
+                }
+            ],
+            "total": 8,
+        }
+    ]
+
+
 @pytest.mark.usefixtures("mocked_query_builder")
 def test_mocked_graph_fetch_identities(mocked_graph: MockedGraph) -> None:
     graph = GraphConnector.get()
