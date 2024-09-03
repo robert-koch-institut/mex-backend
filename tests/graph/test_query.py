@@ -221,14 +221,14 @@ CALL {
             value: properties(nested)
         } ELSE NULL END as ref
     }
-    WITH n, collect(ref) as refs
-    RETURN n{.*, entityType: head(labels(n)), _refs: refs}
-    ORDER BY n.identifier ASC
+    WITH merged, n, collect(ref) as refs
+    ORDER BY merged.identifier, n.identifier ASC
+    WITH merged, collect(n{.*, entityType: head(labels(n)), _refs: refs}) as n
+    RETURN merged{entityType: head(labels(merged)), components: n}
+    SKIP $skip
+    LIMIT $limit
 }
-RETURN merged, collect(n) AS items, total
-ORDER BY merged.identifier ASC
-SKIP $skip
-LIMIT $limit;""",
+RETURN collect(merged) AS items, total;""",
         ),
         (
             False,
@@ -264,14 +264,14 @@ CALL {
             value: properties(nested)
         } ELSE NULL END as ref
     }
-    WITH n, collect(ref) as refs
-    RETURN n{.*, entityType: head(labels(n)), _refs: refs}
-    ORDER BY n.identifier ASC
+    WITH merged, n, collect(ref) as refs
+    ORDER BY merged.identifier, n.identifier ASC
+    WITH merged, collect(n{.*, entityType: head(labels(n)), _refs: refs}) as n
+    RETURN merged{entityType: head(labels(merged)), components: n}
+    SKIP $skip
+    LIMIT $limit
 }
-RETURN merged, collect(n) AS items, total
-ORDER BY merged.identifier ASC
-SKIP $skip
-LIMIT $limit;""",
+RETURN collect(merged) AS items, total;""",
         ),
     ],
     ids=["all-filters", "no-filters"],
