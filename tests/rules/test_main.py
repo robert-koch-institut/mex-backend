@@ -248,5 +248,5 @@ def test_get_rule_set(
             "website": [],
         },
         "$type": "OrganizationalUnitRuleSetResponse",
-        "stableTargetId": "bFQoRhcVH5DHUA",
+        "stableTargetId": "bFQoRhcVH5DHUB",
     }

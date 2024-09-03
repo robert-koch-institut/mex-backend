@@ -99,20 +99,20 @@ def test_search_merged_items_mocked(
                         "version": None,
                     }
                 ],
-                "total": 7,
+                "total": 8,
             },
         ),
         (
-            "?limit=1&skip=4",
+            "?limit=1&skip=6",
             {
                 "items": [
                     {
                         "$type": "MergedContactPoint",
                         "email": ["info@contact-point.one"],
-                        "identifier": "bFQoRhcVH5DHUv",
+                        "identifier": "bFQoRhcVH5DHUx",
                     }
                 ],
-                "total": 7,
+                "total": 8,
             },
         ),
         (
@@ -122,12 +122,12 @@ def test_search_merged_items_mocked(
                     {
                         "$type": "MergedContactPoint",
                         "email": ["info@contact-point.one"],
-                        "identifier": "bFQoRhcVH5DHUv",
+                        "identifier": "bFQoRhcVH5DHUx",
                     },
                     {
                         "$type": "MergedContactPoint",
                         "email": ["help@contact-point.two"],
-                        "identifier": "bFQoRhcVH5DHUx",
+                        "identifier": "bFQoRhcVH5DHUz",
                     },
                 ],
                 "total": 2,
@@ -154,14 +154,14 @@ def test_search_merged_items_mocked(
             },
         ),
         (
-            "?identifier=bFQoRhcVH5DHUz",
+            "?identifier=bFQoRhcVH5DHUv",
             {
                 "items": [
                     {
                         "$type": "MergedOrganizationalUnit",
                         "alternativeName": [],
                         "email": [],
-                        "identifier": "bFQoRhcVH5DHUz",
+                        "identifier": "bFQoRhcVH5DHUv",
                         "name": [{"language": "en", "value": "Unit 1"}],
                         "parentUnit": None,
                         "shortName": [],

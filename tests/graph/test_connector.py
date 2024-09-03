@@ -231,7 +231,7 @@ def test_fetch_extracted_items() -> None:
                     "stableTargetId": [MEX_EXTRACTED_PRIMARY_SOURCE.stableTargetId],
                 }
             ],
-            "total": 7,
+            "total": 8,
         }
     ]
 
@@ -349,7 +349,7 @@ def test_fetch_rule_items(
                     "name": [dict(value="Unit 1.7", language="en")],
                     "website": [dict(title="Unit Homepage", url="https://unit-1-7")],
                     "parentUnit": [load_dummy_rule_set.additive.parentUnit],
-                    "stableTargetId": ["bFQoRhcVH5DHUC"],
+                    "stableTargetId": ["bFQoRhcVH5DHUB"],
                 }
             ],
             "total": 3,
@@ -426,9 +426,9 @@ fetch_identities(
 
 @pytest.mark.usefixtures("mocked_query_builder")
 def test_mocked_graph_merge_item(
-    mocked_graph: MockedGraph, dummy_data: list[AnyExtractedModel]
+    mocked_graph: MockedGraph, dummy_data: dict[str, AnyExtractedModel]
 ) -> None:
-    extracted_organizational_unit = dummy_data[4]
+    extracted_organizational_unit = dummy_data["organizational_unit_1"]
     graph = GraphConnector.get()
     graph._merge_item(
         extracted_organizational_unit,
@@ -462,14 +462,14 @@ merge_item(
 
 @pytest.mark.usefixtures("mocked_query_builder")
 def test_mocked_graph_merge_edges(
-    mocked_graph: MockedGraph, dummy_data: list[AnyExtractedModel]
+    mocked_graph: MockedGraph, dummy_data: dict[str, AnyExtractedModel]
 ) -> None:
-    extracted_activity = dummy_data[4]
+    extracted_organizational_unit = dummy_data["organizational_unit_1"]
     graph = GraphConnector.get()
     graph._merge_edges(
-        extracted_activity,
-        extracted_activity.stableTargetId,
-        identifier=extracted_activity.identifier,
+        extracted_organizational_unit,
+        extracted_organizational_unit.stableTargetId,
+        identifier=extracted_organizational_unit.identifier,
     )
 
     assert mocked_graph.call_args_list[-1].args == (
@@ -481,10 +481,10 @@ merge_edges(
     ref_labels=["hadPrimarySource", "stableTargetId"],
 )""",
         {
-            "identifier": extracted_activity.identifier,
+            "identifier": extracted_organizational_unit.identifier,
             "ref_identifiers": [
-                extracted_activity.hadPrimarySource,
-                extracted_activity.stableTargetId,
+                extracted_organizational_unit.hadPrimarySource,
+                extracted_organizational_unit.stableTargetId,
             ],
             "ref_positions": [0, 0],
             "stable_target_id": "cWWm02l1c6cucKjIhkFqY4",
@@ -535,8 +535,8 @@ merge_edges(
 
 
 @pytest.mark.usefixtures("mocked_graph")
-def test_mocked_graph_ingests_models(dummy_data: list[AnyExtractedModel]) -> None:
+def test_mocked_graph_ingests_models(dummy_data: dict[str, AnyExtractedModel]) -> None:
     graph = GraphConnector.get()
-    identifiers = graph.ingest(dummy_data)
+    identifiers = graph.ingest(dummy_data.values())
 
-    assert identifiers == [d.identifier for d in dummy_data]
+    assert identifiers == [d.identifier for d in dummy_data.values()]
