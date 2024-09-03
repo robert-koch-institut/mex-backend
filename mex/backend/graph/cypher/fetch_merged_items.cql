@@ -56,11 +56,10 @@ CALL {
             value: properties(nested)
         } ELSE NULL END as ref
     }
-    WITH n, collect(ref) as refs
-    RETURN n{.*, entityType: head(labels(n)), _refs: refs}
-    ORDER BY n.identifier ASC
+    WITH merged, n, collect(ref) as refs
+    RETURN merged, n{.*, entityType: head(labels(n)), _refs: refs}
+    ORDER BY merged.identifier, n.identifier ASC
 }
-RETURN merged, collect(n) AS items, total
-ORDER BY merged.identifier ASC
+RETURN merged{entityType: head(labels(merged)), stableTargetId: merged.identifier}, collect(n) AS items, total
 SKIP $skip
 LIMIT $limit;
