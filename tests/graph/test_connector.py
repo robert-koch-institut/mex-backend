@@ -512,6 +512,15 @@ def test_fetch_merged_items() -> None:
     ]
 
 
+@pytest.mark.integration
+def test_fetch_merged_items_empty() -> None:
+    connector = GraphConnector.get()
+
+    result = connector.fetch_merged_items(None, "thisIdDoesNotExist", None, 0, 1)
+
+    assert result.all() == [{"items": [], "total": 0}]
+
+
 @pytest.mark.usefixtures("mocked_query_builder")
 def test_mocked_graph_fetch_identities(mocked_graph: MockedGraph) -> None:
     graph = GraphConnector.get()
