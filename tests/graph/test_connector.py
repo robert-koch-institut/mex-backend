@@ -366,6 +366,102 @@ def test_fetch_rule_items_empty() -> None:
     assert result.all() == [{"items": [], "total": 0}]
 
 
+@pytest.mark.usefixtures("mocked_query_builder")
+def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
+    mocked_graph.return_value = [
+        {
+            "items": [
+                {
+                    "components": [
+                        {
+                            "inlineProperty": "foo",
+                            "entityType": "ExtractedThis",
+                            "_refs": [
+                                {
+                                    "label": "nestedProperty",
+                                    "position": 0,
+                                    "value": "first",
+                                },
+                                {
+                                    "label": "nestedProperty",
+                                    "position": 1,
+                                    "value": "second",
+                                },
+                            ],
+                        },
+                        {
+                            "entityType": "PreventiveThis",
+                            "_refs": [
+                                {
+                                    "label": "stableTargetId",
+                                    "position": 0,
+                                    "value": "bFQoRhcVH5DHUB",
+                                }
+                            ],
+                        },
+                    ],
+                    "entityType": "MergedThis",
+                }
+            ],
+            "total": 1,
+        }
+    ]
+    graph = GraphConnector.get()
+    result = graph.fetch_merged_items(
+        query_string="my-query",
+        stable_target_id=Identifier.generate(99),
+        entity_type=[],
+        skip=10,
+        limit=100,
+    )
+
+    assert mocked_graph.call_args_list[-1].args == (
+        """\
+fetch_merged_items(
+    filter_by_query_string=True, filter_by_stable_target_id=True
+)""",
+        {
+            "labels": [
+                "MergedAccessPlatform",
+                "MergedActivity",
+                "MergedContactPoint",
+                "MergedDistribution",
+                "MergedOrganization",
+                "MergedOrganizationalUnit",
+                "MergedPerson",
+                "MergedPrimarySource",
+                "MergedResource",
+                "MergedVariable",
+                "MergedVariableGroup",
+            ],
+            "limit": 100,
+            "query_string": "my-query",
+            "skip": 10,
+            "stable_target_id": "bFQoRhcVH5DHV1",
+        },
+    )
+
+    assert result.one() == {
+        "items": [
+            {
+                "components": [
+                    {
+                        "entityType": "ExtractedThis",
+                        "inlineProperty": "foo",
+                        "nestedProperty": ["first", "second"],
+                    },
+                    {
+                        "entityType": "PreventiveThis",
+                        "stableTargetId": ["bFQoRhcVH5DHUB"],
+                    },
+                ],
+                "entityType": "MergedThis",
+            }
+        ],
+        "total": 1,
+    }
+
+
 @pytest.mark.usefixtures("load_dummy_data", "load_dummy_rule_set")
 @pytest.mark.integration
 def test_fetch_merged_items() -> None:
