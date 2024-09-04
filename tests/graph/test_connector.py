@@ -366,11 +366,9 @@ def test_fetch_rule_items_empty() -> None:
     assert result.all() == [{"items": [], "total": 0}]
 
 
-@pytest.mark.usefixtures("load_dummy_data")
+@pytest.mark.usefixtures("load_dummy_data", "load_dummy_rule_set")
 @pytest.mark.integration
-def test_fetch_merged_items(
-    load_dummy_rule_set: OrganizationalUnitRuleSetResponse,
-) -> None:
+def test_fetch_merged_items() -> None:
     connector = GraphConnector.get()
 
     result = connector.fetch_merged_items(None, None, None, 1, 1)
