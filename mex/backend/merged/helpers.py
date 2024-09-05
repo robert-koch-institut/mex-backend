@@ -5,11 +5,14 @@ from pydantic import Field, TypeAdapter, ValidationError
 from mex.backend.fields import MERGEABLE_FIELDS_BY_CLASS_NAME
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.merged.models import MergedItemSearch
+from mex.backend.rules.helpers import transform_graph_result_to_rule_set_response
 from mex.backend.utils import extend_list_in_dict, prune_list_in_dict
 from mex.common.exceptions import MExError
 from mex.common.logging import logger
 from mex.common.models import (
+    EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
+    RULE_MODEL_CLASSES_BY_NAME,
     AnyAdditiveModel,
     AnyExtractedModel,
     AnyMergedModel,
@@ -129,7 +132,7 @@ def search_merged_items_in_graph(
     skip: int = 0,
     limit: int = 100,
 ) -> MergedItemSearch:
-    """Facade for searching for merged items.
+    """Search for merged items.
 
     Args:
         query_string: Full text search query term
@@ -141,33 +144,49 @@ def search_merged_items_in_graph(
     Returns:
         MergedItemSearch instance
     """
-    # XXX We just search for extracted items and pretend they are already merged
-    #     as a stopgap for MX-1382.
     graph = GraphConnector.get()
-    result = graph.fetch_extracted_items(
+    result = graph.fetch_merged_items(
         query_string=query_string,
         stable_target_id=stable_target_id,
-        entity_type=(
-            None
-            if entity_type is None
-            else [t.replace("Merged", "Extracted") for t in entity_type]
-        ),
+        entity_type=entity_type,
         skip=skip,
         limit=limit,
     )
-    merged_model_adapter: TypeAdapter[AnyMergedModel] = TypeAdapter(
-        Annotated[AnyMergedModel, Field(discriminator="entityType")]
+    extracted_model_adapter: TypeAdapter[AnyExtractedModel] = TypeAdapter(
+        Annotated[AnyExtractedModel, Field(discriminator="entityType")]
     )
     items: list[AnyMergedModel] = []
     total: int = result["total"]
 
     for item in result["items"]:
-        item.pop("hadPrimarySource", None)
-        item.pop("identifierInPrimarySource", None)
-        item["identifier"] = item.pop("stableTargetId")
-        item["entityType"] = item["entityType"].replace("Extracted", "Merged")
+        extracted_items = [
+            extracted_model_adapter.validate_python(component)
+            for component in item["components"]
+            if component["entityType"] in EXTRACTED_MODEL_CLASSES_BY_NAME
+        ]
+
+        rules_raw = [
+            component
+            for component in item["components"]
+            if component["entityType"] in RULE_MODEL_CLASSES_BY_NAME
+        ]
+        if len(rules_raw) == 3:
+            rule_set_response = transform_graph_result_to_rule_set_response(rules_raw)
+        elif len(rules_raw) == 0:
+            rule_set_response = None
+        else:
+            raise MExError(
+                f"Unexpected number of rules found in graph: {len(rules_raw)}"
+            )
+
         try:
-            items.append(merged_model_adapter.validate_python(item))
+            items.append(
+                create_merged_item(
+                    identifier=item["identifier"],
+                    extracted_items=extracted_items,
+                    rule_set=rule_set_response,
+                )
+            )
         except ValidationError as error:
             logger.error(error)
 
