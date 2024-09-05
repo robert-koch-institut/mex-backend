@@ -6,6 +6,7 @@ from mex.backend.fields import MERGEABLE_FIELDS_BY_CLASS_NAME
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.merged.models import MergedItemSearch
 from mex.backend.utils import extend_list_in_dict, prune_list_in_dict
+from mex.common.exceptions import MExError
 from mex.common.logging import logger
 from mex.common.models import (
     MERGED_MODEL_CLASSES_BY_NAME,
@@ -21,11 +22,11 @@ from mex.common.transform import ensure_prefix
 from mex.common.types import Identifier
 
 
-def _apply_preventive_rule(
+def _merge_extracted_items_and_apply_preventive_rule(
     merged_dict: dict[str, Any],
     mergeable_fields: list[str],
     extracted_items: list[AnyExtractedModel],
-    rule: AnyPreventiveModel,
+    rule: AnyPreventiveModel | None,
 ) -> None:
     """Merge a list of extracted items while applying a preventive rule.
 
@@ -36,13 +37,16 @@ def _apply_preventive_rule(
         merged_dict: Mapping from field names to lists of merged values
         mergeable_fields: List of mergeable field names
         extracted_items: List of extracted items
-        rule: Preventive rules with primary source identifiers
+        rule: Preventive rules with primary source identifiers, can be None
     """
     for extracted_item in extracted_items:
         for field_name in mergeable_fields:
-            if extracted_item.hadPrimarySource not in getattr(rule, field_name):
-                extracted_value = getattr(extracted_item, field_name)
-                extend_list_in_dict(merged_dict, field_name, extracted_value)
+            if rule is not None and extracted_item.hadPrimarySource in getattr(
+                rule, field_name
+            ):
+                continue
+            extracted_value = getattr(extracted_item, field_name)
+            extend_list_in_dict(merged_dict, field_name, extracted_value)
 
 
 def _apply_additive_rule(
@@ -82,7 +86,7 @@ def _apply_subtractive_rule(
 def create_merged_item(
     identifier: Identifier,
     extracted_items: list[AnyExtractedModel],
-    rule_set: AnyRuleSetRequest | AnyRuleSetResponse,
+    rule_set: AnyRuleSetRequest | AnyRuleSetResponse | None,
 ) -> AnyMergedModel:
     """Merge a list of extracted items with a set of rules.
 
@@ -94,14 +98,26 @@ def create_merged_item(
     Returns:
         Instance of a merged item
     """
-    entity_type = ensure_prefix(rule_set.stemType, "Merged")
+    if rule_set:
+        entity_type = ensure_prefix(rule_set.stemType, "Merged")
+    elif extracted_items:
+        entity_type = ensure_prefix(extracted_items[0].stemType, "Merged")
+    else:
+        raise MExError("One of rule_set or extracted_items is required.")
     fields = MERGEABLE_FIELDS_BY_CLASS_NAME[entity_type]
     cls = MERGED_MODEL_CLASSES_BY_NAME[entity_type]
 
     merged_dict: dict[str, Any] = {"identifier": identifier}
-    _apply_preventive_rule(merged_dict, fields, extracted_items, rule_set.preventive)
-    _apply_additive_rule(merged_dict, fields, rule_set.additive)
-    _apply_subtractive_rule(merged_dict, fields, rule_set.subtractive)
+    if rule_set:
+        _merge_extracted_items_and_apply_preventive_rule(
+            merged_dict, fields, extracted_items, rule_set.preventive
+        )
+        _apply_additive_rule(merged_dict, fields, rule_set.additive)
+        _apply_subtractive_rule(merged_dict, fields, rule_set.subtractive)
+    else:
+        _merge_extracted_items_and_apply_preventive_rule(
+            merged_dict, fields, extracted_items, None
+        )
 
     return cls.model_validate(merged_dict)
 

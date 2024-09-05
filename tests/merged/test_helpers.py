@@ -2,21 +2,15 @@ from typing import Any
 
 from mex.backend.merged.helpers import (
     _apply_additive_rule,
-    _apply_preventive_rule,
     _apply_subtractive_rule,
-    create_merged_item,
+    _merge_extracted_items_and_apply_preventive_rule,
 )
 from mex.common.models import (
     AdditiveOrganizationalUnit,
-    AdditivePerson,
     AnyExtractedModel,
     ExtractedContactPoint,
-    ExtractedPerson,
-    PersonRuleSetRequest,
     PreventiveContactPoint,
-    PreventivePerson,
     SubtractiveOrganizationalUnit,
-    SubtractivePerson,
 )
 from mex.common.types import Identifier, Text, TextLanguage
 
@@ -38,7 +32,7 @@ def test_apply_preventive_rule() -> None:
     rule = PreventiveContactPoint(
         email=[contact_points[1].hadPrimarySource],
     )
-    _apply_preventive_rule(
+    _merge_extracted_items_and_apply_preventive_rule(
         merged_dict,
         ["email"],
         contact_points,
@@ -85,48 +79,4 @@ def test_apply_subtractive_rule() -> None:
     assert merged_dict == {
         "email": [],
         "name": [Text(value="org unit one", language=TextLanguage.EN)],
-    }
-
-
-def test_create_merged_item() -> None:
-    merged_person = create_merged_item(
-        Identifier.generate(seed=42),
-        [
-            ExtractedPerson(
-                fullName="Dr. Zoidberg",
-                affiliation=Identifier.generate(seed=99),
-                email="z@express.planet",
-                identifierInPrimarySource="drz",
-                hadPrimarySource=Identifier.generate(seed=9),
-            ),
-            ExtractedPerson(
-                fullName="Mr. Krabs",
-                email="manager@krusty.ocean",
-                affiliation=Identifier.generate(seed=101),
-                memberOf=[Identifier.generate(seed=500), Identifier.generate(seed=750)],
-                hadPrimarySource=Identifier.generate(seed=11),
-                identifierInPrimarySource="mrk",
-            ),
-        ],
-        PersonRuleSetRequest(
-            additive=AdditivePerson(
-                givenName=["Eugene", "Harold", "John"],
-                memberOf=[Identifier.generate(seed=500)],
-            ),
-            subtractive=SubtractivePerson(
-                email=["manager@krusty.ocean"],
-                givenName=["John"],
-            ),
-            preventive=PreventivePerson(
-                email=[Identifier.generate(seed=9)],
-                fullName=[Identifier.generate(seed=9)],
-            ),
-        ),
-    )
-    assert merged_person.model_dump(exclude_defaults=True) == {
-        "affiliation": [Identifier.generate(seed=99), Identifier.generate(seed=101)],
-        "fullName": ["Mr. Krabs"],
-        "givenName": ["Eugene", "Harold"],
-        "memberOf": [Identifier.generate(seed=500), Identifier.generate(seed=750)],
-        "identifier": Identifier.generate(seed=42),
     }
