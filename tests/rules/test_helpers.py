@@ -2,7 +2,7 @@ from typing import Any
 
 import pytest
 
-from mex.backend.rules.helpers import transform_graph_result_to_rule_set_response
+from mex.backend.rules.helpers import transform_raw_rules_to_rule_set_response
 from mex.common.types import TextLanguage
 
 
@@ -90,12 +90,12 @@ from mex.common.types import TextLanguage
         "valid rule items",
     ],
 )
-def test_transform_graph_result_to_rule_set_response(
+def test_transform_raw_rules_to_rule_set_response(
     items: list[Any],
     expected: str | dict[str, Any],
 ) -> None:
     try:
-        rule_set = transform_graph_result_to_rule_set_response(items)
+        rule_set = transform_raw_rules_to_rule_set_response(items)
     except Exception as error:
         assert str(expected) in str(error)
     else:

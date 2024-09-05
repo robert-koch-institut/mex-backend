@@ -5,7 +5,7 @@ from pydantic import Field, TypeAdapter, ValidationError
 from mex.backend.fields import MERGEABLE_FIELDS_BY_CLASS_NAME
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.merged.models import MergedItemSearch
-from mex.backend.rules.helpers import transform_graph_result_to_rule_set_response
+from mex.backend.rules.helpers import transform_raw_rules_to_rule_set_response
 from mex.backend.utils import extend_list_in_dict, prune_list_in_dict
 from mex.common.exceptions import MExError
 from mex.common.logging import logger
@@ -168,7 +168,7 @@ def search_merged_items_in_graph(
             if component["entityType"] in RULE_MODEL_CLASSES_BY_NAME
         ]
         if len(rules_raw) == 3:
-            rule_set_response = transform_graph_result_to_rule_set_response(rules_raw)
+            rule_set_response = transform_raw_rules_to_rule_set_response(rules_raw)
         elif len(rules_raw) == 0:
             rule_set_response = None
         else:

@@ -22,7 +22,7 @@ MODEL_CLASS_LOOKUP_BY_FIELD_NAME: Final[dict[str, Mapping[str, type[AnyRuleModel
 }
 
 
-def transform_graph_result_to_rule_set_response(
+def transform_raw_rules_to_rule_set_response(
     raw_rules: list[dict[str, Any]],
 ) -> AnyRuleSetResponse:
     """Transform a set of plain rules into a rule set response."""
@@ -74,7 +74,7 @@ def create_and_get_rule_set(
         0,
         3,
     )
-    return transform_graph_result_to_rule_set_response(graph_result.one()["items"])
+    return transform_raw_rules_to_rule_set_response(graph_result.one()["items"])
 
 
 def get_rule_set_from_graph(
@@ -89,4 +89,4 @@ def get_rule_set_from_graph(
         0,
         3,
     )
-    return transform_graph_result_to_rule_set_response(graph_result.one()["items"])
+    return transform_raw_rules_to_rule_set_response(graph_result.one()["items"])
