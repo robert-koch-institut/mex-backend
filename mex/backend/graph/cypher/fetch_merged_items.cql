@@ -1,4 +1,4 @@
-<# Fetch extracted or rule items including their nested objects and referenced identifiers.
+<# Fetch merged items including their nested objects and referenced identifiers.
 
 Globals:
     extracted_labels: List of all extracted class labels
@@ -12,9 +12,12 @@ Args:
 
 Returns:
     total: Count of all items found by this query
-    items: List of extracted data items, each item has an extra attribute `_refs` that
-           contains the values of nested objects as well as the identifiers of
-           referenced items
+    items: List of merged items, each item has the following attributes:
+        entityType: the type of the merged item
+        identifier: the identifier of the merged item
+        components: The rule and / or extracted items with the stableTargetId of this
+            merged item. Each component has an extra attribute `_refs` that contains the
+            values of nested objects as well as the identifiers of referenced items.
 -#>
 CALL {
 <%- block match_clause -%>
