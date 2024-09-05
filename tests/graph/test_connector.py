@@ -401,6 +401,7 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
                         },
                     ],
                     "entityType": "MergedThis",
+                    "identifier": "bFQoRhcVH5DHV1",
                 }
             ],
             "total": 1,
@@ -456,6 +457,7 @@ fetch_merged_items(
                     },
                 ],
                 "entityType": "MergedThis",
+                "identifier": "bFQoRhcVH5DHV1",
             }
         ],
         "total": 1,
@@ -505,6 +507,7 @@ def test_fetch_merged_items() -> None:
                         },
                     ],
                     "entityType": "MergedOrganizationalUnit",
+                    "identifier": "bFQoRhcVH5DHUB",
                 }
             ],
             "total": 8,
