@@ -42,6 +42,17 @@ def test_apply_preventive_rule() -> None:
         "email": ["info@contact-point.one"],
     }
 
+    merged_dict.clear()
+    _merge_extracted_items_and_apply_preventive_rule(
+        merged_dict,
+        ["email"],
+        contact_points,
+        None,
+    )
+    assert merged_dict == {
+        "email": ["info@contact-point.one", "hello@contact-point.two"],
+    }
+
 
 def test_apply_additive_rule() -> None:
     merged_dict: dict[str, Any] = {
