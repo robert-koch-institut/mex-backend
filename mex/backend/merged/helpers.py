@@ -111,16 +111,13 @@ def create_merged_item(
     cls = MERGED_MODEL_CLASSES_BY_NAME[entity_type]
 
     merged_dict: dict[str, Any] = {"identifier": identifier}
+
+    _merge_extracted_items_and_apply_preventive_rule(
+        merged_dict, fields, extracted_items, rule_set.preventive if rule_set else None
+    )
     if rule_set:
-        _merge_extracted_items_and_apply_preventive_rule(
-            merged_dict, fields, extracted_items, rule_set.preventive
-        )
         _apply_additive_rule(merged_dict, fields, rule_set.additive)
         _apply_subtractive_rule(merged_dict, fields, rule_set.subtractive)
-    else:
-        _merge_extracted_items_and_apply_preventive_rule(
-            merged_dict, fields, extracted_items, None
-        )
 
     return cls.model_validate(merged_dict)
 
