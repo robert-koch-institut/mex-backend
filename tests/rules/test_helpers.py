@@ -1,9 +1,8 @@
 from typing import Any
-from unittest.mock import MagicMock, Mock
 
 import pytest
 
-from mex.backend.rules.helpers import _transform_graph_result_to_rule_set_response
+from mex.backend.rules.helpers import transform_graph_result_to_rule_set_response
 from mex.common.types import TextLanguage
 
 
@@ -96,9 +95,7 @@ def test_transform_graph_result_to_rule_set_response(
     expected: str | dict[str, Any],
 ) -> None:
     try:
-        rule_set = _transform_graph_result_to_rule_set_response(
-            Mock(one=MagicMock(return_value={"items": items}))
-        )
+        rule_set = transform_graph_result_to_rule_set_response(items)
     except Exception as error:
         assert str(expected) in str(error)
     else:
