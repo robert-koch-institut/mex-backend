@@ -15,7 +15,7 @@ from mex.common.models import (
 from mex.common.types import Identifier, Text, TextLanguage
 
 
-def test_apply_preventive_rule() -> None:
+def test_merge_extracted_items_and_apply_preventive_rule() -> None:
     merged_dict: dict[str, Any] = {}
     contact_points: list[AnyExtractedModel] = [
         ExtractedContactPoint(
@@ -52,6 +52,15 @@ def test_apply_preventive_rule() -> None:
     assert merged_dict == {
         "email": ["info@contact-point.one", "hello@contact-point.two"],
     }
+
+    merged_dict.clear()
+    _merge_extracted_items_and_apply_preventive_rule(
+        merged_dict,
+        ["email"],
+        [],
+        rule,
+    )
+    assert merged_dict == {}
 
 
 def test_apply_additive_rule() -> None:
