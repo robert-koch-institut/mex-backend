@@ -2,10 +2,8 @@ from functools import cache
 from typing import Annotated
 
 from fastapi import APIRouter, Query
-from pydantic import PlainSerializer
 
 from mex.backend.auxiliary.models import AuxiliarySearch
-from mex.backend.serialization import to_primitive
 from mex.common.models import ExtractedOrganization, ExtractedPrimarySource
 from mex.common.primary_source.extract import extract_seed_primary_sources
 from mex.common.primary_source.transform import (
@@ -30,7 +28,7 @@ def search_organization_in_wikidata(
     offset: Annotated[int, Query(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
     lang: TextLanguage = TextLanguage.EN,
-) -> Annotated[AuxiliarySearch[ExtractedOrganization], PlainSerializer(to_primitive)]:
+) -> AuxiliarySearch[ExtractedOrganization]:
     """Search for organizations in wikidata.
 
     Args:

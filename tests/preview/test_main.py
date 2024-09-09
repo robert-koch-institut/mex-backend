@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
             {
                 "additive": {
                     "$type": "AdditiveActivity",
-                    "start": ["2025"],
+                    "end": ["2025"],
                     "title": [{"value": "A new beginning", "language": "en"}],
                 },
                 "preventive": {"$type": "PreventiveActivity"},
@@ -30,7 +30,8 @@ from fastapi.testclient import TestClient
                     {"value": "An active activity.", "language": "en"},
                     {"value": "Une activité active.", "language": None},
                 ],
-                "start": ["2025"],
+                "start": ["2014-08-24"],
+                "end": ["2025"],
                 "theme": ["https://mex.rki.de/item/theme-3"],
                 "website": [
                     {
@@ -49,7 +50,7 @@ from fastapi.testclient import TestClient
                 "preventive": {"$type": "PreventiveActivity"},
                 "subtractive": {
                     "$type": "SubtractiveActivity",
-                    "start": ["2025"],
+                    "start": ["2014"],
                     "contact": ["bFQoRhcVH5DHUv"],
                     "abstract": [
                         {"value": "Une activité active.", "language": None},
@@ -60,6 +61,7 @@ from fastapi.testclient import TestClient
                 "$type": "MergedActivity",
                 "contact": ["bFQoRhcVH5DHUx", "bFQoRhcVH5DHUz"],
                 "responsibleUnit": ["bFQoRhcVH5DHUv"],
+                "start": ["2014-08-24"],
                 "title": [
                     {"value": "Aktivität 1", "language": "de"},
                 ],
@@ -96,6 +98,7 @@ from fastapi.testclient import TestClient
                 "$type": "MergedActivity",
                 "contact": ["bFQoRhcVH5DHUx", "bFQoRhcVH5DHUz", "bFQoRhcVH5DHUv"],
                 "responsibleUnit": ["bFQoRhcVH5DHUv"],
+                "start": ["2014-08-24"],
                 "title": [
                     {"value": "Aktivität 1", "language": "de"},
                 ],

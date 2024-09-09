@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add a rule-set response to the `create_rule_set` endpoint
 - implement merging logic as a triple of functions corresponding to our rule types
 - add a preview endpoint to perform merge with a submitted rule-set and all found items
+- add GraphConnector.exists_merged_item to verify stableTargetIds exist
+- add PUT endpoint to update rule-sets for existing merged items
 
 ### Changes
 
@@ -22,7 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to also include non-indexable models (namely: merged models)
 - BREAKING: rename `fetch_extracted_data` to a more consistent `fetch_extracted_items`
 - harmonize PagedAuxiliaryResponse with Merged- and ExtractedItemSearchResponse
-- use PlainSerializer instead of JSONResponse to fix serializing with a happy mypy
 - move searching and fetching of extracted and merged items to `helpers` module
   so they can be reused more easily outside of the endpoint code
 - use starlette status code constants instead of plain integers for readability
