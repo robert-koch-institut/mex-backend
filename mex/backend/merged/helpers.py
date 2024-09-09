@@ -1,6 +1,6 @@
 from typing import Annotated, Any
 
-from pydantic import Field, TypeAdapter, ValidationError
+from pydantic import Field, TypeAdapter
 
 from mex.backend.fields import MERGEABLE_FIELDS_BY_CLASS_NAME
 from mex.backend.graph.connector import GraphConnector
@@ -8,7 +8,6 @@ from mex.backend.merged.models import MergedItemSearch
 from mex.backend.rules.helpers import transform_raw_rules_to_rule_set_response
 from mex.backend.utils import extend_list_in_dict, prune_list_in_dict
 from mex.common.exceptions import MExError
-from mex.common.logging import logger
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
@@ -176,15 +175,12 @@ def search_merged_items_in_graph(
                 f"Unexpected number of rules found in graph: {len(rules_raw)}"
             )
 
-        try:
-            items.append(
-                create_merged_item(
-                    identifier=item["identifier"],
-                    extracted_items=extracted_items,
-                    rule_set=rule_set_response,
-                )
+        items.append(
+            create_merged_item(
+                identifier=item["identifier"],
+                extracted_items=extracted_items,
+                rule_set=rule_set_response,
             )
-        except ValidationError as error:
-            logger.error(error)
+        )
 
     return MergedItemSearch(items=items, total=total)
