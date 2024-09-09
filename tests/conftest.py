@@ -23,6 +23,7 @@ from mex.common.models import (
     ExtractedContactPoint,
     ExtractedOrganizationalUnit,
     ExtractedPrimarySource,
+    OrganizationalUnitRuleSetRequest,
     OrganizationalUnitRuleSetResponse,
     PreventiveOrganizationalUnit,
     SubtractiveOrganizationalUnit,
@@ -273,21 +274,23 @@ def additive_organizational_unit(
 @pytest.fixture()
 def organizational_unit_rule_set_request(
     additive_organizational_unit: AdditiveOrganizationalUnit,
-    dummy_data: dict[str, AnyExtractedModel],
-) -> OrganizationalUnitRuleSetResponse:
-    return OrganizationalUnitRuleSetResponse(
+) -> OrganizationalUnitRuleSetRequest:
+    return OrganizationalUnitRuleSetRequest(
         additive=additive_organizational_unit,
         preventive=PreventiveOrganizationalUnit(),
         subtractive=SubtractiveOrganizationalUnit(),
-        stableTargetId=dummy_data["organizational_unit_2"].stableTargetId,
     )
 
 
 @pytest.fixture()
 def load_dummy_rule_set(
-    organizational_unit_rule_set_request: OrganizationalUnitRuleSetResponse,
+    organizational_unit_rule_set_request: OrganizationalUnitRuleSetRequest,
+    dummy_data: dict[str, AnyExtractedModel],
 ) -> OrganizationalUnitRuleSetResponse:
     return cast(
         OrganizationalUnitRuleSetResponse,
-        create_and_get_rule_set(organizational_unit_rule_set_request),
+        create_and_get_rule_set(
+            organizational_unit_rule_set_request,
+            stable_target_id=dummy_data["organizational_unit_2"].stableTargetId,
+        ),
     )
