@@ -55,13 +55,13 @@ def _transform_graph_result_to_rule_set_response(
 
 
 def create_and_get_rule_set(
-    rule_set: AnyRuleSetRequest | AnyRuleSetResponse,
+    rule_set: AnyRuleSetRequest,
+    stable_target_id: Identifier | None = None,
 ) -> AnyRuleSetResponse:
     """Merge a rule set into the graph and read it back."""
-    if isinstance(rule_set, AnyRuleSetRequest):
+    if stable_target_id is None:
         stable_target_id = Identifier.generate()
-    else:
-        stable_target_id = rule_set.stableTargetId
+
     connector = GraphConnector.get()
     connector.create_rule_set(rule_set, stable_target_id)
     rule_types = [
@@ -92,3 +92,17 @@ def get_rule_set_from_graph(
         3,
     )
     return _transform_graph_result_to_rule_set_response(graph_result)
+
+
+def update_and_get_rule_set(
+    rule_set: AnyRuleSetRequest,
+    stable_target_id: Identifier,
+) -> AnyRuleSetResponse:
+    """Merge a rule set into the graph and read it back."""
+    connector = GraphConnector.get()
+    if not connector.exists_merged_item(
+        stable_target_id,
+        [rule_set.stemType],
+    ):
+        raise MExError("no merged item found for given identifier and type")
+    return create_and_get_rule_set(rule_set, stable_target_id)

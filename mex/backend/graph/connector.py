@@ -17,8 +17,7 @@ from mex.backend.fields import (
 )
 from mex.backend.graph.models import Result
 from mex.backend.graph.query import QueryBuilder
-from mex.backend.graph.transform import expand_references_in_search_result
-from mex.backend.serialization import to_primitive
+from mex.backend.graph.transform import expand_references_in_search_result, to_primitive
 from mex.backend.settings import BackendSettings
 from mex.common.connector import BaseConnector
 from mex.common.exceptions import MExError
@@ -33,7 +32,6 @@ from mex.common.models import (
     AnyExtractedModel,
     AnyRuleModel,
     AnyRuleSetRequest,
-    AnyRuleSetResponse,
     BasePrimarySource,
     ExtractedPrimarySource,
 )
@@ -288,6 +286,27 @@ class GraphConnector(BaseConnector):
             limit=limit,
         )
 
+    def exists_merged_item(
+        self, stable_target_id: Identifier, stem_types: list[str] | None = None
+    ) -> bool:
+        """Validate whether a merged item with the given identifier and type exists.
+
+        Args:
+            stable_target_id: Identifier of the to-be-checked merged item
+            stem_types: Allowed stem types of the to-be-checked merged item
+
+        Returns:
+            Boolean representing the existence of the requested item
+        """
+        if stem_types:
+            merged_types = [ensure_prefix(t, "Merged") for t in stem_types]
+        else:
+            merged_types = list(MERGED_MODEL_CLASSES_BY_NAME)
+        query_builder = QueryBuilder.get()
+        query = query_builder.exists_merged_item(node_labels=merged_types)
+        result = self.commit(query, identifier=stable_target_id)
+        return bool(result["exists"])
+
     def _merge_item(
         self,
         model: AnyExtractedModel | AnyRuleModel,
@@ -417,7 +436,7 @@ class GraphConnector(BaseConnector):
 
     def create_rule_set(
         self,
-        model: AnyRuleSetRequest | AnyRuleSetResponse,
+        model: AnyRuleSetRequest,
         stable_target_id: Identifier,
     ) -> None:
         """Create a new rule set to be applied to one merged item.

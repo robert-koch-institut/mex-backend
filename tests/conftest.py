@@ -38,6 +38,7 @@ from mex.common.types import (
     Text,
     TextLanguage,
     Theme,
+    YearMonthDay,
 )
 
 pytest_plugins = ("mex.common.testing.plugin",)
@@ -228,6 +229,7 @@ def dummy_data() -> list[AnyExtractedModel]:
         hadPrimarySource=primary_source_1.stableTargetId,
         identifierInPrimarySource="a-1",
         responsibleUnit=[organizational_unit_1.stableTargetId],
+        start=[YearMonthDay("2014-08-24")],
         theme=[Theme["DIGITAL_PUBLIC_HEALTH"]],
         title=[Text(value="Aktivität 1", language=TextLanguage.DE)],
         website=[Link(title="Activity Homepage", url="https://activity-1")],

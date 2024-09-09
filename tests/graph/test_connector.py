@@ -425,6 +425,72 @@ fetch_identities(
 
 
 @pytest.mark.usefixtures("mocked_query_builder")
+def test_mocked_graph_exists_merged_item(mocked_graph: MockedGraph) -> None:
+    mocked_graph.return_value = [{"exists": True}]
+
+    graph = GraphConnector.get()
+    graph.exists_merged_item(
+        stable_target_id=Identifier.generate(99),
+        stem_types=["Person", "ContactPoint"],
+    )
+
+    assert mocked_graph.call_args_list[-1].args == (
+        """\
+exists_merged_item(node_labels=["MergedPerson", "MergedContactPoint"])""",
+        {"identifier": Identifier.generate(99)},
+    )
+
+    graph.exists_merged_item(
+        stable_target_id=Identifier.generate(99),
+    )
+
+    assert mocked_graph.call_args_list[-1].args == (
+        """\
+exists_merged_item(
+    node_labels=[
+        "MergedAccessPlatform",
+        "MergedActivity",
+        "MergedContactPoint",
+        "MergedDistribution",
+        "MergedOrganization",
+        "MergedOrganizationalUnit",
+        "MergedPerson",
+        "MergedPrimarySource",
+        "MergedResource",
+        "MergedVariable",
+        "MergedVariableGroup",
+    ]
+)""",
+        {"identifier": Identifier.generate(99)},
+    )
+
+
+@pytest.mark.parametrize(
+    ("stable_target_id", "stem_types", "exists"),
+    [
+        ("bFQoRhcVH5DHUv", None, True),
+        ("bFQoRhcVH5DHUv", ["Person", "ContactPoint", "OrganizationalUnit"], True),
+        ("bFQoRhcVH5DHUv", ["Activity"], False),
+        ("thisIdDoesNotExist", ["Activity"], False),
+    ],
+    ids=[
+        "found without type filter",
+        "found with type filter",
+        "missed due to filter",
+        "missed due to identifier",
+    ],
+)
+@pytest.mark.usefixtures("load_dummy_data")
+@pytest.mark.integration
+def test_graph_exists_merged_item(
+    stable_target_id: Identifier, stem_types: list[str] | None, exists: bool
+) -> None:
+    connector = GraphConnector.get()
+
+    assert connector.exists_merged_item(stable_target_id, stem_types) == exists
+
+
+@pytest.mark.usefixtures("mocked_query_builder")
 def test_mocked_graph_merge_item(
     mocked_graph: MockedGraph, dummy_data: list[AnyExtractedModel]
 ) -> None:
