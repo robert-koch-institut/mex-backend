@@ -1,9 +1,9 @@
 from typing import Any
 
 import pytest
+from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
 
-from mex.backend.serialization import to_primitive
 from mex.common.models import ExtractedOrganizationalUnit
 from tests.conftest import MockedGraph
 
@@ -59,7 +59,7 @@ def test_search_extracted_items_mocked(
 
     response = client_with_api_key_read_permission.get("/v0/extracted-item")
     assert response.status_code == 200, response.text
-    assert response.json() == {"items": [to_primitive(unit)], "total": 14}
+    assert response.json() == {"items": [jsonable_encoder(unit)], "total": 14}
 
 
 @pytest.mark.parametrize(

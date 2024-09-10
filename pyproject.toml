@@ -10,9 +10,10 @@ requires-python = "<3.13,>=3.11"
 dependencies = [
     "fastapi>=0.112.0,<1",
     "httpx>=0.27.0,<1",
-    "mex-common @ git+https://github.com/robert-koch-institut/mex-common.git@0.34.0",
+    "mex-common @ git+https://github.com/robert-koch-institut/mex-common.git@0.36.0",
     "neo4j>=5.23.1,<6",
     "pydantic>=2.8.2,<3",
+    "starlette>=0.38.5,<1",
     "uvicorn[standard]>=0.30.5,<1",
 ]
 optional-dependencies.dev = [
@@ -24,7 +25,7 @@ optional-dependencies.dev = [
     "pytest>=8.3.2,<9",
     "ruff>=0.6.0,<1",
     "sphinx>=8.0.2,<9",
-    "types-pytz>=2024.1.0.20240417,<2025",
+    "types-pytz>=2024.1.0,<2025",
 ]
 
 [project.scripts]
