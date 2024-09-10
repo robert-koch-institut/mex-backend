@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
     ("stable_target_id", "json_body", "expected"),
     [
         (
-            "bFQoRhcVH5DHUB",
+            "bFQoRhcVH5DHUD",
             {
                 "additive": {
                     "$type": "AdditiveActivity",
@@ -20,8 +20,8 @@ from fastapi.testclient import TestClient
             },
             {
                 "$type": "MergedActivity",
-                "contact": ["bFQoRhcVH5DHUv", "bFQoRhcVH5DHUx", "bFQoRhcVH5DHUz"],
-                "responsibleUnit": ["bFQoRhcVH5DHUz"],
+                "contact": ["bFQoRhcVH5DHUx", "bFQoRhcVH5DHUz", "bFQoRhcVH5DHUv"],
+                "responsibleUnit": ["bFQoRhcVH5DHUv"],
                 "title": [
                     {"value": "Aktivität 1", "language": "de"},
                     {"value": "A new beginning", "language": "en"},
@@ -40,11 +40,11 @@ from fastapi.testclient import TestClient
                         "url": "https://activity-1",
                     }
                 ],
-                "identifier": "bFQoRhcVH5DHUB",
+                "identifier": "bFQoRhcVH5DHUD",
             },
         ),
         (
-            "bFQoRhcVH5DHUB",
+            "bFQoRhcVH5DHUD",
             {
                 "additive": {"$type": "AdditiveActivity"},
                 "preventive": {"$type": "PreventiveActivity"},
@@ -60,7 +60,7 @@ from fastapi.testclient import TestClient
             {
                 "$type": "MergedActivity",
                 "contact": ["bFQoRhcVH5DHUx", "bFQoRhcVH5DHUz"],
-                "responsibleUnit": ["bFQoRhcVH5DHUz"],
+                "responsibleUnit": ["bFQoRhcVH5DHUv"],
                 "start": ["2014-08-24"],
                 "title": [
                     {"value": "Aktivität 1", "language": "de"},
@@ -76,11 +76,11 @@ from fastapi.testclient import TestClient
                         "url": "https://activity-1",
                     }
                 ],
-                "identifier": "bFQoRhcVH5DHUB",
+                "identifier": "bFQoRhcVH5DHUD",
             },
         ),
         (
-            "bFQoRhcVH5DHUB",
+            "bFQoRhcVH5DHUD",
             {
                 "additive": {
                     "$type": "AdditiveActivity",
@@ -96,8 +96,8 @@ from fastapi.testclient import TestClient
             },
             {
                 "$type": "MergedActivity",
-                "contact": ["bFQoRhcVH5DHUv", "bFQoRhcVH5DHUx", "bFQoRhcVH5DHUz"],
-                "responsibleUnit": ["bFQoRhcVH5DHUz"],
+                "contact": ["bFQoRhcVH5DHUx", "bFQoRhcVH5DHUz", "bFQoRhcVH5DHUv"],
+                "responsibleUnit": ["bFQoRhcVH5DHUv"],
                 "start": ["2014-08-24"],
                 "title": [
                     {"value": "Aktivität 1", "language": "de"},
@@ -113,7 +113,7 @@ from fastapi.testclient import TestClient
                         "url": "https://activity-1",
                     }
                 ],
-                "identifier": "bFQoRhcVH5DHUB",
+                "identifier": "bFQoRhcVH5DHUD",
             },
         ),
         (

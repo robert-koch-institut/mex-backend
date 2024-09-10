@@ -174,6 +174,123 @@ def test_fetch_extracted_items(
 
 @pytest.mark.parametrize(
     (
+        "filter_by_query_string",
+        "filter_by_stable_target_id",
+        "expected",
+    ),
+    [
+        (
+            True,
+            True,
+            """\
+CALL {
+    CALL db.index.fulltext.queryNodes("search_index", $query_string)
+    YIELD node AS hit, score
+    OPTIONAL MATCH (n:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
+    WHERE
+        elementId(hit) = elementId(n)
+        AND merged.identifier = $stable_target_id
+        AND ANY(label IN labels(merged) WHERE label IN $labels)
+    WITH DISTINCT merged as merged
+    RETURN COUNT(merged) AS total
+}
+CALL {
+    CALL db.index.fulltext.queryNodes("search_index", $query_string)
+    YIELD node AS hit, score
+    OPTIONAL MATCH (n:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
+    WHERE
+        elementId(hit) = elementId(n)
+        AND merged.identifier = $stable_target_id
+        AND ANY(label IN labels(merged) WHERE label IN $labels)
+    WITH DISTINCT merged as merged
+    OPTIONAL MATCH (n)-[:stableTargetId]->(merged)
+    CALL {
+        WITH n
+        OPTIONAL MATCH (n)-[r]->(referenced:MergedThis|MergedThat|MergedOther)
+        RETURN CASE WHEN referenced IS NOT NULL THEN {
+            label: type(r),
+            position: r.position,
+            value: referenced.identifier
+        } ELSE NULL END as ref
+    UNION
+        WITH n
+        OPTIONAL MATCH (n)-[r]->(nested:Link|Text|Location)
+        RETURN CASE WHEN nested IS NOT NULL THEN {
+            label: type(r),
+            position: r.position,
+            value: properties(nested)
+        } ELSE NULL END as ref
+    }
+    WITH merged, n, collect(ref) as refs
+    ORDER BY merged.identifier, n.identifier ASC
+    WITH merged, collect(n{.*, entityType: head(labels(n)), _refs: refs}) as n
+    RETURN merged{entityType: head(labels(merged)), identifier: merged.identifier, components: n}
+    SKIP $skip
+    LIMIT $limit
+}
+RETURN collect(merged) AS items, total;""",
+        ),
+        (
+            False,
+            False,
+            """\
+CALL {
+    OPTIONAL MATCH (n:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
+    WHERE
+        ANY(label IN labels(merged) WHERE label IN $labels)
+    WITH DISTINCT merged as merged
+    RETURN COUNT(merged) AS total
+}
+CALL {
+    OPTIONAL MATCH (n:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
+    WHERE
+        ANY(label IN labels(merged) WHERE label IN $labels)
+    WITH DISTINCT merged as merged
+    OPTIONAL MATCH (n)-[:stableTargetId]->(merged)
+    CALL {
+        WITH n
+        OPTIONAL MATCH (n)-[r]->(referenced:MergedThis|MergedThat|MergedOther)
+        RETURN CASE WHEN referenced IS NOT NULL THEN {
+            label: type(r),
+            position: r.position,
+            value: referenced.identifier
+        } ELSE NULL END as ref
+    UNION
+        WITH n
+        OPTIONAL MATCH (n)-[r]->(nested:Link|Text|Location)
+        RETURN CASE WHEN nested IS NOT NULL THEN {
+            label: type(r),
+            position: r.position,
+            value: properties(nested)
+        } ELSE NULL END as ref
+    }
+    WITH merged, n, collect(ref) as refs
+    ORDER BY merged.identifier, n.identifier ASC
+    WITH merged, collect(n{.*, entityType: head(labels(n)), _refs: refs}) as n
+    RETURN merged{entityType: head(labels(merged)), identifier: merged.identifier, components: n}
+    SKIP $skip
+    LIMIT $limit
+}
+RETURN collect(merged) AS items, total;""",
+        ),
+    ],
+    ids=["all-filters", "no-filters"],
+)
+def test_fetch_merged_items(
+    query_builder: QueryBuilder,
+    filter_by_query_string: bool,
+    filter_by_stable_target_id: bool,
+    expected: str,
+) -> None:
+    query = query_builder.fetch_merged_items(
+        filter_by_query_string=filter_by_query_string,
+        filter_by_stable_target_id=filter_by_stable_target_id,
+    )
+    assert query == expected
+
+
+@pytest.mark.parametrize(
+    (
         "filter_by_had_primary_source",
         "filter_by_identifier_in_primary_source",
         "filter_by_stable_target_id",

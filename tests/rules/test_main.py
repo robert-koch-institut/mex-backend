@@ -248,7 +248,7 @@ def test_get_rule_set(
             "website": [],
         },
         "$type": "OrganizationalUnitRuleSetResponse",
-        "stableTargetId": "bFQoRhcVH5DHUA",
+        "stableTargetId": "bFQoRhcVH5DHUB",
     }
 
 
@@ -321,7 +321,7 @@ def test_update_rule_set(
             "website": [],
         },
         "$type": "OrganizationalUnitRuleSetResponse",
-        "stableTargetId": "bFQoRhcVH5DHUA",
+        "stableTargetId": "bFQoRhcVH5DHUB",
     }
     assert get_graph() == [
         {"label": "AdditiveOrganizationalUnit", "email": []},
@@ -346,19 +346,19 @@ def test_update_rule_set(
         },
         {
             "start": "AdditiveOrganizationalUnit",
-            "end": "bFQoRhcVH5DHUA",
+            "end": "bFQoRhcVH5DHUB",
             "label": "stableTargetId",
             "position": 0,
         },
         {
             "start": "PreventiveOrganizationalUnit",
-            "end": "bFQoRhcVH5DHUA",
+            "end": "bFQoRhcVH5DHUB",
             "label": "stableTargetId",
             "position": 0,
         },
         {
             "start": "SubtractiveOrganizationalUnit",
-            "end": "bFQoRhcVH5DHUA",
+            "end": "bFQoRhcVH5DHUB",
             "label": "stableTargetId",
             "position": 0,
         },
@@ -368,7 +368,7 @@ def test_update_rule_set(
             "identifierInPrimarySource": "mex",
             "label": "ExtractedPrimarySource",
         },
-        {"identifier": "bFQoRhcVH5DHUA", "label": "MergedOrganizationalUnit"},
+        {"identifier": "bFQoRhcVH5DHUB", "label": "MergedOrganizationalUnit"},
         {"label": "PreventiveOrganizationalUnit"},
         {"language": "en", "label": "Text", "value": "A new unit name"},
     ]

@@ -25,31 +25,40 @@ def test_search_merged_items_mocked(
         {
             "items": [
                 {
-                    "identifier": unit.stableTargetId,
-                    "identifierInPrimarySource": unit.identifierInPrimarySource,
-                    "stableTargetId": unit.stableTargetId,
-                    "email": ["test@foo.bar"],
-                    "entityType": "ExtractedOrganizationalUnit",
-                    "_refs": [
+                    "components": [
                         {
-                            "label": "hadPrimarySource",
-                            "position": 0,
-                            "value": "2222222222222222",
-                        },
-                        {
-                            "label": "name",
-                            "position": 0,
-                            "value": {
-                                "value": "Eine unit von einer Org.",
-                                "language": "de",
-                            },
-                        },
-                        {
-                            "label": "name",
-                            "position": 1,
-                            "value": {"value": "A unit of an org.", "language": "en"},
-                        },
+                            "identifier": unit.identifier,
+                            "identifierInPrimarySource": unit.identifierInPrimarySource,
+                            "stableTargetId": unit.stableTargetId,
+                            "email": ["test@foo.bar"],
+                            "entityType": "ExtractedOrganizationalUnit",
+                            "_refs": [
+                                {
+                                    "label": "hadPrimarySource",
+                                    "position": 0,
+                                    "value": "2222222222222222",
+                                },
+                                {
+                                    "label": "name",
+                                    "position": 0,
+                                    "value": {
+                                        "value": "Eine unit von einer Org.",
+                                        "language": "de",
+                                    },
+                                },
+                                {
+                                    "label": "name",
+                                    "position": 1,
+                                    "value": {
+                                        "value": "A unit of an org.",
+                                        "language": "en",
+                                    },
+                                },
+                            ],
+                        }
                     ],
+                    "entityType": "MergedOrganizationalUnit",
+                    "identifier": unit.stableTargetId,
                 }
             ],
             "total": 14,
@@ -99,20 +108,20 @@ def test_search_merged_items_mocked(
                         "version": None,
                     }
                 ],
-                "total": 7,
+                "total": 8,
             },
         ),
         (
-            "?limit=1&skip=4",
+            "?limit=1&skip=6",
             {
                 "items": [
                     {
                         "$type": "MergedContactPoint",
                         "email": ["info@contact-point.one"],
-                        "identifier": "bFQoRhcVH5DHUv",
+                        "identifier": "bFQoRhcVH5DHUx",
                     }
                 ],
-                "total": 7,
+                "total": 8,
             },
         ),
         (
@@ -122,12 +131,12 @@ def test_search_merged_items_mocked(
                     {
                         "$type": "MergedContactPoint",
                         "email": ["info@contact-point.one"],
-                        "identifier": "bFQoRhcVH5DHUv",
+                        "identifier": "bFQoRhcVH5DHUx",
                     },
                     {
                         "$type": "MergedContactPoint",
                         "email": ["help@contact-point.two"],
-                        "identifier": "bFQoRhcVH5DHUx",
+                        "identifier": "bFQoRhcVH5DHUz",
                     },
                 ],
                 "total": 2,
@@ -154,19 +163,47 @@ def test_search_merged_items_mocked(
             },
         ),
         (
-            "?identifier=bFQoRhcVH5DHUz",
+            "?identifier=bFQoRhcVH5DHUv",
             {
                 "items": [
                     {
                         "$type": "MergedOrganizationalUnit",
                         "alternativeName": [],
                         "email": [],
-                        "identifier": "bFQoRhcVH5DHUz",
+                        "identifier": "bFQoRhcVH5DHUv",
                         "name": [{"language": "en", "value": "Unit 1"}],
                         "parentUnit": None,
                         "shortName": [],
                         "unitOf": [],
                         "website": [],
+                    }
+                ],
+                "total": 1,
+            },
+        ),
+        (
+            "?identifier=bFQoRhcVH5DHUB",
+            {
+                "items": [
+                    {
+                        "$type": "MergedOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "identifier": "bFQoRhcVH5DHUB",
+                        "name": [
+                            {"language": "en", "value": "Unit 1.6"},
+                            {"language": "en", "value": "Unit 1.7"},
+                        ],
+                        "parentUnit": "bFQoRhcVH5DHUv",
+                        "shortName": [],
+                        "unitOf": [],
+                        "website": [
+                            {
+                                "language": None,
+                                "title": "Unit Homepage",
+                                "url": "https://unit-1-7",
+                            }
+                        ],
                     }
                 ],
                 "total": 1,
@@ -180,10 +217,11 @@ def test_search_merged_items_mocked(
         "entity type contact points",
         "full text search",
         "identifier filter",
+        "identifier filter with composite result",
         "empty result",
     ],
 )
-@pytest.mark.usefixtures("load_dummy_data")
+@pytest.mark.usefixtures("load_dummy_data", "load_dummy_rule_set")
 @pytest.mark.integration
 def test_search_merged_items(
     client_with_api_key_read_permission: TestClient,

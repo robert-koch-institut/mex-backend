@@ -102,9 +102,9 @@ def test_assign_identity_inconsistency_mocked(
             },
             {
                 "hadPrimarySource": "bFQoRhcVH5DHUr",
-                "identifier": "bFQoRhcVH5DHUC",
+                "identifier": "bFQoRhcVH5DHUE",
                 "identifierInPrimarySource": "new-item",
-                "stableTargetId": "bFQoRhcVH5DHUD",
+                "stableTargetId": "bFQoRhcVH5DHUF",
             },
         ),
         (
@@ -114,9 +114,9 @@ def test_assign_identity_inconsistency_mocked(
             },
             {
                 "hadPrimarySource": "bFQoRhcVH5DHUr",
-                "identifier": "bFQoRhcVH5DHUw",
+                "identifier": "bFQoRhcVH5DHUy",
                 "identifierInPrimarySource": "cp-2",
-                "stableTargetId": "bFQoRhcVH5DHUx",
+                "stableTargetId": "bFQoRhcVH5DHUz",
             },
         ),
         (
@@ -241,14 +241,14 @@ def test_fetch_identities_mocked(
             },
         ),
         (
-            "?stableTargetId=bFQoRhcVH5DHUz",
+            "?stableTargetId=bFQoRhcVH5DHUv",
             {
                 "items": [
                     {
-                        "identifier": "bFQoRhcVH5DHUy",
+                        "identifier": "bFQoRhcVH5DHUu",
                         "hadPrimarySource": "bFQoRhcVH5DHUt",
                         "identifierInPrimarySource": "ou-1",
-                        "stableTargetId": "bFQoRhcVH5DHUz",
+                        "stableTargetId": "bFQoRhcVH5DHUv",
                     }
                 ],
                 "total": 1,

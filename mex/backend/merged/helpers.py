@@ -1,14 +1,17 @@
 from typing import Annotated, Any
 
-from pydantic import Field, TypeAdapter, ValidationError
+from pydantic import Field, TypeAdapter
 
 from mex.backend.fields import MERGEABLE_FIELDS_BY_CLASS_NAME
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.merged.models import MergedItemSearch
+from mex.backend.rules.helpers import transform_raw_rules_to_rule_set_response
 from mex.backend.utils import extend_list_in_dict, prune_list_in_dict
-from mex.common.logging import logger
+from mex.common.exceptions import MExError
 from mex.common.models import (
+    EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
+    RULE_MODEL_CLASSES_BY_NAME,
     AnyAdditiveModel,
     AnyExtractedModel,
     AnyMergedModel,
@@ -21,11 +24,11 @@ from mex.common.transform import ensure_prefix
 from mex.common.types import Identifier
 
 
-def _apply_preventive_rule(
+def _merge_extracted_items_and_apply_preventive_rule(
     merged_dict: dict[str, Any],
     mergeable_fields: list[str],
     extracted_items: list[AnyExtractedModel],
-    rule: AnyPreventiveModel,
+    rule: AnyPreventiveModel | None,
 ) -> None:
     """Merge a list of extracted items while applying a preventive rule.
 
@@ -36,13 +39,16 @@ def _apply_preventive_rule(
         merged_dict: Mapping from field names to lists of merged values
         mergeable_fields: List of mergeable field names
         extracted_items: List of extracted items
-        rule: Preventive rules with primary source identifiers
+        rule: Preventive rules with primary source identifiers, can be None
     """
     for extracted_item in extracted_items:
         for field_name in mergeable_fields:
-            if extracted_item.hadPrimarySource not in getattr(rule, field_name):
-                extracted_value = getattr(extracted_item, field_name)
-                extend_list_in_dict(merged_dict, field_name, extracted_value)
+            if rule is not None and extracted_item.hadPrimarySource in getattr(
+                rule, field_name
+            ):
+                continue
+            extracted_value = getattr(extracted_item, field_name)
+            extend_list_in_dict(merged_dict, field_name, extracted_value)
 
 
 def _apply_additive_rule(
@@ -82,7 +88,7 @@ def _apply_subtractive_rule(
 def create_merged_item(
     identifier: Identifier,
     extracted_items: list[AnyExtractedModel],
-    rule_set: AnyRuleSetRequest | AnyRuleSetResponse,
+    rule_set: AnyRuleSetRequest | AnyRuleSetResponse | None,
 ) -> AnyMergedModel:
     """Merge a list of extracted items with a set of rules.
 
@@ -94,14 +100,23 @@ def create_merged_item(
     Returns:
         Instance of a merged item
     """
-    entity_type = ensure_prefix(rule_set.stemType, "Merged")
+    if rule_set:
+        entity_type = ensure_prefix(rule_set.stemType, "Merged")
+    elif extracted_items:
+        entity_type = ensure_prefix(extracted_items[0].stemType, "Merged")
+    else:
+        raise MExError("One of rule_set or extracted_items is required.")
     fields = MERGEABLE_FIELDS_BY_CLASS_NAME[entity_type]
     cls = MERGED_MODEL_CLASSES_BY_NAME[entity_type]
 
     merged_dict: dict[str, Any] = {"identifier": identifier}
-    _apply_preventive_rule(merged_dict, fields, extracted_items, rule_set.preventive)
-    _apply_additive_rule(merged_dict, fields, rule_set.additive)
-    _apply_subtractive_rule(merged_dict, fields, rule_set.subtractive)
+
+    _merge_extracted_items_and_apply_preventive_rule(
+        merged_dict, fields, extracted_items, rule_set.preventive if rule_set else None
+    )
+    if rule_set:
+        _apply_additive_rule(merged_dict, fields, rule_set.additive)
+        _apply_subtractive_rule(merged_dict, fields, rule_set.subtractive)
 
     return cls.model_validate(merged_dict)
 
@@ -113,7 +128,7 @@ def search_merged_items_in_graph(
     skip: int = 0,
     limit: int = 100,
 ) -> MergedItemSearch:
-    """Facade for searching for merged items.
+    """Search for merged items.
 
     Args:
         query_string: Full text search query term
@@ -125,34 +140,47 @@ def search_merged_items_in_graph(
     Returns:
         MergedItemSearch instance
     """
-    # XXX We just search for extracted items and pretend they are already merged
-    #     as a stopgap for MX-1382.
     graph = GraphConnector.get()
-    result = graph.fetch_extracted_items(
+    result = graph.fetch_merged_items(
         query_string=query_string,
         stable_target_id=stable_target_id,
-        entity_type=(
-            None
-            if entity_type is None
-            else [t.replace("Merged", "Extracted") for t in entity_type]
-        ),
+        entity_type=entity_type,
         skip=skip,
         limit=limit,
     )
-    merged_model_adapter: TypeAdapter[AnyMergedModel] = TypeAdapter(
-        Annotated[AnyMergedModel, Field(discriminator="entityType")]
+    extracted_model_adapter: TypeAdapter[AnyExtractedModel] = TypeAdapter(
+        Annotated[AnyExtractedModel, Field(discriminator="entityType")]
     )
     items: list[AnyMergedModel] = []
     total: int = result["total"]
 
     for item in result["items"]:
-        item.pop("hadPrimarySource", None)
-        item.pop("identifierInPrimarySource", None)
-        item["identifier"] = item.pop("stableTargetId")
-        item["entityType"] = item["entityType"].replace("Extracted", "Merged")
-        try:
-            items.append(merged_model_adapter.validate_python(item))
-        except ValidationError as error:
-            logger.error(error)
+        extracted_items = [
+            extracted_model_adapter.validate_python(component)
+            for component in item["components"]
+            if component["entityType"] in EXTRACTED_MODEL_CLASSES_BY_NAME
+        ]
+
+        rules_raw = [
+            component
+            for component in item["components"]
+            if component["entityType"] in RULE_MODEL_CLASSES_BY_NAME
+        ]
+        if len(rules_raw) == 3:
+            rule_set_response = transform_raw_rules_to_rule_set_response(rules_raw)
+        elif len(rules_raw) == 0:
+            rule_set_response = None
+        else:
+            raise MExError(
+                f"Unexpected number of rules found in graph: {len(rules_raw)}"
+            )
+
+        items.append(
+            create_merged_item(
+                identifier=item["identifier"],
+                extracted_items=extracted_items,
+                rule_set=rule_set_response,
+            )
+        )
 
     return MergedItemSearch(items=items, total=total)

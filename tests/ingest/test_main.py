@@ -12,9 +12,9 @@ Payload = dict[str, list[dict[str, Any]]]
 
 
 @pytest.fixture()
-def post_payload(dummy_data: list[AnyExtractedModel]) -> Payload:
+def post_payload(dummy_data: dict[str, AnyExtractedModel]) -> Payload:
     payload = defaultdict(list)
-    for model in dummy_data:
+    for model in dummy_data.values():
         payload["items"].append(model.model_dump())
     return cast(Payload, dict(payload))
 
@@ -32,10 +32,10 @@ def test_bulk_insert_empty(client_with_api_key_write_permission: TestClient) -> 
 def test_bulk_insert(
     client_with_api_key_write_permission: TestClient,
     post_payload: Payload,
-    dummy_data: list[AnyExtractedModel],
+    dummy_data: dict[str, AnyExtractedModel],
 ) -> None:
     # get expected identifiers from the dummy data
-    expected_identifiers = sorted(d.identifier for d in dummy_data)
+    expected_identifiers = sorted(d.identifier for d in dummy_data.values())
 
     # post the dummy data to the ingest endpoint
     response = client_with_api_key_write_permission.post(
@@ -77,7 +77,7 @@ def test_bulk_insert_malformed(
 def test_bulk_insert_mocked(
     client_with_api_key_write_permission: TestClient,
     post_payload: Payload,
-    dummy_data: list[AnyExtractedModel],
+    dummy_data: dict[str, AnyExtractedModel],
     mocked_graph: MockedGraph,
 ) -> None:
     mocked_graph.return_value = []
@@ -86,5 +86,5 @@ def test_bulk_insert_mocked(
     )
     assert response.status_code == 201, response.text
     assert sorted(response.json()["identifiers"]) == sorted(
-        d.identifier for d in dummy_data
+        d.identifier for d in dummy_data.values()
     )
