@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   so they can be reused more easily outside of the endpoint code
 - use starlette status code constants instead of plain integers for readability
 - BREAKING: rework `create_rule` connector method and endpoint to use RuleSets
+- improved test coverage for graph connector and wikidata endpoint
 
 ### Deprecated
 

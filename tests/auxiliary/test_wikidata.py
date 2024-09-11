@@ -3,10 +3,14 @@ from fastapi.testclient import TestClient
 from pytest import MonkeyPatch
 
 from mex.backend.auxiliary import wikidata
-from mex.common.models import (
-    ExtractedPrimarySource,
-)
+from mex.backend.auxiliary.wikidata import extracted_primary_source_wikidata
+from mex.common.models import ExtractedPrimarySource
 from mex.common.types import Text
+
+
+def test_extracted_primary_source_wikidata() -> None:
+    primary_source = extracted_primary_source_wikidata()
+    assert primary_source.identifierInPrimarySource == "wikidata"
 
 
 @pytest.mark.usefixtures("mocked_wikidata")
