@@ -2,7 +2,6 @@ from collections.abc import Mapping
 from typing import Any, Final
 
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.graph.models import Result
 from mex.common.exceptions import MExError
 from mex.common.models import (
     ADDITIVE_MODEL_CLASSES_BY_NAME,
@@ -23,22 +22,21 @@ MODEL_CLASS_LOOKUP_BY_FIELD_NAME: Final[dict[str, Mapping[str, type[AnyRuleModel
 }
 
 
-def _transform_graph_result_to_rule_set_response(
-    graph_result: Result,
+def transform_raw_rules_to_rule_set_response(
+    raw_rules: list[dict[str, Any]],
 ) -> AnyRuleSetResponse:
-    """Transform the results of fetching a rule triple into a rule set response."""
+    """Transform a set of plain rules into a rule set response."""
     stem_types: list[str] = []
     stable_target_ids: list[str] = []
     response: dict[str, Any] = {}
     model: type[AnyRuleModel] | None
-    rules = graph_result.one()["items"]
 
-    if len(rules) != 3:
+    if len(raw_rules) != 3:
         raise MExError("inconsistent rule item count")
 
-    for rule in rules:
+    for rule in raw_rules:
         for field_name, model_class_lookup in MODEL_CLASS_LOOKUP_BY_FIELD_NAME.items():
-            if model := model_class_lookup.get(rule.get("entityType")):
+            if model := model_class_lookup.get(str(rule.get("entityType"))):
                 response[field_name] = rule
                 stem_types.append(model.stemType)
                 stable_target_ids.extend(rule.pop("stableTargetId", []))
@@ -76,7 +74,7 @@ def create_and_get_rule_set(
         0,
         3,
     )
-    return _transform_graph_result_to_rule_set_response(graph_result)
+    return transform_raw_rules_to_rule_set_response(graph_result.one()["items"])
 
 
 def get_rule_set_from_graph(
@@ -91,7 +89,7 @@ def get_rule_set_from_graph(
         0,
         3,
     )
-    return _transform_graph_result_to_rule_set_response(graph_result)
+    return transform_raw_rules_to_rule_set_response(graph_result.one()["items"])
 
 
 def update_and_get_rule_set(
