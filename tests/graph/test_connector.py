@@ -7,6 +7,7 @@ from pytest import MonkeyPatch
 from mex.backend.graph import connector as connector_module
 from mex.backend.graph.connector import MEX_EXTRACTED_PRIMARY_SOURCE, GraphConnector
 from mex.backend.graph.query import QueryBuilder
+from mex.common.exceptions import MExError
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_IDENTIFIER,
     MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
@@ -28,6 +29,22 @@ def mocked_query_builder(monkeypatch: MonkeyPatch) -> None:
         ).strip()
 
     monkeypatch.setattr(QueryBuilder, "__getattr__", __getattr__)
+
+
+@pytest.mark.usefixtures("mocked_query_builder")
+def test_check_connectivity_and_authentication(mocked_graph: MockedGraph) -> None:
+    mocked_graph.return_value = [{"currentStatus": "online"}]
+    graph = GraphConnector.get()
+    graph._check_connectivity_and_authentication()
+
+    assert mocked_graph.call_args_list[-1].args == ("fetch_database_status()", {})
+
+
+def test_check_connectivity_and_authentication_error(mocked_graph: MockedGraph) -> None:
+    mocked_graph.return_value = [{"currentStatus": "offline"}]
+    graph = GraphConnector.get()
+    with pytest.raises(MExError, match="Database is offline"):
+        graph._check_connectivity_and_authentication()
 
 
 @pytest.mark.usefixtures("mocked_query_builder")
@@ -147,6 +164,13 @@ merge_edges(
             "stable_target_id": MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
         },
     )
+
+
+def test_mocked_graph_commit_raises_error(mocked_graph: MockedGraph) -> None:
+    mocked_graph.run.side_effect = Exception("query failed")
+    connector = GraphConnector.get()
+    with pytest.raises(Exception, match="query failed"):
+        connector.commit("RETURN 1;")
 
 
 @pytest.mark.usefixtures("mocked_query_builder")

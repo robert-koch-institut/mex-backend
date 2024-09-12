@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BREAKING: rework `create_rule` connector method and endpoint to use RuleSets
 - merged endpoint returns actual merged items. was: extracted items presented as merged
   items
+- improved test coverage for graph connector and wikidata endpoint
 
 ### Deprecated
 
