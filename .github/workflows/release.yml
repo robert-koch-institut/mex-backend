@@ -85,6 +85,7 @@ jobs:
   containerize:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    needs: release
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
