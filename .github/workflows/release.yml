@@ -123,9 +123,9 @@ jobs:
 
       - name: 'Build Inventory Image'
         run: |
-          docker build .
-          --tag ghcr.io/robert-koch-institut/mex-backend:latest
-          --tag ghcr.io/robert-koch-institut/mex-backend:${{ github.sha }}
+          docker build . \
+          --tag ghcr.io/robert-koch-institut/mex-backend:latest \
+          --tag ghcr.io/robert-koch-institut/mex-backend:${{ github.sha }} \
           --tag ghcr.io/robert-koch-institut/mex-backend:${{ needs.release.outputs.tag }}
           docker push ghcr.io/robert-koch-institut/mex-backend:latest
 
