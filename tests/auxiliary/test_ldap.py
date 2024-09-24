@@ -57,29 +57,6 @@ def test_transform_ldap_persons_to_mex_persons(
             == expected
     )
 
-# @pytest.mark.usefixtures("mocked_ldap")
-# def test_search_persons_in_ldap_mocked(
-#     client_with_api_key_read_permission: TestClient, monkeypatch: MonkeyPatch
-# ) -> None:
-#     def extracted_primary_source_ldap() -> ExtractedPrimarySource:
-#         return extracted_primary_source_ldap()
-
-#     monkeypatch.setattr(
-#         ldap, "extracted_primary_source_ldap", extracted_primary_source_ldap
-#     )
-
-#     #expected_total = 3
-#     #expected_organization_identifier = "Q679041"
-#     #expected_organization_official_name = [
-#     #    {"value": "Robert Koch Institute", "language": "en"},
-#     #    {"value": "Robert Koch-Institut", "language": "de"},
-#     #]
-#     expected_total=1
-#     persons = client_with_api_key_read_permission.get(
-#         "/v0/ldap", params={"q": "Sample"}
-#     ).json()
-
-#     assert persons["total"] == expected_total
 
 @pytest.mark.usefixtures("mocked_ldap")
 def test_search_persons_in_ldap_mocked(
@@ -94,17 +71,10 @@ def test_search_persons_in_ldap_mocked(
     response = client_with_api_key_read_permission.get(
         "/v0/ldap", params={"q": "Sample"}
     ).json()        
-    # Überprüfe den Statuscode
     assert response.status_code == 200
-    # Überprüfe die Struktur der Antwort
     data = response.json()
-    #"Response should contain 'total' key"
     assert "total" in data
-    #"Response should contain 'items' key"
     assert "items" in data
-    # Überprüfe die Gesamtanzahl der gefundenen Personen
     #assert data["total"] == 1
-    # Überprüfe die Anzahl der zurückgegebenen Elemente
     assert len(data["items"]) == 1
-    # Überprüfe die Namen der zurückgegebenen Personen
     assert data["items"][0]["givenName"] == "Sam"
