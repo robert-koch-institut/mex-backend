@@ -38,6 +38,7 @@ from mex.common.types import (
     Text,
     TextLanguage,
     Theme,
+    YearMonthDay,
 )
 
 pytest_plugins = ("mex.common.testing.plugin",)
@@ -189,7 +190,7 @@ def isolate_graph_database(
 
 
 @pytest.fixture()
-def dummy_data() -> list[AnyExtractedModel]:
+def dummy_data() -> dict[str, AnyExtractedModel]:
     """Create a set of interlinked dummy data."""
     primary_source_1 = ExtractedPrimarySource(
         hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -215,6 +216,12 @@ def dummy_data() -> list[AnyExtractedModel]:
         identifierInPrimarySource="ou-1",
         name=[Text(value="Unit 1", language=TextLanguage.EN)],
     )
+    organizational_unit_2 = ExtractedOrganizationalUnit(
+        hadPrimarySource=primary_source_2.stableTargetId,
+        identifierInPrimarySource="ou-1.6",
+        name=[Text(value="Unit 1.6", language=TextLanguage.EN)],
+        parentUnit=organizational_unit_1.stableTargetId,
+    )
     activity_1 = ExtractedActivity(
         abstract=[
             Text(value="An active activity.", language=TextLanguage.EN),
@@ -228,36 +235,39 @@ def dummy_data() -> list[AnyExtractedModel]:
         hadPrimarySource=primary_source_1.stableTargetId,
         identifierInPrimarySource="a-1",
         responsibleUnit=[organizational_unit_1.stableTargetId],
+        start=[YearMonthDay("2014-08-24")],
         theme=[Theme["DIGITAL_PUBLIC_HEALTH"]],
         title=[Text(value="Aktivität 1", language=TextLanguage.DE)],
         website=[Link(title="Activity Homepage", url="https://activity-1")],
     )
-    return [
-        primary_source_1,
-        primary_source_2,
-        contact_point_1,
-        contact_point_2,
-        organizational_unit_1,
-        activity_1,
-    ]
+    return {
+        "primary_source_1": primary_source_1,
+        "primary_source_2": primary_source_2,
+        "contact_point_1": contact_point_1,
+        "contact_point_2": contact_point_2,
+        "organizational_unit_1": organizational_unit_1,
+        "organizational_unit_2": organizational_unit_2,
+        "activity_1": activity_1,
+    }
 
 
 @pytest.fixture()
-def load_dummy_data(dummy_data: list[AnyExtractedModel]) -> list[AnyExtractedModel]:
+def load_dummy_data(
+    dummy_data: dict[str, AnyExtractedModel],
+) -> dict[str, AnyExtractedModel]:
     """Ingest dummy data into the graph."""
-    GraphConnector.get().ingest(dummy_data)
+    GraphConnector.get().ingest(list(dummy_data.values()))
     return dummy_data
 
 
 @pytest.fixture()
 def additive_organizational_unit(
-    dummy_data: list[AnyExtractedModel],
+    dummy_data: dict[str, AnyExtractedModel],
 ) -> AdditiveOrganizationalUnit:
-    organizational_unit_1 = dummy_data[4]
     return AdditiveOrganizationalUnit(
         name=[Text(value="Unit 1.7", language=TextLanguage.EN)],
         website=[Link(title="Unit Homepage", url="https://unit-1-7")],
-        parentUnit=organizational_unit_1.stableTargetId,
+        parentUnit=dummy_data["organizational_unit_1"].stableTargetId,
     )
 
 
@@ -275,8 +285,12 @@ def organizational_unit_rule_set_request(
 @pytest.fixture()
 def load_dummy_rule_set(
     organizational_unit_rule_set_request: OrganizationalUnitRuleSetRequest,
+    dummy_data: dict[str, AnyExtractedModel],
 ) -> OrganizationalUnitRuleSetResponse:
     return cast(
         OrganizationalUnitRuleSetResponse,
-        create_and_get_rule_set(organizational_unit_rule_set_request),
+        create_and_get_rule_set(
+            organizational_unit_rule_set_request,
+            stable_target_id=dummy_data["organizational_unit_2"].stableTargetId,
+        ),
     )

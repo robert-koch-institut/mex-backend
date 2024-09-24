@@ -17,8 +17,7 @@ from mex.backend.fields import (
 )
 from mex.backend.graph.models import Result
 from mex.backend.graph.query import QueryBuilder
-from mex.backend.graph.transform import expand_references_in_search_result
-from mex.backend.serialization import to_primitive
+from mex.backend.graph.transform import expand_references_in_search_result, to_primitive
 from mex.backend.settings import BackendSettings
 from mex.common.connector import BaseConnector
 from mex.common.exceptions import MExError
@@ -33,7 +32,6 @@ from mex.common.models import (
     AnyExtractedModel,
     AnyRuleModel,
     AnyRuleSetRequest,
-    AnyRuleSetResponse,
     BasePrimarySource,
     ExtractedPrimarySource,
 )
@@ -253,6 +251,45 @@ class GraphConnector(BaseConnector):
             limit,
         )
 
+    def fetch_merged_items(
+        self,
+        query_string: str | None,
+        stable_target_id: str | None,
+        entity_type: Sequence[str] | None,
+        skip: int,
+        limit: int,
+    ) -> Result:
+        """Query the graph for merged items.
+
+        Args:
+            query_string: Optional full text search query term
+            stable_target_id: Optional stable target ID filter
+            entity_type: Optional merged entity type filter
+            skip: How many items to skip for pagination
+            limit: How many items to return at most
+
+        Returns:
+            Graph result instance
+        """
+        query_builder = QueryBuilder.get()
+        query = query_builder.fetch_merged_items(
+            filter_by_query_string=bool(query_string),
+            filter_by_stable_target_id=bool(stable_target_id),
+        )
+        result = self.commit(
+            query,
+            query_string=query_string,
+            stable_target_id=stable_target_id,
+            labels=entity_type or list(MERGED_MODEL_CLASSES_BY_NAME),
+            skip=skip,
+            limit=limit,
+        )
+        for query_result in result.all():
+            for item in query_result["items"]:
+                for component in item["components"]:
+                    expand_references_in_search_result(component)
+        return result
+
     def fetch_identities(
         self,
         had_primary_source: Identifier | None = None,
@@ -287,6 +324,27 @@ class GraphConnector(BaseConnector):
             stable_target_id=stable_target_id,
             limit=limit,
         )
+
+    def exists_merged_item(
+        self, stable_target_id: Identifier, stem_types: list[str] | None = None
+    ) -> bool:
+        """Validate whether a merged item with the given identifier and type exists.
+
+        Args:
+            stable_target_id: Identifier of the to-be-checked merged item
+            stem_types: Allowed stem types of the to-be-checked merged item
+
+        Returns:
+            Boolean representing the existence of the requested item
+        """
+        if stem_types:
+            merged_types = [ensure_prefix(t, "Merged") for t in stem_types]
+        else:
+            merged_types = list(MERGED_MODEL_CLASSES_BY_NAME)
+        query_builder = QueryBuilder.get()
+        query = query_builder.exists_merged_item(node_labels=merged_types)
+        result = self.commit(query, identifier=stable_target_id)
+        return bool(result["exists"])
 
     def _merge_item(
         self,
@@ -417,7 +475,7 @@ class GraphConnector(BaseConnector):
 
     def create_rule_set(
         self,
-        model: AnyRuleSetRequest | AnyRuleSetResponse,
+        model: AnyRuleSetRequest,
         stable_target_id: Identifier,
     ) -> None:
         """Create a new rule set to be applied to one merged item.

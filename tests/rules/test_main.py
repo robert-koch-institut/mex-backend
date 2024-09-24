@@ -248,5 +248,127 @@ def test_get_rule_set(
             "website": [],
         },
         "$type": "OrganizationalUnitRuleSetResponse",
-        "stableTargetId": "bFQoRhcVH5DHUA",
+        "stableTargetId": "bFQoRhcVH5DHUB",
     }
+
+
+@pytest.mark.integration
+def test_update_rule_set_not_found(
+    client_with_api_key_write_permission: TestClient,
+) -> None:
+    response = client_with_api_key_write_permission.put(
+        "/v0/rule-set/thisIdDoesNotExist",
+        json={
+            "additive": {"$type": "AdditiveOrganizationalUnit"},
+            "preventive": {"$type": "PreventiveOrganizationalUnit"},
+            "subtractive": {"$type": "SubtractiveOrganizationalUnit"},
+        },
+    )
+    assert "no merged item found" in response.text
+
+
+@pytest.mark.integration
+def test_update_rule_set(
+    client_with_api_key_write_permission: TestClient,
+    load_dummy_rule_set: OrganizationalUnitRuleSetResponse,
+) -> None:
+    response = client_with_api_key_write_permission.put(
+        f"/v0/rule-set/{load_dummy_rule_set.stableTargetId}",
+        json={
+            "additive": {
+                "$type": "AdditiveOrganizationalUnit",
+                "name": [{"value": "A new unit name", "language": "en"}],
+                "website": [],
+            },
+            "preventive": {
+                "$type": "PreventiveOrganizationalUnit",
+            },
+            "subtractive": {
+                "$type": "SubtractiveOrganizationalUnit",
+            },
+        },
+    )
+    assert response.status_code == 200, response.text
+    assert response.json() == {
+        "additive": {
+            "parentUnit": None,
+            "name": [{"value": "A new unit name", "language": "en"}],
+            "alternativeName": [],
+            "email": [],
+            "shortName": [],
+            "unitOf": [],
+            "website": [],
+            "$type": "AdditiveOrganizationalUnit",
+        },
+        "subtractive": {
+            "parentUnit": [],
+            "name": [],
+            "alternativeName": [],
+            "email": [],
+            "shortName": [],
+            "unitOf": [],
+            "website": [],
+            "$type": "SubtractiveOrganizationalUnit",
+        },
+        "preventive": {
+            "$type": "PreventiveOrganizationalUnit",
+            "alternativeName": [],
+            "email": [],
+            "name": [],
+            "parentUnit": [],
+            "shortName": [],
+            "unitOf": [],
+            "website": [],
+        },
+        "$type": "OrganizationalUnitRuleSetResponse",
+        "stableTargetId": "bFQoRhcVH5DHUB",
+    }
+    assert get_graph() == [
+        {"label": "AdditiveOrganizationalUnit", "email": []},
+        {"label": "SubtractiveOrganizationalUnit", "email": []},
+        {
+            "start": "00000000000001",
+            "end": "00000000000000",
+            "label": "hadPrimarySource",
+            "position": 0,
+        },
+        {
+            "start": "00000000000001",
+            "end": "00000000000000",
+            "label": "stableTargetId",
+            "position": 0,
+        },
+        {
+            "start": "AdditiveOrganizationalUnit",
+            "end": "Text",
+            "label": "name",
+            "position": 0,
+        },
+        {
+            "start": "AdditiveOrganizationalUnit",
+            "end": "bFQoRhcVH5DHUB",
+            "label": "stableTargetId",
+            "position": 0,
+        },
+        {
+            "start": "PreventiveOrganizationalUnit",
+            "end": "bFQoRhcVH5DHUB",
+            "label": "stableTargetId",
+            "position": 0,
+        },
+        {
+            "start": "SubtractiveOrganizationalUnit",
+            "end": "bFQoRhcVH5DHUB",
+            "label": "stableTargetId",
+            "position": 0,
+        },
+        {"identifier": "00000000000000", "label": "MergedPrimarySource"},
+        {
+            "identifier": "00000000000001",
+            "identifierInPrimarySource": "mex",
+            "label": "ExtractedPrimarySource",
+        },
+        {"identifier": "bFQoRhcVH5DHUB", "label": "MergedOrganizationalUnit"},
+        {"label": "PreventiveOrganizationalUnit"},
+        {"language": "en", "label": "Text", "value": "A new unit name"},
+    ]

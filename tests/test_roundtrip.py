@@ -9,10 +9,11 @@ from mex.common.models import AnyExtractedModel
 
 @pytest.mark.integration
 def test_graph_ingest_and_query_roundtrip(
-    load_dummy_data: list[AnyExtractedModel],
+    load_dummy_data: dict[str, AnyExtractedModel],
 ) -> None:
     seeded_models = sorted(
-        [*load_dummy_data, MEX_EXTRACTED_PRIMARY_SOURCE], key=lambda x: x.identifier
+        [*load_dummy_data.values(), MEX_EXTRACTED_PRIMARY_SOURCE],
+        key=lambda x: x.identifier,
     )
 
     connector = GraphConnector.get()
