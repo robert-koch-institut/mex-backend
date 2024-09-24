@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 from unittest.mock import MagicMock, Mock
+from uuid import UUID
 
 import pytest
 import requests
@@ -12,8 +13,65 @@ from mex.common.wikidata.connector import (
     WikidataQueryServiceConnector,
 )
 
+from mex.common.ldap.connector import(
+    LDAPConnector
+)
+from mex.common.ldap.extract import(
+    get_count_of_found_persons_by_name, get_persons_by_name
+)
+from mex.common.models import ExtractedPerson, ExtractedPrimarySource
+
 TEST_DATA_DIR = Path(__file__).parent / "test_data"
 
+
+@pytest.fixture()
+def mocked_ldap(monkeypatch: MonkeyPatch) -> None:
+    response_query = Mock(spec=Response, status_code=200)
+
+    session = MagicMock(spec=requests.Session)
+    session.get = MagicMock(side_effect=[response_query])
+
+    def mocked_init(self: LDAPConnector) -> None:
+        self.session = session
+    # Mock für die Funktion get_count_of_found_persons_by_name
+    monkeypatch.setattr(get_count_of_found_persons_by_name, "get_count_of_found_persons_by_name", MagicMock(return_value=1))
+
+    # Mock für die Funktion get_persons_by_name
+    mock_persons = [
+        {
+        "company": "RKI",
+        "department": "XY",
+        "departmentNumber": "XY2",
+        "displayName": "Sample, Sam",
+        "employeeID": "1024",
+        "givenName": ["Sam"],
+        "mail": ["SampleS@mail.tld"],
+        "objectGUID": UUID(int=0, version=4),
+        "ou": ["XY"],
+        "sAMAccountName": "SampleS",
+        "sn": "Sample",
+    }
+    ]
+    monkeypatch.setattr(get_persons_by_name, "get_persons_by_name", MagicMock(return_value=mock_persons))
+
+    # Mock für die Funktion transform_ldap_persons_to_mex_persons
+    # def mock_transform_ldap_persons_to_mex_persons(persons, primary_source, organizational_units):
+    #     return [
+    #         ExtractedPerson(name=person["name"], id=person["id"]) for person in persons[0]
+    #     ]
+
+    # monkeypatch.setattr(LDAPConnector, "transform_ldap_persons_to_mex_persons", mock_transform_ldap_persons_to_mex_persons)
+
+    # Mock für die Funktion extracted_primary_source_ldap
+    # def mock_extracted_primary_source_ldap() -> ExtractedPrimarySource:
+    #     return ExtractedPrimarySource(
+    #         hadPrimarySource="ldap_source_id",
+    #         identifierInPrimarySource="ldap",
+    #         title=["LDAP"],
+    #         entityType="ExtractedPrimarySource",
+    #     )
+
+    # monkeypatch.setattr(LDAPConnector, "extracted_primary_source_ldap", mock_extracted_primary_source_ldap)
 
 @pytest.fixture()
 def mocked_wikidata(monkeypatch: MonkeyPatch) -> None:

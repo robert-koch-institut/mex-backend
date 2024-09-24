@@ -10,7 +10,7 @@ requires-python = "<3.13,>=3.11"
 dependencies = [
     "fastapi>=0.112.0,<1",
     "httpx>=0.27.0,<1",
-    "mex-common @ git+https://github.com/robert-koch-institut/mex-common.git@0.34.0",
+    "mex-common @ git+https://github.com/robert-koch-institut/mex-common.git@feature/mx-1660-ldap-search-endpoint",
     "neo4j>=5.23.1,<6",
     "pydantic>=2.8.2,<3",
     "uvicorn[standard]>=0.30.5,<1",
