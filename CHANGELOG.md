@@ -12,8 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changes
 
 - silence neo4j missing label warnings, because we will likely never need all labels
-- sort search results by `elementId` instead of `identifier`, which is missing on rules,
-  this ensures a more stable sort order
+- sort search results by `identifier` and `entityType` to ensure a more stable order
 
 ### Deprecated
 

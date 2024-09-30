@@ -111,7 +111,7 @@ CALL {
     }
     WITH n, collect(ref) as refs
     RETURN n{.*, entityType: head(labels(n)), _refs: refs}
-    ORDER BY elementId(n) ASC
+    ORDER BY n.identifier, n.entityType ASC
     SKIP $skip
     LIMIT $limit
 }
@@ -150,7 +150,7 @@ CALL {
     }
     WITH n, collect(ref) as refs
     RETURN n{.*, entityType: head(labels(n)), _refs: refs}
-    ORDER BY elementId(n) ASC
+    ORDER BY n.identifier, n.entityType ASC
     SKIP $skip
     LIMIT $limit
 }
@@ -222,7 +222,7 @@ CALL {
         } ELSE NULL END as ref
     }
     WITH merged, n, collect(ref) as refs
-    ORDER BY merged.identifier, elementId(n) ASC
+    ORDER BY merged.identifier ASC
     WITH merged, collect(n{.*, entityType: head(labels(n)), _refs: refs}) as n
     RETURN merged{entityType: head(labels(merged)), identifier: merged.identifier, components: n}
     SKIP $skip
@@ -265,7 +265,7 @@ CALL {
         } ELSE NULL END as ref
     }
     WITH merged, n, collect(ref) as refs
-    ORDER BY merged.identifier, elementId(n) ASC
+    ORDER BY merged.identifier ASC
     WITH merged, collect(n{.*, entityType: head(labels(n)), _refs: refs}) as n
     RETURN merged{entityType: head(labels(merged)), identifier: merged.identifier, components: n}
     SKIP $skip
