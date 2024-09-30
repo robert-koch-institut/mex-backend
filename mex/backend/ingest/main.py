@@ -12,4 +12,7 @@ def ingest_extracted_items(request: BulkIngestRequest) -> BulkIngestResponse:
     """Ingest batches of extracted items grouped by their type."""
     connector = GraphConnector.get()
     identifiers = connector.ingest(request.items)
+    from mex.common.logging import logger
+
+    logger.info(request.model_dump_json(indent=2))
     return BulkIngestResponse(identifiers=identifiers)

@@ -59,7 +59,7 @@ CALL {
     }
     WITH n, collect(ref) as refs
     RETURN n{.*, entityType: head(labels(n)), _refs: refs}
-    ORDER BY n.identifier ASC
+    ORDER BY elementId(n) ASC
     SKIP $skip
     LIMIT $limit
 }
