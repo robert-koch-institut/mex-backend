@@ -22,8 +22,11 @@ from mex.backend.security import has_read_access, has_write_access
 from mex.backend.settings import BackendSettings
 from mex.common.cli import entrypoint
 from mex.common.connector import CONNECTOR_STORE
-from mex.common.types import EXTRACTED_IDENTIFIER_CLASSES, MERGED_IDENTIFIER_CLASSES
-from mex.common.types import IDENTIFIER_PATTERN as MEX_ID_PATTERN
+from mex.common.types import (
+    EXTRACTED_IDENTIFIER_CLASSES,
+    IDENTIFIER_PATTERN,
+    MERGED_IDENTIFIER_CLASSES,
+)
 
 
 def create_openapi_schema() -> dict[str, Any]:
@@ -54,7 +57,7 @@ def create_openapi_schema() -> dict[str, Any]:
             "title": name,
             "type": "string",
             "description": identifier.__doc__,
-            "pattern": MEX_ID_PATTERN,
+            "pattern": IDENTIFIER_PATTERN,
         }
 
     app.openapi_schema = openapi_schema
