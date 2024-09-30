@@ -499,39 +499,39 @@ def test_fetch_merged_items() -> None:
         {
             "items": [
                 {
+                    "identifier": "bFQoRhcVH5DHUB",
                     "components": [
                         {
+                            "entityType": "AdditiveOrganizationalUnit",
                             "email": [],
-                            "entityType": "ExtractedOrganizationalUnit",
-                            "hadPrimarySource": ["bFQoRhcVH5DHUt"],
-                            "identifier": "bFQoRhcVH5DHUA",
-                            "identifierInPrimarySource": "ou-1.6",
-                            "name": [{"language": "en", "value": "Unit 1.6"}],
                             "parentUnit": ["bFQoRhcVH5DHUv"],
                             "stableTargetId": ["bFQoRhcVH5DHUB"],
+                            "name": [{"language": "en", "value": "Unit 1.7"}],
+                            "website": [
+                                {"title": "Unit Homepage", "url": "https://unit-1-7"}
+                            ],
+                        },
+                        {
+                            "identifierInPrimarySource": "ou-1.6",
+                            "identifier": "bFQoRhcVH5DHUA",
+                            "entityType": "ExtractedOrganizationalUnit",
+                            "email": [],
+                            "parentUnit": ["bFQoRhcVH5DHUv"],
+                            "hadPrimarySource": ["bFQoRhcVH5DHUt"],
+                            "stableTargetId": ["bFQoRhcVH5DHUB"],
+                            "name": [{"language": "en", "value": "Unit 1.6"}],
                         },
                         {
                             "entityType": "PreventiveOrganizationalUnit",
                             "stableTargetId": ["bFQoRhcVH5DHUB"],
                         },
                         {
-                            "email": [],
                             "entityType": "SubtractiveOrganizationalUnit",
-                            "stableTargetId": ["bFQoRhcVH5DHUB"],
-                        },
-                        {
                             "email": [],
-                            "entityType": "AdditiveOrganizationalUnit",
-                            "name": [{"language": "en", "value": "Unit 1.7"}],
-                            "parentUnit": ["bFQoRhcVH5DHUv"],
                             "stableTargetId": ["bFQoRhcVH5DHUB"],
-                            "website": [
-                                {"title": "Unit Homepage", "url": "https://unit-1-7"}
-                            ],
                         },
                     ],
                     "entityType": "MergedOrganizationalUnit",
-                    "identifier": "bFQoRhcVH5DHUB",
                 }
             ],
             "total": 8,

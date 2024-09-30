@@ -222,7 +222,7 @@ CALL {
         } ELSE NULL END as ref
     }
     WITH merged, n, collect(ref) as refs
-    ORDER BY merged.identifier ASC
+    ORDER BY merged.identifier, head(labels(n)) ASC
     WITH merged, collect(n{.*, entityType: head(labels(n)), _refs: refs}) as n
     RETURN merged{entityType: head(labels(merged)), identifier: merged.identifier, components: n}
     SKIP $skip
@@ -265,7 +265,7 @@ CALL {
         } ELSE NULL END as ref
     }
     WITH merged, n, collect(ref) as refs
-    ORDER BY merged.identifier ASC
+    ORDER BY merged.identifier, head(labels(n)) ASC
     WITH merged, collect(n{.*, entityType: head(labels(n)), _refs: refs}) as n
     RETURN merged{entityType: head(labels(merged)), identifier: merged.identifier, components: n}
     SKIP $skip
@@ -392,7 +392,7 @@ CALL {
     MERGE (source)-[edge:agendaSignedOff {position: $ref_positions[2]}]->(target_2)
     RETURN edge
 }
-WITH source, collect(edge) as edges
+WITH source, count(edge) as merged, collect(edge) as edges
 CALL {
     WITH source, edges
     MATCH (source)-[outdated_edge]->(:MergedThis|MergedThat|MergedOther)
@@ -400,7 +400,7 @@ CALL {
     DELETE outdated_edge
     RETURN count(outdated_edge) as pruned
 }
-RETURN count(edges) as merged, pruned, edges;""",
+RETURN merged, pruned, edges;""",
         ),
         (
             [],
@@ -409,7 +409,7 @@ MATCH (source:ExtractedThat {identifier: $identifier})-[stableTargetId:stableTar
 CALL {
     RETURN null as edge
 }
-WITH source, collect(edge) as edges
+WITH source, count(edge) as merged, collect(edge) as edges
 CALL {
     WITH source, edges
     MATCH (source)-[outdated_edge]->(:MergedThis|MergedThat|MergedOther)
@@ -417,7 +417,7 @@ CALL {
     DELETE outdated_edge
     RETURN count(outdated_edge) as pruned
 }
-RETURN count(edges) as merged, pruned, edges;""",
+RETURN merged, pruned, edges;""",
         ),
     ],
     ids=["has-ref-labels", "no-ref-labels"],
