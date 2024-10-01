@@ -1,11 +1,12 @@
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
+from typing import Any
 
 import pytest
 from black import Mode, format_str
 from pytest import MonkeyPatch
 
 from mex.backend.graph import connector as connector_module
-from mex.backend.graph.connector import GraphConnector
+from mex.backend.graph.connector import MEX_EXTRACTED_PRIMARY_SOURCE, GraphConnector
 from mex.backend.graph.query import QueryBuilder
 from mex.common.exceptions import MExError
 from mex.common.models import (
@@ -237,47 +238,164 @@ fetch_extracted_or_rule_items(
     }
 
 
+@pytest.mark.parametrize(
+    ("args", "expected"),
+    [
+        (
+            ("Unit", None, None, 0, 10),
+            {
+                "items": [
+                    {
+                        "identifierInPrimarySource": "ou-1.6",
+                        "identifier": "bFQoRhcVH5DHUA",
+                        "entityType": "ExtractedOrganizationalUnit",
+                        "email": [],
+                        "hadPrimarySource": ["bFQoRhcVH5DHUt"],
+                        "parentUnit": ["bFQoRhcVH5DHUv"],
+                        "stableTargetId": ["bFQoRhcVH5DHUB"],
+                        "name": [{"language": "en", "value": "Unit 1.6"}],
+                    },
+                    {
+                        "identifierInPrimarySource": "ou-1",
+                        "identifier": "bFQoRhcVH5DHUu",
+                        "entityType": "ExtractedOrganizationalUnit",
+                        "email": [],
+                        "hadPrimarySource": ["bFQoRhcVH5DHUt"],
+                        "stableTargetId": ["bFQoRhcVH5DHUv"],
+                        "name": [{"language": "en", "value": "Unit 1"}],
+                    },
+                ],
+                "total": 2,
+            },
+        ),
+        (
+            (None, None, None, 0, 1),
+            {
+                "items": [
+                    {
+                        "entityType": MEX_EXTRACTED_PRIMARY_SOURCE.entityType,
+                        "hadPrimarySource": [
+                            MEX_EXTRACTED_PRIMARY_SOURCE.hadPrimarySource
+                        ],
+                        "identifier": MEX_EXTRACTED_PRIMARY_SOURCE.identifier,
+                        "identifierInPrimarySource": MEX_EXTRACTED_PRIMARY_SOURCE.identifierInPrimarySource,
+                        "stableTargetId": [MEX_EXTRACTED_PRIMARY_SOURCE.stableTargetId],
+                    }
+                ],
+                "total": 8,
+            },
+        ),
+        (
+            ("Cool", None, None, 0, 10),
+            {
+                "items": [
+                    {
+                        "identifier": "bFQoRhcVH5DHUs",
+                        "identifierInPrimarySource": "ps-2",
+                        "entityType": "ExtractedPrimarySource",
+                        "version": "Cool Version v2.13",
+                        "hadPrimarySource": ["00000000000000"],
+                        "stableTargetId": ["bFQoRhcVH5DHUt"],
+                    }
+                ],
+                "total": 1,
+            },
+        ),
+        (
+            ("1.6", None, None, 0, 10),
+            {
+                "items": [
+                    {
+                        "identifierInPrimarySource": "ou-1.6",
+                        "identifier": "bFQoRhcVH5DHUA",
+                        "entityType": "ExtractedOrganizationalUnit",
+                        "email": [],
+                        "hadPrimarySource": ["bFQoRhcVH5DHUt"],
+                        "parentUnit": ["bFQoRhcVH5DHUv"],
+                        "stableTargetId": ["bFQoRhcVH5DHUB"],
+                        "name": [{"language": "en", "value": "Unit 1.6"}],
+                    },
+                ],
+                "total": 1,
+            },
+        ),
+        (
+            (None, "thisIdDoesNotExist", None, 0, 1),
+            {
+                "items": [],
+                "total": 0,
+            },
+        ),
+        (
+            (None, "bFQoRhcVH5DHUB", None, 0, 10),
+            {
+                "items": [
+                    {
+                        "identifierInPrimarySource": "ou-1.6",
+                        "identifier": "bFQoRhcVH5DHUA",
+                        "entityType": "ExtractedOrganizationalUnit",
+                        "email": [],
+                        "hadPrimarySource": ["bFQoRhcVH5DHUt"],
+                        "parentUnit": ["bFQoRhcVH5DHUv"],
+                        "stableTargetId": ["bFQoRhcVH5DHUB"],
+                        "name": [{"language": "en", "value": "Unit 1.6"}],
+                    },
+                ],
+                "total": 1,
+            },
+        ),
+        (
+            (None, None, ["ExtractedActivity"], 0, 10),
+            {
+                "items": [
+                    {
+                        "identifier": "bFQoRhcVH5DHUC",
+                        "identifierInPrimarySource": "a-1",
+                        "fundingProgram": [],
+                        "entityType": "ExtractedActivity",
+                        "start": ["2014-08-24"],
+                        "end": [],
+                        "theme": ["https://mex.rki.de/item/theme-3"],
+                        "activityType": [],
+                        "contact": [
+                            "bFQoRhcVH5DHUx",
+                            "bFQoRhcVH5DHUz",
+                            "bFQoRhcVH5DHUv",
+                        ],
+                        "responsibleUnit": ["bFQoRhcVH5DHUv"],
+                        "hadPrimarySource": ["bFQoRhcVH5DHUr"],
+                        "stableTargetId": ["bFQoRhcVH5DHUD"],
+                        "abstract": [
+                            {"language": "en", "value": "An active activity."},
+                            {"value": "Une activité active."},
+                        ],
+                        "website": [
+                            {"title": "Activity Homepage", "url": "https://activity-1"}
+                        ],
+                        "title": [{"language": "de", "value": "Aktivität 1"}],
+                    }
+                ],
+                "total": 1,
+            },
+        ),
+    ],
+    ids=[
+        "search in nested nodes",
+        "no filter by anything but pagination is 1",
+        "search in inline strings",
+        "search in nested nodes and in inline strings",
+        "search for non-existent stableTargetId",
+        "search for existing stableTargetId",
+        "search for specific entityType",
+    ],
+)
 @pytest.mark.usefixtures("load_dummy_data")
 @pytest.mark.integration
-def test_fetch_extracted_items() -> None:
+def test_fetch_extracted_items(args: Iterable[Any], expected: dict[str, Any]) -> None:
     connector = GraphConnector.get()
 
-    result = connector.fetch_extracted_items("Unit", None, None, 0, 10)
-    assert result.all() == [
-        {
-            "items": [
-                {
-                    "identifierInPrimarySource": "ou-1.6",
-                    "identifier": "bFQoRhcVH5DHUA",
-                    "entityType": "ExtractedOrganizationalUnit",
-                    "email": [],
-                    "hadPrimarySource": ["bFQoRhcVH5DHUt"],
-                    "parentUnit": ["bFQoRhcVH5DHUv"],
-                    "stableTargetId": ["bFQoRhcVH5DHUB"],
-                    "name": [{"language": "en", "value": "Unit 1.6"}],
-                },
-                {
-                    "identifierInPrimarySource": "ou-1",
-                    "identifier": "bFQoRhcVH5DHUu",
-                    "entityType": "ExtractedOrganizationalUnit",
-                    "email": [],
-                    "hadPrimarySource": ["bFQoRhcVH5DHUt"],
-                    "stableTargetId": ["bFQoRhcVH5DHUv"],
-                    "name": [{"language": "en", "value": "Unit 1"}],
-                },
-            ],
-            "total": 2,
-        }
-    ]
-
-
-@pytest.mark.integration
-def test_fetch_extracted_items_empty() -> None:
-    connector = GraphConnector.get()
-
-    result = connector.fetch_extracted_items(None, "thisIdDoesNotExist", None, 0, 1)
-
-    assert result.all() == [{"items": [], "total": 0}]
+    result = connector.fetch_extracted_items(*args)
+    assert result.one() == expected
 
 
 @pytest.mark.usefixtures("mocked_query_builder")
