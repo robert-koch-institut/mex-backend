@@ -24,45 +24,55 @@ CALL {
 <%- if filter_by_query_string %>
     CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
+    CALL {
+        WITH hit
+        MATCH (extracted_node:<<rule_labels|join("|")>>|<<extracted_labels|join("|")>>)-[:stableTargetId]->(merged:<<merged_labels|join("|")>>)
+        WHERE elementId(hit) = elementId(extracted_node)
+        RETURN merged
+    UNION
+        WITH hit
+        MATCH (nested_node:<<nested_labels|join("|")>>)<--(extracted_node:<<rule_labels|join("|")>>|<<extracted_labels|join("|")>>)-[:stableTargetId]->(merged:<<merged_labels|join("|")>>)
+        WHERE elementId(hit) = elementId(nested_node)
+        RETURN merged
+    }
+    WITH DISTINCT merged
+<%- else %>
+    OPTIONAL MATCH (merged:<<merged_labels|join("|")>>)
 <%- endif %>
-    OPTIONAL MATCH (n:<<rule_labels|join("|")>>|<<extracted_labels|join("|")>>)-[:stableTargetId]->(merged:<<merged_labels|join("|")>>)
 <%- set and_ = joiner("AND ") %>
     WHERE
-    <%- if filter_by_query_string %>
-        <<and_()>>elementId(hit) = elementId(n)
-    <%- endif %>
     <%- if filter_by_stable_target_id %>
         <<and_()>>merged.identifier = $stable_target_id
     <%- endif %>
         <<and_()>>ANY(label IN labels(merged) WHERE label IN $labels)
-    WITH DISTINCT merged as merged
 <%- endblock %>
     RETURN COUNT(merged) AS total
 }
 CALL {
     <<-self.match_clause()>>
-    OPTIONAL MATCH (n)-[:stableTargetId]->(merged)
+    WITH merged
+    OPTIONAL MATCH (extracted_node)-[:stableTargetId]->(merged)
     CALL {
-        WITH n
-        OPTIONAL MATCH (n)-[r]->(referenced:<<merged_labels|join("|")>>)
+        WITH extracted_node
+        OPTIONAL MATCH (extracted_node)-[r]->(referenced:<<merged_labels|join("|")>>)
         RETURN CASE WHEN referenced IS NOT NULL THEN {
             label: type(r),
             position: r.position,
             value: referenced.identifier
         } ELSE NULL END as ref
     UNION
-        WITH n
-        OPTIONAL MATCH (n)-[r]->(nested:<<nested_labels|join("|")>>)
+        WITH extracted_node
+        OPTIONAL MATCH (extracted_node)-[r]->(nested:<<nested_labels|join("|")>>)
         RETURN CASE WHEN nested IS NOT NULL THEN {
             label: type(r),
             position: r.position,
             value: properties(nested)
         } ELSE NULL END as ref
     }
-    WITH merged, n, collect(ref) as refs
-    ORDER BY merged.identifier, n.identifier ASC
-    WITH merged, collect(n{.*, entityType: head(labels(n)), _refs: refs}) as n
-    RETURN merged{entityType: head(labels(merged)), identifier: merged.identifier, components: n}
+    WITH merged, extracted_node, collect(ref) as refs
+    ORDER BY merged.identifier, extracted_node.identifier ASC
+    WITH merged, collect(extracted_node{.*, entityType: head(labels(extracted_node)), _refs: refs}) as extracted_node
+    RETURN merged{entityType: head(labels(merged)), identifier: merged.identifier, components: extracted_node}
     SKIP $skip
     LIMIT $limit
 }
