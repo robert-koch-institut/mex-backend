@@ -5,7 +5,7 @@ from black import Mode, format_str
 from pytest import MonkeyPatch
 
 from mex.backend.graph import connector as connector_module
-from mex.backend.graph.connector import MEX_EXTRACTED_PRIMARY_SOURCE, GraphConnector
+from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.query import QueryBuilder
 from mex.common.exceptions import MExError
 from mex.common.models import (
@@ -242,20 +242,31 @@ fetch_extracted_or_rule_items(
 def test_fetch_extracted_items() -> None:
     connector = GraphConnector.get()
 
-    result = connector.fetch_extracted_items(None, None, None, 0, 1)
-
+    result = connector.fetch_extracted_items("Unit", None, None, 0, 10)
     assert result.all() == [
         {
             "items": [
                 {
-                    "entityType": MEX_EXTRACTED_PRIMARY_SOURCE.entityType,
-                    "hadPrimarySource": [MEX_EXTRACTED_PRIMARY_SOURCE.hadPrimarySource],
-                    "identifier": MEX_EXTRACTED_PRIMARY_SOURCE.identifier,
-                    "identifierInPrimarySource": MEX_EXTRACTED_PRIMARY_SOURCE.identifierInPrimarySource,
-                    "stableTargetId": [MEX_EXTRACTED_PRIMARY_SOURCE.stableTargetId],
-                }
+                    "identifierInPrimarySource": "ou-1.6",
+                    "identifier": "bFQoRhcVH5DHUA",
+                    "entityType": "ExtractedOrganizationalUnit",
+                    "email": [],
+                    "hadPrimarySource": ["bFQoRhcVH5DHUt"],
+                    "parentUnit": ["bFQoRhcVH5DHUv"],
+                    "stableTargetId": ["bFQoRhcVH5DHUB"],
+                    "name": [{"language": "en", "value": "Unit 1.6"}],
+                },
+                {
+                    "identifierInPrimarySource": "ou-1",
+                    "identifier": "bFQoRhcVH5DHUu",
+                    "entityType": "ExtractedOrganizationalUnit",
+                    "email": [],
+                    "hadPrimarySource": ["bFQoRhcVH5DHUt"],
+                    "stableTargetId": ["bFQoRhcVH5DHUv"],
+                    "name": [{"language": "en", "value": "Unit 1"}],
+                },
             ],
-            "total": 8,
+            "total": 2,
         }
     ]
 
