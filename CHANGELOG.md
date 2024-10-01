@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changes
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [0.19.1] - 2024-09-18
+
+### Fixed
+
+- pin jinja as explicit dependency
+
+## [0.19.0] - 2024-09-18
+
+### Added
+
 - add `GraphConnector.fetch_rule_items` to get rule items
 - add `GET /rule-set/{stableTargetId}` endpoint to get rule-sets
 - add a rule-set response to the `create_rule_set` endpoint
@@ -32,8 +52,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   items
 - improved test coverage for graph connector and wikidata endpoint
 
-### Deprecated
-
 ### Removed
 
 - remove redundant `status_code=200` config on endpoints
@@ -43,8 +61,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fix empty graph search results not returning empty lists but raising errors
 - move `purge-db` from entrypoints to pdm scripts, because it's not part of the module
-
-### Security
 
 ## [0.18.1] - 2024-08-07
 
