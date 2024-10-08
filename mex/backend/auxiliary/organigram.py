@@ -7,11 +7,11 @@ from mex.common.organigram.transform import (
     transform_organigram_units_to_organizational_units,
 )
 from mex.common.types import MergedOrganizationalUnitIdentifier
-from mex.extractors.pipeline import asset
-from mex.extractors.sinks import load
+from mex.extractors.pipeline import asset  # type: ignore
+from mex.extractors.sinks import load  # type: ignore
 
 
-@asset(group_name="default")
+@asset(group_name="default")  # type: ignore
 def extracted_organizational_units(
     extracted_primary_source_organigram: ExtractedPrimarySource,
 ) -> list[ExtractedOrganizationalUnit]:
@@ -27,7 +27,7 @@ def extracted_organizational_units(
     return mex_organizational_units
 
 
-@asset(group_name="default")
+@asset(group_name="default")  # type: ignore
 def unit_stable_target_ids_by_synonym(
     extracted_organizational_units: list[ExtractedOrganizationalUnit],
 ) -> dict[str, MergedOrganizationalUnitIdentifier]:

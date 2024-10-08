@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from pydantic import BaseModel
 
+from mex.backend.auxiliary.ldap import router as ldap_router
 from mex.backend.auxiliary.wikidata import router as wikidata_router
 from mex.backend.exceptions import handle_uncaught_exception
 from mex.backend.extracted.main import router as extracted_router
@@ -95,6 +96,7 @@ router.include_router(merged_router, dependencies=[Depends(has_read_access)])
 router.include_router(preview_router, dependencies=[Depends(has_read_access)])
 router.include_router(rules_router, dependencies=[Depends(has_write_access)])
 router.include_router(wikidata_router, dependencies=[Depends(has_read_access)])
+router.include_router(ldap_router, dependencies=[Depends(has_read_access)])
 
 
 class SystemStatus(BaseModel):
