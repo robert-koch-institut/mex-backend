@@ -3,7 +3,7 @@ from collections.abc import Sequence
 from string import Template
 from typing import Annotated, Any, Literal, cast
 
-from neo4j import Driver, GraphDatabase
+from neo4j import Driver, GraphDatabase, NotificationMinimumSeverity
 from pydantic import Field
 
 from mex.backend.fields import (
@@ -17,7 +17,7 @@ from mex.backend.fields import (
 )
 from mex.backend.graph.models import Result
 from mex.backend.graph.query import QueryBuilder
-from mex.backend.graph.transform import expand_references_in_search_result, to_primitive
+from mex.backend.graph.transform import expand_references_in_search_result
 from mex.backend.settings import BackendSettings
 from mex.common.connector import BaseConnector
 from mex.common.exceptions import MExError
@@ -84,6 +84,7 @@ class GraphConnector(BaseConnector):
                 settings.graph_password.get_secret_value(),
             ),
             database=settings.graph_db,
+            warn_notification_severity=NotificationMinimumSeverity.OFF,
         )
 
     def _check_connectivity_and_authentication(self) -> Result:
@@ -379,12 +380,12 @@ class GraphConnector(BaseConnector):
         mutable_fields = set(MUTABLE_FIELDS_BY_CLASS_NAME[model.entityType])
         final_fields = set(FINAL_FIELDS_BY_CLASS_NAME[model.entityType])
 
-        mutable_values = to_primitive(model, include=mutable_fields)
-        final_values = to_primitive(model, include=final_fields)
+        mutable_values = model.model_dump(include=mutable_fields)
+        final_values = model.model_dump(include=final_fields)
         all_values = {**mutable_values, **final_values}
 
-        text_values = to_primitive(model, include=text_fields)
-        link_values = to_primitive(model, include=link_fields)
+        text_values = model.model_dump(include=text_fields)
+        link_values = model.model_dump(include=link_fields)
 
         nested_edge_labels: list[str] = []
         nested_node_labels: list[str] = []
@@ -445,7 +446,7 @@ class GraphConnector(BaseConnector):
         query_builder = QueryBuilder.get()
 
         ref_fields = REFERENCE_FIELDS_BY_CLASS_NAME[model.entityType]
-        ref_values = to_primitive(model, include=set(ref_fields))
+        ref_values = model.model_dump(include=set(ref_fields))
         ref_values.update(extra_refs or {})
 
         ref_labels: list[str] = []
@@ -464,7 +465,6 @@ class GraphConnector(BaseConnector):
             merged_label=ensure_prefix(model.stemType, "Merged"),
             ref_labels=ref_labels,
         )
-
         return self.commit(
             query,
             **constraints,

@@ -7,10 +7,10 @@ import uvicorn
 from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from mex.backend.auxiliary.wikidata import router as wikidata_router
-from mex.backend.exceptions import handle_uncaught_exception
+from mex.backend.exceptions import handle_uncaught_exception, handle_validation_error
 from mex.backend.extracted.main import router as extracted_router
 from mex.backend.identity.main import router as identity_router
 from mex.backend.ingest.main import router as ingest_router
@@ -24,8 +24,8 @@ from mex.common.cli import entrypoint
 from mex.common.connector import CONNECTOR_STORE
 from mex.common.types import (
     EXTRACTED_IDENTIFIER_CLASSES,
+    IDENTIFIER_PATTERN,
     MERGED_IDENTIFIER_CLASSES,
-    MEX_ID_PATTERN,
 )
 
 
@@ -57,7 +57,7 @@ def create_openapi_schema() -> dict[str, Any]:
             "title": name,
             "type": "string",
             "description": identifier.__doc__,
-            "pattern": MEX_ID_PATTERN,
+            "pattern": IDENTIFIER_PATTERN,
         }
 
     app.openapi_schema = openapi_schema
@@ -110,6 +110,7 @@ def check_system_status() -> SystemStatus:
 
 
 app.include_router(router)
+app.add_exception_handler(ValidationError, handle_validation_error)
 app.add_exception_handler(Exception, handle_uncaught_exception)
 app.add_middleware(
     CORSMiddleware,
