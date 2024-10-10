@@ -11,12 +11,40 @@ from requests import Response
 
 from mex.common.ldap.connector import LDAPConnector
 from mex.common.ldap.models.person import LDAPPerson
+from mex.common.models import (
+    ExtractedOrganizationalUnit,
+    ExtractedPrimarySource,
+)
 from mex.common.wikidata.connector import (
     WikidataAPIConnector,
     WikidataQueryServiceConnector,
 )
 
 TEST_DATA_DIR = Path(__file__).parent / "test_data"
+
+test_persons = [
+    LDAPPerson(
+        employeeID="abc",
+        sn="Mueller",
+        givenName=["Max"],
+        objectGUID=UUID(version=4, int=1),
+        department="FG99",
+    ),
+    LDAPPerson(
+        employeeID="def",
+        sn="Example",
+        givenName=["Moritz"],
+        objectGUID=UUID(version=4, int=2),
+        department="FG99",
+    ),
+    LDAPPerson(
+        employeeID="ghi",
+        sn="Mueller",
+        givenName=["Moritz"],
+        objectGUID=UUID(version=4, int=3),
+        department="FG99",
+    ),
+]
 
 
 @pytest.fixture()
@@ -27,33 +55,18 @@ def mocked_ldap(monkeypatch: MonkeyPatch) -> None:
 
     monkeypatch.setattr(LDAPConnector, "__init__", __init__)
     monkeypatch.setattr(
-        LDAPConnector,
-        "get_persons",
-        MagicMock(
-            return_value=[
-                LDAPPerson(
-                    employeeID="abc",
-                    sn="Mueller",
-                    givenName=["Max"],
-                    objectGUID=UUID(version=4, int=1),
-                    department="FG99",
-                ),
-                LDAPPerson(
-                    employeeID="def",
-                    sn="Example",
-                    givenName=["Erik"],
-                    objectGUID=UUID(version=4, int=2),
-                    department="FG99",
-                ),
-                LDAPPerson(
-                    employeeID="ghi",
-                    sn="Mustermann",
-                    givenName=["Moritz"],
-                    objectGUID=UUID(version=4, int=3),
-                    department="FG99",
-                ),
-            ]
-        ),
+        LDAPConnector, "get_persons", MagicMock(return_value=test_persons)
+    )
+
+
+@pytest.fixture()
+def extracted_unit(
+    extracted_primary_sources: dict[str, ExtractedPrimarySource],
+) -> ExtractedOrganizationalUnit:
+    return ExtractedOrganizationalUnit(
+        name=["MF"],
+        hadPrimarySource=extracted_primary_sources["ldap"].stableTargetId,
+        identifierInPrimarySource="mf",
     )
 
 

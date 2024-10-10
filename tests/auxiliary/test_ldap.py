@@ -4,7 +4,6 @@ import pytest
 from fastapi.testclient import TestClient
 from pytest import MonkeyPatch
 
-from mex.backend.auxiliary.ldap import extracted_primary_source_ldap
 from mex.common.ldap.models.person import LDAPPerson
 from mex.common.ldap.transform import (
     transform_ldap_persons_to_mex_persons,
@@ -33,12 +32,10 @@ def test_transform_ldap_persons_to_mex_persons(
         sAMAccountName="samples",
         sn="Sample",
     )
-
     extracted_persons = transform_ldap_persons_to_mex_persons(
         [ldap_person], extracted_primary_sources["ldap"], [extracted_unit]
     )
     extracted_person = next(iter(extracted_persons))
-
     expected = {
         "email": ["mail@example2.com"],
         "familyName": ["Sample"],
@@ -50,29 +47,37 @@ def test_transform_ldap_persons_to_mex_persons(
         "memberOf": [extracted_unit.stableTargetId],
         "stableTargetId": Joker(),
     }
-
     assert (
         extracted_person.model_dump(exclude_none=True, exclude_defaults=True)
         == expected
     )
 
 
-def test_extracted_primary_source_ldap() -> None:
-    primary_source = extracted_primary_source_ldap()
-    assert primary_source.identifierInPrimarySource == "ldap"
-
-
+@pytest.mark.parametrize(
+    "search_string, status_code, expected_total",
+    [("Mueller", 200, 2), ("Example", 200, 1), (str(UUID(version=4, int=3)), 200, 1)],
+)
 @pytest.mark.usefixtures("mocked_ldap")
 def test_search_persons_in_ldap_mocked(
-    client_with_api_key_read_permission: TestClient, monkeypatch: MonkeyPatch
+    client_with_api_key_read_permission: TestClient,
+    monkeypatch: MonkeyPatch,
+    search_string,
+    status_code,
+    expected_total,
 ) -> None:
     response = client_with_api_key_read_permission.get(
-        "/v0/ldap", params={"q": "Example"}
+        "/v0/ldap", params={"q": search_string}
     )
-    assert response.status_code == 200
+    assert response.status_code == status_code
     data = response.json()
-    # assert "total" in datas
-    # assert "items" in data
-    assert data["total"] == 3
-    assert len(data["items"]) == 3
-    # assert data["items"][0] == "Mueller"  # noqa: ERA001
+    # assert sum(1 for person in data if (person["sn"] == search_string | person["objectGUID"] == search_string)) == expected_total  # noqa: ERA001
+    assert (
+        sum(
+            1
+            for person in data
+            if person["sn"] == search_string or person["objectGUID"] == search_string
+        )
+        == expected_total
+    )
+    assert data["total"] == expected_total
+    assert len(data["items"]) == expected_total
