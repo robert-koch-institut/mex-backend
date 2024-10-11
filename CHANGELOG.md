@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - silence neo4j missing label warnings, because we will likely never need all labels
 - sort search results by `identifier` and `entityType` to ensure a more stable order
+- improve handling of pydantic validation errors and uncaught errors
 
 ### Deprecated
 
