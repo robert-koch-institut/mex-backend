@@ -276,10 +276,13 @@ def load_dummy_data(
     dummy_data: dict[str, AnyExtractedModel],
 ) -> dict[str, AnyExtractedModel]:
     """Ingest dummy data into the graph."""
-    # ToDo: get the IDs in line 284f from dummy_data dict
     GraphConnector.get().ingest(list(dummy_data.values()))
-    delete_merged_node = "MATCH(n) WHERE n.identifier='bFQoRhcVH5DHUH' DETACH DELETE n"
-    merge_organizations = "MATCH(n :ExtractedOrganization) WHERE n.identifier = 'bFQoRhcVH5DHUG' MATCH(m :MergedOrganization) WHERE m.identifier = 'bFQoRhcVH5DHUF'  MERGE (n)-[:stableTargetId {position:0}]->(m)"
+    delete_merged_node = f"MATCH(n) WHERE n.identifier='{dummy_data['organization_2'].stableTargetId}' DETACH DELETE n"
+    merge_organizations = (
+        f"MATCH(n :ExtractedOrganization) WHERE n.identifier = '{dummy_data['organization_2'].identifier}' "
+        f"MATCH(m :MergedOrganization) WHERE m.identifier = '{dummy_data['organization_1'].stableTargetId}' "
+        "MERGE (n)-[:stableTargetId {position:0}]->(m)"
+    )
     connector = GraphConnector.get()
     connector.commit(delete_merged_node)
     connector.commit(merge_organizations)
