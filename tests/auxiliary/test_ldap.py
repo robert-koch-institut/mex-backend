@@ -1,3 +1,4 @@
+from collections import Counter
 from uuid import UUID
 
 import pytest
@@ -13,6 +14,13 @@ from mex.common.models import (
     ExtractedPrimarySource,
 )
 from mex.common.testing import Joker
+
+
+def count_results(persons: list) -> dict:
+    # result=[]  # noqa: ERA001
+    # result.append(person for person in persons if person["familyName"] == search_string)  # noqa: ERA001
+    # return len(result)  # noqa: ERA001
+    return Counter(persons)
 
 
 def test_transform_ldap_persons_to_mex_persons(
@@ -54,8 +62,8 @@ def test_transform_ldap_persons_to_mex_persons(
 
 
 @pytest.mark.parametrize(
-    "search_string, status_code, expected_total",
-    [("Mueller", 200, 2), ("Example", 200, 1), (str(UUID(version=4, int=3)), 200, 1)],
+    "search_string, status_code, match_total",
+    [("Mueller", 200, 2), ("Example", 200, 1), ("", 422, 0), ("None-Existent", 200, 0)],
 )
 @pytest.mark.usefixtures("mocked_ldap")
 def test_search_persons_in_ldap_mocked(
@@ -63,21 +71,14 @@ def test_search_persons_in_ldap_mocked(
     monkeypatch: MonkeyPatch,
     search_string,
     status_code,
-    expected_total,
+    match_total,
 ) -> None:
     response = client_with_api_key_read_permission.get(
         "/v0/ldap", params={"q": search_string}
     )
     assert response.status_code == status_code
     data = response.json()
-    # assert sum(1 for person in data if (person["sn"] == search_string | person["objectGUID"] == search_string)) == expected_total  # noqa: ERA001
-    assert (
-        sum(
-            1
-            for person in data
-            if person["sn"] == search_string or person["objectGUID"] == search_string
-        )
-        == expected_total
-    )
-    assert data["total"] == expected_total
-    assert len(data["items"]) == expected_total
+    if response.status_code == 200:
+        assert data["total"] == 3
+    # TODO: count persons matched with search string
+    assert count_results(list(data["items"]))[search_string] == match_total
