@@ -1,4 +1,3 @@
-from collections import Counter
 from uuid import UUID
 
 import pytest
@@ -16,11 +15,13 @@ from mex.common.models import (
 from mex.common.testing import Joker
 
 
-def count_results(persons: list) -> dict:
-    # result=[]  # noqa: ERA001
-    # result.append(person for person in persons if person["familyName"] == search_string)  # noqa: ERA001
-    # return len(result)  # noqa: ERA001
-    return Counter(persons)
+def count_results(search_string: str, persons: list) -> tuple:
+    return sum(
+        1
+        for person in persons
+        if search_string in person.get("givenName", [])
+        or search_string in person.get("familyName", [])
+    )
 
 
 def test_transform_ldap_persons_to_mex_persons(
@@ -63,7 +64,18 @@ def test_transform_ldap_persons_to_mex_persons(
 
 @pytest.mark.parametrize(
     "search_string, status_code, match_total",
-    [("Mueller", 200, 2), ("Example", 200, 1), ("", 422, 0), ("None-Existent", 200, 0)],
+    [
+        ("Mueller", 200, 2),
+        ("Example", 200, 1),
+        ("", 422, None),
+        ("None-Existent", 200, 0),
+    ],
+    ids=[
+        "Get existing Person with same name",
+        "Get existing Person with unique name",
+        "Empty Search String",
+        "Non-existent string",
+    ],
 )
 @pytest.mark.usefixtures("mocked_ldap")
 def test_search_persons_in_ldap_mocked(
@@ -77,8 +89,7 @@ def test_search_persons_in_ldap_mocked(
         "/v0/ldap", params={"q": search_string}
     )
     assert response.status_code == status_code
-    data = response.json()
     if response.status_code == 200:
+        data = response.json()
         assert data["total"] == 3
-    # TODO: count persons matched with search string
-    assert count_results(list(data["items"]))[search_string] == match_total
+        assert count_results(search_string, data["items"]) == match_total
