@@ -11,11 +11,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- silence neo4j missing label warnings, because we will likely never need all labels
+- sort search results by `identifier` and `entityType` to ensure a more stable order
+- improve handling of pydantic validation errors and uncaught errors
+
 ### Deprecated
 
 ### Removed
 
+- remove already obsolete module `mex.backend.serialization`
+  this is not needed any more with the new mex-common version
+
 ### Fixed
+
+- fix how merged edges are counted (currently only used for debugging)
 
 ### Security
 
@@ -77,7 +86,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - remove stop-gaps for MX-1596
 
 ### Removed
-- removed class  _BaseBulkIngestRequest for ingestion model
+
+- removed class _BaseBulkIngestRequest for ingestion model
 
 ## [0.17.0] - 2024-07-29
 
