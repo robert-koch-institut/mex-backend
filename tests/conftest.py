@@ -21,6 +21,7 @@ from mex.common.models import (
     AnyExtractedModel,
     ExtractedActivity,
     ExtractedContactPoint,
+    ExtractedOrganization,
     ExtractedOrganizationalUnit,
     ExtractedPrimarySource,
     OrganizationalUnitRuleSetRequest,
@@ -190,7 +191,7 @@ def isolate_graph_database(
 
 
 @pytest.fixture()
-def dummy_data() -> dict[str, AnyExtractedModel]:
+def dummy_data(settings: BackendSettings) -> dict[str, AnyExtractedModel]:
     """Create a set of interlinked dummy data."""
     primary_source_1 = ExtractedPrimarySource(
         hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -240,6 +241,23 @@ def dummy_data() -> dict[str, AnyExtractedModel]:
         title=[Text(value="Aktivität 1", language=TextLanguage.DE)],
         website=[Link(title="Activity Homepage", url="https://activity-1")],
     )
+    organization_1 = ExtractedOrganization(
+        hadPrimarySource=primary_source_1.stableTargetId,
+        identifierInPrimarySource="rki",
+        officialName=[
+            Text(value="RKI", language=None),
+            Text(value="Robert Koch Institut ist the best", language=TextLanguage.DE),
+        ],
+    )
+    organization_2 = ExtractedOrganization(
+        hadPrimarySource=primary_source_2.stableTargetId,
+        identifierInPrimarySource="robert-koch-institute",
+        officialName=[
+            Text(value="RKI", language=None),
+            Text(value="Robert Koch Institute", language=TextLanguage.EN),
+        ],
+    )
+
     return {
         "primary_source_1": primary_source_1,
         "primary_source_2": primary_source_2,
@@ -248,6 +266,8 @@ def dummy_data() -> dict[str, AnyExtractedModel]:
         "organizational_unit_1": organizational_unit_1,
         "organizational_unit_2": organizational_unit_2,
         "activity_1": activity_1,
+        "organization_1": organization_1,
+        "organization_2": organization_2,
     }
 
 
@@ -257,6 +277,15 @@ def load_dummy_data(
 ) -> dict[str, AnyExtractedModel]:
     """Ingest dummy data into the graph."""
     GraphConnector.get().ingest(list(dummy_data.values()))
+    delete_merged_node = f"MATCH(n) WHERE n.identifier='{dummy_data['organization_2'].stableTargetId}' DETACH DELETE n"
+    merge_organizations = (
+        f"MATCH(n :ExtractedOrganization) WHERE n.identifier = '{dummy_data['organization_2'].identifier}' "
+        f"MATCH(m :MergedOrganization) WHERE m.identifier = '{dummy_data['organization_1'].stableTargetId}' "
+        "MERGE (n)-[:stableTargetId {position:0}]->(m)"
+    )
+    connector = GraphConnector.get()
+    connector.commit(delete_merged_node)
+    connector.commit(merge_organizations)
     return dummy_data
 
 
