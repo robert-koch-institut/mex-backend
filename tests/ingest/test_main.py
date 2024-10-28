@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from starlette import status
 
 from mex.backend.graph.connector import GraphConnector
-from mex.common.models import AnyExtractedModel
+from mex.common.models import EXTRACTED_MODEL_CLASSES, AnyExtractedModel
 from tests.conftest import MockedGraph
 
 Payload = dict[str, list[dict[str, Any]]]
@@ -56,7 +56,7 @@ def test_bulk_insert(
 def test_bulk_insert_malformed(
     client_with_api_key_write_permission: TestClient,
 ) -> None:
-    expected_res = []
+    expected_response = []
     exp_err = {
         "ctx": {"error": {}},
         "input": "FAIL!",
@@ -65,14 +65,14 @@ def test_bulk_insert_malformed(
         "other types is not supported for models with computed fields.",
         "type": "assertion_error",
     }
-    expected_res += [exp_err] * 11
+    expected_response += [exp_err] * len(EXTRACTED_MODEL_CLASSES)
 
     response = client_with_api_key_write_permission.post(
         "/v0/ingest",
         json={"items": ["FAIL!"]},
     )
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY, response.text
-    assert response.json() == {"detail": expected_res}
+    assert response.json() == {"detail": expected_response}
 
 
 def test_bulk_insert_mocked(

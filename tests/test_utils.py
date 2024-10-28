@@ -48,13 +48,16 @@ def test_reraising_no_exception() -> None:
 
 
 def test_reraising_with_caught_exception() -> None:
+    class CustomDivisionError(Exception):
+        pass
+
     def divide(a: int, b: int) -> float:
         return a / b
 
-    with pytest.raises(ValueError, match="division by zero") as exc_info:
-        reraising(ZeroDivisionError, ValueError, divide, 1, 0)
+    with pytest.raises(CustomDivisionError) as exc_info:
+        reraising(ZeroDivisionError, CustomDivisionError, divide, 1, 0)
 
-    assert isinstance(exc_info.value, ValueError)
+    assert isinstance(exc_info.value, CustomDivisionError)
     assert exc_info.value.__cause__ is not None
     assert isinstance(exc_info.value.__cause__, ZeroDivisionError)
 

@@ -236,7 +236,7 @@ def dummy_data() -> dict[str, AnyExtractedModel]:
         identifierInPrimarySource="a-1",
         responsibleUnit=[organizational_unit_1.stableTargetId],
         start=[YearMonthDay("2014-08-24")],
-        theme=[Theme["DIGITAL_PUBLIC_HEALTH"]],
+        theme=[Theme["INFECTIOUS_DISEASES_AND_EPIDEMIOLOGY"]],
         title=[Text(value="Aktivität 1", language=TextLanguage.DE)],
         website=[Link(title="Activity Homepage", url="https://activity-1")],
     )

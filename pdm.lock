@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:6ad2aad32dc0cdfe678313db0d437a74a64f3500cd4bef6e24604642b20c36bd"
+content_hash = "sha256:955352b2e90470cfd0c69cc2077533d857fc618f58ad1e959359943e1d0a0801"
 
 [[metadata.targets]]
 requires_python = "==3.11.*"
@@ -545,11 +545,11 @@ files = [
 
 [[package]]
 name = "mex-common"
-version = "0.39.0"
+version = "0.40.0"
 requires_python = ">=3.11,<3.13"
 git = "https://github.com/robert-koch-institut/mex-common.git"
-ref = "0.39.0"
-revision = "21e3842ac8d0230e88565301b3b75e5b36e2caa9"
+ref = "0.40.0"
+revision = "402bfd513270659047bc8364179d7ed759685c93"
 summary = "Common library for MEx python projects."
 groups = ["default"]
 marker = "python_version == \"3.11\""
@@ -558,7 +558,7 @@ dependencies = [
     "click<9,>=8.1.7",
     "langdetect<2,>=1.0.9",
     "ldap3<3,>=2.9.1",
-    "mex-model @ git+https://github.com/robert-koch-institut/mex-model.git@3.0.0",
+    "mex-model @ git+https://github.com/robert-koch-institut/mex-model.git@3.1.0",
     "numpy<3,>=2.1.2",
     "pandas<3,>=2.2.3",
     "pyarrow<18,>=17.0.0",
@@ -570,11 +570,11 @@ dependencies = [
 
 [[package]]
 name = "mex-model"
-version = "3.0.0"
+version = "3.1.0"
 requires_python = "<3.13,>=3.11"
 git = "https://github.com/robert-koch-institut/mex-model.git"
-ref = "3.0.0"
-revision = "c027f6e13b599624c085cd3d383a8ad902d8ba51"
+ref = "3.1.0"
+revision = "61283bbb386573e18db79ec86dbc03363b4348ce"
 summary = "JSON schema files defining the MEx metadata model."
 groups = ["default"]
 marker = "python_version == \"3.11\""

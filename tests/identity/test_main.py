@@ -60,7 +60,7 @@ def test_assign_identity_mocked(
 ) -> None:
     mocked_graph.return_value = mocked_return
     response = client_with_api_key_write_permission.post("/v0/identity", json=post_body)
-    assert response.status_code == status, response.text
+    assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == expected
 
 

@@ -33,7 +33,7 @@ from starlette import status
                 ],
                 "start": ["2014-08-24"],
                 "end": ["2025"],
-                "theme": ["https://mex.rki.de/item/theme-3"],
+                "theme": ["https://mex.rki.de/item/theme-11"],
                 "website": [
                     {
                         "language": None,
@@ -69,7 +69,7 @@ from starlette import status
                 "abstract": [
                     {"value": "An active activity.", "language": "en"},
                 ],
-                "theme": ["https://mex.rki.de/item/theme-3"],
+                "theme": ["https://mex.rki.de/item/theme-11"],
                 "website": [
                     {
                         "language": None,
