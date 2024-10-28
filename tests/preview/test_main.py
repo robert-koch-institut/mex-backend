@@ -2,6 +2,7 @@ from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
+from starlette import status
 
 
 @pytest.mark.parametrize(
@@ -151,6 +152,6 @@ def test_preview(
     response = client_with_api_key_read_permission.post(
         f"/v0/preview-item/{stable_target_id}", json=json_body
     )
-    assert response.status_code == 200, response.text
+    assert response.status_code == status.HTTP_200_OK, response.text
     cleaned_response = {k: v for k, v in response.json().items() if v}
     assert cleaned_response == expected

@@ -44,14 +44,14 @@ def test_reraising_no_exception() -> None:
         return a + b
 
     result = reraising(ValueError, RuntimeError, add, 1, 2)
-    assert result == 3
+    assert result == 1 + 2
 
 
 def test_reraising_with_caught_exception() -> None:
     def divide(a: int, b: int) -> float:
         return a / b
 
-    with pytest.raises(ValueError) as exc_info:
+    with pytest.raises(ValueError, match="division by zero") as exc_info:
         reraising(ZeroDivisionError, ValueError, divide, 1, 0)
 
     assert isinstance(exc_info.value, ValueError)
@@ -61,7 +61,8 @@ def test_reraising_with_caught_exception() -> None:
 
 def test_reraising_propagates_other_exceptions() -> None:
     def raise_type_error() -> None:
-        raise TypeError("This is a TypeError")
+        msg = "This is a TypeError"
+        raise TypeError(msg)
 
     with pytest.raises(TypeError) as exc_info:
         reraising(ValueError, RuntimeError, raise_type_error)

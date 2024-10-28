@@ -3,6 +3,7 @@ from typing import Any
 import pytest
 from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
+from starlette import status
 
 from mex.common.models import ExtractedOrganizationalUnit
 from tests.conftest import MockedGraph
@@ -58,7 +59,7 @@ def test_search_extracted_items_mocked(
     ]
 
     response = client_with_api_key_read_permission.get("/v0/extracted-item")
-    assert response.status_code == 200, response.text
+    assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == {"items": [jsonable_encoder(unit)], "total": 14}
 
 
@@ -194,5 +195,5 @@ def test_search_extracted_items(
     response = client_with_api_key_read_permission.get(
         f"/v0/extracted-item{query_string}"
     )
-    assert response.status_code == 200, response.text
+    assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == expected

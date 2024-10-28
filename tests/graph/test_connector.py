@@ -20,7 +20,7 @@ from mex.common.types import Identifier
 from tests.conftest import MockedGraph
 
 
-@pytest.fixture()
+@pytest.fixture
 def mocked_query_builder(monkeypatch: MonkeyPatch) -> None:
     def __getattr__(_: QueryBuilder, query: str) -> Callable[..., str]:
         return lambda **parameters: format_str(
@@ -367,8 +367,8 @@ def test_fetch_rule_items(
             {
                 "email": [],
                 "entityType": "AdditiveOrganizationalUnit",
-                "name": [dict(value="Unit 1.7", language="en")],
-                "website": [dict(title="Unit Homepage", url="https://unit-1-7")],
+                "name": [{"value": "Unit 1.7", "language": "en"}],
+                "website": [{"title": "Unit Homepage", "url": "https://unit-1-7"}],
                 "parentUnit": [load_dummy_rule_set.additive.parentUnit],
                 "stableTargetId": ["bFQoRhcVH5DHUB"],
             }

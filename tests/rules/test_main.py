@@ -3,6 +3,7 @@ from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
+from starlette import status
 
 from mex.backend.graph.connector import GraphConnector
 from mex.common.models import OrganizationalUnitRuleSetResponse
@@ -55,7 +56,7 @@ def test_create_rule_set(client_with_api_key_write_permission: TestClient) -> No
             },
         },
     )
-    assert response.status_code == 201, response.text
+    assert response.status_code == status.HTTP_201_CREATED, response.text
     assert response.json() == {
         "additive": {
             "contact": [],
@@ -213,7 +214,7 @@ def test_get_rule_set(
     response = client_with_api_key_write_permission.get(
         f"/v0/rule-set/{load_dummy_rule_set.stableTargetId}"
     )
-    assert response.status_code == 200, response.text
+    assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == {
         "additive": {
             "parentUnit": None,
@@ -288,7 +289,7 @@ def test_update_rule_set(
             },
         },
     )
-    assert response.status_code == 200, response.text
+    assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == {
         "additive": {
             "parentUnit": None,

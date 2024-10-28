@@ -6,6 +6,7 @@ import pytest
 import requests
 from pytest import MonkeyPatch
 from requests import Response
+from starlette import status
 
 from mex.common.wikidata.connector import (
     WikidataAPIConnector,
@@ -15,9 +16,9 @@ from mex.common.wikidata.connector import (
 TEST_DATA_DIR = Path(__file__).parent / "test_data"
 
 
-@pytest.fixture()
+@pytest.fixture
 def mocked_wikidata(monkeypatch: MonkeyPatch) -> None:
-    response_query = Mock(spec=Response, status_code=200)
+    response_query = Mock(spec=Response, status_code=status.HTTP_200_OK)
 
     session = MagicMock(spec=requests.Session)
     session.get = MagicMock(side_effect=[response_query])

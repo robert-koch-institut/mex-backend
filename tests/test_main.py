@@ -1,6 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 from neo4j import GraphDatabase
+from starlette import status
 
 from mex.backend.main import app
 from mex.backend.settings import BackendSettings
@@ -8,7 +9,7 @@ from mex.backend.settings import BackendSettings
 
 def test_openapi_schema(client: TestClient) -> None:
     response = client.get("/openapi.json")
-    assert response.status_code == 200, response.text
+    assert response.status_code == status.HTTP_200_OK, response.text
 
     schema = response.json()
     assert schema["info"]["title"] == "mex-backend"
@@ -26,7 +27,7 @@ def test_openapi_schema(client: TestClient) -> None:
 
 def test_health_check(client: TestClient) -> None:
     response = client.get("/v0/_system/check")
-    assert response.status_code == 200, response.text
+    assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == {"status": "ok"}
 
 
@@ -42,7 +43,10 @@ def test_all_endpoints_require_authorization(client: TestClient) -> None:
         if route.path not in excluded_routes:
             for method in route.methods:
                 client_method = getattr(client, method.lower())
-                assert client_method(route.path).status_code == 401
+                assert (
+                    client_method(route.path).status_code
+                    == status.HTTP_401_UNAUTHORIZED
+                )
 
 
 @pytest.mark.integration

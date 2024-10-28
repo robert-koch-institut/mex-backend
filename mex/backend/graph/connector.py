@@ -92,7 +92,8 @@ class GraphConnector(BaseConnector):
         query_builder = QueryBuilder.get()
         result = self.commit(query_builder.fetch_database_status())
         if (status := result["currentStatus"]) != "online":
-            raise MExError(f"Database is {status}.") from None
+            msg = f"Database is {status}."
+            raise MExError(msg) from None
         return result
 
     def _seed_constraints(self) -> list[Result]:
@@ -494,7 +495,7 @@ class GraphConnector(BaseConnector):
             self._merge_edges(
                 rule,
                 stable_target_id,
-                extra_refs=dict(stableTargetId=stable_target_id),
+                extra_refs={"stableTargetId": stable_target_id},
             )
 
     def ingest(self, models: list[AnyExtractedModel]) -> list[Identifier]:
