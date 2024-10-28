@@ -27,7 +27,7 @@ jobs:
 
     services:
       neo4j:
-        image: neo4j:5.23-community
+        image: neo4j:5.24-community
         env:
           NEO4J_AUTH: neo4j/password
         ports:

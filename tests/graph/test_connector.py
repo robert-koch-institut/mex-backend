@@ -492,21 +492,19 @@ def test_fetch_rule_items(
 
     result = connector.fetch_rule_items(None, None, None, 0, 1)
 
-    assert result.all() == [
-        {
-            "items": [
-                {
-                    "email": [],
-                    "entityType": "AdditiveOrganizationalUnit",
-                    "name": [dict(value="Unit 1.7", language="en")],
-                    "website": [dict(title="Unit Homepage", url="https://unit-1-7")],
-                    "parentUnit": [load_dummy_rule_set.additive.parentUnit],
-                    "stableTargetId": ["bFQoRhcVH5DHUB"],
-                }
-            ],
-            "total": 3,
-        }
-    ]
+    assert result.one() == {
+        "items": [
+            {
+                "email": [],
+                "entityType": "AdditiveOrganizationalUnit",
+                "name": [dict(value="Unit 1.7", language="en")],
+                "website": [dict(title="Unit Homepage", url="https://unit-1-7")],
+                "parentUnit": [load_dummy_rule_set.additive.parentUnit],
+                "stableTargetId": ["bFQoRhcVH5DHUB"],
+            }
+        ],
+        "total": 3,
+    }
 
 
 @pytest.mark.integration
@@ -515,7 +513,7 @@ def test_fetch_rule_items_empty() -> None:
 
     result = connector.fetch_rule_items(None, "thisIdDoesNotExist", None, 0, 1)
 
-    assert result.all() == [{"items": [], "total": 0}]
+    assert result.one() == {"items": [], "total": 0}
 
 
 @pytest.mark.usefixtures("mocked_query_builder")
