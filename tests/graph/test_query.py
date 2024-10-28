@@ -77,84 +77,96 @@ YIELD currentStatus;"""
 CALL {
     CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
-    OPTIONAL MATCH (n:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
+    CALL {
+        WITH hit
+        MATCH (extracted_node:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
+        WHERE elementId(hit) = elementId(extracted_node)
+        RETURN extracted_node, merged
+    UNION
+        WITH hit
+        MATCH (nested_node:Link|Text|Location)<--(extracted_node:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
+        WHERE elementId(hit) = elementId(nested_node)
+        RETURN extracted_node, merged
+    }
+    WITH DISTINCT extracted_node, merged
     WHERE
-        elementId(hit) = elementId(n)
-        AND merged.identifier = $stable_target_id
-        AND ANY(label IN labels(n) WHERE label IN $labels)
-    RETURN COUNT(n) AS total
-}
-CALL {
+        merged.identifier = $stable_target_id
+        AND ANY(label IN labels(extracted_node) WHERE label IN $labels)
+    RETURN COUNT(extracted_node) AS total\n}\nCALL {
     CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
-    OPTIONAL MATCH (n:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
-    WHERE
-        elementId(hit) = elementId(n)
-        AND merged.identifier = $stable_target_id
-        AND ANY(label IN labels(n) WHERE label IN $labels)
     CALL {
-        WITH n
-        OPTIONAL MATCH (n)-[r]->(referenced:MergedThis|MergedThat|MergedOther)
+        WITH hit
+        MATCH (extracted_node:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
+        WHERE elementId(hit) = elementId(extracted_node)
+        RETURN extracted_node, merged
+    UNION
+        WITH hit
+        MATCH (nested_node:Link|Text|Location)<--(extracted_node:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
+        WHERE elementId(hit) = elementId(nested_node)
+        RETURN extracted_node, merged
+    }
+    WITH DISTINCT extracted_node, merged
+    WHERE
+        merged.identifier = $stable_target_id
+        AND ANY(label IN labels(extracted_node) WHERE label IN $labels)
+    CALL {
+        WITH extracted_node
+        OPTIONAL MATCH (extracted_node)-[r]->(referenced:MergedThis|MergedThat|MergedOther)
         RETURN CASE WHEN referenced IS NOT NULL THEN {
             label: type(r),
             position: r.position,
             value: referenced.identifier
         } ELSE NULL END as ref
     UNION
-        WITH n
-        OPTIONAL MATCH (n)-[r]->(nested:Link|Text|Location)
+        WITH extracted_node
+        OPTIONAL MATCH (extracted_node)-[r]->(nested:Link|Text|Location)
         RETURN CASE WHEN nested IS NOT NULL THEN {
             label: type(r),
             position: r.position,
             value: properties(nested)
         } ELSE NULL END as ref
     }
-    WITH n, collect(ref) as refs
-    RETURN n{.*, entityType: head(labels(n)), _refs: refs}
-    ORDER BY n.identifier, n.entityType ASC
+    WITH extracted_node, collect(ref) as refs
+    RETURN extracted_node{.*, entityType: head(labels(extracted_node)), _refs: refs}
+    ORDER BY extracted_node.identifier ASC
     SKIP $skip
-    LIMIT $limit
-}
-RETURN collect(n) AS items, total;""",
+    LIMIT $limit\n}\nRETURN collect(extracted_node) AS items, total;""",
         ),
         (
             False,
             False,
             """\
 CALL {
-    OPTIONAL MATCH (n:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)
+    OPTIONAL MATCH (extracted_node:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
     WHERE
-        ANY(label IN labels(n) WHERE label IN $labels)
-    RETURN COUNT(n) AS total
-}
-CALL {
-    OPTIONAL MATCH (n:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)
+        ANY(label IN labels(extracted_node) WHERE label IN $labels)
+    RETURN COUNT(extracted_node) AS total\n}\nCALL {
+    OPTIONAL MATCH (extracted_node:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
     WHERE
-        ANY(label IN labels(n) WHERE label IN $labels)
+        ANY(label IN labels(extracted_node) WHERE label IN $labels)
     CALL {
-        WITH n
-        OPTIONAL MATCH (n)-[r]->(referenced:MergedThis|MergedThat|MergedOther)
+        WITH extracted_node
+        OPTIONAL MATCH (extracted_node)-[r]->(referenced:MergedThis|MergedThat|MergedOther)
         RETURN CASE WHEN referenced IS NOT NULL THEN {
             label: type(r),
             position: r.position,
             value: referenced.identifier
         } ELSE NULL END as ref
     UNION
-        WITH n
-        OPTIONAL MATCH (n)-[r]->(nested:Link|Text|Location)
+        WITH extracted_node
+        OPTIONAL MATCH (extracted_node)-[r]->(nested:Link|Text|Location)
         RETURN CASE WHEN nested IS NOT NULL THEN {
             label: type(r),
             position: r.position,
             value: properties(nested)
         } ELSE NULL END as ref
     }
-    WITH n, collect(ref) as refs
-    RETURN n{.*, entityType: head(labels(n)), _refs: refs}
-    ORDER BY n.identifier, n.entityType ASC
+    WITH extracted_node, collect(ref) as refs
+    RETURN extracted_node{.*, entityType: head(labels(extracted_node)), _refs: refs}
+    ORDER BY extracted_node.identifier ASC
     SKIP $skip
-    LIMIT $limit
-}
-RETURN collect(n) AS items, total;""",
+    LIMIT $limit\n}\nRETURN collect(extracted_node) AS items, total;""",
         ),
     ],
     ids=["all-filters", "no-filters"],
