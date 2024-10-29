@@ -8,9 +8,18 @@ from mex.common.ldap.extract import (
     get_count_of_found_persons_by_name,
     get_persons_by_name,
 )
-
-# from mex.backend.serialization import to_primitive  # noqa: ERA001
-from mex.common.models import ExtractedPerson, ExtractedPrimarySource
+from mex.common.ldap.transform import (
+    transform_ldap_persons_to_mex_persons,
+)
+from mex.common.models import (
+    ExtractedOrganizationalUnit,
+    ExtractedPerson,
+    ExtractedPrimarySource,
+)
+from mex.common.organigram.extract import extract_organigram_units
+from mex.common.organigram.transform import (
+    transform_organigram_units_to_organizational_units,
+)
 from mex.common.primary_source.extract import extract_seed_primary_sources
 from mex.common.primary_source.transform import (
     get_primary_sources_by_name,
@@ -18,14 +27,6 @@ from mex.common.primary_source.transform import (
 )
 
 router = APIRouter()
-from mex.common.ldap.transform import (  # noqa: E402
-    transform_ldap_persons_to_mex_persons,
-)
-from mex.common.models import ExtractedOrganizationalUnit  # noqa: E402
-from mex.common.organigram.extract import extract_organigram_units  # noqa: E402
-from mex.common.organigram.transform import (  # noqa: E402
-    transform_organigram_units_to_organizational_units,
-)
 
 
 @router.get("/ldap", tags=["editor"])
@@ -74,7 +75,8 @@ def extracted_primary_source_ldap() -> ExtractedPrimarySource:
 
 
 @cache
-def extracted_organizational_unit() -> list[ExtractedOrganizationalUnit]:  # noqa: D103
+def extracted_organizational_unit() -> list[ExtractedOrganizationalUnit]:
+    """Auxilary function to get ldap as primary resource."""
     extracted_organigram_units = extract_organigram_units()
     extracted_organizational_units = transform_organigram_units_to_organizational_units(
         extracted_organigram_units, extracted_primary_source_ldap()
