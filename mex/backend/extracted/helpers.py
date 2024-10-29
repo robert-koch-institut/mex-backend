@@ -1,5 +1,9 @@
+from pydantic import ValidationError
+
 from mex.backend.extracted.models import ExtractedItemSearch
 from mex.backend.graph.connector import GraphConnector
+from mex.backend.graph.exceptions import InconsistentGraphError
+from mex.backend.utils import reraising
 from mex.common.models import AnyExtractedModel
 
 
@@ -19,6 +23,9 @@ def search_extracted_items_in_graph(
         skip: How many items to skip for pagination
         limit: How many items to return at most
 
+    Raises:
+        InconsistentGraphError: When the graph response cannot be parsed
+
     Returns:
         ExtractedItemSearch instance
     """
@@ -30,8 +37,12 @@ def search_extracted_items_in_graph(
         skip=skip,
         limit=limit,
     )
-    search_result = graph_result.one()
-    return ExtractedItemSearch.model_validate(search_result)
+    return reraising(
+        ValidationError,
+        InconsistentGraphError,
+        ExtractedItemSearch.model_validate,
+        graph_result.one(),
+    )
 
 
 def get_extracted_items_from_graph(
@@ -45,6 +56,9 @@ def get_extracted_items_from_graph(
         stable_target_id: Optional stable target ID filter
         entity_type: Optional entity type filter
         limit: How many items to return at most
+
+    Raises:
+        InconsistentGraphError: When the graph response cannot be parsed
 
     Returns:
         List of extracted items

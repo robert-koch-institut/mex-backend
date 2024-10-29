@@ -244,20 +244,18 @@ def test_fetch_extracted_items() -> None:
 
     result = connector.fetch_extracted_items(None, None, None, 0, 1)
 
-    assert result.all() == [
-        {
-            "items": [
-                {
-                    "entityType": MEX_EXTRACTED_PRIMARY_SOURCE.entityType,
-                    "hadPrimarySource": [MEX_EXTRACTED_PRIMARY_SOURCE.hadPrimarySource],
-                    "identifier": MEX_EXTRACTED_PRIMARY_SOURCE.identifier,
-                    "identifierInPrimarySource": MEX_EXTRACTED_PRIMARY_SOURCE.identifierInPrimarySource,
-                    "stableTargetId": [MEX_EXTRACTED_PRIMARY_SOURCE.stableTargetId],
-                }
-            ],
-            "total": 8,
-        }
-    ]
+    assert result.one() == {
+        "items": [
+            {
+                "entityType": MEX_EXTRACTED_PRIMARY_SOURCE.entityType,
+                "hadPrimarySource": [MEX_EXTRACTED_PRIMARY_SOURCE.hadPrimarySource],
+                "identifier": MEX_EXTRACTED_PRIMARY_SOURCE.identifier,
+                "identifierInPrimarySource": MEX_EXTRACTED_PRIMARY_SOURCE.identifierInPrimarySource,
+                "stableTargetId": [MEX_EXTRACTED_PRIMARY_SOURCE.stableTargetId],
+            }
+        ],
+        "total": 8,
+    }
 
 
 @pytest.mark.integration
@@ -266,7 +264,7 @@ def test_fetch_extracted_items_empty() -> None:
 
     result = connector.fetch_extracted_items(None, "thisIdDoesNotExist", None, 0, 1)
 
-    assert result.all() == [{"items": [], "total": 0}]
+    assert result.one() == {"items": [], "total": 0}
 
 
 @pytest.mark.usefixtures("mocked_query_builder")
@@ -364,21 +362,19 @@ def test_fetch_rule_items(
 
     result = connector.fetch_rule_items(None, None, None, 0, 1)
 
-    assert result.all() == [
-        {
-            "items": [
-                {
-                    "email": [],
-                    "entityType": "AdditiveOrganizationalUnit",
-                    "name": [dict(value="Unit 1.7", language="en")],
-                    "website": [dict(title="Unit Homepage", url="https://unit-1-7")],
-                    "parentUnit": [load_dummy_rule_set.additive.parentUnit],
-                    "stableTargetId": ["bFQoRhcVH5DHUB"],
-                }
-            ],
-            "total": 3,
-        }
-    ]
+    assert result.one() == {
+        "items": [
+            {
+                "email": [],
+                "entityType": "AdditiveOrganizationalUnit",
+                "name": [dict(value="Unit 1.7", language="en")],
+                "website": [dict(title="Unit Homepage", url="https://unit-1-7")],
+                "parentUnit": [load_dummy_rule_set.additive.parentUnit],
+                "stableTargetId": ["bFQoRhcVH5DHUB"],
+            }
+        ],
+        "total": 3,
+    }
 
 
 @pytest.mark.integration
@@ -387,7 +383,7 @@ def test_fetch_rule_items_empty() -> None:
 
     result = connector.fetch_rule_items(None, "thisIdDoesNotExist", None, 0, 1)
 
-    assert result.all() == [{"items": [], "total": 0}]
+    assert result.one() == {"items": [], "total": 0}
 
 
 @pytest.mark.usefixtures("mocked_query_builder")
@@ -495,48 +491,46 @@ def test_fetch_merged_items() -> None:
 
     result = connector.fetch_merged_items(None, None, None, 1, 1)
 
-    assert result.all() == [
-        {
-            "items": [
-                {
-                    "components": [
-                        {
-                            "email": [],
-                            "entityType": "ExtractedOrganizationalUnit",
-                            "hadPrimarySource": ["bFQoRhcVH5DHUt"],
-                            "identifier": "bFQoRhcVH5DHUA",
-                            "identifierInPrimarySource": "ou-1.6",
-                            "name": [{"language": "en", "value": "Unit 1.6"}],
-                            "parentUnit": ["bFQoRhcVH5DHUv"],
-                            "stableTargetId": ["bFQoRhcVH5DHUB"],
-                        },
-                        {
-                            "entityType": "PreventiveOrganizationalUnit",
-                            "stableTargetId": ["bFQoRhcVH5DHUB"],
-                        },
-                        {
-                            "email": [],
-                            "entityType": "SubtractiveOrganizationalUnit",
-                            "stableTargetId": ["bFQoRhcVH5DHUB"],
-                        },
-                        {
-                            "email": [],
-                            "entityType": "AdditiveOrganizationalUnit",
-                            "name": [{"language": "en", "value": "Unit 1.7"}],
-                            "parentUnit": ["bFQoRhcVH5DHUv"],
-                            "stableTargetId": ["bFQoRhcVH5DHUB"],
-                            "website": [
-                                {"title": "Unit Homepage", "url": "https://unit-1-7"}
-                            ],
-                        },
-                    ],
-                    "entityType": "MergedOrganizationalUnit",
-                    "identifier": "bFQoRhcVH5DHUB",
-                }
-            ],
-            "total": 8,
-        }
-    ]
+    assert result.one() == {
+        "items": [
+            {
+                "components": [
+                    {
+                        "email": [],
+                        "entityType": "ExtractedOrganizationalUnit",
+                        "hadPrimarySource": ["bFQoRhcVH5DHUt"],
+                        "identifier": "bFQoRhcVH5DHUA",
+                        "identifierInPrimarySource": "ou-1.6",
+                        "name": [{"language": "en", "value": "Unit 1.6"}],
+                        "parentUnit": ["bFQoRhcVH5DHUv"],
+                        "stableTargetId": ["bFQoRhcVH5DHUB"],
+                    },
+                    {
+                        "email": [],
+                        "entityType": "AdditiveOrganizationalUnit",
+                        "name": [{"language": "en", "value": "Unit 1.7"}],
+                        "parentUnit": ["bFQoRhcVH5DHUv"],
+                        "stableTargetId": ["bFQoRhcVH5DHUB"],
+                        "website": [
+                            {"title": "Unit Homepage", "url": "https://unit-1-7"}
+                        ],
+                    },
+                    {
+                        "entityType": "PreventiveOrganizationalUnit",
+                        "stableTargetId": ["bFQoRhcVH5DHUB"],
+                    },
+                    {
+                        "email": [],
+                        "entityType": "SubtractiveOrganizationalUnit",
+                        "stableTargetId": ["bFQoRhcVH5DHUB"],
+                    },
+                ],
+                "entityType": "MergedOrganizationalUnit",
+                "identifier": "bFQoRhcVH5DHUB",
+            }
+        ],
+        "total": 8,
+    }
 
 
 @pytest.mark.integration
@@ -545,7 +539,7 @@ def test_fetch_merged_items_empty() -> None:
 
     result = connector.fetch_merged_items(None, "thisIdDoesNotExist", None, 0, 1)
 
-    assert result.all() == [{"items": [], "total": 0}]
+    assert result.one() == {"items": [], "total": 0}
 
 
 @pytest.mark.usefixtures("mocked_query_builder")

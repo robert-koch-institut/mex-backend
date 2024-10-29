@@ -1,12 +1,13 @@
-from typing import Annotated, Any
+from typing import Annotated, Any, cast
 
-from pydantic import Field, TypeAdapter
+from pydantic import Field, TypeAdapter, ValidationError
 
 from mex.backend.fields import MERGEABLE_FIELDS_BY_CLASS_NAME
 from mex.backend.graph.connector import GraphConnector
+from mex.backend.graph.exceptions import InconsistentGraphError
 from mex.backend.merged.models import MergedItemSearch
 from mex.backend.rules.helpers import transform_raw_rules_to_rule_set_response
-from mex.backend.utils import extend_list_in_dict, prune_list_in_dict
+from mex.backend.utils import extend_list_in_dict, prune_list_in_dict, reraising
 from mex.common.exceptions import MExError
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
@@ -97,6 +98,9 @@ def create_merged_item(
         extracted_items: List of extracted items, can be empty
         rule_set: Rule set, with potentially empty rules
 
+    Raises:
+        InconsistentGraphError: When the graph response cannot be parsed
+
     Returns:
         Instance of a merged item
     """
@@ -117,8 +121,13 @@ def create_merged_item(
     if rule_set:
         _apply_additive_rule(merged_dict, fields, rule_set.additive)
         _apply_subtractive_rule(merged_dict, fields, rule_set.subtractive)
-
-    return cls.model_validate(merged_dict)
+    merged_item = reraising(
+        ValidationError,
+        InconsistentGraphError,
+        cls.model_validate,
+        merged_dict,
+    )
+    return cast(AnyMergedModel, merged_item)  # mypy, get a grip!
 
 
 def search_merged_items_in_graph(
@@ -136,6 +145,9 @@ def search_merged_items_in_graph(
         entity_type: Optional entity type filter
         skip: How many items to skip for pagination
         limit: How many items to return at most
+
+    Raises:
+        InconsistentGraphError: When the graph response cannot be parsed
 
     Returns:
         MergedItemSearch instance
@@ -182,5 +194,10 @@ def search_merged_items_in_graph(
                 rule_set=rule_set_response,
             )
         )
-
-    return MergedItemSearch(items=items, total=total)
+    return reraising(
+        ValidationError,
+        InconsistentGraphError,
+        MergedItemSearch,
+        items=items,
+        total=total,
+    )

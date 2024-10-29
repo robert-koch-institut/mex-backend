@@ -1,10 +1,10 @@
-from typing import Any
+from typing import Any, cast
 
 from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ValidationError
 from starlette import status
 from starlette.requests import Request
+from starlette.responses import Response
 
 from mex.common.logging import logger
 
@@ -34,23 +34,35 @@ class ErrorResponse(BaseModel):
     debug: DebuggingInfo
 
 
-def handle_uncaught_exception(request: Request, exc: Exception) -> JSONResponse:
+def handle_validation_error(request: Request, exc: Exception) -> Response:
+    """Handle pydantic validation errors and provide debugging info."""
+    logger.exception("ValidationError %s", exc)
+    return Response(
+        content=ErrorResponse(
+            message=str(exc),
+            debug=DebuggingInfo(
+                errors=[
+                    jsonable_encoder(e) for e in cast(ValidationError, exc).errors()
+                ],
+                scope=DebuggingScope.model_validate(request.scope),
+            ),
+        ).model_dump_json(),
+        status_code=status.HTTP_400_BAD_REQUEST,
+        media_type="application/json",
+    )
+
+
+def handle_uncaught_exception(request: Request, exc: Exception) -> Response:
     """Handle uncaught errors and provide debugging info."""
-    logger.exception("Error %s", exc)
-    if isinstance(exc, ValidationError):
-        errors = [dict(error) for error in exc.errors()]
-        status_code = status.HTTP_400_BAD_REQUEST
-    else:
-        errors = [dict(type=type(exc).__name__)]
-        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-    return JSONResponse(
-        jsonable_encoder(
-            ErrorResponse(
-                message=str(exc),
-                debug=DebuggingInfo(
-                    errors=errors, scope=DebuggingScope.model_validate(request.scope)
-                ),
-            )
-        ),
-        status_code,
+    logger.exception("UncaughtError %s", exc)
+    return Response(
+        content=ErrorResponse(
+            message=str(exc),
+            debug=DebuggingInfo(
+                errors=[dict(type=type(exc).__name__)],
+                scope=DebuggingScope.model_validate(request.scope),
+            ),
+        ).model_dump_json(),
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        media_type="application/json",
     )
