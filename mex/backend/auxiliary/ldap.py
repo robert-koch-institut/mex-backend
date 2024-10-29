@@ -9,7 +9,6 @@ from mex.common.ldap.extract import (
     get_persons_by_name,
 )
 
-# from mex.backend.serialization import to_primitive  # noqa: ERA001
 from mex.common.models import ExtractedPerson, ExtractedPrimarySource
 from mex.common.primary_source.extract import extract_seed_primary_sources
 from mex.common.primary_source.transform import (
