@@ -73,7 +73,7 @@ def extracted_primary_source_ldap() -> ExtractedPrimarySource:
 
 
 @cache
-def extracted_organizational_unit() -> list[ExtractedOrganizationalUnit]:  # noqa: D103
+def extracted_organizational_units() -> list[ExtractedOrganizationalUnit]
     extracted_organigram_units = extract_organigram_units()
     extracted_organizational_units = transform_organigram_units_to_organizational_units(
         extracted_organigram_units, extracted_primary_source_ldap()
