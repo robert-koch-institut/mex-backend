@@ -25,6 +25,10 @@ from mex.common.models import (
 from mex.common.transform import ensure_prefix
 from mex.common.types import Identifier
 
+EXTRACTED_MODEL_ADAPTER: TypeAdapter[AnyExtractedModel] = TypeAdapter(
+    Annotated[AnyExtractedModel, Field(discriminator="entityType")]
+)
+
 
 def _merge_extracted_items_and_apply_preventive_rule(
     merged_dict: dict[str, Any],
@@ -132,6 +136,43 @@ def create_merged_item(
     return cast(AnyMergedModel, merged_item)  # mypy, get a grip!
 
 
+def merge_search_result_item(item: dict[str, Any]) -> AnyMergedModel:
+    """Merge a single search result into a merged item.
+
+    Args:
+        item: Raw merged search result item from the graph response
+
+    Raises:
+        InconsistentGraphError: When the graph response item has inconsistencies
+
+    Returns:
+        AnyMergedModel instance
+    """
+    extracted_items = [
+        EXTRACTED_MODEL_ADAPTER.validate_python(component)
+        for component in item["components"]
+        if component["entityType"] in EXTRACTED_MODEL_CLASSES_BY_NAME
+    ]
+    rules_raw = [
+        component
+        for component in item["components"]
+        if component["entityType"] in RULE_MODEL_CLASSES_BY_NAME
+    ]
+    if len(rules_raw) == NUMBER_OF_RULE_TYPES:
+        rule_set_response = transform_raw_rules_to_rule_set_response(rules_raw)
+    elif len(rules_raw) == 0:
+        rule_set_response = None
+    else:
+        msg = f"Unexpected number of rules found in graph: {len(rules_raw)}"
+        raise InconsistentGraphError(msg)
+
+    return create_merged_item(
+        identifier=item["identifier"],
+        extracted_items=extracted_items,
+        rule_set=rule_set_response,
+    )
+
+
 def search_merged_items_in_graph(
     query_string: str | None = None,
     stable_target_id: str | None = None,
@@ -149,7 +190,7 @@ def search_merged_items_in_graph(
         limit: How many items to return at most
 
     Raises:
-        InconsistentGraphError: When the graph response cannot be parsed
+        InconsistentGraphError: When the graph response has inconsistencies
 
     Returns:
         MergedItemSearch instance
@@ -162,39 +203,16 @@ def search_merged_items_in_graph(
         skip=skip,
         limit=limit,
     )
-    extracted_model_adapter: TypeAdapter[AnyExtractedModel] = TypeAdapter(
-        Annotated[AnyExtractedModel, Field(discriminator="entityType")]
-    )
-    items: list[AnyMergedModel] = []
     total: int = result["total"]
-
-    for item in result["items"]:
-        extracted_items = [
-            extracted_model_adapter.validate_python(component)
-            for component in item["components"]
-            if component["entityType"] in EXTRACTED_MODEL_CLASSES_BY_NAME
-        ]
-
-        rules_raw = [
-            component
-            for component in item["components"]
-            if component["entityType"] in RULE_MODEL_CLASSES_BY_NAME
-        ]
-        if len(rules_raw) == NUMBER_OF_RULE_TYPES:
-            rule_set_response = transform_raw_rules_to_rule_set_response(rules_raw)
-        elif len(rules_raw) == 0:
-            rule_set_response = None
-        else:
-            msg = f"Unexpected number of rules found in graph: {len(rules_raw)}"
-            raise MExError(msg)
-
-        items.append(
-            create_merged_item(
-                identifier=item["identifier"],
-                extracted_items=extracted_items,
-                rule_set=rule_set_response,
-            )
+    items: list[AnyMergedModel] = [
+        reraising(
+            ValidationError,
+            InconsistentGraphError,
+            merge_search_result_item,
+            item,
         )
+        for item in result["items"]
+    ]
     return reraising(
         ValidationError,
         InconsistentGraphError,

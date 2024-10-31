@@ -74,7 +74,7 @@ YIELD currentStatus;"""
             True,
             True,
             """\
-CALL {
+CALL () {
     CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
     OPTIONAL MATCH (n:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
@@ -84,7 +84,7 @@ CALL {
         AND ANY(label IN labels(n) WHERE label IN $labels)
     RETURN COUNT(n) AS total
 }
-CALL {
+CALL () {
     CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
     OPTIONAL MATCH (n:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
@@ -92,8 +92,8 @@ CALL {
         elementId(hit) = elementId(n)
         AND merged.identifier = $stable_target_id
         AND ANY(label IN labels(n) WHERE label IN $labels)
-    CALL {
-        WITH n
+    WITH n
+    CALL (n) {
         OPTIONAL MATCH (n)-[r]->(referenced:MergedThis|MergedThat|MergedOther)
         RETURN CASE WHEN referenced IS NOT NULL THEN {
             label: type(r),
@@ -101,7 +101,6 @@ CALL {
             value: referenced.identifier
         } ELSE NULL END as ref
     UNION
-        WITH n
         OPTIONAL MATCH (n)-[r]->(nested:Link|Text|Location)
         RETURN CASE WHEN nested IS NOT NULL THEN {
             label: type(r),
@@ -121,18 +120,18 @@ RETURN collect(n) AS items, total;""",
             False,
             False,
             """\
-CALL {
+CALL () {
     OPTIONAL MATCH (n:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)
     WHERE
         ANY(label IN labels(n) WHERE label IN $labels)
     RETURN COUNT(n) AS total
 }
-CALL {
+CALL () {
     OPTIONAL MATCH (n:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)
     WHERE
         ANY(label IN labels(n) WHERE label IN $labels)
-    CALL {
-        WITH n
+    WITH n
+    CALL (n) {
         OPTIONAL MATCH (n)-[r]->(referenced:MergedThis|MergedThat|MergedOther)
         RETURN CASE WHEN referenced IS NOT NULL THEN {
             label: type(r),
@@ -140,7 +139,6 @@ CALL {
             value: referenced.identifier
         } ELSE NULL END as ref
     UNION
-        WITH n
         OPTIONAL MATCH (n)-[r]->(nested:Link|Text|Location)
         RETURN CASE WHEN nested IS NOT NULL THEN {
             label: type(r),
@@ -183,7 +181,7 @@ def test_fetch_extracted_items(
             True,
             True,
             """\
-CALL {
+CALL () {
     CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
     OPTIONAL MATCH (n:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
@@ -194,7 +192,7 @@ CALL {
     WITH DISTINCT merged as merged
     RETURN COUNT(merged) AS total
 }
-CALL {
+CALL () {
     CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
     OPTIONAL MATCH (n:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
@@ -204,8 +202,8 @@ CALL {
         AND ANY(label IN labels(merged) WHERE label IN $labels)
     WITH DISTINCT merged as merged
     OPTIONAL MATCH (n)-[:stableTargetId]->(merged)
-    CALL {
-        WITH n
+    WITH n, merged
+    CALL (n) {
         OPTIONAL MATCH (n)-[r]->(referenced:MergedThis|MergedThat|MergedOther)
         RETURN CASE WHEN referenced IS NOT NULL THEN {
             label: type(r),
@@ -213,7 +211,6 @@ CALL {
             value: referenced.identifier
         } ELSE NULL END as ref
     UNION
-        WITH n
         OPTIONAL MATCH (n)-[r]->(nested:Link|Text|Location)
         RETURN CASE WHEN nested IS NOT NULL THEN {
             label: type(r),
@@ -234,21 +231,21 @@ RETURN collect(merged) AS items, total;""",
             False,
             False,
             """\
-CALL {
+CALL () {
     OPTIONAL MATCH (n:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
     WHERE
         ANY(label IN labels(merged) WHERE label IN $labels)
     WITH DISTINCT merged as merged
     RETURN COUNT(merged) AS total
 }
-CALL {
+CALL () {
     OPTIONAL MATCH (n:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
     WHERE
         ANY(label IN labels(merged) WHERE label IN $labels)
     WITH DISTINCT merged as merged
     OPTIONAL MATCH (n)-[:stableTargetId]->(merged)
-    CALL {
-        WITH n
+    WITH n, merged
+    CALL (n) {
         OPTIONAL MATCH (n)-[r]->(referenced:MergedThis|MergedThat|MergedOther)
         RETURN CASE WHEN referenced IS NOT NULL THEN {
             label: type(r),
@@ -256,7 +253,6 @@ CALL {
             value: referenced.identifier
         } ELSE NULL END as ref
     UNION
-        WITH n
         OPTIONAL MATCH (n)-[r]->(nested:Link|Text|Location)
         RETURN CASE WHEN nested IS NOT NULL THEN {
             label: type(r),
@@ -375,8 +371,8 @@ def test_fetch_identities(
         (
             ["personInCharge", "meetingScheduledBy", "agendaSignedOff"],
             """\
-MATCH (source:ExtractedThat {identifier: $identifier})-[stableTargetId:stableTargetId]->({identifier: $stable_target_id})
-CALL {
+MATCH (source:ExtractedThat {identifier: $identifier})-[:stableTargetId]->({identifier: $stable_target_id})
+CALL (source) {
     WITH source
     MATCH (target_0 {identifier: $ref_identifiers[0]})
     MERGE (source)-[edge:personInCharge {position: $ref_positions[0]}]->(target_0)
@@ -393,7 +389,7 @@ CALL {
     RETURN edge
 }
 WITH source, count(edge) as merged, collect(edge) as edges
-CALL {
+CALL (source, edges) {
     WITH source, edges
     MATCH (source)-[outdated_edge]->(:MergedThis|MergedThat|MergedOther)
     WHERE NOT outdated_edge IN edges
@@ -405,12 +401,12 @@ RETURN merged, pruned, edges;""",
         (
             [],
             """\
-MATCH (source:ExtractedThat {identifier: $identifier})-[stableTargetId:stableTargetId]->({identifier: $stable_target_id})
-CALL {
+MATCH (source:ExtractedThat {identifier: $identifier})-[:stableTargetId]->({identifier: $stable_target_id})
+CALL (source) {
     RETURN null as edge
 }
 WITH source, count(edge) as merged, collect(edge) as edges
-CALL {
+CALL (source, edges) {
     WITH source, edges
     MATCH (source)-[outdated_edge]->(:MergedThis|MergedThat|MergedOther)
     WHERE NOT outdated_edge IN edges
@@ -456,7 +452,7 @@ ON MATCH SET value_2 += $nested_values[2]
 WITH current,
     [edge_0, edge_1, edge_2] as edges,
     [value_0, value_1, value_2] as values
-CALL {
+CALL (current, values) {
     WITH current, values
     MATCH (current)-[]->(outdated_node:Link|Text|Location)
     WHERE NOT outdated_node IN values
@@ -476,7 +472,7 @@ ON MATCH SET current += $on_match
 WITH current,
     [] as edges,
     [] as values
-CALL {
+CALL (current, values) {
     WITH current, values
     MATCH (current)-[]->(outdated_node:Link|Text|Location)
     WHERE NOT outdated_node IN values
