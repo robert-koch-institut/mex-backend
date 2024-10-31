@@ -2,6 +2,7 @@ from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
+from starlette import status
 
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_IDENTIFIER,
@@ -59,7 +60,7 @@ def test_assign_identity_mocked(
 ) -> None:
     mocked_graph.return_value = mocked_return
     response = client_with_api_key_write_permission.post("/v0/identity", json=post_body)
-    assert response.status_code == 200, response.text
+    assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == expected
 
 
@@ -88,7 +89,7 @@ def test_assign_identity_inconsistency_mocked(
             "identifierInPrimarySource": "cp-2",
         },
     )
-    assert response.status_code == 500, response.text
+    assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR, response.text
     assert "MultipleResultsFoundError" in response.text
 
 
@@ -142,7 +143,7 @@ def test_assign_identity(
     expected: dict[str, Any],
 ) -> None:
     response = client_with_api_key_write_permission.post("/v0/identity", json=post_body)
-    assert response.status_code == 200, response.text
+    assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == expected
 
 
@@ -218,7 +219,7 @@ def test_fetch_identities_mocked(
 ) -> None:
     mocked_graph.return_value = mocked_return
     response = client_with_api_key_write_permission.get(f"/v0/identity{query_string}")
-    assert response.status_code == 200, response.text
+    assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == expected
 
 
@@ -269,5 +270,5 @@ def test_fetch_identities(
     expected: dict[str, Any],
 ) -> None:
     response = client_with_api_key_write_permission.get(f"/v0/identity{query_string}")
-    assert response.status_code == 200, response.text
+    assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == expected

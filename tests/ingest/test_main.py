@@ -3,15 +3,16 @@ from typing import Any, cast
 
 import pytest
 from fastapi.testclient import TestClient
+from starlette import status
 
 from mex.backend.graph.connector import GraphConnector
-from mex.common.models import AnyExtractedModel
+from mex.common.models import EXTRACTED_MODEL_CLASSES, AnyExtractedModel
 from tests.conftest import MockedGraph
 
 Payload = dict[str, list[dict[str, Any]]]
 
 
-@pytest.fixture()
+@pytest.fixture
 def post_payload(dummy_data: dict[str, AnyExtractedModel]) -> Payload:
     payload = defaultdict(list)
     for model in dummy_data.values():
@@ -24,7 +25,7 @@ def test_bulk_insert_empty(client_with_api_key_write_permission: TestClient) -> 
     response = client_with_api_key_write_permission.post(
         "/v0/ingest", json={"items": []}
     )
-    assert response.status_code == 201, response.text
+    assert response.status_code == status.HTTP_201_CREATED, response.text
     assert response.json() == {"identifiers": []}
 
 
@@ -43,7 +44,7 @@ def test_bulk_insert(
     )
 
     # assert the response is the identifier of the contact point
-    assert response.status_code == 201, response.text
+    assert response.status_code == status.HTTP_201_CREATED, response.text
     assert sorted(response.json()["identifiers"]) == expected_identifiers
 
     # verify the nodes have actually been stored in the database
@@ -55,7 +56,7 @@ def test_bulk_insert(
 def test_bulk_insert_malformed(
     client_with_api_key_write_permission: TestClient,
 ) -> None:
-    expected_res = []
+    expected_response = []
     exp_err = {
         "ctx": {"error": {}},
         "input": "FAIL!",
@@ -64,14 +65,14 @@ def test_bulk_insert_malformed(
         "other types is not supported for models with computed fields.",
         "type": "assertion_error",
     }
-    expected_res += [exp_err] * 11
+    expected_response += [exp_err] * len(EXTRACTED_MODEL_CLASSES)
 
     response = client_with_api_key_write_permission.post(
         "/v0/ingest",
         json={"items": ["FAIL!"]},
     )
-    assert response.status_code == 422, response.text
-    assert response.json() == {"detail": expected_res}
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY, response.text
+    assert response.json() == {"detail": expected_response}
 
 
 def test_bulk_insert_mocked(
@@ -84,7 +85,7 @@ def test_bulk_insert_mocked(
     response = client_with_api_key_write_permission.post(
         "/v0/ingest", json=post_payload
     )
-    assert response.status_code == 201, response.text
+    assert response.status_code == status.HTTP_201_CREATED, response.text
     assert sorted(response.json()["identifiers"]) == sorted(
         d.identifier for d in dummy_data.values()
     )

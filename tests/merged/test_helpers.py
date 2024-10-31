@@ -115,7 +115,7 @@ def test_apply_subtractive_rule() -> None:
 
 @pytest.mark.parametrize(
     ("extracted_items", "rule_set", "expected"),
-    (
+    [
         (
             [
                 ExtractedPerson(
@@ -226,7 +226,7 @@ def test_apply_subtractive_rule() -> None:
             },
         ),
         ([], None, "One of rule_set or extracted_items is required."),
-    ),
+    ],
     ids=(
         "extracted_items_and_rule_set",
         "only_rule_set",

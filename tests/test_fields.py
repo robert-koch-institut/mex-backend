@@ -16,14 +16,14 @@ from mex.common.types import (
 
 @pytest.mark.parametrize(
     ("annotation", "expected_types"),
-    (
+    [
         (str, [str]),
         (str | None, [str]),
         (str | int, [str, int]),
         (list[str | int | list[str]], [str, int, str]),
         (Annotated[list[str | int], "some-annotation"], [str, int]),
         (None, []),
-    ),
+    ],
     ids=[
         "simple annotation",
         "optional type",
@@ -39,7 +39,7 @@ def test_get_inner_types(annotation: Any, expected_types: list[type]) -> None:
 
 @pytest.mark.parametrize(
     ("annotation", "types", "expected"),
-    (
+    [
         (None, [str], False),
         (str, [str], True),
         (str, [Identifier], False),
@@ -47,7 +47,7 @@ def test_get_inner_types(annotation: Any, expected_types: list[type]) -> None:
         (list[str | int | list[str]], [str, float], False),
         (list[str | int | list[str]], [int, str], True),
         (MergedPersonIdentifier | None, MERGED_IDENTIFIER_CLASSES, True),
-    ),
+    ],
     ids=[
         "static None",
         "simple str",

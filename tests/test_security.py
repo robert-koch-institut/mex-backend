@@ -5,16 +5,20 @@ from fastapi.security import HTTPBasicCredentials
 from mex.backend.security import has_read_access, has_write_access
 
 read_credentials = HTTPBasicCredentials(
-    **{"username": "Reader", "password": "read_password"}
+    username="Reader",
+    password="read_password",  # noqa: S106
 )
 write_credentials = HTTPBasicCredentials(
-    **{"username": "Writer", "password": "write_password"}
+    username="Writer",
+    password="write_password",  # noqa: S106
 )
 missing_user = HTTPBasicCredentials(
-    **{"username": "Missing", "password": "no_password"}
+    username="Missing",
+    password="no_password",  # noqa: S106
 )
 user_wrong_pw = HTTPBasicCredentials(
-    **{"username": "Writer", "password": "wrong_password"}
+    username="Writer",
+    password="wrong_password",  # noqa: S106
 )
 
 

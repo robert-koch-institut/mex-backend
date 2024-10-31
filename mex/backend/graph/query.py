@@ -71,4 +71,4 @@ class QueryBuilder(BaseConnector):
 
     def close(self) -> None:
         """Clean up the connector."""
-        pass  # no clean-up needed
+        # no clean-up needed

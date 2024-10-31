@@ -4,7 +4,7 @@ from pydantic import ValidationError
 from mex.backend.graph.query import QueryBuilder, render_constraints
 
 
-@pytest.fixture()
+@pytest.fixture
 def query_builder() -> QueryBuilder:
     builder = QueryBuilder.get()
     builder._env.globals.update(
