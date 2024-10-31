@@ -11,9 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- upgrade mex-common and mex-model dependencies to metadata model v3
-- apply additional linters in prep for `all` ruff linters
-
 ### Deprecated
 
 ### Removed
@@ -21,6 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [0.21.0] - 2024-10-31
+
+### Changes
+
+- upgrade mex-common and mex-model dependencies to metadata model v3
+- apply additional linters in prep for `all` ruff linters
 
 ## [0.20.0] - 2024-10-18
 
