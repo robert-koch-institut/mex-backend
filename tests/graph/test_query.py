@@ -390,7 +390,6 @@ CALL (source) {
 }
 WITH source, count(edge) as merged, collect(edge) as edges
 CALL (source, edges) {
-    WITH source, edges
     MATCH (source)-[outdated_edge]->(:MergedThis|MergedThat|MergedOther)
     WHERE NOT outdated_edge IN edges
     DELETE outdated_edge
@@ -407,7 +406,6 @@ CALL (source) {
 }
 WITH source, count(edge) as merged, collect(edge) as edges
 CALL (source, edges) {
-    WITH source, edges
     MATCH (source)-[outdated_edge]->(:MergedThis|MergedThat|MergedOther)
     WHERE NOT outdated_edge IN edges
     DELETE outdated_edge
@@ -453,7 +451,6 @@ WITH current,
     [edge_0, edge_1, edge_2] as edges,
     [value_0, value_1, value_2] as values
 CALL (current, values) {
-    WITH current, values
     MATCH (current)-[]->(outdated_node:Link|Text|Location)
     WHERE NOT outdated_node IN values
     DETACH DELETE outdated_node
@@ -473,7 +470,6 @@ WITH current,
     [] as edges,
     [] as values
 CALL (current, values) {
-    WITH current, values
     MATCH (current)-[]->(outdated_node:Link|Text|Location)
     WHERE NOT outdated_node IN values
     DETACH DELETE outdated_node

@@ -72,6 +72,14 @@ components of the MEx project are open-sourced under the same license as well.
   - switch version `pyenv global 3.11`
   - run `.\mex.bat install`
 
+### database
+
+- for local development, neo4j desktop edition is recommended
+  - make sure you download and run the same version as in `testing.yml`
+  - also make sure db name, user and password match the `settings.py`
+- for production deployments, a container runtime is recommended
+  - for a configuration example, see `compose.yaml`
+
 ### linting and testing
 
 - run all linters with `pdm lint`

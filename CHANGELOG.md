@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - mute warnings about labels used in queries but missing in graph
 - split up search_merged_items_in_graph for better readability
 - update cypher queries to use `CALL` clauses with correct variable scope
+- BREAKING: drop support for neo4j server version 5.6 and lower
 
 ### Deprecated
 

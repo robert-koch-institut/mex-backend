@@ -36,7 +36,6 @@ CALL (source) {
 }
 WITH source, count(edge) as merged, collect(edge) as edges
 CALL (source, edges) {
-    WITH source, edges
     MATCH (source)-[outdated_edge]->(:<<merged_labels|join("|")>>)
     WHERE NOT outdated_edge IN edges
     DELETE outdated_edge
