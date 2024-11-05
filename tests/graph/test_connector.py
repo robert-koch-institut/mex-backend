@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from unittest.mock import Mock
 
 import pytest
 from black import Mode, format_str
@@ -20,7 +21,7 @@ from mex.common.types import Identifier
 from tests.conftest import MockedGraph
 
 
-@pytest.fixture()
+@pytest.fixture
 def mocked_query_builder(monkeypatch: MonkeyPatch) -> None:
     def __getattr__(_: QueryBuilder, query: str) -> Callable[..., str]:
         return lambda **parameters: format_str(
@@ -194,7 +195,7 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
     result = graph.fetch_extracted_items(
         query_string="my-query",
         stable_target_id=Identifier.generate(99),
-        entity_type=[],
+        entity_type=["ExtractedFoo", "ExtractedBar", "ExtractedBatz"],
         skip=10,
         limit=100,
     )
@@ -206,17 +207,9 @@ fetch_extracted_or_rule_items(
 )""",
         {
             "labels": [
-                "ExtractedAccessPlatform",
-                "ExtractedActivity",
-                "ExtractedContactPoint",
-                "ExtractedDistribution",
-                "ExtractedOrganization",
-                "ExtractedOrganizationalUnit",
-                "ExtractedPerson",
-                "ExtractedPrimarySource",
-                "ExtractedResource",
-                "ExtractedVariable",
-                "ExtractedVariableGroup",
+                "ExtractedFoo",
+                "ExtractedBar",
+                "ExtractedBatz",
             ],
             "limit": 100,
             "query_string": "my-query",
@@ -288,7 +281,7 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
     result = graph.fetch_rule_items(
         query_string="my-query",
         stable_target_id=Identifier.generate(99),
-        entity_type=[],
+        entity_type=["AdditiveFoo", "SubtractiveBar", "PreventiveBatz"],
         skip=10,
         limit=100,
     )
@@ -300,39 +293,9 @@ fetch_extracted_or_rule_items(
 )""",
         {
             "labels": [
-                "AdditiveAccessPlatform",
-                "AdditiveActivity",
-                "AdditiveContactPoint",
-                "AdditiveDistribution",
-                "AdditiveOrganization",
-                "AdditiveOrganizationalUnit",
-                "AdditivePerson",
-                "AdditivePrimarySource",
-                "AdditiveResource",
-                "AdditiveVariable",
-                "AdditiveVariableGroup",
-                "SubtractiveAccessPlatform",
-                "SubtractiveActivity",
-                "SubtractiveContactPoint",
-                "SubtractiveDistribution",
-                "SubtractiveOrganization",
-                "SubtractiveOrganizationalUnit",
-                "SubtractivePerson",
-                "SubtractivePrimarySource",
-                "SubtractiveResource",
-                "SubtractiveVariable",
-                "SubtractiveVariableGroup",
-                "PreventiveAccessPlatform",
-                "PreventiveActivity",
-                "PreventiveContactPoint",
-                "PreventiveDistribution",
-                "PreventiveOrganization",
-                "PreventiveOrganizationalUnit",
-                "PreventivePerson",
-                "PreventivePrimarySource",
-                "PreventiveResource",
-                "PreventiveVariable",
-                "PreventiveVariableGroup",
+                "AdditiveFoo",
+                "SubtractiveBar",
+                "PreventiveBatz",
             ],
             "limit": 100,
             "query_string": "my-query",
@@ -367,8 +330,8 @@ def test_fetch_rule_items(
             {
                 "email": [],
                 "entityType": "AdditiveOrganizationalUnit",
-                "name": [dict(value="Unit 1.7", language="en")],
-                "website": [dict(title="Unit Homepage", url="https://unit-1-7")],
+                "name": [{"value": "Unit 1.7", "language": "en"}],
+                "website": [{"title": "Unit Homepage", "url": "https://unit-1-7"}],
                 "parentUnit": [load_dummy_rule_set.additive.parentUnit],
                 "stableTargetId": ["bFQoRhcVH5DHUB"],
             }
@@ -431,7 +394,7 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
     result = graph.fetch_merged_items(
         query_string="my-query",
         stable_target_id=Identifier.generate(99),
-        entity_type=[],
+        entity_type=["MergedFoo", "MergedBar", "MergedBatz"],
         skip=10,
         limit=100,
     )
@@ -443,17 +406,9 @@ fetch_merged_items(
 )""",
         {
             "labels": [
-                "MergedAccessPlatform",
-                "MergedActivity",
-                "MergedContactPoint",
-                "MergedDistribution",
-                "MergedOrganization",
-                "MergedOrganizationalUnit",
-                "MergedPerson",
-                "MergedPrimarySource",
-                "MergedResource",
-                "MergedVariable",
-                "MergedVariableGroup",
+                "MergedFoo",
+                "MergedBar",
+                "MergedBatz",
             ],
             "limit": 100,
             "query_string": "my-query",
@@ -601,18 +556,25 @@ fetch_identities(
 
 
 @pytest.mark.usefixtures("mocked_query_builder")
-def test_mocked_graph_exists_merged_item(mocked_graph: MockedGraph) -> None:
+def test_mocked_graph_exists_merged_item(
+    mocked_graph: MockedGraph, monkeypatch: MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        connector_module,
+        "MERGED_MODEL_CLASSES_BY_NAME",
+        {"MergedFoo": Mock(), "MergedBar": Mock(), "MergedBatz": Mock()},
+    )
     mocked_graph.return_value = [{"exists": True}]
 
     graph = GraphConnector.get()
     graph.exists_merged_item(
         stable_target_id=Identifier.generate(99),
-        stem_types=["Person", "ContactPoint"],
+        stem_types=["Foo", "Bar"],
     )
 
     assert mocked_graph.call_args_list[-1].args == (
         """\
-exists_merged_item(node_labels=["MergedPerson", "MergedContactPoint"])""",
+exists_merged_item(node_labels=["MergedFoo", "MergedBar"])""",
         {"identifier": Identifier.generate(99)},
     )
 
@@ -622,21 +584,7 @@ exists_merged_item(node_labels=["MergedPerson", "MergedContactPoint"])""",
 
     assert mocked_graph.call_args_list[-1].args == (
         """\
-exists_merged_item(
-    node_labels=[
-        "MergedAccessPlatform",
-        "MergedActivity",
-        "MergedContactPoint",
-        "MergedDistribution",
-        "MergedOrganization",
-        "MergedOrganizationalUnit",
-        "MergedPerson",
-        "MergedPrimarySource",
-        "MergedResource",
-        "MergedVariable",
-        "MergedVariableGroup",
-    ]
-)""",
+exists_merged_item(node_labels=["MergedFoo", "MergedBar", "MergedBatz"])""",
         {"identifier": Identifier.generate(99)},
     )
 
@@ -779,6 +727,6 @@ merge_edges(
 @pytest.mark.usefixtures("mocked_graph")
 def test_mocked_graph_ingests_models(dummy_data: dict[str, AnyExtractedModel]) -> None:
     graph = GraphConnector.get()
-    identifiers = graph.ingest(dummy_data.values())
+    identifiers = graph.ingest(list(dummy_data.values()))
 
     assert identifiers == [d.identifier for d in dummy_data.values()]

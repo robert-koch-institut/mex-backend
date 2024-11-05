@@ -8,6 +8,7 @@ import requests
 from ldap3 import Connection
 from pytest import MonkeyPatch
 from requests import Response
+from starlette import status
 
 from mex.common.ldap.connector import LDAPConnector
 from mex.common.ldap.models.person import LDAPPerson
@@ -71,9 +72,9 @@ def extracted_unit(
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def mocked_wikidata(monkeypatch: MonkeyPatch) -> None:
-    response_query = Mock(spec=Response, status_code=200)
+    response_query = Mock(spec=Response, status_code=status.HTTP_200_OK)
 
     session = MagicMock(spec=requests.Session)
     session.get = MagicMock(side_effect=[response_query])

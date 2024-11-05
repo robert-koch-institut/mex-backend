@@ -1,3 +1,4 @@
+import contextlib
 from collections.abc import Callable
 from typing import ParamSpec, TypeVar
 
@@ -21,10 +22,8 @@ def prune_list_in_dict(dict_: dict[str, list[T]], key: str, item: list[T] | T) -
     if not isinstance(item, list):
         item = [item]
     for removable in item:
-        try:
+        with contextlib.suppress(ValueError):
             list_.remove(removable)
-        except ValueError:
-            pass
 
 
 def reraising(

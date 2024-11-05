@@ -59,7 +59,7 @@ def handle_uncaught_exception(request: Request, exc: Exception) -> Response:
         content=ErrorResponse(
             message=str(exc),
             debug=DebuggingInfo(
-                errors=[dict(type=type(exc).__name__)],
+                errors=[{"type": type(exc).__name__}],
                 scope=DebuggingScope.model_validate(request.scope),
             ),
         ).model_dump_json(),

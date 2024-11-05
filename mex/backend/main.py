@@ -50,7 +50,7 @@ def create_openapi_schema() -> dict[str, Any]:
         summary=app.summary,
         description=app.description,
         routes=app.routes,
-        servers=[dict(url=settings.backend_api_url)],
+        servers=[{"url": settings.backend_api_url}],
     )
     for identifier in chain(EXTRACTED_IDENTIFIER_CLASSES, MERGED_IDENTIFIER_CLASSES):
         name = identifier.__name__
@@ -79,11 +79,11 @@ app = FastAPI(
         "The MEx API includes endpoints for multiple use-cases, "
         "e.g. for extractor pipelines, the MEx editor or inter-departmental access."
     ),
-    contact=dict(
-        name="RKI MEx Team",
-        email="mex@rki.de",
-        url="https://github.com/robert-koch-institut/mex-backend",
-    ),
+    contact={
+        "name": "RKI MEx Team",
+        "email": "mex@rki.de",
+        "url": "https://github.com/robert-koch-institut/mex-backend",
+    },
     lifespan=lifespan,
     version="v0",
 )

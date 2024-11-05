@@ -38,7 +38,7 @@ def test_expand_references_in_search_result() -> None:
         "identifier": "bFQoRhcVH5DHUA",
         "identifierInPrimarySource": "a-1",
         "start": [],
-        "theme": ["https://mex.rki.de/item/theme-3"],
+        "theme": ["https://mex.rki.de/item/theme-11"],
     }
 
     expand_references_in_search_result(node_dict)
@@ -51,7 +51,7 @@ def test_expand_references_in_search_result() -> None:
         "identifier": "bFQoRhcVH5DHUA",
         "identifierInPrimarySource": "a-1",
         "start": [],
-        "theme": ["https://mex.rki.de/item/theme-3"],
+        "theme": ["https://mex.rki.de/item/theme-11"],
         "responsibleUnit": ["bFQoRhcVH5DHUz"],
         "contact": ["bFQoRhcVH5DHUv", "bFQoRhcVH5DHUx", "bFQoRhcVH5DHUz"],
         "hadPrimarySource": ["bFQoRhcVH5DHUr"],

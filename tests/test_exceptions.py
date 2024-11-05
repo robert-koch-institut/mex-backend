@@ -5,6 +5,7 @@ from unittest.mock import Mock
 import pydantic_core
 import pytest
 from pydantic import ValidationError
+from starlette import status
 
 from mex.backend.exceptions import handle_uncaught_exception, handle_validation_error
 from mex.common.exceptions import MExError
@@ -31,7 +32,7 @@ MOCK_REQUEST_SCOPE = {
                 },
                 "message": "foo",
             },
-            500,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
         ),
         (
             MExError("bar"),
@@ -42,7 +43,7 @@ MOCK_REQUEST_SCOPE = {
                     "scope": MOCK_REQUEST_SCOPE,
                 },
             },
-            500,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
         ),
     ],
     ids=["TypeError", "MExError"],
@@ -71,7 +72,7 @@ def test_handle_validation_error() -> None:
         ],
     )
     response = handle_validation_error(request, exception)
-    assert response.status_code == 400, response.body
+    assert response.status_code == status.HTTP_400_BAD_REQUEST, response.body
     assert json.loads(response.body) == {
         "debug": {
             "errors": [
