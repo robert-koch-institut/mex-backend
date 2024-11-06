@@ -1,11 +1,12 @@
 from typing import Any, cast
 
 from fastapi.encoders import jsonable_encoder
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 from starlette import status
 from starlette.requests import Request
 from starlette.responses import Response
 
+from mex.backend.graph.exceptions import DetailedError
 from mex.common.logging import logger
 
 
@@ -34,16 +35,14 @@ class ErrorResponse(BaseModel):
     debug: DebuggingInfo
 
 
-def handle_validation_error(request: Request, exc: Exception) -> Response:
-    """Handle pydantic validation errors and provide debugging info."""
-    logger.exception("ValidationError %s", exc)
+def handle_detailed_error(request: Request, exc: Exception) -> Response:
+    """Handle detailed errors and provide debugging info."""
+    logger.exception("%s %s", type(exc), exc)
     return Response(
         content=ErrorResponse(
             message=str(exc),
             debug=DebuggingInfo(
-                errors=[
-                    jsonable_encoder(e) for e in cast(ValidationError, exc).errors()
-                ],
+                errors=[jsonable_encoder(e) for e in cast(DetailedError, exc).errors()],
                 scope=DebuggingScope.model_validate(request.scope),
             ),
         ).model_dump_json(),
