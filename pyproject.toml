@@ -122,6 +122,9 @@ select = ["ALL"]
 "scripts/**" = [
     "INP001",   # Scripts folder does not need to be a package
 ]
+"**/main.py" = [
+    "N803",     # Allow dromedaryCase query parameters
+]
 "tests/**" = [
     "ARG005",   # Allow unused lambda arguments for mocking
     "D101",     # Allow missing docstring in public class
