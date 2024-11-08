@@ -211,7 +211,7 @@ def test_assign_identity(
     ],
     ids=["nothing found", "one item", "two items"],
 )
-def test_fetch_identities_mocked(
+def test_fetch_identities_mocked(  # noqa: PLR0913
     mocked_graph: MockedGraph,
     mocked_return: list[dict[str, str]],
     had_primary_source: MergedPrimarySourceIdentifier | None,

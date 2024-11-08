@@ -9,7 +9,7 @@ Backend server for the RKI metadata exchange.
 [![open-code](https://github.com/robert-koch-institut/mex-backend/actions/workflows/open-code.yml/badge.svg)](https://gitlab.opencode.de/robert-koch-institut/mex/mex-backend)
 [![testing](https://github.com/robert-koch-institut/mex-backend/actions/workflows/testing.yml/badge.svg)](https://github.com/robert-koch-institut/mex-backend/actions/workflows/testing.yml)
 
-## project
+## Project
 
 The Metadata Exchange (MEx) project is committed to improve the retrieval of RKI
 research data and projects. How? By focusing on metadata: instead of providing the
@@ -39,27 +39,28 @@ data Findable, Accessible, Interoperable and Reusable.
 **Contact** \
 For more information, please feel free to email us at [mex@rki.de](mailto:mex@rki.de).
 
-### Publisher of this document
+### Publisher
+
 **Robert Koch-Institut** \
 Nordufer 20 \
 13353 Berlin \
 Germany
 
-## package
+## Package
 
 The `mex-backend` package is a multi-purpose backend application with an HTTP-API. It
 provides endpoints to ingest data from ETL-pipelines, for a metadata editor application,
 and for publishing pipelines to extract standardized data for use in upstream frontend
 applications.
 
-## license
+## License
 
 This package is licensed under the [MIT license](/LICENSE). All other software
 components of the MEx project are open-sourced under the same license as well.
 
-## development
+## Development
 
-### installation
+### Installation
 
 - on unix, consider using pyenv https://github.com/pyenv/pyenv
   - get pyenv `curl https://pyenv.run | bash`
@@ -72,13 +73,13 @@ components of the MEx project are open-sourced under the same license as well.
   - switch version `pyenv global 3.11`
   - run `.\mex.bat install`
 
-### linting and testing
+### Linting and testing
 
 - run all linters with `pdm lint`
 - run only unit tests with `pdm unit`
 - run unit and integration tests with `pdm test`
 
-### updating dependencies
+### Updating dependencies
 
 - update boilerplate files with `cruft update`
 - update global requirements in `requirements.txt` manually
@@ -86,18 +87,18 @@ components of the MEx project are open-sourced under the same license as well.
 - update package dependencies using `pdm update-all`
 - update github actions in `.github/workflows/*.yml` manually
 
-### creating release
+### Creating release
 
 - run `pdm release RULE` to release a new version where RULE determines which part of
   the version to update and is one of `major`, `minor`, `patch`.
 
-### container workflow
+### Container workflow
 
 - build image with `make image`
 - run directly using docker `make run`
 - start with docker compose `make start`
 
-## commands
+## Commands
 
 - run `pdm run {command} --help` to print instructions
 - run `pdm run {command} --debug` for interactive debugging
