@@ -13,13 +13,13 @@ def get_graph() -> list[dict[str, Any]]:
     connector = GraphConnector.get()
     graph = connector.commit(
         """
-CALL {
+CALL () {
     MATCH (n)
     RETURN collect(n{
         .*, label: head(labels(n))
     }) as nodes
 }
-CALL {
+CALL () {
     MATCH ()-[r]->()
     RETURN collect({
         label: type(r), position: r.position,

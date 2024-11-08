@@ -3,7 +3,7 @@ from collections.abc import Sequence
 from string import Template
 from typing import Annotated, Any, Literal, cast
 
-from neo4j import Driver, GraphDatabase, NotificationMinimumSeverity
+from neo4j import Driver, GraphDatabase, NotificationDisabledCategory
 from pydantic import Field
 
 from mex.backend.fields import (
@@ -84,7 +84,10 @@ class GraphConnector(BaseConnector):
                 settings.graph_password.get_secret_value(),
             ),
             database=settings.graph_db,
-            warn_notification_severity=NotificationMinimumSeverity.OFF,
+            notifications_disabled_categories=[
+                # mute warnings about labels used in queries but missing in graph
+                NotificationDisabledCategory.UNRECOGNIZED,
+            ],
         )
 
     def _check_connectivity_and_authentication(self) -> Result:

@@ -19,8 +19,8 @@ Returns:
     pruned: Number of pruned edges
     edges: List of the merged edge objects
 -#>
-MATCH (source:<<current_label>> {<<current_constraints|render_constraints>>})-[stableTargetId:stableTargetId]->({identifier: $stable_target_id})
-CALL {
+MATCH (source:<<current_label>> {<<current_constraints|render_constraints>>})-[:stableTargetId]->({identifier: $stable_target_id})
+CALL (source) {
 <%- if ref_labels %>
 <%- set union = joiner("UNION\n    ") %>
 <%- for ref_label in ref_labels %>
@@ -35,8 +35,7 @@ CALL {
 <%- endif %>
 }
 WITH source, count(edge) as merged, collect(edge) as edges
-CALL {
-    WITH source, edges
+CALL (source, edges) {
     MATCH (source)-[outdated_edge]->(:<<merged_labels|join("|")>>)
     WHERE NOT outdated_edge IN edges
     DELETE outdated_edge
