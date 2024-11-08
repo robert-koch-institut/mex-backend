@@ -18,7 +18,7 @@ dependencies = [
     "uvicorn[standard]>=0.30.6,<1",
 ]
 optional-dependencies.dev = [
-    "black>=24.8.0,<25",
+    "black>=24,<25",
     "ipdb>=0.13.13,<1",
     "mypy>=1.11.2,<2",
     "pytest-cov>=6,<7",
