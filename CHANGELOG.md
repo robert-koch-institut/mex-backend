@@ -11,13 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- upgrade mex-common and mex-model dependencies to metadata model v3
-- apply additional linters in prep for `all` ruff linters
-- mute warnings about labels used in queries but missing in graph
-- split up search_merged_items_in_graph for better readability
-- update cypher queries to use `CALL` clauses with correct variable scope
-- BREAKING: drop support for neo4j server version 5.6 and lower
-
 ### Deprecated
 
 ### Removed
@@ -25,6 +18,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [0.22.0] - 2024-11-08
+
+### Changes
+
+- upgrade mex-common and mex-model dependencies to metadata model v3
+- apply additional linters in prep for `all` ruff linters
+- mute warnings about labels used in queries but missing in graph
+- split up search_merged_items_in_graph for better readability
+- update cypher queries to use `CALL` clauses with correct variable scope
+- BREAKING: drop support for neo4j server version 5.6 and lower
 
 ## [0.21.0] - 2024-10-31
 
