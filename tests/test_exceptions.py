@@ -38,7 +38,7 @@ MOCK_REQUEST_SCOPE = {
         (
             MExError("bar"),
             {
-                "message": "MExError: bar ",
+                "message": "MExError: bar",
                 "debug": {
                     "errors": [{"type": "MExError"}],
                     "scope": MOCK_REQUEST_SCOPE,
