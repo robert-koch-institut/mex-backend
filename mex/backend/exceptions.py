@@ -40,7 +40,7 @@ def handle_detailed_error(request: Request, exc: Exception) -> Response:
     logger.exception("%s %s", type(exc), exc)
     return Response(
         content=ErrorResponse(
-            message=str(exc),
+            message=str(exc).strip(" "),
             debug=DebuggingInfo(
                 errors=[jsonable_encoder(e) for e in cast(DetailedError, exc).errors()],
                 scope=DebuggingScope.model_validate(request.scope),
@@ -56,7 +56,7 @@ def handle_uncaught_exception(request: Request, exc: Exception) -> Response:
     logger.exception("UncaughtError %s", exc)
     return Response(
         content=ErrorResponse(
-            message=str(exc),
+            message=str(exc).strip(" "),
             debug=DebuggingInfo(
                 errors=[{"type": type(exc).__name__}],
                 scope=DebuggingScope.model_validate(request.scope),
