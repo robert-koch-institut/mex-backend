@@ -26,7 +26,7 @@ from mex.common.types.identifier import (
     ExtractedOrganizationalUnitIdentifier,
     MergedOrganizationalUnitIdentifier,
 )
-from mex.common.types.text import Text, TextLanguage  # noqa: F811
+from mex.common.types import Text, TextLanguage
 
 
 def count_results(search_string: str, persons: list) -> tuple:
