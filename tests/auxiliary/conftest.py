@@ -48,8 +48,8 @@ test_persons = [
 ]
 
 
-@pytest.fixture()
-def mocked_ldap(monkeypatch: MonkeyPatch, search_string: str) -> None:
+@pytest.fixture
+def mocked_ldap(monkeypatch: MonkeyPatch) -> None:
     def __init__(self: LDAPConnector) -> None:
         self._connection = MagicMock(spec=Connection, extend=Mock())
         self._connection.extend.standard.paged_search = MagicMock(side_effect=[])
@@ -61,7 +61,7 @@ def mocked_ldap(monkeypatch: MonkeyPatch, search_string: str) -> None:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def extracted_unit(
     extracted_primary_sources: dict[str, ExtractedPrimarySource],
 ) -> ExtractedOrganizationalUnit:
