@@ -1,16 +1,7 @@
-from typing import Protocol
-
 from pydantic import ValidationError
 from pydantic_core import ErrorDetails
 
 from mex.common.exceptions import MExError
-
-
-class DetailedError(Protocol):
-    """Protocol for errors that offer details."""
-
-    def errors(self) -> list[ErrorDetails]:
-        """Details about each underlying error."""
 
 
 class NoResultFoundError(MExError):

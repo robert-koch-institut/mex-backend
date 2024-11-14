@@ -1,13 +1,20 @@
-from typing import Any, cast
+from typing import Any, Protocol, cast
 
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
+from pydantic_core import ErrorDetails
 from starlette import status
 from starlette.requests import Request
 from starlette.responses import Response
 
-from mex.backend.graph.exceptions import DetailedError
 from mex.common.logging import logger
+
+
+class DetailedError(Protocol):
+    """Protocol for errors that offer details."""
+
+    def errors(self) -> list[ErrorDetails]:
+        """Details about each underlying error."""
 
 
 class DebuggingScope(BaseModel, extra="ignore"):
