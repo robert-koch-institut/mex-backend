@@ -1,5 +1,3 @@
-from typing import Text
-
 import pytest
 from fastapi.testclient import TestClient
 
@@ -11,15 +9,13 @@ from mex.common.models import (
     ExtractedOrganizationalUnit,
     ExtractedPrimarySource,
 )
-from mex.common.types import (  # noqa: F811
+from mex.common.types import (
+    ExtractedOrganizationalUnitIdentifier,
     ExtractedPrimarySourceIdentifier,
+    MergedOrganizationalUnitIdentifier,
     MergedPrimarySourceIdentifier,
     Text,
     TextLanguage,
-)
-from mex.common.types.identifier import (
-    ExtractedOrganizationalUnitIdentifier,
-    MergedOrganizationalUnitIdentifier,
 )
 
 
