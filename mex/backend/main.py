@@ -10,8 +10,9 @@ from fastapi.openapi.utils import get_openapi
 from pydantic import BaseModel, ValidationError
 
 from mex.backend.auxiliary.wikidata import router as wikidata_router
-from mex.backend.exceptions import handle_uncaught_exception, handle_validation_error
+from mex.backend.exceptions import handle_detailed_error, handle_uncaught_exception
 from mex.backend.extracted.main import router as extracted_router
+from mex.backend.graph.exceptions import InconsistentGraphError
 from mex.backend.identity.main import router as identity_router
 from mex.backend.ingest.main import router as ingest_router
 from mex.backend.logging import UVICORN_LOGGING_CONFIG
@@ -110,7 +111,8 @@ def check_system_status() -> SystemStatus:
 
 
 app.include_router(router)
-app.add_exception_handler(ValidationError, handle_validation_error)
+app.add_exception_handler(InconsistentGraphError, handle_detailed_error)
+app.add_exception_handler(ValidationError, handle_detailed_error)
 app.add_exception_handler(Exception, handle_uncaught_exception)
 app.add_middleware(
     CORSMiddleware,

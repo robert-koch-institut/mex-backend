@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- improve error handling by returning validation issues for InconsistentGraphErrors
+- pin mex-release to 0.3.0
+
 ### Deprecated
 
 ### Removed
