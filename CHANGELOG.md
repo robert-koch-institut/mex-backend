@@ -21,6 +21,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [0.23.0] - 2024-11-19
+
+### Changes
+
+- improve error handling by returning validation issues for InconsistentGraphErrors
+- pin mex-release to 0.3.0
+
 ## [0.22.0] - 2024-11-08
 
 ### Changes

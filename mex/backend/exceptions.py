@@ -1,12 +1,20 @@
-from typing import Any, cast
+from typing import Any, Protocol, cast
 
 from fastapi.encoders import jsonable_encoder
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
+from pydantic_core import ErrorDetails
 from starlette import status
 from starlette.requests import Request
 from starlette.responses import Response
 
 from mex.common.logging import logger
+
+
+class DetailedError(Protocol):
+    """Protocol for errors that offer details."""
+
+    def errors(self) -> list[ErrorDetails]:
+        """Details about each underlying error."""
 
 
 class DebuggingScope(BaseModel, extra="ignore"):
@@ -34,16 +42,14 @@ class ErrorResponse(BaseModel):
     debug: DebuggingInfo
 
 
-def handle_validation_error(request: Request, exc: Exception) -> Response:
-    """Handle pydantic validation errors and provide debugging info."""
-    logger.exception("ValidationError %s", exc)
+def handle_detailed_error(request: Request, exc: Exception) -> Response:
+    """Handle detailed errors and provide debugging info."""
+    logger.exception("%s %s", type(exc), exc)
     return Response(
         content=ErrorResponse(
-            message=str(exc),
+            message=str(exc).strip(" "),
             debug=DebuggingInfo(
-                errors=[
-                    jsonable_encoder(e) for e in cast(ValidationError, exc).errors()
-                ],
+                errors=[jsonable_encoder(e) for e in cast(DetailedError, exc).errors()],
                 scope=DebuggingScope.model_validate(request.scope),
             ),
         ).model_dump_json(),
@@ -57,7 +63,7 @@ def handle_uncaught_exception(request: Request, exc: Exception) -> Response:
     logger.exception("UncaughtError %s", exc)
     return Response(
         content=ErrorResponse(
-            message=str(exc),
+            message=str(exc).strip(" "),
             debug=DebuggingInfo(
                 errors=[{"type": type(exc).__name__}],
                 scope=DebuggingScope.model_validate(request.scope),

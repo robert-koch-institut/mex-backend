@@ -28,7 +28,7 @@ def prune_list_in_dict(dict_: dict[str, list[T]], key: str, item: list[T] | T) -
 
 def reraising(
     original_error: type[Exception],
-    reraise_as: type[Exception],
+    reraise_as: type[Exception] | Exception,
     fn: Callable[P, T],
     *args: P.args,
     **kwargs: P.kwargs,
@@ -37,11 +37,11 @@ def reraising(
 
     This utility allows you to call any given function `fn` with its arguments `args`
     and `kwargs`, catch a specified exception type (`original_error`), and re-raise
-    it as another exception type (`reraise_as`) while preserving the original traceback.
+    it as another exception (`reraise_as`) while preserving the original traceback.
 
     Args:
         original_error: The exception class to catch.
-        reraise_as: The exception class to re-raise as.
+        reraise_as: The exception class to re-raise as or an instance thereof.
         fn: The function to be called.
         *args: Positional arguments to be passed to the function `fn`.
         **kwargs: Keyword arguments to be passed to the function `fn`.
