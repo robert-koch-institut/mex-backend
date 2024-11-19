@@ -435,7 +435,7 @@ def test_merge_edges(
             ["Text", "Link", "Location"],
             """\
 MERGE (merged:MergedThat {identifier: $stable_target_id})
-MERGE (current:ExtractedThat {identifier: $identifier})-[stableTargetId:stableTargetId {position: 0}]->(merged)
+MERGE (current:ExtractedThat {identifier: $identifier})-[:stableTargetId {position: 0}]->(merged)
 ON CREATE SET current = $on_create
 ON MATCH SET current += $on_match
 MERGE (current)-[edge_0:description {position: $nested_positions[0]}]->(value_0:Text)
@@ -463,7 +463,7 @@ RETURN current, edges, values, pruned;""",
             [],
             """\
 MERGE (merged:MergedThat {identifier: $stable_target_id})
-MERGE (current:ExtractedThat {identifier: $identifier})-[stableTargetId:stableTargetId {position: 0}]->(merged)
+MERGE (current:ExtractedThat {identifier: $identifier})-[:stableTargetId {position: 0}]->(merged)
 ON CREATE SET current = $on_create
 ON MATCH SET current += $on_match
 WITH current,
