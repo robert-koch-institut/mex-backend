@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added parameterized tests for it in `test_ldap.py`
 
 ### Changes
+- changed ldap search endpoint by for- and familyName to displayName
 
 ### Deprecated
 
