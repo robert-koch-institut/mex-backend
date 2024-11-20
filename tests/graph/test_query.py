@@ -75,7 +75,7 @@ YIELD currentStatus;"""
             True,
             """\
 CALL () {
-    CALL db.index.fulltext.queryNodes("search_index", $query_string)
+    OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
     OPTIONAL MATCH (n:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
     WHERE
@@ -85,7 +85,7 @@ CALL () {
     RETURN COUNT(n) AS total
 }
 CALL () {
-    CALL db.index.fulltext.queryNodes("search_index", $query_string)
+    OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
     OPTIONAL MATCH (n:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
     WHERE
@@ -99,16 +99,16 @@ CALL () {
             label: type(r),
             position: r.position,
             value: referenced.identifier
-        } ELSE NULL END as ref
+        } ELSE NULL END AS ref
     UNION
         OPTIONAL MATCH (n)-[r]->(nested:Link|Text|Location)
         RETURN CASE WHEN nested IS NOT NULL THEN {
             label: type(r),
             position: r.position,
             value: properties(nested)
-        } ELSE NULL END as ref
+        } ELSE NULL END AS ref
     }
-    WITH n, collect(ref) as refs
+    WITH n, collect(ref) AS refs
     RETURN n{.*, entityType: head(labels(n)), _refs: refs}
     ORDER BY n.identifier, n.entityType ASC
     SKIP $skip
@@ -137,16 +137,16 @@ CALL () {
             label: type(r),
             position: r.position,
             value: referenced.identifier
-        } ELSE NULL END as ref
+        } ELSE NULL END AS ref
     UNION
         OPTIONAL MATCH (n)-[r]->(nested:Link|Text|Location)
         RETURN CASE WHEN nested IS NOT NULL THEN {
             label: type(r),
             position: r.position,
             value: properties(nested)
-        } ELSE NULL END as ref
+        } ELSE NULL END AS ref
     }
-    WITH n, collect(ref) as refs
+    WITH n, collect(ref) AS refs
     RETURN n{.*, entityType: head(labels(n)), _refs: refs}
     ORDER BY n.identifier, n.entityType ASC
     SKIP $skip
@@ -182,25 +182,25 @@ def test_fetch_extracted_items(
             True,
             """\
 CALL () {
-    CALL db.index.fulltext.queryNodes("search_index", $query_string)
+    OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
     OPTIONAL MATCH (n:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
     WHERE
         elementId(hit) = elementId(n)
         AND merged.identifier = $stable_target_id
         AND ANY(label IN labels(merged) WHERE label IN $labels)
-    WITH DISTINCT merged as merged
+    WITH DISTINCT merged AS merged
     RETURN COUNT(merged) AS total
 }
 CALL () {
-    CALL db.index.fulltext.queryNodes("search_index", $query_string)
+    OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
     OPTIONAL MATCH (n:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
     WHERE
         elementId(hit) = elementId(n)
         AND merged.identifier = $stable_target_id
         AND ANY(label IN labels(merged) WHERE label IN $labels)
-    WITH DISTINCT merged as merged
+    WITH DISTINCT merged AS merged
     OPTIONAL MATCH (n)-[:stableTargetId]->(merged)
     WITH n, merged
     CALL (n) {
@@ -209,18 +209,18 @@ CALL () {
             label: type(r),
             position: r.position,
             value: referenced.identifier
-        } ELSE NULL END as ref
+        } ELSE NULL END AS ref
     UNION
         OPTIONAL MATCH (n)-[r]->(nested:Link|Text|Location)
         RETURN CASE WHEN nested IS NOT NULL THEN {
             label: type(r),
             position: r.position,
             value: properties(nested)
-        } ELSE NULL END as ref
+        } ELSE NULL END AS ref
     }
-    WITH merged, n, collect(ref) as refs
+    WITH merged, n, collect(ref) AS refs
     ORDER BY merged.identifier, n.identifier, head(labels(n)) ASC
-    WITH merged, collect(n{.*, entityType: head(labels(n)), _refs: refs}) as n
+    WITH merged, collect(n{.*, entityType: head(labels(n)), _refs: refs}) AS n
     RETURN merged{entityType: head(labels(merged)), identifier: merged.identifier, components: n}
     SKIP $skip
     LIMIT $limit
@@ -235,14 +235,14 @@ CALL () {
     OPTIONAL MATCH (n:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
     WHERE
         ANY(label IN labels(merged) WHERE label IN $labels)
-    WITH DISTINCT merged as merged
+    WITH DISTINCT merged AS merged
     RETURN COUNT(merged) AS total
 }
 CALL () {
     OPTIONAL MATCH (n:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
     WHERE
         ANY(label IN labels(merged) WHERE label IN $labels)
-    WITH DISTINCT merged as merged
+    WITH DISTINCT merged AS merged
     OPTIONAL MATCH (n)-[:stableTargetId]->(merged)
     WITH n, merged
     CALL (n) {
@@ -251,18 +251,18 @@ CALL () {
             label: type(r),
             position: r.position,
             value: referenced.identifier
-        } ELSE NULL END as ref
+        } ELSE NULL END AS ref
     UNION
         OPTIONAL MATCH (n)-[r]->(nested:Link|Text|Location)
         RETURN CASE WHEN nested IS NOT NULL THEN {
             label: type(r),
             position: r.position,
             value: properties(nested)
-        } ELSE NULL END as ref
+        } ELSE NULL END AS ref
     }
-    WITH merged, n, collect(ref) as refs
+    WITH merged, n, collect(ref) AS refs
     ORDER BY merged.identifier, n.identifier, head(labels(n)) ASC
-    WITH merged, collect(n{.*, entityType: head(labels(n)), _refs: refs}) as n
+    WITH merged, collect(n{.*, entityType: head(labels(n)), _refs: refs}) AS n
     RETURN merged{entityType: head(labels(merged)), identifier: merged.identifier, components: n}
     SKIP $skip
     LIMIT $limit
@@ -305,10 +305,10 @@ WHERE
     AND n.identifierInPrimarySource = $identifier_in_primary_source
     AND merged.identifier = $stable_target_id
 RETURN
-    merged.identifier as stableTargetId,
-    primary_source.identifier as hadPrimarySource,
-    n.identifierInPrimarySource as identifierInPrimarySource,
-    n.identifier as identifier
+    merged.identifier AS stableTargetId,
+    primary_source.identifier AS hadPrimarySource,
+    n.identifierInPrimarySource AS identifierInPrimarySource,
+    n.identifier AS identifier
 ORDER BY n.identifier ASC
 LIMIT $limit;""",
         ),
@@ -320,10 +320,10 @@ LIMIT $limit;""",
 MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
 MATCH (n)-[:hadPrimarySource]->(primary_source:MergedPrimarySource)
 RETURN
-    merged.identifier as stableTargetId,
-    primary_source.identifier as hadPrimarySource,
-    n.identifierInPrimarySource as identifierInPrimarySource,
-    n.identifier as identifier
+    merged.identifier AS stableTargetId,
+    primary_source.identifier AS hadPrimarySource,
+    n.identifierInPrimarySource AS identifierInPrimarySource,
+    n.identifier AS identifier
 ORDER BY n.identifier ASC
 LIMIT $limit;""",
         ),
@@ -337,10 +337,10 @@ MATCH (n)-[:hadPrimarySource]->(primary_source:MergedPrimarySource)
 WHERE
     merged.identifier = $stable_target_id
 RETURN
-    merged.identifier as stableTargetId,
-    primary_source.identifier as hadPrimarySource,
-    n.identifierInPrimarySource as identifierInPrimarySource,
-    n.identifier as identifier
+    merged.identifier AS stableTargetId,
+    primary_source.identifier AS hadPrimarySource,
+    n.identifierInPrimarySource AS identifierInPrimarySource,
+    n.identifier AS identifier
 ORDER BY n.identifier ASC
 LIMIT $limit;""",
         ),
@@ -388,12 +388,12 @@ CALL (source) {
     MERGE (source)-[edge:agendaSignedOff {position: $ref_positions[2]}]->(target_2)
     RETURN edge
 }
-WITH source, count(edge) as merged, collect(edge) as edges
+WITH source, count(edge) AS merged, collect(edge) AS edges
 CALL (source, edges) {
     MATCH (source)-[outdated_edge]->(:MergedThis|MergedThat|MergedOther)
     WHERE NOT outdated_edge IN edges
     DELETE outdated_edge
-    RETURN count(outdated_edge) as pruned
+    RETURN count(outdated_edge) AS pruned
 }
 RETURN merged, pruned, edges;""",
         ),
@@ -402,14 +402,14 @@ RETURN merged, pruned, edges;""",
             """\
 MATCH (source:ExtractedThat {identifier: $identifier})-[:stableTargetId]->({identifier: $stable_target_id})
 CALL (source) {
-    RETURN null as edge
+    RETURN null AS edge
 }
-WITH source, count(edge) as merged, collect(edge) as edges
+WITH source, count(edge) AS merged, collect(edge) AS edges
 CALL (source, edges) {
     MATCH (source)-[outdated_edge]->(:MergedThis|MergedThat|MergedOther)
     WHERE NOT outdated_edge IN edges
     DELETE outdated_edge
-    RETURN count(outdated_edge) as pruned
+    RETURN count(outdated_edge) AS pruned
 }
 RETURN merged, pruned, edges;""",
         ),
@@ -448,13 +448,13 @@ MERGE (current)-[edge_2:geoLocation {position: $nested_positions[2]}]->(value_2:
 ON CREATE SET value_2 = $nested_values[2]
 ON MATCH SET value_2 += $nested_values[2]
 WITH current,
-    [edge_0, edge_1, edge_2] as edges,
-    [value_0, value_1, value_2] as values
+    [edge_0, edge_1, edge_2] AS edges,
+    [value_0, value_1, value_2] AS values
 CALL (current, values) {
     MATCH (current)-[]->(outdated_node:Link|Text|Location)
     WHERE NOT outdated_node IN values
     DETACH DELETE outdated_node
-    RETURN count(outdated_node) as pruned
+    RETURN count(outdated_node) AS pruned
 }
 RETURN current, edges, values, pruned;""",
         ),
@@ -467,13 +467,13 @@ MERGE (current:ExtractedThat {identifier: $identifier})-[:stableTargetId {positi
 ON CREATE SET current = $on_create
 ON MATCH SET current += $on_match
 WITH current,
-    [] as edges,
-    [] as values
+    [] AS edges,
+    [] AS values
 CALL (current, values) {
     MATCH (current)-[]->(outdated_node:Link|Text|Location)
     WHERE NOT outdated_node IN values
     DETACH DELETE outdated_node
-    RETURN count(outdated_node) as pruned
+    RETURN count(outdated_node) AS pruned
 }
 RETURN current, edges, values, pruned;""",
         ),

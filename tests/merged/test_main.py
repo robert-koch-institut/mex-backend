@@ -211,6 +211,7 @@ def test_search_merged_items_mocked(
             },
         ),
         ("?identifier=thisIdDoesNotExist", {"items": [], "total": 0}),
+        ("?q=queryNotFound", {"items": [], "total": 0}),
     ],
     ids=[
         "limit 1",
@@ -219,7 +220,8 @@ def test_search_merged_items_mocked(
         "full text search",
         "identifier filter",
         "identifier filter with composite result",
-        "empty result",
+        "identifier not found",
+        "full text not found",
     ],
 )
 @pytest.mark.usefixtures("load_dummy_data", "load_dummy_rule_set")

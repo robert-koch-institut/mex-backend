@@ -38,12 +38,12 @@ ON CREATE SET value_<<index>> = $nested_values[<<index>>]
 ON MATCH SET value_<<index>> += $nested_values[<<index>>]
 <%- endfor %>
 WITH current,
-    [<<range(nested_edge_labels|count)|map("ensure_prefix", "edge_")|join(", ")>>] as edges,
-    [<<range(nested_edge_labels|count)|map("ensure_prefix", "value_")|join(", ")>>] as values
+    [<<range(nested_edge_labels|count)|map("ensure_prefix", "edge_")|join(", ")>>] AS edges,
+    [<<range(nested_edge_labels|count)|map("ensure_prefix", "value_")|join(", ")>>] AS values
 CALL (current, values) {
     MATCH (current)-[]->(outdated_node:<<nested_labels|join("|")>>)
     WHERE NOT outdated_node IN values
     DETACH DELETE outdated_node
-    RETURN count(outdated_node) as pruned
+    RETURN count(outdated_node) AS pruned
 }
 RETURN current, edges, values, pruned;
