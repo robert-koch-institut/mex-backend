@@ -24,14 +24,12 @@ CALL () {
 <%- if filter_by_query_string %>
     CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
-    CALL {
-        WITH hit
+    CALL (hit) {
         MATCH (extracted_or_rule_node:<<extracted_or_rule_labels|join("|")>>)-[:stableTargetId]->(merged_node:<<merged_labels|join("|")>>)
         WHERE elementId(hit) = elementId(extracted_or_rule_node)
         RETURN merged_node
     UNION
-        WITH hit
-        MATCH (nested_node:<<nested_labels|join("|")>>)<--(extracted_or_rule_node:<<extracted_or_rule_labels|join("|")>>)-[:stableTargetId]->(merged_node:<<merged_labels|join("|")>>)
+        MATCH (nested_node:<<nested_labels|join("|")>>)<--(:<<extracted_or_rule_labels|join("|")>>)-[:stableTargetId]->(merged_node:<<merged_labels|join("|")>>)
         WHERE elementId(hit) = elementId(nested_node)
         RETURN merged_node
     }
@@ -50,27 +48,27 @@ CALL () {
 }
 CALL () {
     <<-self.match_clause()>>
-    OPTIONAL MATCH (extracted_node)-[:stableTargetId]->(merged_node)
-    WITH extracted_node, merged_node
-    CALL (extracted_node) {
-        OPTIONAL MATCH (extracted_node)-[r]->(referenced_merged_node:<<merged_labels|join("|")>>)
+    OPTIONAL MATCH (extracted_or_rule_node)-[:stableTargetId]->(merged_node)
+    WITH extracted_or_rule_node, merged_node
+    CALL (extracted_or_rule_node) {
+        OPTIONAL MATCH (extracted_or_rule_node)-[r]->(referenced_merged_node:<<merged_labels|join("|")>>)
         RETURN CASE WHEN referenced_merged_node IS NOT NULL THEN {
             label: type(r),
             position: r.position,
             value: referenced_merged_node.identifier
         } ELSE NULL END as ref
     UNION
-        OPTIONAL MATCH (extracted_node)-[r]->(referenced_nested_node:<<nested_labels|join("|")>>)
+        OPTIONAL MATCH (extracted_or_rule_node)-[r]->(referenced_nested_node:<<nested_labels|join("|")>>)
         RETURN CASE WHEN referenced_nested_node IS NOT NULL THEN {
             label: type(r),
             position: r.position,
             value: properties(referenced_nested_node)
         } ELSE NULL END as ref
     }
-    WITH merged_node, extracted_node, collect(ref) as refs
-    ORDER BY merged_node.identifier, extracted_node.identifier ASC
-    WITH merged_node, collect(extracted_node{.*, entityType: head(labels(extracted_node)), _refs: refs}) as extracted_node
-    RETURN merged_node{entityType: head(labels(merged_node)), identifier: merged_node.identifier, components: extracted_node}
+    WITH merged_node, extracted_or_rule_node, collect(ref) as refs
+    ORDER BY merged_node.identifier, extracted_or_rule_node.identifier ASC
+    WITH merged_node, collect(extracted_or_rule_node{.*, entityType: head(labels(extracted_or_rule_node)), _refs: refs}) as extracted_or_rule_node
+    RETURN merged_node{entityType: head(labels(merged_node)), identifier: merged_node.identifier, components: extracted_or_rule_node}
     SKIP $skip
     LIMIT $limit
 }

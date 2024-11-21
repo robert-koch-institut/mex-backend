@@ -21,13 +21,11 @@ CALL () {
 <%- if filter_by_query_string %>
     CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
-    CALL {
-        WITH hit
+    CALL (hit) {
         MATCH (extracted_or_rule_node:<<extracted_or_rule_labels|join("|")>>)-[:stableTargetId]->(merged_node:<<merged_labels|join("|")>>)
         WHERE elementId(hit) = elementId(extracted_or_rule_node)
         RETURN extracted_or_rule_node, merged_node
     UNION
-        WITH hit
         MATCH (nested_node:<<nested_labels|join("|")>>)<--(extracted_or_rule_node:<<extracted_or_rule_labels|join("|")>>)-[:stableTargetId]->(merged_node:<<merged_labels|join("|")>>)
         WHERE elementId(hit) = elementId(nested_node)
         RETURN extracted_or_rule_node, merged_node
@@ -65,7 +63,7 @@ CALL () {
     }
     WITH extracted_or_rule_node, collect(ref) as refs
     RETURN extracted_or_rule_node{.*, entityType: head(labels(extracted_or_rule_node)), _refs: refs}
-    ORDER BY extracted_or_rule_node.identifier ASC
+    ORDER BY extracted_or_rule_node.identifier, extracted_or_rule_node.entityType ASC
     SKIP $skip
     LIMIT $limit
 }
