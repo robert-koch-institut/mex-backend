@@ -16,7 +16,7 @@ def expand_references_in_search_result(item: dict[str, Any]) -> None:
     `_SearchResultReference`. Before parsing them into pydantic, we need to inline
     the references back into the `item` dictionary.
     """
-    # XXX if we can use `apoc`, we might do this step directly in the cypher query
+    # TODO(ND): try to re-write directly in the cypher query, if we can use `apoc`
     for ref in cast(list[_SearchResultReference], item.pop("_refs")):
         target_list = item.setdefault(ref["label"], [None])
         length_needed = 1 + ref["position"] - len(target_list)

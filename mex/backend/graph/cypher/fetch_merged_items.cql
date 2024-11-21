@@ -19,7 +19,7 @@ Returns:
             merged item. Each component has an extra attribute `_refs` that contains the
             values of nested objects as well as the identifiers of referenced items.
 -#>
-CALL {
+CALL () {
 <%- block match_clause -%>
 <%- if filter_by_query_string %>
     CALL db.index.fulltext.queryNodes("search_index", $query_string)
@@ -48,12 +48,11 @@ CALL {
 <%- endblock %>
     RETURN COUNT(merged_node) AS total
 }
-CALL {
+CALL () {
     <<-self.match_clause()>>
-    WITH merged_node
     OPTIONAL MATCH (extracted_node)-[:stableTargetId]->(merged_node)
-    CALL {
-        WITH extracted_node
+    WITH extracted_node, merged_node
+    CALL (extracted_node) {
         OPTIONAL MATCH (extracted_node)-[r]->(referenced_merged_node:<<merged_labels|join("|")>>)
         RETURN CASE WHEN referenced_merged_node IS NOT NULL THEN {
             label: type(r),
@@ -61,7 +60,6 @@ CALL {
             value: referenced_merged_node.identifier
         } ELSE NULL END as ref
     UNION
-        WITH extracted_node
         OPTIONAL MATCH (extracted_node)-[r]->(referenced_nested_node:<<nested_labels|join("|")>>)
         RETURN CASE WHEN referenced_nested_node IS NOT NULL THEN {
             label: type(r),

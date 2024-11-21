@@ -40,8 +40,7 @@ ON MATCH SET value_<<index>> += $nested_values[<<index>>]
 WITH current,
     [<<range(nested_edge_labels|count)|map("ensure_prefix", "edge_")|join(", ")>>] as edges,
     [<<range(nested_edge_labels|count)|map("ensure_prefix", "value_")|join(", ")>>] as values
-CALL {
-    WITH current, values
+CALL (current, values) {
     MATCH (current)-[]->(outdated_node:<<nested_labels|join("|")>>)
     WHERE NOT outdated_node IN values
     DETACH DELETE outdated_node

@@ -50,10 +50,10 @@ def settings() -> BackendSettings:
     """Load the settings for this pytest session."""
     settings = BackendSettings.get()
     settings.backend_api_key_database = APIKeyDatabase(
-        **{"read": "read_key", "write": "write_key"}
+        read="read_key", write="write_key"
     )
     settings.backend_user_database = APIUserDatabase(
-        **{"read": {"Reader": "read_password"}, "write": {"Writer": "write_password"}}
+        read={"Reader": "read_password"}, write={"Writer": "write_password"}
     )
     return settings
 
@@ -63,28 +63,28 @@ def skip_integration_test_in_ci(is_integration_test: bool) -> None:
     """Overwrite fixture from plugin to not skip integration tests in ci."""
 
 
-@pytest.fixture()
+@pytest.fixture
 def client() -> TestClient:
     """Return a fastAPI test client initialized with our app."""
     with TestClient(app, raise_server_exceptions=False) as test_client:
         return test_client
 
 
-@pytest.fixture()
+@pytest.fixture
 def client_with_api_key_write_permission(client: TestClient) -> TestClient:
     """Return a fastAPI test client with write permission initialized with our app."""
     client.headers.update({"X-API-Key": "write_key"})
     return client
 
 
-@pytest.fixture()
+@pytest.fixture
 def client_with_api_key_read_permission(client: TestClient) -> TestClient:
     """Return a fastAPI test client with read permission granted by API key."""
     client.headers.update({"X-API-Key": "read_key"})
     return client
 
 
-@pytest.fixture()
+@pytest.fixture
 def client_with_basic_auth_read_permission(client: TestClient) -> TestClient:
     """Return a fastAPI test client with read permission granted by basic auth."""
     client.headers.update(
@@ -93,7 +93,7 @@ def client_with_basic_auth_read_permission(client: TestClient) -> TestClient:
     return client
 
 
-@pytest.fixture()
+@pytest.fixture
 def client_with_basic_auth_write_permission(client: TestClient) -> TestClient:
     """Return a fastAPI test client with write permission granted by basic auth."""
     client.headers.update(
@@ -128,7 +128,7 @@ class MockedGraph:
         return self.run.call_args_list
 
 
-@pytest.fixture()
+@pytest.fixture
 def mocked_graph(monkeypatch: MonkeyPatch) -> MockedGraph:
     """Mock the graph connector and return the mocked `run` for easy manipulation."""
     records: list[Any] = []
@@ -190,8 +190,8 @@ def isolate_graph_database(
                 driver.execute_query(f"DROP INDEX {row['name']};")
 
 
-@pytest.fixture()
-def dummy_data(settings: BackendSettings) -> dict[str, AnyExtractedModel]:
+@pytest.fixture
+def dummy_data() -> dict[str, AnyExtractedModel]:
     """Create a set of interlinked dummy data."""
     primary_source_1 = ExtractedPrimarySource(
         hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -237,7 +237,7 @@ def dummy_data(settings: BackendSettings) -> dict[str, AnyExtractedModel]:
         identifierInPrimarySource="a-1",
         responsibleUnit=[organizational_unit_1.stableTargetId],
         start=[YearMonthDay("2014-08-24")],
-        theme=[Theme["DIGITAL_PUBLIC_HEALTH"]],
+        theme=[Theme["INFECTIOUS_DISEASES_AND_EPIDEMIOLOGY"]],
         title=[Text(value="Aktivität 1", language=TextLanguage.DE)],
         website=[Link(title="Activity Homepage", url="https://activity-1")],
     )
@@ -271,7 +271,7 @@ def dummy_data(settings: BackendSettings) -> dict[str, AnyExtractedModel]:
     }
 
 
-@pytest.fixture()
+@pytest.fixture
 def load_dummy_data(
     dummy_data: dict[str, AnyExtractedModel],
 ) -> dict[str, AnyExtractedModel]:
@@ -289,7 +289,7 @@ def load_dummy_data(
     return dummy_data
 
 
-@pytest.fixture()
+@pytest.fixture
 def additive_organizational_unit(
     dummy_data: dict[str, AnyExtractedModel],
 ) -> AdditiveOrganizationalUnit:
@@ -300,7 +300,7 @@ def additive_organizational_unit(
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def organizational_unit_rule_set_request(
     additive_organizational_unit: AdditiveOrganizationalUnit,
 ) -> OrganizationalUnitRuleSetRequest:
@@ -311,7 +311,7 @@ def organizational_unit_rule_set_request(
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def load_dummy_rule_set(
     organizational_unit_rule_set_request: OrganizationalUnitRuleSetRequest,
     dummy_data: dict[str, AnyExtractedModel],

@@ -56,8 +56,8 @@ class DynamicStrEnum(EnumMeta):
         cls: type["DynamicStrEnum"], name: str, bases: tuple[type], dct: _EnumDict
     ) -> "DynamicStrEnum":
         """Create a new enum by adding an entry for each name in the source."""
-        for name in dct.pop("__names__"):
-            dct[dromedary_to_snake(name).upper()] = name
+        for value in dct.pop("__names__"):
+            dct[dromedary_to_snake(value).upper()] = value
         return super().__new__(cls, name, bases, dct)
 
 

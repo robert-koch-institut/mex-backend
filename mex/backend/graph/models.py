@@ -5,6 +5,7 @@ from typing import Any
 from neo4j import Result as Neo4jResult
 
 from mex.backend.graph.exceptions import MultipleResultsFoundError, NoResultFoundError
+from mex.backend.logging import LOGGING_LINE_LENGTH
 
 
 class Result:
@@ -31,7 +32,7 @@ class Result:
     def __repr__(self) -> str:
         """Return a human-readable representation of this result object."""
         representation = f"Result({self.all()!r})"
-        if len(representation) > 90:
+        if len(representation) > LOGGING_LINE_LENGTH:
             representation = f"{representation[:40]}... ...{representation[-40:]}"
         return representation
 

@@ -2,11 +2,13 @@ import json
 from typing import Any
 from unittest.mock import Mock
 
-import pydantic_core
 import pytest
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
+from starlette import status
 
-from mex.backend.exceptions import handle_uncaught_exception, handle_validation_error
+from mex.backend.exceptions import handle_detailed_error, handle_uncaught_exception
+from mex.backend.graph.exceptions import InconsistentGraphError
+from mex.backend.utils import reraising
 from mex.common.exceptions import MExError
 
 MOCK_REQUEST_SCOPE = {
@@ -31,18 +33,18 @@ MOCK_REQUEST_SCOPE = {
                 },
                 "message": "foo",
             },
-            500,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
         ),
         (
             MExError("bar"),
             {
-                "message": "MExError: bar ",
+                "message": "MExError: bar",
                 "debug": {
                     "errors": [{"type": "MExError"}],
                     "scope": MOCK_REQUEST_SCOPE,
                 },
             },
-            500,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
         ),
     ],
     ids=["TypeError", "MExError"],
@@ -56,36 +58,74 @@ def test_handle_uncaught_exception(
     assert json.loads(response.body) == expected
 
 
-def test_handle_validation_error() -> None:
-    request = Mock(scope=MOCK_REQUEST_SCOPE)
-    exception = ValidationError.from_exception_data(
-        "foo",
-        [
-            {
-                "type": pydantic_core.PydanticCustomError(
-                    "TestError", "You messed up!"
-                ),
-                "loc": ("integerAttribute",),
-                "input": "mumbo-jumbo",
-            }
-        ],
+class DummyModel(BaseModel):
+    numbers: list[int]
+
+
+try:
+    DummyModel.model_validate({"numbers": "foo"})
+except ValidationError as error:
+    validation_error = error
+
+
+try:
+    reraising(
+        ValidationError,
+        InconsistentGraphError("this has to validate"),
+        DummyModel.model_validate,
+        {"numbers": "foo"},
     )
-    response = handle_validation_error(request, exception)
-    assert response.status_code == 400, response.body
-    assert json.loads(response.body) == {
-        "debug": {
-            "errors": [
-                {
-                    "input": "mumbo-jumbo",
-                    "loc": ["integerAttribute"],
-                    "msg": "You messed up!",
-                    "type": "TestError",
-                }
-            ],
-            "scope": MOCK_REQUEST_SCOPE,
-        },
-        "message": "1 validation error for foo\n"
-        "integerAttribute\n"
-        "  You messed up! [type=TestError, input_value='mumbo-jumbo', "
-        "input_type=str]",
-    }
+except InconsistentGraphError as error:
+    inconsistent_graph_error = error
+
+
+@pytest.mark.parametrize(
+    ("exception", "expected"),
+    [
+        (
+            validation_error,
+            {
+                "message": """1 validation error for DummyModel
+numbers
+  Input should be a valid list [type=list_type, input_value='foo', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.9/v/list_type""",
+                "debug": {
+                    "errors": [
+                        {
+                            "type": "list_type",
+                            "loc": ["numbers"],
+                            "msg": "Input should be a valid list",
+                            "input": "foo",
+                            "url": "https://errors.pydantic.dev/2.9/v/list_type",
+                        }
+                    ],
+                    "scope": MOCK_REQUEST_SCOPE,
+                },
+            },
+        ),
+        (
+            inconsistent_graph_error,
+            {
+                "message": "InconsistentGraphError: this has to validate",
+                "debug": {
+                    "errors": [
+                        {
+                            "type": "list_type",
+                            "loc": ["numbers"],
+                            "msg": "Input should be a valid list",
+                            "input": "foo",
+                            "url": "https://errors.pydantic.dev/2.9/v/list_type",
+                        }
+                    ],
+                    "scope": MOCK_REQUEST_SCOPE,
+                },
+            },
+        ),
+    ],
+    ids=["ValidationError", "InconsistentGraphError"],
+)
+def test_handle_detailed_error(exception: Exception, expected: dict[str, Any]) -> None:
+    request = Mock(scope=MOCK_REQUEST_SCOPE)
+    response = handle_detailed_error(request, exception)
+    assert response.status_code == status.HTTP_400_BAD_REQUEST, response.body
+    assert json.loads(response.body) == expected

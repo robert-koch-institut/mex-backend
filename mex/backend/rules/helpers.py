@@ -1,6 +1,7 @@
 from collections.abc import Mapping
 from typing import Any, Final
 
+from mex.backend.constants import NUMBER_OF_RULE_TYPES
 from mex.backend.graph.connector import GraphConnector
 from mex.common.exceptions import MExError
 from mex.common.models import (
@@ -31,8 +32,9 @@ def transform_raw_rules_to_rule_set_response(
     response: dict[str, Any] = {}
     model: type[AnyRuleModel] | None
 
-    if len(raw_rules) != 3:
-        raise MExError("inconsistent rule item count")
+    if len(raw_rules) != NUMBER_OF_RULE_TYPES:
+        msg = "inconsistent rule item count"
+        raise MExError(msg)
 
     for rule in raw_rules:
         for field_name, model_class_lookup in MODEL_CLASS_LOOKUP_BY_FIELD_NAME.items():
@@ -42,9 +44,11 @@ def transform_raw_rules_to_rule_set_response(
                 stable_target_ids.extend(rule.pop("stableTargetId", []))
 
     if len(set(stem_types)) != 1:
-        raise MExError("inconsistent rule item stem types")
+        msg = "inconsistent rule item stem types"
+        raise MExError(msg)
     if len(set(stable_target_ids)) != 1:
-        raise MExError("inconsistent rule item stableTargetIds")
+        msg = "inconsistent rule item stableTargetIds"
+        raise MExError(msg)
 
     response["stableTargetId"] = stable_target_ids[0]
     response_class_name = ensure_postfix(stem_types[0], "RuleSetResponse")
@@ -102,5 +106,6 @@ def update_and_get_rule_set(
         stable_target_id,
         [rule_set.stemType],
     ):
-        raise MExError("no merged item found for given identifier and type")
+        msg = "no merged item found for given identifier and type"
+        raise MExError(msg)
     return create_and_get_rule_set(rule_set, stable_target_id)

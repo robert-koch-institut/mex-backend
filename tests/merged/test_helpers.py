@@ -115,7 +115,7 @@ def test_apply_subtractive_rule() -> None:
 
 @pytest.mark.parametrize(
     ("extracted_items", "rule_set", "expected"),
-    (
+    [
         (
             [
                 ExtractedPerson(
@@ -226,7 +226,7 @@ def test_apply_subtractive_rule() -> None:
             },
         ),
         ([], None, "One of rule_set or extracted_items is required."),
-    ),
+    ],
     ids=(
         "extracted_items_and_rule_set",
         "only_rule_set",
@@ -245,8 +245,8 @@ def test_create_merged_item(
             extracted_items,
             rule_set,
         )
-    except Exception as error:
-        assert str(expected) in str(error)
+    except Exception as error:  # noqa: BLE001
+        assert str(expected) in str(error)  # noqa: PT017
     else:
         assert merged_item.model_dump(exclude_defaults=True) == expected
 
@@ -462,7 +462,7 @@ def test_search_merged_items_in_graph_mocked(
 
     try:
         merged_result = search_merged_items_in_graph(stable_target_id="bFQoRhcVH5DHUB")
-    except Exception as error:
-        assert str(expected) in str(error), error
+    except Exception as error:  # noqa: BLE001
+        assert str(expected) in str(error)  # noqa: PT017
     else:
         assert merged_result.model_dump(exclude_defaults=True) == expected

@@ -3,7 +3,7 @@ from collections.abc import Sequence
 from string import Template
 from typing import Annotated, Any, Literal, cast
 
-from neo4j import Driver, GraphDatabase, NotificationMinimumSeverity
+from neo4j import Driver, GraphDatabase, NotificationDisabledCategory
 from pydantic import Field
 
 from mex.backend.fields import (
@@ -84,7 +84,10 @@ class GraphConnector(BaseConnector):
                 settings.graph_password.get_secret_value(),
             ),
             database=settings.graph_db,
-            warn_notification_severity=NotificationMinimumSeverity.OFF,
+            notifications_disabled_categories=[
+                # mute warnings about labels used in queries but missing in graph
+                NotificationDisabledCategory.UNRECOGNIZED,
+            ],
         )
 
     def _check_connectivity_and_authentication(self) -> Result:
@@ -92,7 +95,8 @@ class GraphConnector(BaseConnector):
         query_builder = QueryBuilder.get()
         result = self.commit(query_builder.fetch_database_status())
         if (status := result["currentStatus"]) != "online":
-            raise MExError(f"Database is {status}.") from None
+            msg = f"Database is {status}."
+            raise MExError(msg) from None
         return result
 
     def _seed_constraints(self) -> list[Result]:
@@ -494,7 +498,7 @@ class GraphConnector(BaseConnector):
             self._merge_edges(
                 rule,
                 stable_target_id,
-                extra_refs=dict(stableTargetId=stable_target_id),
+                extra_refs={"stableTargetId": stable_target_id},
             )
 
     def ingest(self, models: list[AnyExtractedModel]) -> list[Identifier]:
