@@ -19,7 +19,7 @@ def search_merged_items(
     skip: Annotated[int, Query(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> MergedItemSearch:
-    """Search for merged items by query text or by type and id."""
+    """Search for merged items by query text or by type and identifier."""
     return search_merged_items_in_graph(
         q,
         identifier,

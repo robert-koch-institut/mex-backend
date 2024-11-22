@@ -17,7 +17,7 @@ CALL () {
     MATCH (n)
     RETURN collect(n{
         .*, label: head(labels(n))
-    }) as nodes
+    }) AS nodes
 }
 CALL () {
     MATCH ()-[r]->()
