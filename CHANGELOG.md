@@ -11,17 +11,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- clean up non-functional cypher query style issues
-
 ### Deprecated
 
 ### Removed
 
 ### Fixed
 
-- do not raise server error when search query is not found
-
 ### Security
+
+## [0.24.0] - 2024-11-25
+
+### Changes
+
+- clean up non-functional cypher query style issues
+
+### Fixed
+
+- do not raise server error when search query is not found
 
 ## [0.23.0] - 2024-11-19
 
