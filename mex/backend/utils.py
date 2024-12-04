@@ -57,4 +57,6 @@ def reraising(
     try:
         return fn(*args, **kwargs)
     except original_error as error:
+        if isinstance(reraise_as, type):
+            reraise_as = reraise_as(*error.args)
         raise reraise_as from error

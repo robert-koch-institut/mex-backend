@@ -2,7 +2,6 @@ from typing import Annotated, Any, cast
 
 from pydantic import Field, TypeAdapter, ValidationError
 
-from mex.backend.constants import NUMBER_OF_RULE_TYPES
 from mex.backend.fields import MERGEABLE_FIELDS_BY_CLASS_NAME
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import InconsistentGraphError
@@ -158,18 +157,15 @@ def merge_search_result_item(item: dict[str, Any]) -> AnyMergedModel:
         for component in item["components"]
         if component["entityType"] in RULE_MODEL_CLASSES_BY_NAME
     ]
-    if len(rules_raw) == NUMBER_OF_RULE_TYPES:
-        rule_set_response = transform_raw_rules_to_rule_set_response(rules_raw)
-    elif len(rules_raw) == 0:
-        rule_set_response = None
+    if rules_raw:
+        rule_set = transform_raw_rules_to_rule_set_response(rules_raw)
     else:
-        msg = f"Unexpected number of rules found in graph: {len(rules_raw)}"
-        raise InconsistentGraphError(msg)
+        rule_set = None
 
     return create_merged_item(
         identifier=item["identifier"],
         extracted_items=extracted_items,
-        rule_set=rule_set_response,
+        rule_set=rule_set,
     )
 
 
