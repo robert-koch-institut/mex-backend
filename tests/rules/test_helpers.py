@@ -9,7 +9,7 @@ from mex.common.types import TextLanguage
 @pytest.mark.parametrize(
     ("items", "expected"),
     [
-        ([], "inconsistent rule item count"),
+        ([], "inconsistent number of rules found: 0"),
         (
             [
                 {

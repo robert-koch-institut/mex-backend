@@ -152,13 +152,13 @@ def merge_search_result_item(item: dict[str, Any]) -> AnyMergedModel:
         for component in item["components"]
         if component["entityType"] in EXTRACTED_MODEL_CLASSES_BY_NAME
     ]
-    rules_raw = [
+    raw_rules = [
         component
         for component in item["components"]
         if component["entityType"] in RULE_MODEL_CLASSES_BY_NAME
     ]
-    if rules_raw:
-        rule_set = transform_raw_rules_to_rule_set_response(rules_raw)
+    if raw_rules:
+        rule_set = transform_raw_rules_to_rule_set_response(raw_rules)
     else:
         rule_set = None
 

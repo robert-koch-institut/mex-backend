@@ -411,6 +411,7 @@ class GraphConnector(BaseConnector):
             nested_edge_labels=nested_edge_labels,
             nested_node_labels=nested_node_labels,
         )
+
         return self.commit(
             query,
             **constraints,
