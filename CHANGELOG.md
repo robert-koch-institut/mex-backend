@@ -11,9 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- harmonize error handling for transforming raw rule-sets to responses
+- return 404 on GET rule-set endpoint, when no rules are found
+
 ### Deprecated
 
 ### Removed
+
+- removed not needed `mex.backend.constants` module
 
 ### Fixed
 

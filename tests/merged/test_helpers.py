@@ -365,7 +365,7 @@ def test_search_merged_items_in_graph() -> None:
                     "total": 1,
                 }
             ],
-            "Unexpected number of rules found in graph: 1",
+            "inconsistent number of rules found: 1",
         ),
         (
             [
