@@ -42,7 +42,8 @@ from mex.common.types import TextLanguage
                     "stableTargetId": ["00000000000003"],
                 },
             ],
-            "inconsistent rule item stableTargetIds",
+            "inconsistent rule item stableTargetIds: "
+            "00000000000001, 00000000000002, 00000000000003",
         ),
         (
             [

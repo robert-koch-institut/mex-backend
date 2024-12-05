@@ -47,7 +47,7 @@ def transform_raw_rules_to_rule_set_response(
         msg = "inconsistent rule item stem types"
         raise InconsistentGraphError(msg)
     if len(set(stable_target_ids)) != 1:
-        msg = "inconsistent rule item stableTargetIds"
+        msg = f"inconsistent rule item stableTargetIds: {', '.join(stable_target_ids)}"
         raise InconsistentGraphError(msg)
 
     response["stableTargetId"] = stable_target_ids[0]
