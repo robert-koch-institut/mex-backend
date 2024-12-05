@@ -1,15 +1,17 @@
-from typing import Annotated, Any, cast
+from typing import Annotated, Any, Literal, overload
 
 from pydantic import Field, TypeAdapter, ValidationError
 
 from mex.backend.fields import MERGEABLE_FIELDS_BY_CLASS_NAME
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import InconsistentGraphError
-from mex.backend.merged.models import MergedItemSearch
+from mex.backend.merged.models import MergedItemSearch, PreviewItemSearch
 from mex.backend.rules.helpers import transform_raw_rules_to_rule_set_response
-from mex.backend.utils import extend_list_in_dict, prune_list_in_dict, reraising
+from mex.backend.utils import extend_list_in_dict, prune_list_in_dict
 from mex.common.exceptions import MExError
+from mex.common.logging import logger
 from mex.common.models import (
+    ADDITIVE_MODEL_CLASSES_BY_NAME,
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
     RULE_MODEL_CLASSES_BY_NAME,
@@ -90,17 +92,39 @@ def _apply_subtractive_rule(
         prune_list_in_dict(merged_dict, field_name, rule_value)
 
 
+@overload
 def create_merged_item(
     identifier: Identifier,
     extracted_items: list[AnyExtractedModel],
     rule_set: AnyRuleSetRequest | AnyRuleSetResponse | None,
-) -> AnyMergedModel:
+    validate_cardinality: Literal[False],
+) -> AnyAdditiveModel: ...
+
+
+@overload
+def create_merged_item(
+    identifier: Identifier,
+    extracted_items: list[AnyExtractedModel],
+    rule_set: AnyRuleSetRequest | AnyRuleSetResponse | None,
+    validate_cardinality: Literal[True],
+) -> AnyMergedModel: ...
+
+
+def create_merged_item(
+    identifier: Identifier,
+    extracted_items: list[AnyExtractedModel],
+    rule_set: AnyRuleSetRequest | AnyRuleSetResponse | None,
+    validate_cardinality: Literal[True, False],
+) -> AnyAdditiveModel | AnyMergedModel:
     """Merge a list of extracted items with a set of rules.
 
     Args:
         identifier: Identifier the finished merged item should have
         extracted_items: List of extracted items, can be empty
         rule_set: Rule set, with potentially empty rules
+        validate_cardinality: Merged items validate the existence of required fields and
+            the lengths of lists, set this to `False` to avoid this and return a
+            "preview" of a merged item instead of a valid merged item
 
     Raises:
         InconsistentGraphError: When the graph response cannot be parsed
@@ -108,15 +132,25 @@ def create_merged_item(
     Returns:
         Instance of a merged item
     """
+    model_class_lookup: (
+        dict[str, type[AnyAdditiveModel]] | dict[str, type[AnyMergedModel]]
+    )
+    if validate_cardinality:
+        model_prefix = "Merged"
+        model_class_lookup = MERGED_MODEL_CLASSES_BY_NAME
+    else:
+        model_prefix = "Additive"
+        model_class_lookup = ADDITIVE_MODEL_CLASSES_BY_NAME
+
     if rule_set:
-        entity_type = ensure_prefix(rule_set.stemType, "Merged")
+        entity_type = ensure_prefix(rule_set.stemType, model_prefix)
     elif extracted_items:
-        entity_type = ensure_prefix(extracted_items[0].stemType, "Merged")
+        entity_type = ensure_prefix(extracted_items[0].stemType, model_prefix)
     else:
         msg = "One of rule_set or extracted_items is required."
         raise MExError(msg)
     fields = MERGEABLE_FIELDS_BY_CLASS_NAME[entity_type]
-    cls = MERGED_MODEL_CLASSES_BY_NAME[entity_type]
+    cls = model_class_lookup[entity_type]
 
     merged_dict: dict[str, Any] = {"identifier": identifier}
 
@@ -126,20 +160,37 @@ def create_merged_item(
     if rule_set:
         _apply_additive_rule(merged_dict, fields, rule_set.additive)
         _apply_subtractive_rule(merged_dict, fields, rule_set.subtractive)
-    merged_item = reraising(
-        ValidationError,
-        InconsistentGraphError,
-        cls.model_validate,
-        merged_dict,
-    )
-    return cast(AnyMergedModel, merged_item)  # mypy, get a grip!
+    try:
+        return cls.model_validate(merged_dict)
+    except ValidationError as error:
+        raise InconsistentGraphError from error
 
 
-def merge_search_result_item(item: dict[str, Any]) -> AnyMergedModel:
+@overload
+def merge_search_result_item(
+    item: dict[str, Any],
+    validate_cardinality: Literal[False],
+) -> AnyAdditiveModel: ...
+
+
+@overload
+def merge_search_result_item(
+    item: dict[str, Any],
+    validate_cardinality: Literal[True],
+) -> AnyMergedModel: ...
+
+
+def merge_search_result_item(
+    item: dict[str, Any],
+    validate_cardinality: Literal[True, False],
+) -> AnyAdditiveModel | AnyMergedModel:
     """Merge a single search result into a merged item.
 
     Args:
         item: Raw merged search result item from the graph response
+        validate_cardinality: Merged items validate the existence of required fields and
+            the lengths of lists by default, set this to `False` to avoid this and
+            return a "preview" of a merged item instead of a valid merged item
 
     Raises:
         InconsistentGraphError: When the graph response item has inconsistencies
@@ -163,19 +214,43 @@ def merge_search_result_item(item: dict[str, Any]) -> AnyMergedModel:
         rule_set = None
 
     return create_merged_item(
-        identifier=item["identifier"],
+        identifier=Identifier(item["identifier"]),
         extracted_items=extracted_items,
         rule_set=rule_set,
+        validate_cardinality=validate_cardinality,
     )
 
 
+@overload
 def search_merged_items_in_graph(
     query_string: str | None = None,
     stable_target_id: str | None = None,
     entity_type: list[str] | None = None,
     skip: int = 0,
     limit: int = 100,
-) -> MergedItemSearch:
+    validate_cardinality: Literal[False] = False,
+) -> PreviewItemSearch: ...
+
+
+@overload
+def search_merged_items_in_graph(
+    query_string: str | None = None,
+    stable_target_id: str | None = None,
+    entity_type: list[str] | None = None,
+    skip: int = 0,
+    limit: int = 100,
+    validate_cardinality: Literal[True] = True,
+) -> MergedItemSearch: ...
+
+
+def search_merged_items_in_graph(  # noqa: PLR0913
+    query_string: str | None = None,
+    stable_target_id: str | None = None,
+    entity_type: list[str] | None = None,
+    skip: int = 0,
+    limit: int = 100,
+    validate_cardinality: Literal[True, False] = True,
+) -> PreviewItemSearch | MergedItemSearch:
     """Search for merged items.
 
     Args:
@@ -184,6 +259,9 @@ def search_merged_items_in_graph(
         entity_type: Optional entity type filter
         skip: How many items to skip for pagination
         limit: How many items to return at most
+        validate_cardinality: Merged items validate the existence of required fields and
+            the lengths of lists by default, set this to `False` to avoid this and
+            return "previews" of merged items instead of valid merged items
 
     Raises:
         InconsistentGraphError: When the graph response has inconsistencies
@@ -200,19 +278,19 @@ def search_merged_items_in_graph(
         limit=limit,
     )
     total: int = result["total"]
-    items: list[AnyMergedModel] = [
-        reraising(
-            ValidationError,
-            InconsistentGraphError,
-            merge_search_result_item,
-            item,
-        )
-        for item in result["items"]
-    ]
-    return reraising(
-        ValidationError,
-        InconsistentGraphError,
-        MergedItemSearch,
-        items=items,
-        total=total,
-    )
+    items: list[AnyMergedModel | AnyAdditiveModel] = []
+    for item in result["items"]:
+        try:
+            items.append(
+                merge_search_result_item(
+                    item,
+                    validate_cardinality=validate_cardinality,
+                )
+            )
+        except ValidationError as error:
+            logger.error(error)
+            raise InconsistentGraphError from error
+
+    if validate_cardinality:
+        return MergedItemSearch(items=items, total=total)
+    return PreviewItemSearch(items=items, total=total)

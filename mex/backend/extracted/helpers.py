@@ -3,7 +3,6 @@ from pydantic import ValidationError
 from mex.backend.extracted.models import ExtractedItemSearch
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import InconsistentGraphError
-from mex.backend.utils import reraising
 from mex.common.models import AnyExtractedModel
 
 
@@ -37,12 +36,10 @@ def search_extracted_items_in_graph(
         skip=skip,
         limit=limit,
     )
-    return reraising(
-        ValidationError,
-        InconsistentGraphError,
-        ExtractedItemSearch.model_validate,
-        graph_result.one(),
-    )
+    try:
+        return ExtractedItemSearch.model_validate(graph_result.one())
+    except ValidationError as error:
+        raise InconsistentGraphError from error
 
 
 def get_extracted_items_from_graph(

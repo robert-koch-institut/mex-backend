@@ -2,11 +2,18 @@ from typing import Annotated
 
 from pydantic import Field
 
-from mex.common.models import AnyMergedModel, BaseModel
+from mex.common.models import AnyAdditiveModel, AnyMergedModel, BaseModel
 
 
 class MergedItemSearch(BaseModel):
     """Response body for the merged item search endpoint."""
 
     items: list[Annotated[AnyMergedModel, Field(discriminator="entityType")]]
+    total: int
+
+
+class PreviewItemSearch(BaseModel):
+    """Response body for the preview item search endpoint."""
+
+    items: list[Annotated[AnyAdditiveModel, Field(discriminator="entityType")]]
     total: int
