@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Literal
 
 import pytest
 
@@ -10,15 +10,18 @@ from mex.backend.merged.helpers import (
     search_merged_items_in_graph,
 )
 from mex.common.models import (
+    ActivityRuleSetRequest,
     AdditiveOrganizationalUnit,
     AdditivePerson,
     AnyExtractedModel,
     AnyRuleSetRequest,
+    ExtractedActivity,
     ExtractedContactPoint,
     ExtractedPerson,
     PersonRuleSetRequest,
     PreventiveContactPoint,
     PreventivePerson,
+    SubtractiveActivity,
     SubtractiveOrganizationalUnit,
     SubtractivePerson,
 )
@@ -114,7 +117,7 @@ def test_apply_subtractive_rule() -> None:
 
 
 @pytest.mark.parametrize(
-    ("extracted_items", "rule_set", "expected"),
+    ("extracted_items", "rule_set", "validate_cardinality", "expected"),
     [
         (
             [
@@ -151,6 +154,7 @@ def test_apply_subtractive_rule() -> None:
                     fullName=[Identifier.generate(seed=9)],
                 ),
             ),
+            True,
             {
                 "affiliation": [
                     Identifier.generate(seed=99),
@@ -181,6 +185,7 @@ def test_apply_subtractive_rule() -> None:
                     fullName=[Identifier.generate(seed=9)],
                 ),
             ),
+            True,
             {
                 "givenName": ["Eugene", "Harold"],
                 "memberOf": [
@@ -211,6 +216,7 @@ def test_apply_subtractive_rule() -> None:
                 ),
             ],
             None,
+            True,
             {
                 "affiliation": [
                     Identifier.generate(seed=99),
@@ -225,18 +231,40 @@ def test_apply_subtractive_rule() -> None:
                 "identifier": Identifier.generate(seed=42),
             },
         ),
-        ([], None, "One of rule_set or extracted_items is required."),
+        ([], None, True, "One of rule_set or extracted_items is required."),
+        (
+            [
+                ExtractedActivity(
+                    title=Text(value="Burger flipping"),
+                    contact=Identifier.generate(seed=97),
+                    responsibleUnit=Identifier.generate(seed=98),
+                    identifierInPrimarySource="BF",
+                    hadPrimarySource=Identifier.generate(seed=99),
+                ),
+            ],
+            ActivityRuleSetRequest(
+                subtractive=SubtractiveActivity(title=Text(value="Burger flipping")),
+            ),
+            False,
+            {
+                "contact": [Identifier.generate(seed=97)],
+                "identifier": Identifier.generate(seed=42),
+                "responsibleUnit": [Identifier.generate(seed=98)],
+            },
+        ),
     ],
     ids=(
-        "extracted_items_and_rule_set",
-        "only_rule_set",
-        "only_extracted_items",
+        "extracted items and rule set",
+        "only rule set",
+        "only extracted items",
         "error if neither is supplied",
+        "get preview of merged items",
     ),
 )
 def test_create_merged_item(
     extracted_items: list[AnyExtractedModel],
     rule_set: AnyRuleSetRequest | None,
+    validate_cardinality: Literal[True, False],
     expected: Any,
 ) -> None:
     try:
@@ -244,9 +272,11 @@ def test_create_merged_item(
             Identifier.generate(seed=42),
             extracted_items,
             rule_set,
+            validate_cardinality,
         )
-    except Exception as error:  # noqa: BLE001
-        assert str(expected) in str(error)  # noqa: PT017
+    except Exception as error:
+        if str(expected) not in str(error):
+            raise
     else:
         assert merged_item.model_dump(exclude_defaults=True) == expected
 
@@ -462,7 +492,8 @@ def test_search_merged_items_in_graph_mocked(
 
     try:
         merged_result = search_merged_items_in_graph(stable_target_id="bFQoRhcVH5DHUB")
-    except Exception as error:  # noqa: BLE001
-        assert str(expected) in str(error)  # noqa: PT017
+    except Exception as error:
+        if str(expected) not in str(error):
+            raise
     else:
         assert merged_result.model_dump(exclude_defaults=True) == expected

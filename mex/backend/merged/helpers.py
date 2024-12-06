@@ -2,23 +2,24 @@ from typing import Annotated, Any, Literal, overload
 
 from pydantic import Field, TypeAdapter, ValidationError
 
-from mex.backend.fields import MERGEABLE_FIELDS_BY_CLASS_NAME
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import InconsistentGraphError
 from mex.backend.merged.models import MergedItemSearch, PreviewItemSearch
 from mex.backend.rules.helpers import transform_raw_rules_to_rule_set_response
 from mex.backend.utils import extend_list_in_dict, prune_list_in_dict
 from mex.common.exceptions import MExError
+from mex.common.fields import MERGEABLE_FIELDS_BY_CLASS_NAME
 from mex.common.logging import logger
 from mex.common.models import (
-    ADDITIVE_MODEL_CLASSES_BY_NAME,
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
+    PREVIEW_MODEL_CLASSES_BY_NAME,
     RULE_MODEL_CLASSES_BY_NAME,
     AnyAdditiveModel,
     AnyExtractedModel,
     AnyMergedModel,
     AnyPreventiveModel,
+    AnyPreviewModel,
     AnyRuleSetRequest,
     AnyRuleSetResponse,
     AnySubtractiveModel,
@@ -98,7 +99,7 @@ def create_merged_item(
     extracted_items: list[AnyExtractedModel],
     rule_set: AnyRuleSetRequest | AnyRuleSetResponse | None,
     validate_cardinality: Literal[False],
-) -> AnyAdditiveModel: ...
+) -> AnyPreviewModel: ...
 
 
 @overload
@@ -115,7 +116,7 @@ def create_merged_item(
     extracted_items: list[AnyExtractedModel],
     rule_set: AnyRuleSetRequest | AnyRuleSetResponse | None,
     validate_cardinality: Literal[True, False],
-) -> AnyAdditiveModel | AnyMergedModel:
+) -> AnyPreviewModel | AnyMergedModel:
     """Merge a list of extracted items with a set of rules.
 
     Args:
@@ -130,17 +131,17 @@ def create_merged_item(
         InconsistentGraphError: When the graph response cannot be parsed
 
     Returns:
-        Instance of a merged item
+        Instance of a merged or preview item
     """
     model_class_lookup: (
-        dict[str, type[AnyAdditiveModel]] | dict[str, type[AnyMergedModel]]
+        dict[str, type[AnyPreviewModel]] | dict[str, type[AnyMergedModel]]
     )
     if validate_cardinality:
         model_prefix = "Merged"
         model_class_lookup = MERGED_MODEL_CLASSES_BY_NAME
     else:
-        model_prefix = "Additive"
-        model_class_lookup = ADDITIVE_MODEL_CLASSES_BY_NAME
+        model_prefix = "Preview"
+        model_class_lookup = PREVIEW_MODEL_CLASSES_BY_NAME
 
     if rule_set:
         entity_type = ensure_prefix(rule_set.stemType, model_prefix)
@@ -170,7 +171,7 @@ def create_merged_item(
 def merge_search_result_item(
     item: dict[str, Any],
     validate_cardinality: Literal[False],
-) -> AnyAdditiveModel: ...
+) -> AnyPreviewModel: ...
 
 
 @overload
@@ -183,7 +184,7 @@ def merge_search_result_item(
 def merge_search_result_item(
     item: dict[str, Any],
     validate_cardinality: Literal[True, False],
-) -> AnyAdditiveModel | AnyMergedModel:
+) -> AnyPreviewModel | AnyMergedModel:
     """Merge a single search result into a merged item.
 
     Args:
@@ -196,7 +197,7 @@ def merge_search_result_item(
         InconsistentGraphError: When the graph response item has inconsistencies
 
     Returns:
-        AnyMergedModel instance
+        Instance of a merged or preview item
     """
     extracted_items = [
         EXTRACTED_MODEL_ADAPTER.validate_python(component)
@@ -267,7 +268,7 @@ def search_merged_items_in_graph(  # noqa: PLR0913
         InconsistentGraphError: When the graph response has inconsistencies
 
     Returns:
-        MergedItemSearch instance
+        Search response for preview or merged items
     """
     graph = GraphConnector.get()
     result = graph.fetch_merged_items(
@@ -278,7 +279,7 @@ def search_merged_items_in_graph(  # noqa: PLR0913
         limit=limit,
     )
     total: int = result["total"]
-    items: list[AnyMergedModel | AnyAdditiveModel] = []
+    items: list[AnyPreviewModel | AnyMergedModel] = []
     for item in result["items"]:
         try:
             items.append(

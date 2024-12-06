@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:1e89f6a7d9a99695d69de95207fc2b49f2afb28599c7b64df85495329d823476"
+content_hash = "sha256:48b3d84bb0c8be40af359c2f57bf37ea4589526781688ca41062cb533f41c650"
 
 [[metadata.targets]]
 requires_python = "==3.11.*"
@@ -544,8 +544,8 @@ name = "mex-common"
 version = "0.42.0"
 requires_python = ">=3.11,<3.13"
 git = "https://github.com/robert-koch-institut/mex-common.git"
-ref = "0.42.0"
-revision = "346798dbbef2a8a97e32b97f2ceece630954dd1a"
+ref = "feature/mx-1649-add-preview-models"
+revision = "f31bb0ebbc285963fbcc14b659e2bb9aa5a2cce4"
 summary = "Common library for MEx python projects."
 groups = ["default"]
 marker = "python_version == \"3.11\""
