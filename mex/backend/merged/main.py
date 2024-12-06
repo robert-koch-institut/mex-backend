@@ -26,4 +26,5 @@ def search_merged_items(
         [str(t.value) for t in entityType or MergedType],
         skip,
         limit,
+        validate_cardinality=True,
     )

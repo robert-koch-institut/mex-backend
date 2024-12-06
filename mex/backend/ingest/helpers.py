@@ -3,7 +3,6 @@ from pydantic import ValidationError
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import InconsistentGraphError
 from mex.backend.ingest.models import BulkIngestResponse
-from mex.backend.utils import reraising
 from mex.common.models import AnyExtractedModel
 
 
@@ -23,9 +22,7 @@ def ingest_extracted_items_into_graph(
     """
     connector = GraphConnector.get()
     identifiers = connector.ingest(items)
-    return reraising(
-        ValidationError,
-        InconsistentGraphError,
-        BulkIngestResponse,
-        identifiers=identifiers,
-    )
+    try:
+        return BulkIngestResponse(identifiers=identifiers)
+    except ValidationError as error:
+        raise InconsistentGraphError from error

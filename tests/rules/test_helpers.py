@@ -97,7 +97,8 @@ def test_transform_raw_rules_to_rule_set_response(
 ) -> None:
     try:
         rule_set = transform_raw_rules_to_rule_set_response(items)
-    except Exception as error:  # noqa: BLE001
-        assert str(expected) in str(error)  # noqa: PT017
+    except Exception as error:
+        if str(expected) not in str(error):
+            raise
     else:
         assert rule_set.model_dump() == expected

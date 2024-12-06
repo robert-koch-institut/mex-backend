@@ -8,7 +8,6 @@ from starlette import status
 
 from mex.backend.exceptions import handle_detailed_error, handle_uncaught_exception
 from mex.backend.graph.exceptions import InconsistentGraphError
-from mex.backend.utils import reraising
 from mex.common.exceptions import MExError
 
 MOCK_REQUEST_SCOPE = {
@@ -69,12 +68,11 @@ except ValidationError as error:
 
 
 try:
-    reraising(
-        ValidationError,
-        InconsistentGraphError("this has to validate"),
-        DummyModel.model_validate,
-        {"numbers": "foo"},
-    )
+    try:
+        DummyModel.model_validate({"numbers": "foo"})
+    except ValidationError as error:
+        msg = "this has to validate"
+        raise InconsistentGraphError(msg) from error
 except InconsistentGraphError as error:
     inconsistent_graph_error = error
 

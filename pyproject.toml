@@ -11,7 +11,7 @@ dependencies = [
     "fastapi>=0.115,<1",
     "httpx>=0.27,<1",
     "jinja2>=3,<4",
-    "mex-common @ git+https://github.com/robert-koch-institut/mex-common.git@0.42.0",
+    "mex-common @ git+https://github.com/robert-koch-institut/mex-common.git@feature/mx-1649-add-preview-models",
     "neo4j>=5,<6",
     "pydantic>=2,<3",
     "starlette>=0.41,<1",
