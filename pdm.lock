@@ -545,7 +545,7 @@ version = "0.42.0"
 requires_python = ">=3.11,<3.13"
 git = "https://github.com/robert-koch-institut/mex-common.git"
 ref = "feature/mx-1649-add-preview-models"
-revision = "f31bb0ebbc285963fbcc14b659e2bb9aa5a2cce4"
+revision = "8e06c759c0616dc3832435605fe4516e5aed2108"
 summary = "Common library for MEx python projects."
 groups = ["default"]
 marker = "python_version == \"3.11\""
