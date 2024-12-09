@@ -2,11 +2,12 @@ from typing import Any, Protocol, cast
 
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
-from pydantic_core import ErrorDetails
+from pydantic_core import ErrorDetails, SchemaError, ValidationError
 from starlette import status
 from starlette.requests import Request
 from starlette.responses import Response
 
+from mex.common.exceptions import MExError
 from mex.common.logging import logger
 
 
@@ -15,6 +16,16 @@ class DetailedError(Protocol):
 
     def errors(self) -> list[ErrorDetails]:
         """Details about each underlying error."""
+
+
+class BackendError(MExError):
+    """Base backend error that offer details on underlying pydantic errors."""
+
+    def errors(self) -> list[ErrorDetails]:
+        """Details about underlying pydantic errors."""
+        if isinstance(self.__cause__, SchemaError | ValidationError):
+            return self.__cause__.errors()
+        return []
 
 
 class DebuggingScope(BaseModel, extra="ignore"):

@@ -1,7 +1,8 @@
-from typing import Any
+from typing import Any, Literal
 
 import pytest
 
+from mex.backend.exceptions import BackendError
 from mex.backend.merged.helpers import (
     _apply_additive_rule,
     _apply_subtractive_rule,
@@ -10,18 +11,24 @@ from mex.backend.merged.helpers import (
     search_merged_items_in_graph,
 )
 from mex.common.models import (
+    ActivityRuleSetRequest,
     AdditiveOrganizationalUnit,
     AdditivePerson,
     AnyExtractedModel,
     AnyRuleSetRequest,
+    ContactPointRuleSetRequest,
+    ExtractedActivity,
     ExtractedContactPoint,
     ExtractedPerson,
     PersonRuleSetRequest,
     PreventiveContactPoint,
     PreventivePerson,
+    SubtractiveActivity,
+    SubtractiveContactPoint,
     SubtractiveOrganizationalUnit,
     SubtractivePerson,
 )
+from mex.common.testing import Joker
 from mex.common.types import Identifier, Text, TextLanguage
 from tests.conftest import MockedGraph
 
@@ -114,7 +121,7 @@ def test_apply_subtractive_rule() -> None:
 
 
 @pytest.mark.parametrize(
-    ("extracted_items", "rule_set", "expected"),
+    ("extracted_items", "rule_set", "validate_cardinality", "expected"),
     [
         (
             [
@@ -151,6 +158,7 @@ def test_apply_subtractive_rule() -> None:
                     fullName=[Identifier.generate(seed=9)],
                 ),
             ),
+            True,
             {
                 "affiliation": [
                     Identifier.generate(seed=99),
@@ -163,6 +171,7 @@ def test_apply_subtractive_rule() -> None:
                     Identifier.generate(seed=750),
                 ],
                 "identifier": Identifier.generate(seed=42),
+                "entityType": "MergedPerson",
             },
         ),
         (
@@ -181,12 +190,14 @@ def test_apply_subtractive_rule() -> None:
                     fullName=[Identifier.generate(seed=9)],
                 ),
             ),
+            True,
             {
                 "givenName": ["Eugene", "Harold"],
                 "memberOf": [
                     Identifier.generate(seed=500),
                 ],
                 "identifier": Identifier.generate(seed=42),
+                "entityType": "MergedPerson",
             },
         ),
         (
@@ -211,6 +222,7 @@ def test_apply_subtractive_rule() -> None:
                 ),
             ],
             None,
+            True,
             {
                 "affiliation": [
                     Identifier.generate(seed=99),
@@ -223,20 +235,81 @@ def test_apply_subtractive_rule() -> None:
                     Identifier.generate(seed=750),
                 ],
                 "identifier": Identifier.generate(seed=42),
+                "entityType": "MergedPerson",
             },
         ),
-        ([], None, "One of rule_set or extracted_items is required."),
+        ([], None, True, "One of rule_set or extracted_items is required."),
+        (
+            [
+                ExtractedContactPoint(
+                    identifierInPrimarySource="krusty",
+                    hadPrimarySource=Identifier.generate(seed=99),
+                    email=["manager@krusty.ocean"],
+                )
+            ],
+            ContactPointRuleSetRequest(
+                subtractive=SubtractiveContactPoint(
+                    email=["flipper@krusty.ocean", "manager@krusty.ocean"]
+                )
+            ),
+            True,
+            "List should have at least 1 item after validation, not 0",
+        ),
+        (
+            [
+                ExtractedActivity(
+                    title=Text(value="Burger flipping"),
+                    contact=Identifier.generate(seed=97),
+                    responsibleUnit=Identifier.generate(seed=98),
+                    identifierInPrimarySource="BF",
+                    hadPrimarySource=Identifier.generate(seed=99),
+                ),
+            ],
+            ActivityRuleSetRequest(
+                subtractive=SubtractiveActivity(title=Text(value="Burger flipping")),
+            ),
+            False,
+            {
+                "contact": [Identifier.generate(seed=97)],
+                "identifier": Identifier.generate(seed=42),
+                "responsibleUnit": [Identifier.generate(seed=98)],
+                "entityType": "PreviewActivity",
+            },
+        ),
+        (
+            [
+                ExtractedContactPoint(
+                    identifierInPrimarySource="krusty",
+                    hadPrimarySource=Identifier.generate(seed=99),
+                    email=["manager@krusty.ocean"],
+                )
+            ],
+            ContactPointRuleSetRequest(
+                subtractive=SubtractiveContactPoint(
+                    email=["flipper@krusty.ocean", "manager@krusty.ocean"]
+                )
+            ),
+            False,
+            {
+                "identifier": Joker(),
+                "entityType": "PreviewContactPoint",
+            },
+        ),
     ],
     ids=(
-        "extracted_items_and_rule_set",
-        "only_rule_set",
-        "only_extracted_items",
+        "extracted items and rule set",
+        "only rule set",
+        "only extracted items",
         "error if neither is supplied",
+        "merging raises cardinality error",
+        "get preview of merged items",
+        "preview allows cardinality error",
     ),
 )
 def test_create_merged_item(
     extracted_items: list[AnyExtractedModel],
     rule_set: AnyRuleSetRequest | None,
+    validate_cardinality: Literal[True, False],
     expected: Any,
 ) -> None:
     try:
@@ -244,11 +317,13 @@ def test_create_merged_item(
             Identifier.generate(seed=42),
             extracted_items,
             rule_set,
+            validate_cardinality,
         )
-    except Exception as error:  # noqa: BLE001
-        assert str(expected) in str(error)  # noqa: PT017
+    except BackendError as error:
+        if str(expected) not in f"{error}: {error.errors()}":
+            raise AssertionError(expected) from error
     else:
-        assert merged_item.model_dump(exclude_defaults=True) == expected
+        assert {k: v for k, v in merged_item.model_dump().items() if v} == expected
 
 
 @pytest.mark.usefixtures("load_dummy_data", "load_dummy_rule_set")
@@ -462,7 +537,8 @@ def test_search_merged_items_in_graph_mocked(
 
     try:
         merged_result = search_merged_items_in_graph(stable_target_id="bFQoRhcVH5DHUB")
-    except Exception as error:  # noqa: BLE001
-        assert str(expected) in str(error)  # noqa: PT017
+    except Exception as error:
+        if str(expected) not in str(error):
+            raise AssertionError(expected) from error
     else:
         assert merged_result.model_dump(exclude_defaults=True) == expected
