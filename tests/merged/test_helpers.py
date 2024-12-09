@@ -167,6 +167,7 @@ def test_apply_subtractive_rule() -> None:
                     Identifier.generate(seed=750),
                 ],
                 "identifier": Identifier.generate(seed=42),
+                "entityType": "MergedPerson",
             },
         ),
         (
@@ -192,6 +193,7 @@ def test_apply_subtractive_rule() -> None:
                     Identifier.generate(seed=500),
                 ],
                 "identifier": Identifier.generate(seed=42),
+                "entityType": "MergedPerson",
             },
         ),
         (
@@ -229,6 +231,7 @@ def test_apply_subtractive_rule() -> None:
                     Identifier.generate(seed=750),
                 ],
                 "identifier": Identifier.generate(seed=42),
+                "entityType": "MergedPerson",
             },
         ),
         ([], None, True, "One of rule_set or extracted_items is required."),
@@ -250,6 +253,7 @@ def test_apply_subtractive_rule() -> None:
                 "contact": [Identifier.generate(seed=97)],
                 "identifier": Identifier.generate(seed=42),
                 "responsibleUnit": [Identifier.generate(seed=98)],
+                "entityType": "PreviewActivity",
             },
         ),
     ],
@@ -278,7 +282,7 @@ def test_create_merged_item(
         if str(expected) not in str(error):
             raise
     else:
-        assert merged_item.model_dump(exclude_defaults=True) == expected
+        assert {k: v for k, v in merged_item.model_dump().items() if v} == expected
 
 
 @pytest.mark.usefixtures("load_dummy_data", "load_dummy_rule_set")
