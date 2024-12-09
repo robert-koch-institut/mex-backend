@@ -12,7 +12,7 @@ Args:
 
 Returns:
     total: Count of all items found by this query
-    items: List of extracted data items, each item has an extra attribute `_refs` that
+    items: List of extracted items, each item has an extra attribute `_refs` that
            contains the values of nested objects as well as the identifiers of
            referenced items
 -#>
