@@ -2,6 +2,7 @@ from typing import Any, Literal
 
 import pytest
 
+from mex.backend.exceptions import BackendError
 from mex.backend.merged.helpers import (
     _apply_additive_rule,
     _apply_subtractive_rule,
@@ -15,6 +16,7 @@ from mex.common.models import (
     AdditivePerson,
     AnyExtractedModel,
     AnyRuleSetRequest,
+    ContactPointRuleSetRequest,
     ExtractedActivity,
     ExtractedContactPoint,
     ExtractedPerson,
@@ -22,9 +24,11 @@ from mex.common.models import (
     PreventiveContactPoint,
     PreventivePerson,
     SubtractiveActivity,
+    SubtractiveContactPoint,
     SubtractiveOrganizationalUnit,
     SubtractivePerson,
 )
+from mex.common.testing import Joker
 from mex.common.types import Identifier, Text, TextLanguage
 from tests.conftest import MockedGraph
 
@@ -237,6 +241,22 @@ def test_apply_subtractive_rule() -> None:
         ([], None, True, "One of rule_set or extracted_items is required."),
         (
             [
+                ExtractedContactPoint(
+                    identifierInPrimarySource="krusty",
+                    hadPrimarySource=Identifier.generate(seed=99),
+                    email=["manager@krusty.ocean"],
+                )
+            ],
+            ContactPointRuleSetRequest(
+                subtractive=SubtractiveContactPoint(
+                    email=["flipper@krusty.ocean", "manager@krusty.ocean"]
+                )
+            ),
+            True,
+            "List should have at least 1 item after validation, not 0",
+        ),
+        (
+            [
                 ExtractedActivity(
                     title=Text(value="Burger flipping"),
                     contact=Identifier.generate(seed=97),
@@ -256,13 +276,34 @@ def test_apply_subtractive_rule() -> None:
                 "entityType": "PreviewActivity",
             },
         ),
+        (
+            [
+                ExtractedContactPoint(
+                    identifierInPrimarySource="krusty",
+                    hadPrimarySource=Identifier.generate(seed=99),
+                    email=["manager@krusty.ocean"],
+                )
+            ],
+            ContactPointRuleSetRequest(
+                subtractive=SubtractiveContactPoint(
+                    email=["flipper@krusty.ocean", "manager@krusty.ocean"]
+                )
+            ),
+            False,
+            {
+                "identifier": Joker(),
+                "entityType": "PreviewContactPoint",
+            },
+        ),
     ],
     ids=(
         "extracted items and rule set",
         "only rule set",
         "only extracted items",
         "error if neither is supplied",
+        "merging raises cardinality error",
         "get preview of merged items",
+        "preview allows cardinality error",
     ),
 )
 def test_create_merged_item(
@@ -278,9 +319,9 @@ def test_create_merged_item(
             rule_set,
             validate_cardinality,
         )
-    except Exception as error:
-        if str(expected) not in str(error):
-            raise
+    except BackendError as error:
+        if str(expected) not in f"{error}: {error.errors()}":
+            raise AssertionError(expected) from error
     else:
         assert {k: v for k, v in merged_item.model_dump().items() if v} == expected
 
@@ -498,6 +539,6 @@ def test_search_merged_items_in_graph_mocked(
         merged_result = search_merged_items_in_graph(stable_target_id="bFQoRhcVH5DHUB")
     except Exception as error:
         if str(expected) not in str(error):
-            raise
+            raise AssertionError(expected) from error
     else:
         assert merged_result.model_dump(exclude_defaults=True) == expected

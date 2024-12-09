@@ -99,6 +99,6 @@ def test_transform_raw_rules_to_rule_set_response(
         rule_set = transform_raw_rules_to_rule_set_response(items)
     except Exception as error:
         if str(expected) not in str(error):
-            raise
+            raise AssertionError(expected) from error
     else:
         assert rule_set.model_dump() == expected
