@@ -1,15 +1,14 @@
 from typing import Annotated, Any, Literal, overload
 
-from pydantic import Field, TypeAdapter, ValidationError
+from pydantic import Field, TypeAdapter
+from pydantic_core import ValidationError
 
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.graph.exceptions import InconsistentGraphError
+from mex.backend.merged.exceptions import MergingError
 from mex.backend.merged.models import MergedItemSearch, PreviewItemSearch
 from mex.backend.rules.helpers import transform_raw_rules_to_rule_set_response
 from mex.backend.utils import extend_list_in_dict, prune_list_in_dict
-from mex.common.exceptions import MExError
 from mex.common.fields import MERGEABLE_FIELDS_BY_CLASS_NAME
-from mex.common.logging import logger
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
@@ -128,7 +127,7 @@ def create_merged_item(
             "preview" of a merged item instead of a valid merged item
 
     Raises:
-        InconsistentGraphError: When the graph response cannot be parsed
+        MergingError: When the given items cannot be merged
 
     Returns:
         Instance of a merged or preview item
@@ -149,7 +148,7 @@ def create_merged_item(
         entity_type = ensure_prefix(extracted_items[0].stemType, model_prefix)
     else:
         msg = "One of rule_set or extracted_items is required."
-        raise MExError(msg)
+        raise MergingError(msg)
     fields = MERGEABLE_FIELDS_BY_CLASS_NAME[entity_type]
     cls = model_class_lookup[entity_type]
 
@@ -164,7 +163,7 @@ def create_merged_item(
     try:
         return cls.model_validate(merged_dict)
     except ValidationError as error:
-        raise InconsistentGraphError from error
+        raise MergingError from error
 
 
 @overload
@@ -194,7 +193,7 @@ def merge_search_result_item(
             return a "preview" of a merged item instead of a valid merged item
 
     Raises:
-        InconsistentGraphError: When the graph response item has inconsistencies
+        MergingError: When the given items cannot be merged
 
     Returns:
         Instance of a merged or preview item
@@ -265,7 +264,7 @@ def search_merged_items_in_graph(  # noqa: PLR0913
             return "previews" of merged items instead of valid merged items
 
     Raises:
-        InconsistentGraphError: When the graph response has inconsistencies
+        MergingError: When the given items cannot be merged
 
     Returns:
         Search response for preview or merged items
@@ -279,18 +278,13 @@ def search_merged_items_in_graph(  # noqa: PLR0913
         limit=limit,
     )
     total: int = result["total"]
-    items: list[AnyPreviewModel | AnyMergedModel] = []
-    for item in result["items"]:
-        try:
-            items.append(
-                merge_search_result_item(
-                    item,
-                    validate_cardinality=validate_cardinality,
-                )
-            )
-        except ValidationError as error:
-            logger.error(error)
-            raise InconsistentGraphError from error
+    items = [
+        merge_search_result_item(
+            item,
+            validate_cardinality=validate_cardinality,
+        )
+        for item in result["items"]
+    ]
 
     if validate_cardinality:
         return MergedItemSearch(items=items, total=total)

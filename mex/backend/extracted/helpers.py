@@ -1,4 +1,4 @@
-from pydantic import ValidationError
+from pydantic_core import ValidationError
 
 from mex.backend.extracted.models import ExtractedItemSearch
 from mex.backend.graph.connector import GraphConnector
@@ -36,8 +36,9 @@ def search_extracted_items_in_graph(
         skip=skip,
         limit=limit,
     )
+    search_result = graph_result.one()
     try:
-        return ExtractedItemSearch.model_validate(graph_result.one())
+        return ExtractedItemSearch.model_validate(search_result)
     except ValidationError as error:
         raise InconsistentGraphError from error
 

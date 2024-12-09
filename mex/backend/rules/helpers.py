@@ -2,8 +2,7 @@ from collections.abc import Mapping
 from typing import Any, Final
 
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.graph.exceptions import InconsistentGraphError
-from mex.common.exceptions import MExError
+from mex.backend.graph.exceptions import InconsistentGraphError, NoResultFoundError
 from mex.common.models import (
     ADDITIVE_MODEL_CLASSES_BY_NAME,
     PREVENTIVE_MODEL_CLASSES_BY_NAME,
@@ -109,5 +108,5 @@ def update_and_get_rule_set(
         [rule_set.stemType],
     ):
         msg = "no merged item found for given identifier and type"
-        raise MExError(msg)
+        raise NoResultFoundError(msg)
     return create_and_get_rule_set(rule_set, stable_target_id)
