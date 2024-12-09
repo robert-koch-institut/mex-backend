@@ -20,7 +20,10 @@ def preview_item(
     ruleSet: AnyRuleSetRequest,
 ) -> AnyMergedModel:
     """Preview the merging result when the given rule would be applied."""
-    # TODO(ND): Allow this endpoint to return "broken" merged items as well
+    # TODO(ND): Convert this endpoint to return previews instead of merged items.
+    #           This will allow editor users to see the resulting item, even if
+    #           cardinality validation failed for some fields.
+    #           We need to include any validation error alongside the preview though.
     extracted_items = get_extracted_items_from_graph(
         stable_target_id=stableTargetId,
         entity_type=[ensure_prefix(ruleSet.stemType, "Extracted")],
