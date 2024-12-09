@@ -1,12 +1,12 @@
 from typing import Generic, TypeVar
 
-from mex.common.models import BaseModel, ExtractedData
+from mex.common.models import AnyExtractedModel, BaseModel
 
-ExtractedItemT = TypeVar("ExtractedItemT", bound=ExtractedData)
+ExtractedModelT = TypeVar("ExtractedModelT", bound=AnyExtractedModel)
 
 
-class AuxiliarySearch(BaseModel, Generic[ExtractedItemT]):
+class AuxiliarySearch(BaseModel, Generic[ExtractedModelT]):
     """Result of searching for extracted items in auxiliary sources."""
 
-    items: list[ExtractedItemT]
+    items: list[ExtractedModelT]
     total: int
