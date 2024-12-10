@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changes
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [0.25.0] - 2024-12-10
+
+### Added
+
 - allow item merging functions to ignore cardinality and output preview items
 
 ### Changes
@@ -18,16 +32,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - create new endpoint for fetching previews of merged items
 - replaced `mex.backend.fields` with `mex.common` counterpart
 
-### Deprecated
-
 ### Removed
 
 - removed not needed `mex.backend.constants` module
 - removed over-engineered `reraising` function
-
-### Fixed
-
-### Security
 
 ## [0.24.0] - 2024-11-25
 
