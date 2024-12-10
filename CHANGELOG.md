@@ -9,16 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- allow item merging functions to ignore cardinality and output preview items
+
 ### Changes
 
 - harmonize error handling for transforming raw rule-sets to responses
 - return 404 on GET rule-set endpoint, when no rules are found
+- create new endpoint for fetching previews of merged items
+- replaced `mex.backend.fields` with `mex.common` counterpart
 
 ### Deprecated
 
 ### Removed
 
 - removed not needed `mex.backend.constants` module
+- removed over-engineered `reraising` function
 
 ### Fixed
 

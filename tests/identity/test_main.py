@@ -89,7 +89,7 @@ def test_assign_identity_inconsistency_mocked(
             "identifierInPrimarySource": "cp-2",
         },
     )
-    assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR, response.text
+    assert response.status_code == status.HTTP_400_BAD_REQUEST, response.text
     assert "MultipleResultsFoundError" in response.text
 
 
