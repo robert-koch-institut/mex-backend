@@ -1,7 +1,14 @@
 from collections.abc import Callable
 from typing import Annotated
 
-from jinja2 import Environment, PackageLoader, StrictUndefined, select_autoescape
+from black import Mode, format_str
+from jinja2 import (
+    Environment,
+    PackageLoader,
+    StrictUndefined,
+    Template,
+    select_autoescape,
+)
 from pydantic import StringConstraints, validate_call
 
 from mex.backend.settings import BackendSettings
@@ -28,6 +35,29 @@ def render_constraints(
 ) -> str:
     """Convert a list of field names into cypher node/edge constraints."""
     return ", ".join(f"{f}: ${f}" for f in fields)
+
+
+class Query:
+    """Factory for rendering queries."""
+
+    REPR_MODE = Mode(line_length=1024)
+
+    def __init__(
+        self, name: str, template: Template, kwargs: dict[str, object]
+    ) -> None:
+        """Create a new query instance."""
+        self.name = name
+        self.template = template
+        self.kwargs = kwargs
+
+    def __str__(self) -> str:
+        """Render the query for database execution."""
+        return self.template.render(**self.kwargs)
+
+    def __repr__(self) -> str:
+        """Render the call to the query builder for logging and testing."""
+        kwargs_repr = ",".join(f"{k}={v!r}" for k, v in self.kwargs.items())
+        return format_str(f"{self.name}({kwargs_repr})", mode=self.REPR_MODE).strip()
 
 
 class QueryBuilder(BaseConnector):
@@ -64,10 +94,10 @@ class QueryBuilder(BaseConnector):
             rule_labels=list(RULE_MODEL_CLASSES_BY_NAME),
         )
 
-    def __getattr__(self, name: str) -> Callable[..., str]:
-        """Load the template with the given `name` and return its `render` method."""
+    def __getattr__(self, name: str) -> Callable[..., Query]:
+        """Load the template with the given `name` and return a query factory."""
         template = self._env.get_template(f"{name}.cql")
-        return template.render
+        return lambda **kwargs: Query(name, template, kwargs)
 
     def close(self) -> None:
         """Clean up the connector."""

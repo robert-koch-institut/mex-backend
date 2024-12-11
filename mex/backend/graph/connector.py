@@ -3,12 +3,15 @@ from collections.abc import Sequence
 from string import Template
 from typing import Annotated, Any, Literal, cast
 
+import backoff
+from backoff.types import Details as BackoffDetails
 from neo4j import Driver, GraphDatabase, NotificationDisabledCategory
+from neo4j.exceptions import DriverError
 from pydantic import Field
 
 from mex.backend.fields import SEARCHABLE_CLASSES, SEARCHABLE_FIELDS
 from mex.backend.graph.models import Result
-from mex.backend.graph.query import QueryBuilder
+from mex.backend.graph.query import Query, QueryBuilder
 from mex.backend.graph.transform import expand_references_in_search_result
 from mex.backend.settings import BackendSettings
 from mex.common.connector import BaseConnector
@@ -141,25 +144,47 @@ class GraphConnector(BaseConnector):
         """Close the connector's underlying requests session."""
         self.driver.close()
 
-    def commit(self, query: str, **parameters: Any) -> Result:
-        """Send and commit a single graph transaction."""
-        message = Template(query).safe_substitute(
-            {
-                k: json.dumps(v, ensure_ascii=False)
-                for k, v in (parameters or {}).items()
-            }
-        )
+    @staticmethod
+    def _should_giveup_commit(error: Exception) -> bool:
+        """When to give up on committing."""
+        return not cast(DriverError, error).is_retryable()
+
+    @staticmethod
+    def _on_commit_backoff(event: BackoffDetails) -> None:
+        """Re-connect to the graph database."""
+        self = cast(GraphConnector, event["args"][0])
         try:
-            with self.driver.session() as session:
-                result = Result(session.run(query, parameters))
-        except Exception as error:
-            logger.error("\n%s\n%s", message, error)
-            raise
-        if counters := result.get_update_counters():
-            logger.debug("\n%s\n%s", message, json.dumps(counters, indent=4))
+            self.close()
+        except DriverError as error:
+            logger.error("error closing before reconnect %s", error)
+        self.driver = self._init_driver()
+        self._check_connectivity_and_authentication()
+
+    @staticmethod
+    def _on_commit_giveup(event: BackoffDetails) -> None:
+        """Log the query when giving up on committing."""
+        query = cast(Query, event["args"][1])
+        kwargs = event["kwargs"]
+        settings = BackendSettings.get()
+        if settings.debug:
+            params = {k: json.dumps(v, ensure_ascii=False) for k, v in kwargs.items()}
+            message = f"\n{Template(str(query)).safe_substitute(params)}"
         else:
-            logger.debug("\n%s", message)
-        return result
+            message = f": {query!r}"
+        logger.error("error committing query: %s%s", message)
+
+    @backoff.on_exception(
+        backoff.fibo,
+        DriverError,
+        giveup=_should_giveup_commit,
+        on_backoff=_on_commit_backoff,
+        on_giveup=_on_commit_giveup,
+        max_time=1000,
+    )
+    def commit(self, query: Query, **parameters: Any) -> Result:
+        """Send and commit a single graph transaction."""
+        with self.driver.session() as session:
+            return Result(session.run(str(query), parameters))
 
     def _fetch_extracted_or_rule_items(
         self,
