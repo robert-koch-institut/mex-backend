@@ -55,7 +55,7 @@ class ErrorResponse(BaseModel):
 
 def handle_detailed_error(request: Request, exc: Exception) -> Response:
     """Handle detailed errors and provide debugging info."""
-    logger.exception("%s %s", type(exc), exc)
+    logger.exception("%s %s", type(exc).__name__, exc)
     return Response(
         content=ErrorResponse(
             message=str(exc).strip(" "),

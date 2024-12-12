@@ -1,13 +1,12 @@
-from collections.abc import Callable
 from unittest.mock import Mock
 
 import pytest
-from black import Mode, format_str
+from black import DEFAULT_LINE_LENGTH
 from pytest import MonkeyPatch
 
 from mex.backend.graph import connector as connector_module
 from mex.backend.graph.connector import MEX_EXTRACTED_PRIMARY_SOURCE, GraphConnector
-from mex.backend.graph.query import QueryBuilder
+from mex.backend.graph.query import Query
 from mex.common.exceptions import MExError
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_IDENTIFIER,
@@ -22,17 +21,12 @@ from tests.conftest import MockedGraph
 
 
 @pytest.fixture
-def mocked_query_builder(monkeypatch: MonkeyPatch) -> None:
-    def __getattr__(_: QueryBuilder, query: str) -> Callable[..., str]:
-        return lambda **parameters: format_str(
-            f"{query}({','.join(f'{k}={v!r}' for k, v in parameters.items())})",
-            mode=Mode(line_length=78),
-        ).strip()
-
-    monkeypatch.setattr(QueryBuilder, "__getattr__", __getattr__)
+def mocked_query_class(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setattr(Query, "__str__", Query.__repr__)
+    monkeypatch.setattr(Query.REPR_MODE, "line_length", DEFAULT_LINE_LENGTH)
 
 
-@pytest.mark.usefixtures("mocked_query_builder")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_check_connectivity_and_authentication(mocked_graph: MockedGraph) -> None:
     mocked_graph.return_value = [{"currentStatus": "online"}]
     graph = GraphConnector.get()
