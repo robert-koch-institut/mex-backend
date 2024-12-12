@@ -7,4 +7,4 @@ Returns:
 SHOW INDEXES
 YIELD name, labelsOrTypes, properties
 WHERE name = "search_index"
-RETURN labelsOrTypes as node_labels, properties as search_fields;
+RETURN labelsOrTypes AS node_labels, properties AS search_fields;

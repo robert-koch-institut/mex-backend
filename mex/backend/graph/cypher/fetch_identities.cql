@@ -30,9 +30,9 @@ WHERE
     <%- endif -%>
 <%- endif %>
 RETURN
-    merged.identifier as stableTargetId,
-    primary_source.identifier as hadPrimarySource,
-    n.identifierInPrimarySource as identifierInPrimarySource,
-    n.identifier as identifier
+    merged.identifier AS stableTargetId,
+    primary_source.identifier AS hadPrimarySource,
+    n.identifierInPrimarySource AS identifierInPrimarySource,
+    n.identifier AS identifier
 ORDER BY n.identifier ASC
 LIMIT $limit;

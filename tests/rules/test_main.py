@@ -17,7 +17,7 @@ CALL () {
     MATCH (n)
     RETURN collect(n{
         .*, label: head(labels(n))
-    }) as nodes
+    }) AS nodes
 }
 CALL () {
     MATCH ()-[r]->()
@@ -204,6 +204,17 @@ def test_create_rule_set(client_with_api_key_write_permission: TestClient) -> No
         {"label": "PreventiveActivity"},
         {"language": "en", "label": "Text", "value": "A new beginning"},
     ]
+
+
+@pytest.mark.integration
+def test_get_rule_set_not_found(
+    client_with_api_key_write_permission: TestClient,
+) -> None:
+    response = client_with_api_key_write_permission.get(
+        "/v0/rule-set/thisIdDoesNotExist"
+    )
+    assert response.status_code == status.HTTP_404_NOT_FOUND, response.text
+    assert response.json() == {"detail": "no rules found"}
 
 
 @pytest.mark.integration

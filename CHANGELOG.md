@@ -22,6 +22,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [0.25.0] - 2024-12-10
+
+### Added
+
+- allow item merging functions to ignore cardinality and output preview items
+
+### Changes
+
+- harmonize error handling for transforming raw rule-sets to responses
+- return 404 on GET rule-set endpoint, when no rules are found
+- create new endpoint for fetching previews of merged items
+- replaced `mex.backend.fields` with `mex.common` counterpart
+
+### Removed
+
+- removed not needed `mex.backend.constants` module
+- removed over-engineered `reraising` function
+
+## [0.24.0] - 2024-11-25
+
+### Changes
+
+- clean up non-functional cypher query style issues
+
+### Fixed
+
+- do not raise server error when search query is not found
+
 ## [0.23.0] - 2024-11-19
 
 ### Changes

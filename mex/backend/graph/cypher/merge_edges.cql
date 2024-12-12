@@ -31,14 +31,14 @@ CALL (source) {
     RETURN edge
 <%- endfor %>
 <%- else %>
-    RETURN null as edge
+    RETURN null AS edge
 <%- endif %>
 }
-WITH source, count(edge) as merged, collect(edge) as edges
+WITH source, count(edge) AS merged, collect(edge) AS edges
 CALL (source, edges) {
     MATCH (source)-[outdated_edge]->(:<<merged_labels|join("|")>>)
     WHERE NOT outdated_edge IN edges
     DELETE outdated_edge
-    RETURN count(outdated_edge) as pruned
+    RETURN count(outdated_edge) AS pruned
 }
 RETURN merged, pruned, edges;

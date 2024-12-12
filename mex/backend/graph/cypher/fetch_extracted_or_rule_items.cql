@@ -12,14 +12,14 @@ Args:
 
 Returns:
     total: Count of all items found by this query
-    items: List of extracted data items, each item has an extra attribute `_refs` that
+    items: List of extracted items, each item has an extra attribute `_refs` that
            contains the values of nested objects as well as the identifiers of
            referenced items
 -#>
 CALL () {
 <%- block match_clause -%>
 <%- if filter_by_query_string %>
-    CALL db.index.fulltext.queryNodes("search_index", $query_string)
+    OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
 <%- endif %>
     OPTIONAL MATCH (n:<<rule_labels|join("|")>>|<<extracted_labels|join("|")>>)
@@ -47,16 +47,16 @@ CALL () {
             label: type(r),
             position: r.position,
             value: referenced.identifier
-        } ELSE NULL END as ref
+        } ELSE NULL END AS ref
     UNION
         OPTIONAL MATCH (n)-[r]->(nested:<<nested_labels|join("|")>>)
         RETURN CASE WHEN nested IS NOT NULL THEN {
             label: type(r),
             position: r.position,
             value: properties(nested)
-        } ELSE NULL END as ref
+        } ELSE NULL END AS ref
     }
-    WITH n, collect(ref) as refs
+    WITH n, collect(ref) AS refs
     RETURN n{.*, entityType: head(labels(n)), _refs: refs}
     ORDER BY n.identifier, n.entityType ASC
     SKIP $skip

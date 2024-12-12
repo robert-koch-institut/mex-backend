@@ -8,4 +8,4 @@ Returns:
 -#>
 RETURN EXISTS {
     MATCH (:<<node_labels|join("|")>> {identifier: $identifier})
-} as exists;
+} AS exists;

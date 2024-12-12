@@ -6,21 +6,20 @@ from typing import Annotated, Any, Literal, cast
 from neo4j import Driver, GraphDatabase, NotificationDisabledCategory
 from pydantic import Field
 
-from mex.backend.fields import (
-    FINAL_FIELDS_BY_CLASS_NAME,
-    LINK_FIELDS_BY_CLASS_NAME,
-    MUTABLE_FIELDS_BY_CLASS_NAME,
-    REFERENCE_FIELDS_BY_CLASS_NAME,
-    SEARCHABLE_CLASSES,
-    SEARCHABLE_FIELDS,
-    TEXT_FIELDS_BY_CLASS_NAME,
-)
+from mex.backend.fields import SEARCHABLE_CLASSES, SEARCHABLE_FIELDS
 from mex.backend.graph.models import Result
 from mex.backend.graph.query import QueryBuilder
 from mex.backend.graph.transform import expand_references_in_search_result
 from mex.backend.settings import BackendSettings
 from mex.common.connector import BaseConnector
 from mex.common.exceptions import MExError
+from mex.common.fields import (
+    FINAL_FIELDS_BY_CLASS_NAME,
+    LINK_FIELDS_BY_CLASS_NAME,
+    MUTABLE_FIELDS_BY_CLASS_NAME,
+    REFERENCE_FIELDS_BY_CLASS_NAME,
+    TEXT_FIELDS_BY_CLASS_NAME,
+)
 from mex.common.logging import logger
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,

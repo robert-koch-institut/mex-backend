@@ -22,7 +22,7 @@ Returns:
 CALL () {
 <%- block match_clause -%>
 <%- if filter_by_query_string %>
-    CALL db.index.fulltext.queryNodes("search_index", $query_string)
+    OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
 <%- endif %>
     OPTIONAL MATCH (n:<<rule_labels|join("|")>>|<<extracted_labels|join("|")>>)-[:stableTargetId]->(merged:<<merged_labels|join("|")>>)
@@ -35,7 +35,7 @@ CALL () {
         <<and_()>>merged.identifier = $stable_target_id
     <%- endif %>
         <<and_()>>ANY(label IN labels(merged) WHERE label IN $labels)
-    WITH DISTINCT merged as merged
+    WITH DISTINCT merged AS merged
 <%- endblock %>
     RETURN COUNT(merged) AS total
 }
@@ -49,18 +49,18 @@ CALL () {
             label: type(r),
             position: r.position,
             value: referenced.identifier
-        } ELSE NULL END as ref
+        } ELSE NULL END AS ref
     UNION
         OPTIONAL MATCH (n)-[r]->(nested:<<nested_labels|join("|")>>)
         RETURN CASE WHEN nested IS NOT NULL THEN {
             label: type(r),
             position: r.position,
             value: properties(nested)
-        } ELSE NULL END as ref
+        } ELSE NULL END AS ref
     }
-    WITH merged, n, collect(ref) as refs
+    WITH merged, n, collect(ref) AS refs
     ORDER BY merged.identifier, n.identifier, head(labels(n)) ASC
-    WITH merged, collect(n{.*, entityType: head(labels(n)), _refs: refs}) as n
+    WITH merged, collect(n{.*, entityType: head(labels(n)), _refs: refs}) AS n
     RETURN merged{entityType: head(labels(merged)), identifier: merged.identifier, components: n}
     SKIP $skip
     LIMIT $limit
