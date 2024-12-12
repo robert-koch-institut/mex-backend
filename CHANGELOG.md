@@ -8,8 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- add `ldap.py` for an ldap endpoint for getting a person by string
+- added parameterized tests for it in `test_ldap.py`
 
 ### Changes
+- changed ldap search endpoint by for- and familyName to displayName
 
 ### Deprecated
 
