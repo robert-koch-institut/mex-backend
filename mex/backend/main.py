@@ -77,7 +77,7 @@ def main() -> None:  # pragma: no cover
     """Start the backend server process."""
     settings = BackendSettings.get()
     uvicorn.run(
-        "mex.backend.main:create_app",
+        "mex.backend.main:app",
         host=settings.backend_host,
         port=settings.backend_port,
         root_path=settings.backend_root_path,
