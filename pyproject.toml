@@ -50,7 +50,6 @@ plugins = ["pydantic.mypy"]
 distribution = true
 
 [tool.pdm.scripts]
-purge-db = { call = "scripts.purge:purge_db" }
 update-all = { cmd = "pdm update --group :all --update-all --save-compatible" }
 lock-all = { cmd = "pdm lock --group :all --python='==3.11.*'" }
 install-all = { cmd = "pdm install --group :all --frozen-lockfile" }

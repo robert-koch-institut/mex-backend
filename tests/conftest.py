@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 from fastapi.testclient import TestClient
-from neo4j import GraphDatabase, SummaryCounters
+from neo4j import SummaryCounters
 from pytest import MonkeyPatch
 
 from mex.backend.graph.connector import GraphConnector
@@ -15,6 +15,7 @@ from mex.backend.main import app
 from mex.backend.rules.helpers import create_and_get_rule_set
 from mex.backend.settings import BackendSettings
 from mex.backend.types import APIKeyDatabase, APIUserDatabase, BackendIdentityProvider
+from mex.common.connector import CONNECTOR_STORE
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     AdditiveOrganizationalUnit,
@@ -54,6 +55,7 @@ def settings() -> BackendSettings:
     settings.backend_user_database = APIUserDatabase(
         read={"Reader": "read_password"}, write={"Writer": "write_password"}
     )
+    settings.debug = True  # so we can flush the db
     return settings
 
 
@@ -169,24 +171,13 @@ def set_identity_provider(is_integration_test: bool, monkeypatch: MonkeyPatch) -
 
 
 @pytest.fixture(autouse=True)
-def isolate_graph_database(
-    is_integration_test: bool, settings: BackendSettings
-) -> None:
+def isolate_graph_database(is_integration_test: bool) -> None:
     """Automatically flush the graph database for integration testing."""
     if is_integration_test:
-        with GraphDatabase.driver(
-            settings.graph_url,
-            auth=(
-                settings.graph_user.get_secret_value(),
-                settings.graph_password.get_secret_value(),
-            ),
-            database=settings.graph_db,
-        ) as driver:
-            driver.execute_query("MATCH (n) DETACH DELETE n;")
-            for row in driver.execute_query("SHOW ALL CONSTRAINTS;").records:
-                driver.execute_query(f"DROP CONSTRAINT {row['name']};")
-            for row in driver.execute_query("SHOW ALL INDEXES;").records:
-                driver.execute_query(f"DROP INDEX {row['name']};")
+        connector = GraphConnector.get()
+        connector.flush()
+        connector.close()
+        CONNECTOR_STORE.pop(GraphConnector)
 
 
 @pytest.fixture

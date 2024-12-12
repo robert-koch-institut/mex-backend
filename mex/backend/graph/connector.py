@@ -10,6 +10,7 @@ from neo4j.exceptions import DriverError
 from pydantic import Field
 
 from mex.backend.fields import SEARCHABLE_CLASSES, SEARCHABLE_FIELDS
+from mex.backend.graph.exceptions import InconsistentGraphError
 from mex.backend.graph.models import Result
 from mex.backend.graph.query import Query, QueryBuilder
 from mex.backend.graph.transform import expand_references_in_search_result
@@ -493,13 +494,27 @@ class GraphConnector(BaseConnector):
             merged_label=ensure_prefix(model.stemType, "Merged"),
             ref_labels=ref_labels,
         )
-        return self.commit(
+        logger.info(
+            "running %s with %s",
+            str(query),
+            dict(
+                **constraints,
+                stable_target_id=stable_target_id,
+                ref_identifiers=ref_identifiers,
+                ref_positions=ref_positions,
+            ),
+        )
+        result = self.commit(
             query,
             **constraints,
             stable_target_id=stable_target_id,
             ref_identifiers=ref_identifiers,
             ref_positions=ref_positions,
         )
+        if len(result["edges"]) != len(ref_labels):
+            msg = "could not merge all edges"
+            raise InconsistentGraphError(msg)
+        return result
 
     def create_rule_set(
         self,
@@ -546,3 +561,16 @@ class GraphConnector(BaseConnector):
             self._merge_edges(model, model.stableTargetId, identifier=model.identifier)
 
         return [m.identifier for m in models]
+
+    def flush(self) -> None:
+        """Flush the database (only in debug mode)."""
+        settings = BackendSettings.get()
+        if settings.debug is True:
+            self.driver.execute_query("MATCH (n) DETACH DELETE n;")
+            for row in self.driver.execute_query("SHOW ALL CONSTRAINTS;").records:
+                self.driver.execute_query(f"DROP CONSTRAINT {row['name']};")
+            for row in self.driver.execute_query("SHOW ALL INDEXES;").records:
+                self.driver.execute_query(f"DROP INDEX {row['name']};")
+        else:
+            msg = "database flush was attempted in non-debug mode"
+            raise MExError(msg)
