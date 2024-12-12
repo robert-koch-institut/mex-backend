@@ -55,7 +55,6 @@ def settings() -> BackendSettings:
     settings.backend_user_database = APIUserDatabase(
         read={"Reader": "read_password"}, write={"Writer": "write_password"}
     )
-    settings.debug = True  # so we can flush the db
     return settings
 
 
@@ -171,9 +170,12 @@ def set_identity_provider(is_integration_test: bool, monkeypatch: MonkeyPatch) -
 
 
 @pytest.fixture(autouse=True)
-def isolate_graph_database(is_integration_test: bool) -> None:
+def isolate_graph_database(
+    is_integration_test: bool, settings: BackendSettings
+) -> None:
     """Automatically flush the graph database for integration testing."""
     if is_integration_test:
+        settings.debug = True
         connector = GraphConnector.get()
         connector.flush()
         connector.close()

@@ -24,7 +24,6 @@ def check_system_status() -> SystemStatus:
 def flush_graph_database() -> SystemStatus:
     """Flush the database (only in debug mode)."""
     settings = BackendSettings.get()
-    print("route settings", id(settings), settings.debug)
     if settings.debug is True:
         connector = GraphConnector.get()
         connector.flush()

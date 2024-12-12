@@ -1,13 +1,9 @@
 from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager, contextmanager
-from itertools import chain
-from typing import Any, Generator
-from functools import partial
+from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.openapi.utils import get_openapi
 from pydantic_core import SchemaError, ValidationError
 
 from mex.backend.auxiliary.wikidata import router as wikidata_router
@@ -28,46 +24,6 @@ from mex.backend.settings import BackendSettings
 from mex.backend.system.main import router as system_router
 from mex.common.cli import entrypoint
 from mex.common.connector import CONNECTOR_STORE
-from mex.common.types import (
-    EXTRACTED_IDENTIFIER_CLASSES,
-    IDENTIFIER_PATTERN,
-    MERGED_IDENTIFIER_CLASSES,
-)
-
-
-def create_openapi_schema(app: FastAPI) -> dict[str, Any]:
-    """Create an OpenAPI schema for the backend.
-
-    Settings:
-        backend_api_url: MEx backend API url.
-
-    Returns:
-        OpenApi schema as dictionary
-    """
-    if app.openapi_schema:
-        return app.openapi_schema
-
-    settings = BackendSettings.get()
-    openapi_schema = get_openapi(
-        title=app.title,
-        version=app.version,
-        contact=app.contact,
-        summary=app.summary,
-        description=app.description,
-        routes=app.routes,
-        servers=[{"url": settings.backend_api_url}],
-    )
-    for identifier in chain(EXTRACTED_IDENTIFIER_CLASSES, MERGED_IDENTIFIER_CLASSES):
-        name = identifier.__name__
-        openapi_schema["components"]["schemas"][name] = {
-            "title": name,
-            "type": "string",
-            "description": identifier.__doc__,
-            "pattern": IDENTIFIER_PATTERN,
-        }
-
-    app.openapi_schema = openapi_schema
-    return app.openapi_schema
 
 
 @asynccontextmanager
@@ -77,56 +33,49 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     CONNECTOR_STORE.reset()
 
 
-@entrypoint(BackendSettings)
-def create_app() -> FastAPI:
-    settings = BackendSettings.get()
-    print("DEBUG", "create_app", settings.debug)
-    app = FastAPI(
-        title="mex-backend",
-        summary="Robert Koch-Institut Metadata Exchange API",
-        description=(
-            "The MEx API includes endpoints for multiple use-cases, "
-            "e.g. for extractor pipelines, the MEx editor or inter-departmental access."
-        ),
-        contact={
-            "name": "RKI MEx Team",
-            "email": "mex@rki.de",
-            "url": "https://github.com/robert-koch-institut/mex-backend",
-        },
-        lifespan=lifespan,
-        version="v0",
-    )
-    router = APIRouter(prefix="/v0")
-    router.include_router(system_router)
-    router.include_router(extracted_router, dependencies=[Depends(has_read_access)])
-    router.include_router(identity_router, dependencies=[Depends(has_write_access)])
-    router.include_router(ingest_router, dependencies=[Depends(has_write_access)])
-    router.include_router(merged_router, dependencies=[Depends(has_read_access)])
-    router.include_router(preview_router, dependencies=[Depends(has_read_access)])
-    router.include_router(rules_router, dependencies=[Depends(has_write_access)])
-    router.include_router(wikidata_router, dependencies=[Depends(has_read_access)])
+app = FastAPI(
+    title="mex-backend",
+    summary="Robert Koch-Institut Metadata Exchange API",
+    description=(
+        "The MEx API includes endpoints for multiple use-cases, "
+        "e.g. for extractor pipelines, the MEx editor or inter-departmental access."
+    ),
+    contact={
+        "name": "RKI MEx Team",
+        "email": "mex@rki.de",
+        "url": "https://github.com/robert-koch-institut/mex-backend",
+    },
+    lifespan=lifespan,
+    version="v0",
+)
+router = APIRouter(prefix="/v0")
+router.include_router(system_router)
+router.include_router(extracted_router, dependencies=[Depends(has_read_access)])
+router.include_router(identity_router, dependencies=[Depends(has_write_access)])
+router.include_router(ingest_router, dependencies=[Depends(has_write_access)])
+router.include_router(merged_router, dependencies=[Depends(has_read_access)])
+router.include_router(preview_router, dependencies=[Depends(has_read_access)])
+router.include_router(rules_router, dependencies=[Depends(has_write_access)])
+router.include_router(wikidata_router, dependencies=[Depends(has_read_access)])
 
-    app.include_router(router)
-    app.openapi = partial(create_openapi_schema, app)  # type: ignore[method-assign]
-    app.add_exception_handler(BackendError, handle_detailed_error)
-    app.add_exception_handler(SchemaError, handle_detailed_error)
-    app.add_exception_handler(ValidationError, handle_detailed_error)
-    app.add_exception_handler(Exception, handle_uncaught_exception)
-    app.add_middleware(
-        CORSMiddleware,
-        allow_credentials=True,
-        allow_headers=["*"],
-        allow_methods=["*"],
-        allow_origins=["*"],
-    )
-    return app
+app.include_router(router)
+app.add_exception_handler(BackendError, handle_detailed_error)
+app.add_exception_handler(SchemaError, handle_detailed_error)
+app.add_exception_handler(ValidationError, handle_detailed_error)
+app.add_exception_handler(Exception, handle_uncaught_exception)
+app.add_middleware(
+    CORSMiddleware,
+    allow_credentials=True,
+    allow_headers=["*"],
+    allow_methods=["*"],
+    allow_origins=["*"],
+)
 
 
 @entrypoint(BackendSettings)
 def main() -> None:  # pragma: no cover
     """Start the backend server process."""
     settings = BackendSettings.get()
-    print("DEBUG", "main", settings.debug)
     uvicorn.run(
         "mex.backend.main:create_app",
         host=settings.backend_host,
