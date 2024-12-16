@@ -49,7 +49,6 @@ app = FastAPI(
     version="v0",
 )
 router = APIRouter(prefix="/v0")
-router.include_router(system_router)
 router.include_router(extracted_router, dependencies=[Depends(has_read_access)])
 router.include_router(identity_router, dependencies=[Depends(has_write_access)])
 router.include_router(ingest_router, dependencies=[Depends(has_write_access)])
@@ -57,6 +56,7 @@ router.include_router(merged_router, dependencies=[Depends(has_read_access)])
 router.include_router(preview_router, dependencies=[Depends(has_read_access)])
 router.include_router(rules_router, dependencies=[Depends(has_write_access)])
 router.include_router(wikidata_router, dependencies=[Depends(has_read_access)])
+router.include_router(system_router)
 
 app.include_router(router)
 app.add_exception_handler(BackendError, handle_detailed_error)
