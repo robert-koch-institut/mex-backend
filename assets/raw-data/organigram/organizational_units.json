@@ -1,0 +1,91 @@
+[
+    {
+        "alternativeName": [
+            {
+                "value": "CHLD"
+            },
+            {
+                "value": "C1 Sub-Unit"
+            },
+            {
+                "value": "C1 Unterabteilung"
+            }
+        ],
+        "identifier": "child-unit",
+        "name": [
+            {
+                "language": "de",
+                "value": "CHLD Unterabteilung"
+            },
+            {
+                "language": "en",
+                "value": "C1: Sub Unit"
+            }
+        ],
+        "parentDepartment": "parent-unit",
+        "shortName": [
+            {
+                "language": "de",
+                "value": "C1"
+            }
+        ]
+    },
+    {
+        "alternativeName": [
+            {
+                "value": "PRNT Abteilung"
+            },
+            {
+                "value": "PARENT Dept."
+            }
+        ],
+        "email": [
+            "pu@example.com",
+            "PARENT@example.com"
+        ],
+        "identifier": "parent-unit",
+        "name": [
+            {
+                "language": "de",
+                "value": "Abteilung"
+            },
+            {
+                "language": "en",
+                "value": "Department"
+            }
+        ],
+        "shortName": [
+            {
+                "language": "de",
+                "value": "PRNT"
+            }
+        ]
+    },
+    {
+        "alternativeName": [
+            {
+                "value": "FG99"
+            }
+        ],
+        "email": [
+            "fg@example.com"
+        ],
+        "identifier": "fg99",
+        "name": [
+            {
+                "language": "de",
+                "value": "Fachgebiet 99"
+            },
+            {
+                "language": "en",
+                "value": "Group 99"
+            }
+        ],
+        "shortName": [
+            {
+                "language": "de",
+                "value": "FG 99"
+            }
+        ]
+    }
+]
