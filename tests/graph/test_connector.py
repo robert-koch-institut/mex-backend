@@ -42,7 +42,7 @@ def test_check_connectivity_and_authentication_error(mocked_graph: MockedGraph) 
         graph._check_connectivity_and_authentication()
 
 
-@pytest.mark.usefixtures("mocked_query_builder")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_seed_constraints(mocked_graph: MockedGraph) -> None:
     graph = GraphConnector.get()
     graph._seed_constraints()
@@ -53,7 +53,7 @@ def test_mocked_graph_seed_constraints(mocked_graph: MockedGraph) -> None:
     )
 
 
-@pytest.mark.usefixtures("mocked_query_builder")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_seed_indices(
     mocked_graph: MockedGraph, monkeypatch: MonkeyPatch
 ) -> None:
@@ -112,8 +112,9 @@ create_full_text_search_index(
     )
 
 
-@pytest.mark.usefixtures("mocked_query_builder")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
+    mocked_graph.return_value = [{"edges": ["hadPrimarySource", "stableTargetId"]}]
     graph = GraphConnector.get()
     graph._seed_data()
 
@@ -168,7 +169,7 @@ def test_mocked_graph_commit_raises_error(mocked_graph: MockedGraph) -> None:
         connector.commit("RETURN 1;")
 
 
-@pytest.mark.usefixtures("mocked_query_builder")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
     mocked_graph.return_value = [
         {
@@ -254,7 +255,7 @@ def test_fetch_extracted_items_empty() -> None:
     assert result.one() == {"items": [], "total": 0}
 
 
-@pytest.mark.usefixtures("mocked_query_builder")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
     mocked_graph.return_value = [
         {
@@ -310,7 +311,6 @@ fetch_extracted_or_rule_items(
     }
 
 
-@pytest.mark.usefixtures("load_dummy_data")
 @pytest.mark.integration
 def test_fetch_rule_items(
     load_dummy_rule_set: OrganizationalUnitRuleSetResponse,
@@ -343,7 +343,7 @@ def test_fetch_rule_items_empty() -> None:
     assert result.one() == {"items": [], "total": 0}
 
 
-@pytest.mark.usefixtures("mocked_query_builder")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
     mocked_graph.return_value = [
         {
@@ -395,9 +395,7 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
 
     assert mocked_graph.call_args_list[-1].args == (
         """\
-fetch_merged_items(
-    filter_by_query_string=True, filter_by_stable_target_id=True
-)""",
+fetch_merged_items(filter_by_query_string=True, filter_by_stable_target_id=True)""",
         {
             "labels": [
                 "MergedFoo",
@@ -491,7 +489,7 @@ def test_fetch_merged_items_empty() -> None:
     assert result.one() == {"items": [], "total": 0}
 
 
-@pytest.mark.usefixtures("mocked_query_builder")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_fetch_identities(mocked_graph: MockedGraph) -> None:
     graph = GraphConnector.get()
     graph.fetch_identities(stable_target_id=Identifier.generate(99))
@@ -549,7 +547,7 @@ fetch_identities(
     )
 
 
-@pytest.mark.usefixtures("mocked_query_builder")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_exists_merged_item(
     mocked_graph: MockedGraph, monkeypatch: MonkeyPatch
 ) -> None:
@@ -608,7 +606,7 @@ def test_graph_exists_merged_item(
     assert connector.exists_merged_item(stable_target_id, stem_types) == exists
 
 
-@pytest.mark.usefixtures("mocked_query_builder")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_merge_item(
     mocked_graph: MockedGraph, dummy_data: dict[str, AnyExtractedModel]
 ) -> None:
@@ -644,12 +642,14 @@ merge_item(
     )
 
 
-@pytest.mark.usefixtures("mocked_query_builder")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_merge_edges(
     mocked_graph: MockedGraph, dummy_data: dict[str, AnyExtractedModel]
 ) -> None:
-    extracted_organizational_unit = dummy_data["organizational_unit_1"]
+    mocked_graph.return_value = [{"edges": ["hadPrimarySource", "stableTargetId"]}]
     graph = GraphConnector.get()
+
+    extracted_organizational_unit = dummy_data["organizational_unit_1"]
     graph._merge_edges(
         extracted_organizational_unit,
         extracted_organizational_unit.stableTargetId,
@@ -676,11 +676,19 @@ merge_edges(
     )
 
 
-@pytest.mark.usefixtures("mocked_query_builder")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_creates_rule_set(
     mocked_graph: MockedGraph,
     organizational_unit_rule_set_request: OrganizationalUnitRuleSetRequest,
 ) -> None:
+    mocked_graph.side_effect = [
+        [{"current": {}}],  # additive item
+        [{"edges": ["parentUnit", "stableTargetId"]}],  # additive edges
+        [{"current": {}}],  # subtractive item
+        [{"edges": ["stableTargetId"]}],  # subtractive edges
+        [{"current": {}}],  # preventive item
+        [{"edges": ["stableTargetId"]}],  # preventive edges
+    ]
     graph = GraphConnector.get()
     graph.create_rule_set(organizational_unit_rule_set_request, Identifier.generate(42))
 
@@ -718,8 +726,55 @@ merge_edges(
     )
 
 
-@pytest.mark.usefixtures("mocked_graph")
-def test_mocked_graph_ingests_models(dummy_data: dict[str, AnyExtractedModel]) -> None:
+def test_mocked_graph_ingests_models(
+    mocked_graph: MockedGraph, dummy_data: dict[str, AnyExtractedModel]
+) -> None:
+    mocked_graph.side_effect = [
+        [{"current": {}}],  # PrimarySource ps-1 item
+        [{"current": {}}],  # PrimarySource ps-2 item
+        [{"current": {}}],  # ContactPoint cp-1 item
+        [{"current": {}}],  # ContactPoint cp-2 item
+        [{"current": {}}],  # OrganizationalUnit ou-1 item
+        [{"current": {}}],  # OrganizationalUnit ou-1.6 item
+        [{"current": {}}],  # Activity a-1 item
+        [
+            # PrimarySource ps-1 edges
+            {"edges": ["hadPrimarySource", "stableTargetId"]},
+        ],
+        [
+            # PrimarySource ps-2 edges
+            {"edges": ["hadPrimarySource", "stableTargetId"]},
+        ],
+        [
+            # ContactPoint cp-1 edges
+            {"edges": ["hadPrimarySource", "stableTargetId"]},
+        ],
+        [
+            # ContactPoint cp-2 edges
+            {"edges": ["hadPrimarySource", "stableTargetId"]},
+        ],
+        [
+            # OrganizationalUnit ou-1 edges
+            {"edges": ["hadPrimarySource", "stableTargetId"]}
+        ],
+        [
+            # OrganizationalUnit ou-1.6 edges
+            {"edges": ["hadPrimarySource", "parentUnit", "stableTargetId"]}
+        ],
+        [
+            # Activity a-1 edges
+            {
+                "edges": [
+                    "hadPrimarySource",
+                    "contact",
+                    "contact",
+                    "contact",
+                    "responsibleUnit",
+                    "stableTargetId",
+                ]
+            },
+        ],
+    ]
     graph = GraphConnector.get()
     identifiers = graph.ingest(list(dummy_data.values()))
 

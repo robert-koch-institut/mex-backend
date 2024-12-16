@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 from fastapi.testclient import TestClient
-from neo4j import SummaryCounters
+from neo4j import Driver, Session, SummaryCounters
 from pytest import MonkeyPatch
 
 from mex.backend.graph.connector import GraphConnector
@@ -111,17 +111,44 @@ def patch_test_client_json_encoder(monkeypatch: MonkeyPatch) -> None:
 
 
 class MockedGraph:
-    def __init__(self, records: list[Any], session_run: MagicMock) -> None:
-        self.records = records
-        self.run = session_run
+    def __init__(self, run: MagicMock) -> None:
+        self.run = run
+        self.return_value = []
 
     @property
     def return_value(self) -> list[Any]:  # pragma: no cover
-        return self.records
+        raise NotImplementedError
 
     @return_value.setter
     def return_value(self, value: list[Any]) -> None:
-        self.records[:] = [Mock(data=MagicMock(return_value=v)) for v in value]
+        self.run.return_value = Mock(
+            to_eager_result=MagicMock(
+                return_value=(
+                    [Mock(data=MagicMock(return_value=v)) for v in value],
+                    Mock(counters=SummaryCounters({})),
+                    None,
+                ),
+            ),
+        )
+
+    @property
+    def side_effect(self) -> list[Any]:  # pragma: no cover
+        raise NotImplementedError
+
+    @side_effect.setter
+    def side_effect(self, values: list[list[Any]]) -> None:
+        self.run.side_effect = [
+            Mock(
+                to_eager_result=MagicMock(
+                    return_value=(
+                        [Mock(data=MagicMock(return_value=v)) for v in value],
+                        Mock(counters=SummaryCounters({})),
+                        None,
+                    ),
+                ),
+            )
+            for value in values
+        ]
 
     @property
     def call_args_list(self) -> list[Any]:
@@ -131,16 +158,13 @@ class MockedGraph:
 @pytest.fixture
 def mocked_graph(monkeypatch: MonkeyPatch) -> MockedGraph:
     """Mock the graph connector and return the mocked `run` for easy manipulation."""
-    records: list[Any] = []
-    summary = Mock(counters=SummaryCounters({}))
-    result = Mock(to_eager_result=MagicMock(return_value=(records, summary, None)))
-    run = MagicMock(return_value=result)
-    session = MagicMock(__enter__=MagicMock(return_value=Mock(run=run)))
-    driver = Mock(session=MagicMock(return_value=session))
+    run = MagicMock(spec=Session.run)
+    session = MagicMock(spec=Session, __enter__=MagicMock(return_value=Mock(run=run)))
+    driver = Mock(spec=Driver, session=MagicMock(return_value=session))
     monkeypatch.setattr(
         GraphConnector, "__init__", lambda self: setattr(self, "driver", driver)
     )
-    return MockedGraph(records, run)
+    return MockedGraph(run)
 
 
 @pytest.fixture(autouse=True)
@@ -280,6 +304,13 @@ def load_dummy_rule_set(
     organizational_unit_rule_set_request: OrganizationalUnitRuleSetRequest,
     dummy_data: dict[str, AnyExtractedModel],
 ) -> OrganizationalUnitRuleSetResponse:
+    GraphConnector.get().ingest(
+        [
+            dummy_data["primary_source_2"],
+            dummy_data["organizational_unit_1"],
+            dummy_data["organizational_unit_2"],
+        ]
+    )
     return cast(
         OrganizationalUnitRuleSetResponse,
         create_and_get_rule_set(

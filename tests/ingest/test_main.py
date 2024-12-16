@@ -1,13 +1,14 @@
 from collections import defaultdict
 from typing import Any, cast
+from unittest.mock import MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
+from pytest import MonkeyPatch
 from starlette import status
 
 from mex.backend.graph.connector import GraphConnector
 from mex.common.models import EXTRACTED_MODEL_CLASSES, AnyExtractedModel
-from tests.conftest import MockedGraph
 
 Payload = dict[str, list[dict[str, Any]]]
 
@@ -75,13 +76,15 @@ def test_bulk_insert_malformed(
     assert response.json() == {"detail": expected_response}
 
 
+@pytest.mark.usefixtures("mocked_graph")
 def test_bulk_insert_mocked(
     client_with_api_key_write_permission: TestClient,
     post_payload: Payload,
     dummy_data: dict[str, AnyExtractedModel],
-    mocked_graph: MockedGraph,
+    monkeypatch: MonkeyPatch,
 ) -> None:
-    mocked_graph.return_value = []
+    monkeypatch.setattr(GraphConnector, "_merge_item", MagicMock())
+    monkeypatch.setattr(GraphConnector, "_merge_edges", MagicMock())
     response = client_with_api_key_write_permission.post(
         "/v0/ingest", json=post_payload
     )
