@@ -38,7 +38,7 @@ def render_constraints(
 
 
 class Query:
-    """Factory for rendering queries."""
+    """Wrapper for queries that can be rendered."""
 
     REPR_MODE = Mode(line_length=1024)
 

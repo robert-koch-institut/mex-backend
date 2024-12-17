@@ -1,12 +1,16 @@
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock, call
 
 import pytest
+from backoff.types import Details as BackoffDetails
 from black import DEFAULT_LINE_LENGTH
-from pytest import MonkeyPatch
+from jinja2 import Environment
+from neo4j.exceptions import IncompleteCommit, SessionExpired
+from pytest import LogCaptureFixture, MonkeyPatch
 
 from mex.backend.graph import connector as connector_module
 from mex.backend.graph.connector import MEX_EXTRACTED_PRIMARY_SOURCE, GraphConnector
 from mex.backend.graph.query import Query
+from mex.backend.settings import BackendSettings
 from mex.common.exceptions import MExError
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_IDENTIFIER,
@@ -160,6 +164,58 @@ merge_edges(
             "stable_target_id": MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
         },
     )
+
+
+def test_should_giveup_commit() -> None:
+    retryable_error = SessionExpired("session is dead")
+    assert GraphConnector._should_giveup_commit(retryable_error) is False
+
+    terminal_error = IncompleteCommit("commit broke midway")
+    assert GraphConnector._should_giveup_commit(terminal_error) is True
+
+
+@pytest.mark.usefixtures("mocked_graph")
+def test_on_commit_backoff(monkeypatch: MonkeyPatch) -> None:
+    init_driver = MagicMock()
+    check_connectivity_and_authentication = MagicMock()
+    monkeypatch.setattr(GraphConnector, "_seed_constraints", MagicMock())
+    monkeypatch.setattr(GraphConnector, "_init_driver", init_driver)
+    monkeypatch.setattr(
+        GraphConnector,
+        "_check_connectivity_and_authentication",
+        check_connectivity_and_authentication,
+    )
+
+    connector = GraphConnector.get()
+    event = BackoffDetails(args=(connector,))
+    GraphConnector._on_commit_backoff(event)
+    assert init_driver.call_args_list == [call()]
+    assert check_connectivity_and_authentication.call_args_list == [call()]
+
+
+@pytest.mark.parametrize(
+    ("debug", "expected"),
+    [
+        (True, 'error committing query\nMATCH jjj RETURN "ccc";'),
+        (False, 'error committing query: match_something(jinja_var="jjj")'),
+    ],
+)
+@pytest.mark.usefixtures("mocked_graph")
+def test_on_commit_giveup(
+    caplog: LogCaptureFixture, monkeypatch: MonkeyPatch, debug: bool, expected: str
+) -> None:
+    settings = BackendSettings.get()
+    monkeypatch.setattr(settings, "debug", debug)
+    template = Environment(autoescape=True).from_string(
+        r"MATCH {{jinja_var}} RETURN $cypher_var;"
+    )
+
+    connector = GraphConnector.get()
+    query = Query("match_something", template, {"jinja_var": "jjj"})
+    event = BackoffDetails(args=(connector, query), kwargs={"cypher_var": "ccc"})
+    GraphConnector._on_commit_giveup(event)
+
+    assert caplog.messages[-1] == expected
 
 
 def test_mocked_graph_commit_raises_error(mocked_graph: MockedGraph) -> None:

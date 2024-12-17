@@ -164,7 +164,7 @@ class GraphConnector(BaseConnector):
     @staticmethod
     def _on_commit_giveup(event: BackoffDetails) -> None:
         """Log the query when giving up on committing."""
-        query = cast(Query, event["args"][1])
+        query = cast(Query | str, event["args"][1])
         kwargs = event["kwargs"]
         settings = BackendSettings.get()
         if settings.debug:
@@ -172,7 +172,7 @@ class GraphConnector(BaseConnector):
             message = f"\n{Template(str(query)).safe_substitute(params)}"
         else:
             message = f": {query!r}"
-        logger.error("error committing query: %s%s", message)
+        logger.error("error committing query%s", message)
 
     @backoff.on_exception(
         backoff.fibo,
@@ -182,7 +182,7 @@ class GraphConnector(BaseConnector):
         on_giveup=_on_commit_giveup,
         max_time=1000,
     )
-    def commit(self, query: Query, **parameters: Any) -> Result:
+    def commit(self, query: Query | str, **parameters: Any) -> Result:
         """Send and commit a single graph transaction."""
         with self.driver.session() as session:
             return Result(session.run(str(query), parameters))
@@ -493,16 +493,6 @@ class GraphConnector(BaseConnector):
             current_constraints=sorted(constraints),
             merged_label=ensure_prefix(model.stemType, "Merged"),
             ref_labels=ref_labels,
-        )
-        logger.info(
-            "running %s with %s",
-            str(query),
-            dict(
-                **constraints,
-                stable_target_id=stable_target_id,
-                ref_identifiers=ref_identifiers,
-                ref_positions=ref_positions,
-            ),
         )
         result = self.commit(
             query,
