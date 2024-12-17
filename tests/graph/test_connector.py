@@ -22,7 +22,7 @@ from mex.common.models import (
     OrganizationalUnitRuleSetResponse,
 )
 from mex.common.types import Identifier
-from tests.conftest import MockedGraph
+from tests.conftest import MockedGraph, get_graph
 
 
 @pytest.fixture
@@ -857,3 +857,28 @@ def test_mocked_graph_ingests_models(
     identifiers = graph.ingest(list(dummy_data.values()))
 
     assert identifiers == [d.identifier for d in dummy_data.values()]
+
+
+def test_connector_flush_fails(monkeypatch: MonkeyPatch) -> None:
+    settings = BackendSettings.get()
+
+    monkeypatch.setattr(settings, "debug", False)
+    connector = GraphConnector.get()
+
+    with pytest.raises(
+        MExError, match="database flush was attempted outside of debug mode"
+    ):
+        connector.flush()
+
+
+@pytest.mark.integration
+@pytest.mark.usefixtures("load_dummy_data")
+def test_connector_flush(monkeypatch: MonkeyPatch) -> None:
+    assert len(get_graph()) >= 10
+
+    settings = BackendSettings.get()
+    monkeypatch.setattr(settings, "debug", True)
+    connector = GraphConnector.get()
+    connector.flush()
+
+    assert len(get_graph()) == 0

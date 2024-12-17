@@ -206,6 +206,33 @@ def isolate_graph_database(
         CONNECTOR_STORE.pop(GraphConnector)
 
 
+def get_graph() -> list[dict[str, Any]]:
+    connector = GraphConnector.get()
+    graph = connector.commit(
+        """
+CALL () {
+    MATCH (n)
+    RETURN collect(n{
+        .*, label: head(labels(n))
+    }) AS nodes
+}
+CALL () {
+    MATCH ()-[r]->()
+    RETURN collect({
+        label: type(r), position: r.position,
+        start: coalesce(startNode(r).identifier, head(labels(startNode(r)))),
+        end: coalesce(endNode(r).identifier, head(labels(endNode(r))))
+    }) as relations
+}
+RETURN nodes, relations;
+"""
+    ).one()
+    return sorted(
+        graph["nodes"] + graph["relations"],
+        key=lambda i: json.dumps(i, sort_keys=True),
+    )
+
+
 @pytest.fixture
 def dummy_data() -> dict[str, AnyExtractedModel]:
     """Create a set of interlinked dummy data."""

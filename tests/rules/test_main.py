@@ -1,39 +1,9 @@
-import json
-from typing import Any
-
 import pytest
 from fastapi.testclient import TestClient
 from starlette import status
 
-from mex.backend.graph.connector import GraphConnector
 from mex.common.models import OrganizationalUnitRuleSetResponse
-
-
-def get_graph() -> list[dict[str, Any]]:
-    connector = GraphConnector.get()
-    graph = connector.commit(
-        """
-CALL () {
-    MATCH (n)
-    RETURN collect(n{
-        .*, label: head(labels(n))
-    }) AS nodes
-}
-CALL () {
-    MATCH ()-[r]->()
-    RETURN collect({
-        label: type(r), position: r.position,
-        start: coalesce(startNode(r).identifier, head(labels(startNode(r)))),
-        end: coalesce(endNode(r).identifier, head(labels(endNode(r))))
-    }) as relations
-}
-RETURN nodes, relations;
-"""
-    ).one()
-    return sorted(
-        graph["nodes"] + graph["relations"],
-        key=lambda i: json.dumps(i, sort_keys=True),
-    )
+from tests.conftest import get_graph
 
 
 @pytest.mark.integration

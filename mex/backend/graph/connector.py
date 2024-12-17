@@ -562,5 +562,5 @@ class GraphConnector(BaseConnector):
             for row in self.driver.execute_query("SHOW ALL INDEXES;").records:
                 self.driver.execute_query(f"DROP INDEX {row['name']};")
         else:
-            msg = "database flush was attempted in non-debug mode"
+            msg = "database flush was attempted outside of debug mode"
             raise MExError(msg)

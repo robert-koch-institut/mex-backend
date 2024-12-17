@@ -32,5 +32,5 @@ def flush_graph_database() -> SystemStatus:
         return SystemStatus(status="ok")
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
-        detail=f"refusing to flush the database debug={settings.debug}",
+        detail="refusing to flush the database",
     )
