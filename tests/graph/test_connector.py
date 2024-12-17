@@ -9,6 +9,7 @@ from pytest import LogCaptureFixture, MonkeyPatch
 
 from mex.backend.graph import connector as connector_module
 from mex.backend.graph.connector import MEX_EXTRACTED_PRIMARY_SOURCE, GraphConnector
+from mex.backend.graph.exceptions import InconsistentGraphError
 from mex.backend.graph.query import Query
 from mex.backend.settings import BackendSettings
 from mex.common.exceptions import MExError
@@ -702,7 +703,9 @@ merge_item(
 def test_mocked_graph_merge_edges(
     mocked_graph: MockedGraph, dummy_data: dict[str, AnyExtractedModel]
 ) -> None:
-    mocked_graph.return_value = [{"edges": ["hadPrimarySource", "stableTargetId"]}]
+    mocked_graph.return_value = [
+        {"edges": ["hadPrimarySource", "stableTargetId"]},
+    ]
     graph = GraphConnector.get()
 
     extracted_organizational_unit = dummy_data["organizational_unit_1"]
@@ -730,6 +733,25 @@ merge_edges(
             "stable_target_id": "cWWm02l1c6cucKjIhkFqY4",
         },
     )
+
+
+@pytest.mark.usefixtures("mocked_query_class")
+def test_mocked_graph_merge_edges_fails(
+    mocked_graph: MockedGraph, dummy_data: dict[str, AnyExtractedModel]
+) -> None:
+    mocked_graph.return_value = [
+        {"edges": ["stableTargetId"]},  # missing hadPrimarySource
+    ]
+    graph = GraphConnector.get()
+
+    extracted_organizational_unit = dummy_data["organizational_unit_1"]
+
+    with pytest.raises(InconsistentGraphError, match="could not merge all edges"):
+        graph._merge_edges(
+            extracted_organizational_unit,
+            extracted_organizational_unit.stableTargetId,
+            identifier=extracted_organizational_unit.identifier,
+        )
 
 
 @pytest.mark.usefixtures("mocked_query_class")
