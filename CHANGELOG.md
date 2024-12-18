@@ -9,11 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- added an endpoint for getting a person by name from LDAP
-
 ### Changes
-
-- updated to mex-common 0.45.0 and mex-model 3.4.0
 
 ### Deprecated
 
@@ -22,6 +18,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [0.26.0] - 2024-12-18
+
+### Added
+
+- added an endpoint for getting a person by name from LDAP
+
+### Changes
+
+- updated to mex-common 0.45.0 and mex-model 3.4.0
 
 ## [0.25.0] - 2024-12-10
 
