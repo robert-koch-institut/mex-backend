@@ -8,11 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- add `ldap.py` for an ldap endpoint for getting a person by string
-- added parameterized tests for it in `test_ldap.py`
+
+- added an endpoint for getting a person by name from LDAP
 
 ### Changes
-- changed ldap search endpoint by for- and familyName to displayName
+
+- updated to mex-common 0.45.0 and mex-model 3.4.0
 
 ### Deprecated
 
