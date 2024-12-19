@@ -1,13 +1,9 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from itertools import chain
-from typing import Any
 
 import uvicorn
 from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.openapi.utils import get_openapi
-from pydantic import BaseModel
 from pydantic_core import SchemaError, ValidationError
 
 from mex.backend.auxiliary.ldap import router as ldap_router
@@ -26,48 +22,9 @@ from mex.backend.preview.main import router as preview_router
 from mex.backend.rules.main import router as rules_router
 from mex.backend.security import has_read_access, has_write_access
 from mex.backend.settings import BackendSettings
+from mex.backend.system.main import router as system_router
 from mex.common.cli import entrypoint
 from mex.common.connector import CONNECTOR_STORE
-from mex.common.types import (
-    EXTRACTED_IDENTIFIER_CLASSES,
-    IDENTIFIER_PATTERN,
-    MERGED_IDENTIFIER_CLASSES,
-)
-
-
-def create_openapi_schema() -> dict[str, Any]:
-    """Create an OpenAPI schema for the backend.
-
-    Settings:
-        backend_api_url: MEx backend API url.
-
-    Returns:
-        OpenApi schema as dictionary
-    """
-    if app.openapi_schema:
-        return app.openapi_schema
-
-    settings = BackendSettings.get()
-    openapi_schema = get_openapi(
-        title=app.title,
-        version=app.version,
-        contact=app.contact,
-        summary=app.summary,
-        description=app.description,
-        routes=app.routes,
-        servers=[{"url": settings.backend_api_url}],
-    )
-    for identifier in chain(EXTRACTED_IDENTIFIER_CLASSES, MERGED_IDENTIFIER_CLASSES):
-        name = identifier.__name__
-        openapi_schema["components"]["schemas"][name] = {
-            "title": name,
-            "type": "string",
-            "description": identifier.__doc__,
-            "pattern": IDENTIFIER_PATTERN,
-        }
-
-    app.openapi_schema = openapi_schema
-    return app.openapi_schema
 
 
 @asynccontextmanager
@@ -93,7 +50,6 @@ app = FastAPI(
     version="v0",
 )
 router = APIRouter(prefix="/v0")
-app.openapi = create_openapi_schema  # type: ignore[method-assign]
 router.include_router(extracted_router, dependencies=[Depends(has_read_access)])
 router.include_router(identity_router, dependencies=[Depends(has_write_access)])
 router.include_router(ingest_router, dependencies=[Depends(has_write_access)])
@@ -102,19 +58,7 @@ router.include_router(preview_router, dependencies=[Depends(has_read_access)])
 router.include_router(rules_router, dependencies=[Depends(has_write_access)])
 router.include_router(wikidata_router, dependencies=[Depends(has_read_access)])
 router.include_router(ldap_router, dependencies=[Depends(has_read_access)])
-
-
-class SystemStatus(BaseModel):
-    """Response model for system status check."""
-
-    status: str
-
-
-@router.get("/_system/check", tags=["system"])
-def check_system_status() -> SystemStatus:
-    """Check that the backend server is healthy and responsive."""
-    return SystemStatus(status="ok")
-
+router.include_router(system_router)
 
 app.include_router(router)
 app.add_exception_handler(BackendError, handle_detailed_error)

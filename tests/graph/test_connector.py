@@ -1,13 +1,17 @@
-from collections.abc import Callable
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock, call
 
 import pytest
-from black import Mode, format_str
-from pytest import MonkeyPatch
+from backoff.types import Details as BackoffDetails
+from black import DEFAULT_LINE_LENGTH
+from jinja2 import Environment
+from neo4j.exceptions import IncompleteCommit, SessionExpired
+from pytest import LogCaptureFixture, MonkeyPatch
 
 from mex.backend.graph import connector as connector_module
 from mex.backend.graph.connector import MEX_EXTRACTED_PRIMARY_SOURCE, GraphConnector
-from mex.backend.graph.query import QueryBuilder
+from mex.backend.graph.exceptions import InconsistentGraphError
+from mex.backend.graph.query import Query
+from mex.backend.settings import BackendSettings
 from mex.common.exceptions import MExError
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_IDENTIFIER,
@@ -18,21 +22,16 @@ from mex.common.models import (
     OrganizationalUnitRuleSetResponse,
 )
 from mex.common.types import Identifier
-from tests.conftest import MockedGraph
+from tests.conftest import MockedGraph, get_graph
 
 
 @pytest.fixture
-def mocked_query_builder(monkeypatch: MonkeyPatch) -> None:
-    def __getattr__(_: QueryBuilder, query: str) -> Callable[..., str]:
-        return lambda **parameters: format_str(
-            f"{query}({','.join(f'{k}={v!r}' for k, v in parameters.items())})",
-            mode=Mode(line_length=78),
-        ).strip()
-
-    monkeypatch.setattr(QueryBuilder, "__getattr__", __getattr__)
+def mocked_query_class(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setattr(Query, "__str__", Query.__repr__)
+    monkeypatch.setattr(Query.REPR_MODE, "line_length", DEFAULT_LINE_LENGTH)
 
 
-@pytest.mark.usefixtures("mocked_query_builder")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_check_connectivity_and_authentication(mocked_graph: MockedGraph) -> None:
     mocked_graph.return_value = [{"currentStatus": "online"}]
     graph = GraphConnector.get()
@@ -48,7 +47,7 @@ def test_check_connectivity_and_authentication_error(mocked_graph: MockedGraph) 
         graph._check_connectivity_and_authentication()
 
 
-@pytest.mark.usefixtures("mocked_query_builder")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_seed_constraints(mocked_graph: MockedGraph) -> None:
     graph = GraphConnector.get()
     graph._seed_constraints()
@@ -59,7 +58,7 @@ def test_mocked_graph_seed_constraints(mocked_graph: MockedGraph) -> None:
     )
 
 
-@pytest.mark.usefixtures("mocked_query_builder")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_seed_indices(
     mocked_graph: MockedGraph, monkeypatch: MonkeyPatch
 ) -> None:
@@ -118,8 +117,9 @@ create_full_text_search_index(
     )
 
 
-@pytest.mark.usefixtures("mocked_query_builder")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
+    mocked_graph.return_value = [{"edges": ["hadPrimarySource", "stableTargetId"]}]
     graph = GraphConnector.get()
     graph._seed_data()
 
@@ -167,6 +167,58 @@ merge_edges(
     )
 
 
+def test_should_giveup_commit() -> None:
+    retryable_error = SessionExpired("session is dead")
+    assert GraphConnector._should_giveup_commit(retryable_error) is False
+
+    terminal_error = IncompleteCommit("commit broke midway")
+    assert GraphConnector._should_giveup_commit(terminal_error) is True
+
+
+@pytest.mark.usefixtures("mocked_graph")
+def test_on_commit_backoff(monkeypatch: MonkeyPatch) -> None:
+    init_driver = MagicMock()
+    check_connectivity_and_authentication = MagicMock()
+    monkeypatch.setattr(GraphConnector, "_seed_constraints", MagicMock())
+    monkeypatch.setattr(GraphConnector, "_init_driver", init_driver)
+    monkeypatch.setattr(
+        GraphConnector,
+        "_check_connectivity_and_authentication",
+        check_connectivity_and_authentication,
+    )
+
+    connector = GraphConnector.get()
+    event = BackoffDetails(args=(connector,))
+    GraphConnector._on_commit_backoff(event)
+    assert init_driver.call_args_list == [call()]
+    assert check_connectivity_and_authentication.call_args_list == [call()]
+
+
+@pytest.mark.parametrize(
+    ("debug", "expected"),
+    [
+        (True, 'error committing query\nMATCH jjj RETURN "ccc";'),
+        (False, 'error committing query: match_something(jinja_var="jjj")'),
+    ],
+)
+@pytest.mark.usefixtures("mocked_graph")
+def test_on_commit_giveup(
+    caplog: LogCaptureFixture, monkeypatch: MonkeyPatch, debug: bool, expected: str
+) -> None:
+    settings = BackendSettings.get()
+    monkeypatch.setattr(settings, "debug", debug)
+    template = Environment(autoescape=True).from_string(
+        r"MATCH {{jinja_var}} RETURN $cypher_var;"
+    )
+
+    connector = GraphConnector.get()
+    query = Query("match_something", template, {"jinja_var": "jjj"})
+    event = BackoffDetails(args=(connector, query), kwargs={"cypher_var": "ccc"})
+    GraphConnector._on_commit_giveup(event)
+
+    assert caplog.messages[-1] == expected
+
+
 def test_mocked_graph_commit_raises_error(mocked_graph: MockedGraph) -> None:
     mocked_graph.run.side_effect = Exception("query failed")
     connector = GraphConnector.get()
@@ -174,7 +226,7 @@ def test_mocked_graph_commit_raises_error(mocked_graph: MockedGraph) -> None:
         connector.commit("RETURN 1;")
 
 
-@pytest.mark.usefixtures("mocked_query_builder")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
     mocked_graph.return_value = [
         {
@@ -260,7 +312,7 @@ def test_fetch_extracted_items_empty() -> None:
     assert result.one() == {"items": [], "total": 0}
 
 
-@pytest.mark.usefixtures("mocked_query_builder")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
     mocked_graph.return_value = [
         {
@@ -316,7 +368,6 @@ fetch_extracted_or_rule_items(
     }
 
 
-@pytest.mark.usefixtures("load_dummy_data")
 @pytest.mark.integration
 def test_fetch_rule_items(
     load_dummy_rule_set: OrganizationalUnitRuleSetResponse,
@@ -349,7 +400,7 @@ def test_fetch_rule_items_empty() -> None:
     assert result.one() == {"items": [], "total": 0}
 
 
-@pytest.mark.usefixtures("mocked_query_builder")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
     mocked_graph.return_value = [
         {
@@ -401,9 +452,7 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
 
     assert mocked_graph.call_args_list[-1].args == (
         """\
-fetch_merged_items(
-    filter_by_query_string=True, filter_by_stable_target_id=True
-)""",
+fetch_merged_items(filter_by_query_string=True, filter_by_stable_target_id=True)""",
         {
             "labels": [
                 "MergedFoo",
@@ -497,7 +546,7 @@ def test_fetch_merged_items_empty() -> None:
     assert result.one() == {"items": [], "total": 0}
 
 
-@pytest.mark.usefixtures("mocked_query_builder")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_fetch_identities(mocked_graph: MockedGraph) -> None:
     graph = GraphConnector.get()
     graph.fetch_identities(stable_target_id=Identifier.generate(99))
@@ -555,7 +604,7 @@ fetch_identities(
     )
 
 
-@pytest.mark.usefixtures("mocked_query_builder")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_exists_merged_item(
     mocked_graph: MockedGraph, monkeypatch: MonkeyPatch
 ) -> None:
@@ -614,7 +663,7 @@ def test_graph_exists_merged_item(
     assert connector.exists_merged_item(stable_target_id, stem_types) == exists
 
 
-@pytest.mark.usefixtures("mocked_query_builder")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_merge_item(
     mocked_graph: MockedGraph, dummy_data: dict[str, AnyExtractedModel]
 ) -> None:
@@ -650,12 +699,16 @@ merge_item(
     )
 
 
-@pytest.mark.usefixtures("mocked_query_builder")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_merge_edges(
     mocked_graph: MockedGraph, dummy_data: dict[str, AnyExtractedModel]
 ) -> None:
-    extracted_organizational_unit = dummy_data["organizational_unit_1"]
+    mocked_graph.return_value = [
+        {"edges": ["hadPrimarySource", "stableTargetId"]},
+    ]
     graph = GraphConnector.get()
+
+    extracted_organizational_unit = dummy_data["organizational_unit_1"]
     graph._merge_edges(
         extracted_organizational_unit,
         extracted_organizational_unit.stableTargetId,
@@ -682,11 +735,38 @@ merge_edges(
     )
 
 
-@pytest.mark.usefixtures("mocked_query_builder")
+@pytest.mark.usefixtures("mocked_query_class")
+def test_mocked_graph_merge_edges_fails(
+    mocked_graph: MockedGraph, dummy_data: dict[str, AnyExtractedModel]
+) -> None:
+    mocked_graph.return_value = [
+        {"edges": ["stableTargetId"]},  # missing hadPrimarySource
+    ]
+    graph = GraphConnector.get()
+
+    extracted_organizational_unit = dummy_data["organizational_unit_1"]
+
+    with pytest.raises(InconsistentGraphError, match="could not merge all edges"):
+        graph._merge_edges(
+            extracted_organizational_unit,
+            extracted_organizational_unit.stableTargetId,
+            identifier=extracted_organizational_unit.identifier,
+        )
+
+
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_creates_rule_set(
     mocked_graph: MockedGraph,
     organizational_unit_rule_set_request: OrganizationalUnitRuleSetRequest,
 ) -> None:
+    mocked_graph.side_effect = [
+        [{"current": {}}],  # additive item
+        [{"edges": ["parentUnit", "stableTargetId"]}],  # additive edges
+        [{"current": {}}],  # subtractive item
+        [{"edges": ["stableTargetId"]}],  # subtractive edges
+        [{"current": {}}],  # preventive item
+        [{"edges": ["stableTargetId"]}],  # preventive edges
+    ]
     graph = GraphConnector.get()
     graph.create_rule_set(organizational_unit_rule_set_request, Identifier.generate(42))
 
@@ -724,9 +804,81 @@ merge_edges(
     )
 
 
-@pytest.mark.usefixtures("mocked_graph")
-def test_mocked_graph_ingests_models(dummy_data: dict[str, AnyExtractedModel]) -> None:
+def test_mocked_graph_ingests_models(
+    mocked_graph: MockedGraph, dummy_data: dict[str, AnyExtractedModel]
+) -> None:
+    mocked_graph.side_effect = [
+        [{"current": {}}],  # PrimarySource ps-1 item
+        [{"current": {}}],  # PrimarySource ps-2 item
+        [{"current": {}}],  # ContactPoint cp-1 item
+        [{"current": {}}],  # ContactPoint cp-2 item
+        [{"current": {}}],  # OrganizationalUnit ou-1 item
+        [{"current": {}}],  # OrganizationalUnit ou-1.6 item
+        [{"current": {}}],  # Activity a-1 item
+        [
+            # PrimarySource ps-1 edges
+            {"edges": ["hadPrimarySource", "stableTargetId"]},
+        ],
+        [
+            # PrimarySource ps-2 edges
+            {"edges": ["hadPrimarySource", "stableTargetId"]},
+        ],
+        [
+            # ContactPoint cp-1 edges
+            {"edges": ["hadPrimarySource", "stableTargetId"]},
+        ],
+        [
+            # ContactPoint cp-2 edges
+            {"edges": ["hadPrimarySource", "stableTargetId"]},
+        ],
+        [
+            # OrganizationalUnit ou-1 edges
+            {"edges": ["hadPrimarySource", "stableTargetId"]}
+        ],
+        [
+            # OrganizationalUnit ou-1.6 edges
+            {"edges": ["hadPrimarySource", "parentUnit", "stableTargetId"]}
+        ],
+        [
+            # Activity a-1 edges
+            {
+                "edges": [
+                    "hadPrimarySource",
+                    "contact",
+                    "contact",
+                    "contact",
+                    "responsibleUnit",
+                    "stableTargetId",
+                ]
+            },
+        ],
+    ]
     graph = GraphConnector.get()
     identifiers = graph.ingest(list(dummy_data.values()))
 
     assert identifiers == [d.identifier for d in dummy_data.values()]
+
+
+def test_connector_flush_fails(monkeypatch: MonkeyPatch) -> None:
+    settings = BackendSettings.get()
+
+    monkeypatch.setattr(settings, "debug", False)
+    connector = GraphConnector.get()
+
+    with pytest.raises(
+        MExError, match="database flush was attempted outside of debug mode"
+    ):
+        connector.flush()
+
+
+@pytest.mark.integration
+@pytest.mark.usefixtures("load_dummy_data")
+def test_connector_flush(monkeypatch: MonkeyPatch) -> None:
+    assert len(get_graph()) >= 10
+
+    settings = BackendSettings.get()
+    monkeypatch.setattr(settings, "debug", True)
+    connector = GraphConnector.get()
+    connector.flush()
+
+    assert len(get_graph()) == 0

@@ -1,39 +1,9 @@
-import json
-from typing import Any
-
 import pytest
 from fastapi.testclient import TestClient
 from starlette import status
 
-from mex.backend.graph.connector import GraphConnector
 from mex.common.models import OrganizationalUnitRuleSetResponse
-
-
-def get_graph() -> list[dict[str, Any]]:
-    connector = GraphConnector.get()
-    graph = connector.commit(
-        """
-CALL () {
-    MATCH (n)
-    RETURN collect(n{
-        .*, label: head(labels(n))
-    }) AS nodes
-}
-CALL () {
-    MATCH ()-[r]->()
-    RETURN collect({
-        label: type(r), position: r.position,
-        start: coalesce(startNode(r).identifier, head(labels(startNode(r)))),
-        end: coalesce(endNode(r).identifier, head(labels(endNode(r))))
-    }) as relations
-}
-RETURN nodes, relations;
-"""
-    ).one()
-    return sorted(
-        graph["nodes"] + graph["relations"],
-        key=lambda i: json.dumps(i, sort_keys=True),
-    )
+from tests.conftest import get_graph
 
 
 @pytest.mark.integration
@@ -228,7 +198,7 @@ def test_get_rule_set(
     assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == {
         "additive": {
-            "parentUnit": None,
+            "parentUnit": "bFQoRhcVH5DHUv",
             "name": [{"value": "Unit 1.7", "language": "en"}],
             "alternativeName": [],
             "email": [],
@@ -336,51 +306,117 @@ def test_update_rule_set(
         "stableTargetId": "bFQoRhcVH5DHUB",
     }
     assert get_graph() == [
-        {"label": "AdditiveOrganizationalUnit", "email": []},
-        {"label": "SubtractiveOrganizationalUnit", "email": []},
         {
+            "identifierInPrimarySource": "ou-1.6",
+            "email": [],
+            "label": "ExtractedOrganizationalUnit",
+            "identifier": "bFQoRhcVH5DHUA",
+        },
+        {
+            "identifierInPrimarySource": "ou-1",
+            "email": [],
+            "label": "ExtractedOrganizationalUnit",
+            "identifier": "bFQoRhcVH5DHUu",
+        },
+        {"email": [], "label": "AdditiveOrganizationalUnit"},
+        {"email": [], "label": "SubtractiveOrganizationalUnit"},
+        {
+            "position": 0,
             "start": "00000000000001",
-            "end": "00000000000000",
             "label": "hadPrimarySource",
-            "position": 0,
-        },
-        {
-            "start": "00000000000001",
             "end": "00000000000000",
-            "label": "stableTargetId",
-            "position": 0,
         },
         {
+            "position": 0,
+            "start": "bFQoRhcVH5DHUs",
+            "label": "hadPrimarySource",
+            "end": "00000000000000",
+        },
+        {
+            "position": 0,
+            "start": "00000000000001",
+            "label": "stableTargetId",
+            "end": "00000000000000",
+        },
+        {
+            "position": 0,
             "start": "AdditiveOrganizationalUnit",
-            "end": "Text",
             "label": "name",
-            "position": 0,
+            "end": "Text",
         },
+        {"position": 0, "start": "bFQoRhcVH5DHUA", "label": "name", "end": "Text"},
+        {"position": 0, "start": "bFQoRhcVH5DHUu", "label": "name", "end": "Text"},
         {
+            "position": 0,
             "start": "AdditiveOrganizationalUnit",
-            "end": "bFQoRhcVH5DHUB",
             "label": "stableTargetId",
-            "position": 0,
+            "end": "bFQoRhcVH5DHUB",
         },
         {
+            "position": 0,
             "start": "PreventiveOrganizationalUnit",
-            "end": "bFQoRhcVH5DHUB",
             "label": "stableTargetId",
-            "position": 0,
+            "end": "bFQoRhcVH5DHUB",
         },
         {
+            "position": 0,
             "start": "SubtractiveOrganizationalUnit",
-            "end": "bFQoRhcVH5DHUB",
             "label": "stableTargetId",
-            "position": 0,
+            "end": "bFQoRhcVH5DHUB",
         },
-        {"identifier": "00000000000000", "label": "MergedPrimarySource"},
         {
-            "identifier": "00000000000001",
+            "position": 0,
+            "start": "bFQoRhcVH5DHUA",
+            "label": "stableTargetId",
+            "end": "bFQoRhcVH5DHUB",
+        },
+        {
+            "position": 0,
+            "start": "bFQoRhcVH5DHUA",
+            "label": "hadPrimarySource",
+            "end": "bFQoRhcVH5DHUt",
+        },
+        {
+            "position": 0,
+            "start": "bFQoRhcVH5DHUu",
+            "label": "hadPrimarySource",
+            "end": "bFQoRhcVH5DHUt",
+        },
+        {
+            "position": 0,
+            "start": "bFQoRhcVH5DHUs",
+            "label": "stableTargetId",
+            "end": "bFQoRhcVH5DHUt",
+        },
+        {
+            "position": 0,
+            "start": "bFQoRhcVH5DHUA",
+            "label": "parentUnit",
+            "end": "bFQoRhcVH5DHUv",
+        },
+        {
+            "position": 0,
+            "start": "bFQoRhcVH5DHUu",
+            "label": "stableTargetId",
+            "end": "bFQoRhcVH5DHUv",
+        },
+        {"label": "MergedPrimarySource", "identifier": "00000000000000"},
+        {
             "identifierInPrimarySource": "mex",
             "label": "ExtractedPrimarySource",
+            "identifier": "00000000000001",
         },
-        {"identifier": "bFQoRhcVH5DHUB", "label": "MergedOrganizationalUnit"},
+        {"label": "MergedOrganizationalUnit", "identifier": "bFQoRhcVH5DHUB"},
+        {
+            "identifierInPrimarySource": "ps-2",
+            "label": "ExtractedPrimarySource",
+            "identifier": "bFQoRhcVH5DHUs",
+            "version": "Cool Version v2.13",
+        },
+        {"label": "MergedPrimarySource", "identifier": "bFQoRhcVH5DHUt"},
+        {"label": "MergedOrganizationalUnit", "identifier": "bFQoRhcVH5DHUv"},
         {"label": "PreventiveOrganizationalUnit"},
-        {"language": "en", "label": "Text", "value": "A new unit name"},
+        {"value": "A new unit name", "label": "Text", "language": "en"},
+        {"value": "Unit 1", "label": "Text", "language": "en"},
+        {"value": "Unit 1.6", "label": "Text", "language": "en"},
     ]

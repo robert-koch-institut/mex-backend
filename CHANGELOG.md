@@ -9,11 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- configure backoff rules for graph commits
+- validate that the number of merged edges is as intended
+- implement graph flushing connector method
+- add endpoint for flushing the neo4j database (when running in debug)
+
 ### Changes
 
 ### Deprecated
 
 ### Removed
+
+- remove open-api schema customization, not needed anymore by the current editor
+- remove purge-script, this is an HTTP endpoint now
 
 ### Fixed
 

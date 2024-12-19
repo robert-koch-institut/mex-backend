@@ -31,7 +31,7 @@ def test_create_full_text_search_index(query_builder: QueryBuilder) -> None:
         search_fields=["texture", "sugarContent", "color"],
     )
     assert (
-        query
+        str(query)
         == """\
 CREATE FULLTEXT INDEX search_index IF NOT EXISTS
 FOR (n:Apple|Orange)
@@ -45,7 +45,7 @@ def test_create_identifier_uniqueness_constraint(query_builder: QueryBuilder) ->
         node_label="BlueBerryPie"
     )
     assert (
-        query
+        str(query)
         == """\
 CREATE CONSTRAINT blue_berry_pie_identifier_uniqueness IF NOT EXISTS
 FOR (n:BlueBerryPie)
@@ -56,7 +56,7 @@ REQUIRE n.identifier IS UNIQUE;"""
 def test_fetch_database_status(query_builder: QueryBuilder) -> None:
     query = query_builder.fetch_database_status()
     assert (
-        query
+        str(query)
         == """\
 SHOW DEFAULT DATABASE
 YIELD currentStatus;"""
@@ -167,7 +167,7 @@ def test_fetch_extracted_items(
         filter_by_query_string=filter_by_query_string,
         filter_by_stable_target_id=filter_by_stable_target_id,
     )
-    assert query == expected
+    assert str(query) == expected
 
 
 @pytest.mark.parametrize(
@@ -282,7 +282,7 @@ def test_fetch_merged_items(
         filter_by_query_string=filter_by_query_string,
         filter_by_stable_target_id=filter_by_stable_target_id,
     )
-    assert query == expected
+    assert str(query) == expected
 
 
 @pytest.mark.parametrize(
@@ -359,7 +359,7 @@ def test_fetch_identities(
         filter_by_identifier_in_primary_source=filter_by_identifier_in_primary_source,
         filter_by_stable_target_id=filter_by_stable_target_id,
     )
-    assert query == expected
+    assert str(query) == expected
 
 
 @pytest.mark.parametrize(
@@ -424,7 +424,7 @@ def test_merge_edges(
         current_constraints=["identifier"],
         ref_labels=ref_labels,
     )
-    assert query == expected
+    assert str(query) == expected
 
 
 @pytest.mark.parametrize(
@@ -493,4 +493,4 @@ def test_merge_item(
         nested_edge_labels=nested_edge_labels,
         nested_node_labels=nested_node_labels,
     )
-    assert query == expected
+    assert str(query) == expected
