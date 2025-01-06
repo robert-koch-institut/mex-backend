@@ -96,7 +96,8 @@ class GraphConnector(BaseConnector):
     def _check_connectivity_and_authentication(self) -> Result:
         """Check the connectivity and authentication to the graph."""
         query_builder = QueryBuilder.get()
-        result = self.commit(query_builder.fetch_database_status())
+        # use `_do_commit` to avoid recursive retries
+        result = self._do_commit(query_builder.fetch_database_status())
         if (status := result["currentStatus"]) != "online":
             msg = f"Database is {status}."
             raise MExError(msg) from None
@@ -174,6 +175,11 @@ class GraphConnector(BaseConnector):
             message = f": {query!r}"
         logger.error("error committing query%s", message)
 
+    def _do_commit(self, query: Query | str, **parameters: Any) -> Result:
+        """Send and commit a single graph transaction."""
+        with self.driver.session() as session:
+            return Result(session.run(str(query), parameters))
+
     @backoff.on_exception(
         backoff.fibo,
         DriverError,
@@ -183,9 +189,8 @@ class GraphConnector(BaseConnector):
         max_time=1000,
     )
     def commit(self, query: Query | str, **parameters: Any) -> Result:
-        """Send and commit a single graph transaction."""
-        with self.driver.session() as session:
-            return Result(session.run(str(query), parameters))
+        """Send and commit a single graph transaction with retry configuration."""
+        return self._do_commit(query, **parameters)
 
     def _fetch_extracted_or_rule_items(
         self,
