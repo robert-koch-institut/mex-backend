@@ -87,12 +87,12 @@ CALL () {
     YIELD node AS hit, score
     CALL {
         WITH hit
-        MATCH (extracted_or_rule_node:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
+        MATCH (extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
         WHERE elementId(hit) = elementId(extracted_or_rule_node)
         RETURN extracted_or_rule_node, merged
     UNION
         WITH hit
-        MATCH (nested_node:Link|Text|Location)<--(extracted_or_rule_node:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
+        MATCH (nested_node:Link|Text|Location)<--(extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
         WHERE elementId(hit) = elementId(nested_node)
         RETURN extracted_or_rule_node, merged
     }
@@ -107,12 +107,12 @@ CALL {
     YIELD node AS hit, score
     CALL {
         WITH hit
-        MATCH (extracted_or_rule_node:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
+        MATCH (extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
         WHERE elementId(hit) = elementId(extracted_or_rule_node)
         RETURN extracted_or_rule_node, merged
     UNION
         WITH hit
-        MATCH (nested_node:Link|Text|Location)<--(extracted_or_rule_node:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
+        MATCH (nested_node:Link|Text|Location)<--(extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
         WHERE elementId(hit) = elementId(nested_node)
         RETURN extracted_or_rule_node, merged
     }
@@ -150,13 +150,13 @@ RETURN collect(extracted_or_rule_node) AS items, total;""",
             False,
             """\
 CALL {
-    OPTIONAL MATCH (extracted_or_rule_node:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
+    OPTIONAL MATCH (extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
     WHERE
         ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
     RETURN COUNT(extracted_or_rule_node) AS total
 }
 CALL {
-    OPTIONAL MATCH (extracted_or_rule_node:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
+    OPTIONAL MATCH (extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
     WHERE
         ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
     CALL {
