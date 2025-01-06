@@ -87,99 +87,107 @@ CALL () {
     YIELD node AS hit, score
     CALL {
         WITH hit
-        MATCH (extracted_node:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
-        WHERE elementId(hit) = elementId(extracted_node)
-        RETURN extracted_node, merged
+        MATCH (extracted_or_rule_node:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
+        WHERE elementId(hit) = elementId(extracted_or_rule_node)
+        RETURN extracted_or_rule_node, merged
     UNION
         WITH hit
-        MATCH (nested_node:Link|Text|Location)<--(extracted_node:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
+        MATCH (nested_node:Link|Text|Location)<--(extracted_or_rule_node:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
         WHERE elementId(hit) = elementId(nested_node)
-        RETURN extracted_node, merged
+        RETURN extracted_or_rule_node, merged
     }
-    WITH DISTINCT extracted_node, merged
+    WITH DISTINCT extracted_or_rule_node, merged
     WHERE
         merged.identifier = $stable_target_id
-        AND ANY(label IN labels(extracted_node) WHERE label IN $labels)
-    RETURN COUNT(extracted_node) AS total\n}\nCALL {
+        AND ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
+    RETURN COUNT(extracted_or_rule_node) AS total
+}
+CALL {
     CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
     CALL {
         WITH hit
-        MATCH (extracted_node:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
-        WHERE elementId(hit) = elementId(extracted_node)
-        RETURN extracted_node, merged
+        MATCH (extracted_or_rule_node:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
+        WHERE elementId(hit) = elementId(extracted_or_rule_node)
+        RETURN extracted_or_rule_node, merged
     UNION
         WITH hit
-        MATCH (nested_node:Link|Text|Location)<--(extracted_node:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
+        MATCH (nested_node:Link|Text|Location)<--(extracted_or_rule_node:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
         WHERE elementId(hit) = elementId(nested_node)
-        RETURN extracted_node, merged
+        RETURN extracted_or_rule_node, merged
     }
-    WITH DISTINCT extracted_node, merged
+    WITH DISTINCT extracted_or_rule_node, merged
     WHERE
         merged.identifier = $stable_target_id
-        AND ANY(label IN labels(extracted_node) WHERE label IN $labels)
+        AND ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
     CALL {
-        WITH extracted_node
-        OPTIONAL MATCH (extracted_node)-[r]->(referenced:MergedThis|MergedThat|MergedOther)
+        WITH extracted_or_rule_node
+        OPTIONAL MATCH (extracted_or_rule_node)-[r]->(referenced:MergedThis|MergedThat|MergedOther)
         RETURN CASE WHEN referenced IS NOT NULL THEN {
             label: type(r),
             position: r.position,
             value: referenced_merged_node.identifier
         } ELSE NULL END AS ref
     UNION
-        WITH extracted_node
-        OPTIONAL MATCH (extracted_node)-[r]->(nested:Link|Text|Location)
+        WITH extracted_or_rule_node
+        OPTIONAL MATCH (extracted_or_rule_node)-[r]->(nested:Link|Text|Location)
         RETURN CASE WHEN nested IS NOT NULL THEN {
             label: type(r),
             position: r.position,
             value: properties(referenced_nested_node)
         } ELSE NULL END AS ref
     }
-    WITH extracted_node, collect(ref) AS refs
-    RETURN extracted_node{.*, entityType: head(labels(extracted_node)), _refs: refs}
-    ORDER BY extracted_node.identifier ASC
+    WITH extracted_or_rule_node, collect(ref) AS refs
+    RETURN extracted_or_rule_node{.*, entityType: head(labels(extracted_or_rule_node)), _refs: refs}
+    ORDER BY extracted_or_rule_node.identifier ASC
     SKIP $skip
-    LIMIT $limit\n}\nRETURN collect(extracted_node) AS items, total;""",
+    LIMIT $limit
+}
+RETURN collect(extracted_or_rule_node) AS items, total;""",
         ),
         (
             False,
             False,
             """\
 CALL {
-    OPTIONAL MATCH (extracted_node:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
+    OPTIONAL MATCH (extracted_or_rule_node:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
     WHERE
-        ANY(label IN labels(extracted_node) WHERE label IN $labels)
-    RETURN COUNT(extracted_node) AS total\n}\nCALL {
-    OPTIONAL MATCH (extracted_node:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
+        ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
+    RETURN COUNT(extracted_or_rule_node) AS total
+}
+CALL {
+    OPTIONAL MATCH (extracted_or_rule_node:AdditiveThis|AdditiveThat|AdditiveOther|ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
     WHERE
-        ANY(label IN labels(extracted_node) WHERE label IN $labels)
+        ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
     CALL {
-        WITH extracted_node
-        OPTIONAL MATCH (extracted_node)-[r]->(referenced:MergedThis|MergedThat|MergedOther)
+        WITH extracted_or_rule_node
+        OPTIONAL MATCH (extracted_or_rule_node)-[r]->(referenced:MergedThis|MergedThat|MergedOther)
         RETURN CASE WHEN referenced IS NOT NULL THEN {
             label: type(r),
             position: r.position,
             value: referenced_merged_node.identifier
         } ELSE NULL END AS ref
     UNION
-        WITH extracted_node
-        OPTIONAL MATCH (extracted_node)-[r]->(nested:Link|Text|Location)
+        WITH extracted_or_rule_node
+        OPTIONAL MATCH (extracted_or_rule_node)-[r]->(nested:Link|Text|Location)
         RETURN CASE WHEN nested IS NOT NULL THEN {
             label: type(r),
             position: r.position,
             value: properties(referenced_nested_node)
         } ELSE NULL END AS ref
     }
-    WITH extracted_node, collect(ref) AS refs
-    RETURN extracted_node{.*, entityType: head(labels(extracted_node)), _refs: refs}
-    ORDER BY extracted_node.identifier ASC
+    WITH extracted_or_rule_node, collect(ref) AS refs
+    RETURN extracted_or_rule_node{.*, entityType: head(labels(extracted_or_rule_node)), _refs: refs}
+    ORDER BY extracted_or_rule_node.identifier ASC
     SKIP $skip
-    LIMIT $limit\n}\nRETURN collect(extracted_node) AS items, total;""",
+    LIMIT $limit
+}
+RETURN collect(extracted_or_rule_node) AS items, total;""",
         ),
     ],
     ids=["all-filters", "no-filters"],
 )
-def test_fetch_extracted_items(
+def test_fetch_extracted_or_rule_items(
     query_builder: QueryBuilder,
     filter_by_query_string: bool,
     filter_by_stable_target_id: bool,
