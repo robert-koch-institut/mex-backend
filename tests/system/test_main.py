@@ -30,7 +30,6 @@ def test_flush_graph_database_forbidden(
     assert response.json() == {"detail": "Unauthorized API Key."}
 
 
-@pytest.mark.integration
 def test_flush_graph_database_refused(
     client_with_api_key_write_permission: TestClient,
 ) -> None:
