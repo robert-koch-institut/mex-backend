@@ -226,11 +226,11 @@ CALL () {
     OPTIONAL MATCH (extracted_or_rule_node)-[:stableTargetId]->(merged_node)
     WITH extracted_or_rule_node, merged_node
     CALL (extracted_or_rule_node) {
-        OPTIONAL MATCH (extracted_or_rule_node)-[r]->(referenced:MergedThis|MergedThat|MergedOther)
-        RETURN CASE WHEN referenced IS NOT NULL THEN {
+        OPTIONAL MATCH (extracted_or_rule_node)-[r]->(referenced_merged_node:MergedThis|MergedThat|MergedOther)
+        RETURN CASE WHEN referenced_merged_node IS NOT NULL THEN {
             label: type(r),
             position: r.position,
-            value: referenced.identifier
+            value: referenced_merged_node.identifier
         } ELSE NULL END AS ref
     UNION
         OPTIONAL MATCH (extracted_or_rule_node)-[r]->(referenced_nested_node:Link|Text|Location)
@@ -268,11 +268,11 @@ CALL () {
     OPTIONAL MATCH (extracted_or_rule_node)-[:stableTargetId]->(merged_node)
     WITH extracted_or_rule_node, merged_node
     CALL (extracted_or_rule_node) {
-        OPTIONAL MATCH (extracted_or_rule_node)-[r]->(referenced:MergedThis|MergedThat|MergedOther)
-        RETURN CASE WHEN referenced IS NOT NULL THEN {
+        OPTIONAL MATCH (extracted_or_rule_node)-[r]->(referenced_merged_node:MergedThis|MergedThat|MergedOther)
+        RETURN CASE WHEN referenced_merged_node IS NOT NULL THEN {
             label: type(r),
             position: r.position,
-            value: referenced.identifier
+            value: referenced_merged_node.identifier
         } ELSE NULL END AS ref
     UNION
         OPTIONAL MATCH (extracted_or_rule_node)-[r]->(referenced_nested_node:Link|Text|Location)
