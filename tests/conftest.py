@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 from fastapi.testclient import TestClient
-from neo4j import GraphDatabase, SummaryCounters
+from neo4j import Driver, Session, SummaryCounters
 from pytest import MonkeyPatch
 
 from mex.backend.graph.connector import GraphConnector
@@ -15,6 +15,7 @@ from mex.backend.main import app
 from mex.backend.rules.helpers import create_and_get_rule_set
 from mex.backend.settings import BackendSettings
 from mex.backend.types import APIKeyDatabase, APIUserDatabase, BackendIdentityProvider
+from mex.common.connector import CONNECTOR_STORE
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     AdditiveOrganizationalUnit,
@@ -111,17 +112,44 @@ def patch_test_client_json_encoder(monkeypatch: MonkeyPatch) -> None:
 
 
 class MockedGraph:
-    def __init__(self, records: list[Any], session_run: MagicMock) -> None:
-        self.records = records
-        self.run = session_run
+    def __init__(self, run: MagicMock) -> None:
+        self.run = run
+        self.return_value = []
 
     @property
     def return_value(self) -> list[Any]:  # pragma: no cover
-        return self.records
+        raise NotImplementedError
 
     @return_value.setter
     def return_value(self, value: list[Any]) -> None:
-        self.records[:] = [Mock(data=MagicMock(return_value=v)) for v in value]
+        self.run.return_value = Mock(
+            to_eager_result=MagicMock(
+                return_value=(
+                    [Mock(data=MagicMock(return_value=v)) for v in value],
+                    Mock(counters=SummaryCounters({})),
+                    None,
+                ),
+            ),
+        )
+
+    @property
+    def side_effect(self) -> list[Any]:  # pragma: no cover
+        raise NotImplementedError
+
+    @side_effect.setter
+    def side_effect(self, values: list[list[Any]]) -> None:
+        self.run.side_effect = [
+            Mock(
+                to_eager_result=MagicMock(
+                    return_value=(
+                        [Mock(data=MagicMock(return_value=v)) for v in value],
+                        Mock(counters=SummaryCounters({})),
+                        None,
+                    ),
+                ),
+            )
+            for value in values
+        ]
 
     @property
     def call_args_list(self) -> list[Any]:
@@ -131,16 +159,13 @@ class MockedGraph:
 @pytest.fixture
 def mocked_graph(monkeypatch: MonkeyPatch) -> MockedGraph:
     """Mock the graph connector and return the mocked `run` for easy manipulation."""
-    records: list[Any] = []
-    summary = Mock(counters=SummaryCounters({}))
-    result = Mock(to_eager_result=MagicMock(return_value=(records, summary, None)))
-    run = MagicMock(return_value=result)
-    session = MagicMock(__enter__=MagicMock(return_value=Mock(run=run)))
-    driver = Mock(session=MagicMock(return_value=session))
+    run = MagicMock(spec=Session.run)
+    session = MagicMock(spec=Session, __enter__=MagicMock(return_value=Mock(run=run)))
+    driver = Mock(spec=Driver, session=MagicMock(return_value=session))
     monkeypatch.setattr(
         GraphConnector, "__init__", lambda self: setattr(self, "driver", driver)
     )
-    return MockedGraph(records, run)
+    return MockedGraph(run)
 
 
 @pytest.fixture(autouse=True)
@@ -175,19 +200,38 @@ def isolate_graph_database(
 ) -> None:
     """Automatically flush the graph database for integration testing."""
     if is_integration_test:
-        with GraphDatabase.driver(
-            settings.graph_url,
-            auth=(
-                settings.graph_user.get_secret_value(),
-                settings.graph_password.get_secret_value(),
-            ),
-            database=settings.graph_db,
-        ) as driver:
-            driver.execute_query("MATCH (n) DETACH DELETE n;")
-            for row in driver.execute_query("SHOW ALL CONSTRAINTS;").records:
-                driver.execute_query(f"DROP CONSTRAINT {row['name']};")
-            for row in driver.execute_query("SHOW ALL INDEXES;").records:
-                driver.execute_query(f"DROP INDEX {row['name']};")
+        settings.debug = True
+        connector = GraphConnector.get()
+        connector.flush()
+        connector.close()
+        CONNECTOR_STORE.pop(GraphConnector)
+
+
+def get_graph() -> list[dict[str, Any]]:
+    connector = GraphConnector.get()
+    graph = connector.commit(
+        """
+CALL () {
+    MATCH (n)
+    RETURN collect(n{
+        .*, label: head(labels(n))
+    }) AS nodes
+}
+CALL () {
+    MATCH ()-[r]->()
+    RETURN collect({
+        label: type(r), position: r.position,
+        start: coalesce(startNode(r).identifier, head(labels(startNode(r)))),
+        end: coalesce(endNode(r).identifier, head(labels(endNode(r))))
+    }) as relations
+}
+RETURN nodes, relations;
+"""
+    ).one()
+    return sorted(
+        graph["nodes"] + graph["relations"],
+        key=lambda i: json.dumps(i, sort_keys=True),
+    )
 
 
 @pytest.fixture
@@ -316,6 +360,13 @@ def load_dummy_rule_set(
     organizational_unit_rule_set_request: OrganizationalUnitRuleSetRequest,
     dummy_data: dict[str, AnyExtractedModel],
 ) -> OrganizationalUnitRuleSetResponse:
+    GraphConnector.get().ingest(
+        [
+            dummy_data["primary_source_2"],
+            dummy_data["organizational_unit_1"],
+            dummy_data["organizational_unit_2"],
+        ]
+    )
     return cast(
         OrganizationalUnitRuleSetResponse,
         create_and_get_rule_set(

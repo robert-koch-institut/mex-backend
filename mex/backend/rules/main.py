@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from starlette import status
 
 from mex.backend.rules.helpers import (
@@ -21,7 +21,9 @@ def create_rule_set(rule_set: AnyRuleSetRequest) -> AnyRuleSetResponse:
 @router.get("/rule-set/{stableTargetId}", tags=["editor"])
 def get_rule_set(stableTargetId: Identifier) -> AnyRuleSetResponse:
     """Get a rule set."""
-    return get_rule_set_from_graph(stableTargetId)
+    if rule_set := get_rule_set_from_graph(stableTargetId):
+        return rule_set
+    raise HTTPException(status.HTTP_404_NOT_FOUND, "no rules found")
 
 
 @router.put("/rule-set/{stableTargetId}", tags=["editor"])

@@ -1,9 +1,8 @@
 from collections.abc import Mapping
 from typing import Any, Final
 
-from mex.backend.constants import NUMBER_OF_RULE_TYPES
 from mex.backend.graph.connector import GraphConnector
-from mex.common.exceptions import MExError
+from mex.backend.graph.exceptions import InconsistentGraphError, NoResultFoundError
 from mex.common.models import (
     ADDITIVE_MODEL_CLASSES_BY_NAME,
     PREVENTIVE_MODEL_CLASSES_BY_NAME,
@@ -32,9 +31,9 @@ def transform_raw_rules_to_rule_set_response(
     response: dict[str, Any] = {}
     model: type[AnyRuleModel] | None
 
-    if len(raw_rules) != NUMBER_OF_RULE_TYPES:
-        msg = "inconsistent rule item count"
-        raise MExError(msg)
+    if (num_raw_rules := len(raw_rules)) != len(MODEL_CLASS_LOOKUP_BY_FIELD_NAME):
+        msg = f"inconsistent number of rules found: {num_raw_rules}"
+        raise InconsistentGraphError(msg)
 
     for rule in raw_rules:
         for field_name, model_class_lookup in MODEL_CLASS_LOOKUP_BY_FIELD_NAME.items():
@@ -45,10 +44,10 @@ def transform_raw_rules_to_rule_set_response(
 
     if len(set(stem_types)) != 1:
         msg = "inconsistent rule item stem types"
-        raise MExError(msg)
+        raise InconsistentGraphError(msg)
     if len(set(stable_target_ids)) != 1:
-        msg = "inconsistent rule item stableTargetIds"
-        raise MExError(msg)
+        msg = f"inconsistent rule item stableTargetIds: {', '.join(stable_target_ids)}"
+        raise InconsistentGraphError(msg)
 
     response["stableTargetId"] = stable_target_ids[0]
     response_class_name = ensure_postfix(stem_types[0], "RuleSetResponse")
@@ -83,7 +82,7 @@ def create_and_get_rule_set(
 
 def get_rule_set_from_graph(
     stable_target_id: Identifier,
-) -> AnyRuleSetResponse:
+) -> AnyRuleSetResponse | None:
     """Read a rule set from the graph."""
     connector = GraphConnector.get()
     graph_result = connector.fetch_rule_items(
@@ -93,7 +92,9 @@ def get_rule_set_from_graph(
         0,
         3,
     )
-    return transform_raw_rules_to_rule_set_response(graph_result.one()["items"])
+    if raw_rules := graph_result.one()["items"]:
+        return transform_raw_rules_to_rule_set_response(raw_rules)
+    return None
 
 
 def update_and_get_rule_set(
@@ -107,5 +108,5 @@ def update_and_get_rule_set(
         [rule_set.stemType],
     ):
         msg = "no merged item found for given identifier and type"
-        raise MExError(msg)
+        raise NoResultFoundError(msg)
     return create_and_get_rule_set(rule_set, stable_target_id)

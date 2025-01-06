@@ -7,30 +7,6 @@ from mex.backend.main import app
 from mex.backend.settings import BackendSettings
 
 
-def test_openapi_schema(client: TestClient) -> None:
-    response = client.get("/openapi.json")
-    assert response.status_code == status.HTTP_200_OK, response.text
-
-    schema = response.json()
-    assert schema["info"]["title"] == "mex-backend"
-    assert schema["servers"] == [{"url": "http://localhost:8080/"}]
-    assert schema["components"]["schemas"]["MergedPersonIdentifier"] == {
-        "title": "MergedPersonIdentifier",
-        "type": "string",
-        "description": "Identifier for merged persons.",
-        "pattern": "^[a-zA-Z0-9]{14,22}$",
-    }
-
-    cached = client.get("/openapi.json")
-    assert cached.json() == schema
-
-
-def test_health_check(client: TestClient) -> None:
-    response = client.get("/v0/_system/check")
-    assert response.status_code == status.HTTP_200_OK, response.text
-    assert response.json() == {"status": "ok"}
-
-
 def test_all_endpoints_require_authorization(client: TestClient) -> None:
     excluded_routes = [
         "/openapi.json",

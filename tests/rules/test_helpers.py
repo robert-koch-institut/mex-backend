@@ -9,7 +9,7 @@ from mex.common.types import TextLanguage
 @pytest.mark.parametrize(
     ("items", "expected"),
     [
-        ([], "inconsistent rule item count"),
+        ([], "inconsistent number of rules found: 0"),
         (
             [
                 {
@@ -42,7 +42,8 @@ from mex.common.types import TextLanguage
                     "stableTargetId": ["00000000000003"],
                 },
             ],
-            "inconsistent rule item stableTargetIds",
+            "inconsistent rule item stableTargetIds: "
+            "00000000000001, 00000000000002, 00000000000003",
         ),
         (
             [
@@ -96,7 +97,8 @@ def test_transform_raw_rules_to_rule_set_response(
 ) -> None:
     try:
         rule_set = transform_raw_rules_to_rule_set_response(items)
-    except Exception as error:  # noqa: BLE001
-        assert str(expected) in str(error)  # noqa: PT017
+    except Exception as error:
+        if str(expected) not in str(error):
+            raise AssertionError(expected) from error
     else:
         assert rule_set.model_dump() == expected

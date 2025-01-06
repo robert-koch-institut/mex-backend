@@ -1,22 +1,13 @@
-from pydantic import ValidationError
-from pydantic_core import ErrorDetails
-
-from mex.common.exceptions import MExError
+from mex.backend.exceptions import BackendError
 
 
-class NoResultFoundError(MExError):
+class NoResultFoundError(BackendError):
     """A database result was required but none was found."""
 
 
-class MultipleResultsFoundError(MExError):
+class MultipleResultsFoundError(BackendError):
     """A single database result was required but more than one were found."""
 
 
-class InconsistentGraphError(MExError):
+class InconsistentGraphError(BackendError):
     """Exception raised for inconsistencies found in the graph database."""
-
-    def errors(self) -> list[ErrorDetails]:
-        """Details about each underlying error."""
-        if isinstance(self.__cause__, ValidationError):
-            return self.__cause__.errors()
-        return []

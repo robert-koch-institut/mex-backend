@@ -12,14 +12,14 @@ Args:
 
 Returns:
     total: Count of all items found by this query
-    items: List of extracted data items, each item has an extra attribute `_refs` that
+    items: List of extracted items, each item has an extra attribute `_refs` that
            contains the values of nested objects as well as the identifiers of
            referenced items
 -#>
 CALL () {
 <%- block match_clause -%>
 <%- if filter_by_query_string %>
-    CALL db.index.fulltext.queryNodes("search_index", $query_string)
+    OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
     CALL (hit) {
         MATCH (extracted_or_rule_node:<<extracted_or_rule_labels|join("|")>>)-[:stableTargetId]->(merged_node:<<merged_labels|join("|")>>)

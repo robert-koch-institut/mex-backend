@@ -9,7 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- add `extracted_or_rule_labels` to query builder globals
+
 ### Changes
+
+- rename short and obscure cypher query variables to more expressive and verbose ones
 
 ### Deprecated
 
@@ -17,7 +21,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- avoid recursive retries in `GraphConnector._check_connectivity_and_authentication`
+- fix integration tests not properly marked as integration tests
+
 ### Security
+
+## [0.27.0] - 2024-12-19
+
+### Added
+
+- configure backoff rules for graph commits
+- validate that the number of merged edges is as intended
+- implement graph flushing connector method
+- add endpoint for flushing the neo4j database (when running in debug)
+
+### Removed
+
+- remove open-api schema customization, not needed anymore by the current editor
+- remove purge-script, this is an HTTP endpoint now
+
+## [0.26.0] - 2024-12-18
+
+### Added
+
+- added an endpoint for getting a person by name from LDAP
+
+### Changes
+
+- updated to mex-common 0.45.0 and mex-model 3.4.0
+
+## [0.25.0] - 2024-12-10
+
+### Added
+
+- allow item merging functions to ignore cardinality and output preview items
+
+### Changes
+
+- harmonize error handling for transforming raw rule-sets to responses
+- return 404 on GET rule-set endpoint, when no rules are found
+- create new endpoint for fetching previews of merged items
+- replaced `mex.backend.fields` with `mex.common` counterpart
+
+### Removed
+
+- removed not needed `mex.backend.constants` module
+- removed over-engineered `reraising` function
+
+## [0.24.0] - 2024-11-25
+
+### Changes
+
+- clean up non-functional cypher query style issues
+
+### Fixed
+
+- do not raise server error when search query is not found
 
 ## [0.23.0] - 2024-11-19
 
