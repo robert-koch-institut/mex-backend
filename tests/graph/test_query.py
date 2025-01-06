@@ -135,7 +135,7 @@ CALL () {
             value: properties(referenced_nested_node)
         } ELSE NULL END AS ref
     }
-    WITH extracted_node, collect(ref) as refs
+    WITH extracted_node, collect(ref) AS refs
     RETURN extracted_node{.*, entityType: head(labels(extracted_node)), _refs: refs}
     ORDER BY extracted_node.identifier ASC
     SKIP $skip
@@ -170,7 +170,7 @@ CALL {
             value: properties(referenced_nested_node)
         } ELSE NULL END AS ref
     }
-    WITH extracted_node, collect(ref) as refs
+    WITH extracted_node, collect(ref) AS refs
     RETURN extracted_node{.*, entityType: head(labels(extracted_node)), _refs: refs}
     ORDER BY extracted_node.identifier ASC
     SKIP $skip

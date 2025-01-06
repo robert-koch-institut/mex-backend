@@ -56,18 +56,18 @@ CALL () {
             label: type(r),
             position: r.position,
             value: referenced_merged_node.identifier
-        } ELSE NULL END as ref
+        } ELSE NULL END AS ref
     UNION
         OPTIONAL MATCH (extracted_or_rule_node)-[r]->(referenced_nested_node:<<nested_labels|join("|")>>)
         RETURN CASE WHEN referenced_nested_node IS NOT NULL THEN {
             label: type(r),
             position: r.position,
             value: properties(referenced_nested_node)
-        } ELSE NULL END as ref
+        } ELSE NULL END AS ref
     }
-    WITH merged_node, extracted_or_rule_node, collect(ref) as refs
+    WITH merged_node, extracted_or_rule_node, collect(ref) AS refs
     ORDER BY merged_node.identifier, extracted_or_rule_node.identifier ASC
-    WITH merged_node, collect(extracted_or_rule_node{.*, entityType: head(labels(extracted_or_rule_node)), _refs: refs}) as extracted_or_rule_node
+    WITH merged_node, collect(extracted_or_rule_node{.*, entityType: head(labels(extracted_or_rule_node)), _refs: refs}) AS extracted_or_rule_node
     RETURN merged_node{entityType: head(labels(merged_node)), identifier: merged_node.identifier, components: extracted_or_rule_node}
     SKIP $skip
     LIMIT $limit

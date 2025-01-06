@@ -52,16 +52,16 @@ CALL () {
             label: type(r),
             position: r.position,
             value: referenced_merged_node.identifier
-        } ELSE NULL END as ref
+        } ELSE NULL END AS ref
     UNION
         OPTIONAL MATCH (extracted_or_rule_node)-[r]->(referenced_nested_node:<<nested_labels|join("|")>>)
         RETURN CASE WHEN referenced_nested_node IS NOT NULL THEN {
             label: type(r),
             position: r.position,
             value: properties(referenced_nested_node)
-        } ELSE NULL END as ref
+        } ELSE NULL END AS ref
     }
-    WITH extracted_or_rule_node, collect(ref) as refs
+    WITH extracted_or_rule_node, collect(ref) AS refs
     RETURN extracted_or_rule_node{.*, entityType: head(labels(extracted_or_rule_node)), _refs: refs}
     ORDER BY extracted_or_rule_node.identifier, extracted_or_rule_node.entityType ASC
     SKIP $skip
