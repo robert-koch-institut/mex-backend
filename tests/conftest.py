@@ -321,6 +321,8 @@ def load_dummy_data(
 ) -> dict[str, AnyExtractedModel]:
     """Ingest dummy data into the graph."""
     GraphConnector.get().ingest(list(dummy_data.values()))
+
+    # crude item matching implementation (stopgap MX-1530)
     delete_merged_node = f"MATCH(n) WHERE n.identifier='{dummy_data['organization_2'].stableTargetId}' DETACH DELETE n"
     merge_organizations = (
         f"MATCH(n :ExtractedOrganization) WHERE n.identifier = '{dummy_data['organization_2'].identifier}' "
@@ -330,6 +332,7 @@ def load_dummy_data(
     connector = GraphConnector.get()
     connector.commit(delete_merged_node)
     connector.commit(merge_organizations)
+
     return dummy_data
 
 
