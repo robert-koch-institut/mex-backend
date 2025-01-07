@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - add `extracted_or_rule_labels` to query builder globals
+- add two matched organizations to the test dummy data
 
 ### Changes
 

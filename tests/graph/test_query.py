@@ -165,7 +165,7 @@ RETURN collect(extracted_or_rule_node) AS items, total;""",
     ],
     ids=["all-filters", "no-filters"],
 )
-def test_fetch_extracted_items(
+def test_fetch_extracted_or_rule_items(
     query_builder: QueryBuilder,
     filter_by_query_string: bool,
     filter_by_stable_target_id: bool,
