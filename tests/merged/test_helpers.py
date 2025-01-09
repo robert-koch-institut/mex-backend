@@ -329,16 +329,19 @@ def test_create_merged_item(
 @pytest.mark.usefixtures("load_dummy_data", "load_dummy_rule_set")
 @pytest.mark.integration
 def test_search_merged_items_in_graph() -> None:
-    merged_result = search_merged_items_in_graph(stable_target_id="bFQoRhcVH5DHUB")
+    merged_result = search_merged_items_in_graph(
+        identifier="bFQoRhcVH5DHUF",
+    )
     assert merged_result.model_dump(exclude_defaults=True) == {
         "items": [
             {
-                "identifier": "bFQoRhcVH5DHUB",
+                "identifier": "bFQoRhcVH5DHUF",
                 "name": [
                     {"language": "en", "value": "Unit 1.6"},
                     {"language": "en", "value": "Unit 1.7"},
                 ],
-                "parentUnit": "bFQoRhcVH5DHUv",
+                "parentUnit": "bFQoRhcVH5DHUx",
+                "unitOf": ["bFQoRhcVH5DHUv"],
                 "website": [{"title": "Unit Homepage", "url": "https://unit-1-7"}],
             },
         ],
@@ -536,7 +539,7 @@ def test_search_merged_items_in_graph_mocked(
     mocked_graph.return_value = mocked_graph_result
 
     try:
-        merged_result = search_merged_items_in_graph(stable_target_id="bFQoRhcVH5DHUB")
+        merged_result = search_merged_items_in_graph(identifier="bFQoRhcVH5DHUB")
     except Exception as error:
         if str(expected) not in str(error):
             raise AssertionError(expected) from error

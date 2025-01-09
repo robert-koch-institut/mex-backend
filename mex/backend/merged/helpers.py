@@ -224,7 +224,7 @@ def merge_search_result_item(
 @overload
 def search_merged_items_in_graph(
     query_string: str | None = None,
-    stable_target_id: str | None = None,
+    identifier: str | None = None,
     entity_type: list[str] | None = None,
     skip: int = 0,
     limit: int = 100,
@@ -235,7 +235,7 @@ def search_merged_items_in_graph(
 @overload
 def search_merged_items_in_graph(
     query_string: str | None = None,
-    stable_target_id: str | None = None,
+    identifier: str | None = None,
     entity_type: list[str] | None = None,
     skip: int = 0,
     limit: int = 100,
@@ -245,7 +245,7 @@ def search_merged_items_in_graph(
 
 def search_merged_items_in_graph(  # noqa: PLR0913
     query_string: str | None = None,
-    stable_target_id: str | None = None,
+    identifier: str | None = None,
     entity_type: list[str] | None = None,
     skip: int = 0,
     limit: int = 100,
@@ -255,7 +255,7 @@ def search_merged_items_in_graph(  # noqa: PLR0913
 
     Args:
         query_string: Full text search query term
-        stable_target_id: Optional stable target ID filter
+        identifier: Optional merged item identifier filter
         entity_type: Optional entity type filter
         skip: How many items to skip for pagination
         limit: How many items to return at most
@@ -272,7 +272,7 @@ def search_merged_items_in_graph(  # noqa: PLR0913
     graph = GraphConnector.get()
     result = graph.fetch_merged_items(
         query_string=query_string,
-        stable_target_id=stable_target_id,
+        identifier=identifier,
         entity_type=entity_type,
         skip=skip,
         limit=limit,

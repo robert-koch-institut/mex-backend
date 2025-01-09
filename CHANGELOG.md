@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changes
 
 - rename short and obscure cypher query variables to more expressive and verbose ones
+- rename `stable_target_id` to more appropriate `identifier` argument for merged queries
 
 ### Deprecated
 

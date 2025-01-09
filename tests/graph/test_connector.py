@@ -1,3 +1,4 @@
+from typing import cast
 from unittest.mock import MagicMock, Mock, call
 
 import pytest
@@ -18,6 +19,7 @@ from mex.common.models import (
     MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     AnyExtractedModel,
+    ExtractedOrganizationalUnit,
     OrganizationalUnitRuleSetRequest,
     OrganizationalUnitRuleSetResponse,
 )
@@ -299,7 +301,7 @@ def test_fetch_extracted_items() -> None:
                 "stableTargetId": [MEX_EXTRACTED_PRIMARY_SOURCE.stableTargetId],
             }
         ],
-        "total": 8,
+        "total": 10,
     }
 
 
@@ -384,7 +386,7 @@ def test_fetch_rule_items(
                 "name": [{"value": "Unit 1.7", "language": "en"}],
                 "website": [{"title": "Unit Homepage", "url": "https://unit-1-7"}],
                 "parentUnit": [load_dummy_rule_set.additive.parentUnit],
-                "stableTargetId": ["bFQoRhcVH5DHUB"],
+                "stableTargetId": [load_dummy_rule_set.stableTargetId],
             }
         ],
         "total": 3,
@@ -444,7 +446,7 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
     graph = GraphConnector.get()
     result = graph.fetch_merged_items(
         query_string="my-query",
-        stable_target_id=Identifier.generate(99),
+        identifier=Identifier.generate(99),
         entity_type=["MergedFoo", "MergedBar", "MergedBatz"],
         skip=10,
         limit=100,
@@ -452,7 +454,7 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
 
     assert mocked_graph.call_args_list[-1].args == (
         """\
-fetch_merged_items(filter_by_query_string=True, filter_by_stable_target_id=True)""",
+fetch_merged_items(filter_by_query_string=True, filter_by_identifier=True)""",
         {
             "labels": [
                 "MergedFoo",
@@ -462,7 +464,7 @@ fetch_merged_items(filter_by_query_string=True, filter_by_stable_target_id=True)
             "limit": 100,
             "query_string": "my-query",
             "skip": 10,
-            "stable_target_id": "bFQoRhcVH5DHV1",
+            "identifier": "bFQoRhcVH5DHV1",
         },
     )
 
@@ -493,47 +495,34 @@ fetch_merged_items(filter_by_query_string=True, filter_by_stable_target_id=True)
 def test_fetch_merged_items() -> None:
     connector = GraphConnector.get()
 
-    result = connector.fetch_merged_items(None, None, None, 1, 1)
+    result = connector.fetch_merged_items(
+        query_string=None,
+        identifier=None,
+        entity_type=["MergedOrganizationalUnit"],
+        skip=1,
+        limit=1,
+    )
 
     assert result.one() == {
         "items": [
             {
                 "components": [
                     {
+                        "identifierInPrimarySource": "ou-1",
                         "email": [],
                         "entityType": "ExtractedOrganizationalUnit",
+                        "identifier": "bFQoRhcVH5DHUw",
+                        "stableTargetId": ["bFQoRhcVH5DHUx"],
                         "hadPrimarySource": ["bFQoRhcVH5DHUt"],
-                        "identifier": "bFQoRhcVH5DHUA",
-                        "identifierInPrimarySource": "ou-1.6",
-                        "name": [{"language": "en", "value": "Unit 1.6"}],
-                        "parentUnit": ["bFQoRhcVH5DHUv"],
-                        "stableTargetId": ["bFQoRhcVH5DHUB"],
-                    },
-                    {
-                        "email": [],
-                        "entityType": "AdditiveOrganizationalUnit",
-                        "name": [{"language": "en", "value": "Unit 1.7"}],
-                        "parentUnit": ["bFQoRhcVH5DHUv"],
-                        "stableTargetId": ["bFQoRhcVH5DHUB"],
-                        "website": [
-                            {"title": "Unit Homepage", "url": "https://unit-1-7"}
-                        ],
-                    },
-                    {
-                        "entityType": "PreventiveOrganizationalUnit",
-                        "stableTargetId": ["bFQoRhcVH5DHUB"],
-                    },
-                    {
-                        "email": [],
-                        "entityType": "SubtractiveOrganizationalUnit",
-                        "stableTargetId": ["bFQoRhcVH5DHUB"],
-                    },
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "name": [{"value": "Unit 1", "language": "en"}],
+                    }
                 ],
                 "entityType": "MergedOrganizationalUnit",
-                "identifier": "bFQoRhcVH5DHUB",
+                "identifier": "bFQoRhcVH5DHUx",
             }
         ],
-        "total": 8,
+        "total": 2,
     }
 
 
@@ -541,7 +530,13 @@ def test_fetch_merged_items() -> None:
 def test_fetch_merged_items_empty() -> None:
     connector = GraphConnector.get()
 
-    result = connector.fetch_merged_items(None, "thisIdDoesNotExist", None, 0, 1)
+    result = connector.fetch_merged_items(
+        query_string=None,
+        identifier="thisIdDoesNotExist",
+        entity_type=None,
+        skip=0,
+        limit=1,
+    )
 
     assert result.one() == {"items": [], "total": 0}
 
@@ -641,14 +636,16 @@ exists_merged_item(node_labels=["MergedFoo", "MergedBar", "MergedBatz"])""",
 @pytest.mark.parametrize(
     ("stable_target_id", "stem_types", "exists"),
     [
-        ("bFQoRhcVH5DHUv", None, True),
-        ("bFQoRhcVH5DHUv", ["Person", "ContactPoint", "OrganizationalUnit"], True),
-        ("bFQoRhcVH5DHUv", ["Activity"], False),
+        ("bFQoRhcVH5DHUB", None, True),
+        ("bFQoRhcVH5DHUB", ["ContactPoint"], True),
+        ("bFQoRhcVH5DHUB", ["Person", "ContactPoint", "OrganizationalUnit"], True),
+        ("bFQoRhcVH5DHUB", ["Activity"], False),
         ("thisIdDoesNotExist", ["Activity"], False),
     ],
     ids=[
         "found without type filter",
         "found with type filter",
+        "found with multi-type filter",
         "missed due to filter",
         "missed due to identifier",
     ],
@@ -704,11 +701,13 @@ def test_mocked_graph_merge_edges(
     mocked_graph: MockedGraph, dummy_data: dict[str, AnyExtractedModel]
 ) -> None:
     mocked_graph.return_value = [
-        {"edges": ["hadPrimarySource", "stableTargetId"]},
+        {"edges": ["hadPrimarySource", "unitOf", "stableTargetId"]},
     ]
     graph = GraphConnector.get()
 
-    extracted_organizational_unit = dummy_data["organizational_unit_1"]
+    extracted_organizational_unit = cast(
+        ExtractedOrganizationalUnit, dummy_data["organizational_unit_1"]
+    )
     graph._merge_edges(
         extracted_organizational_unit,
         extracted_organizational_unit.stableTargetId,
@@ -721,16 +720,17 @@ merge_edges(
     current_label="ExtractedOrganizationalUnit",
     current_constraints=["identifier"],
     merged_label="MergedOrganizationalUnit",
-    ref_labels=["hadPrimarySource", "stableTargetId"],
+    ref_labels=["hadPrimarySource", "unitOf", "stableTargetId"],
 )""",
         {
             "identifier": extracted_organizational_unit.identifier,
             "ref_identifiers": [
                 extracted_organizational_unit.hadPrimarySource,
+                extracted_organizational_unit.unitOf[0],
                 extracted_organizational_unit.stableTargetId,
             ],
-            "ref_positions": [0, 0],
-            "stable_target_id": "cWWm02l1c6cucKjIhkFqY4",
+            "ref_positions": [0, 0, 0],
+            "stable_target_id": extracted_organizational_unit.stableTargetId,
         },
     )
 
@@ -805,42 +805,79 @@ merge_edges(
 
 
 def test_mocked_graph_ingests_models(
-    mocked_graph: MockedGraph, dummy_data: dict[str, AnyExtractedModel]
+    mocked_graph: MockedGraph,
+    dummy_data: dict[str, AnyExtractedModel],
 ) -> None:
+    # the `$comment` keys are just for easier debugging
     mocked_graph.side_effect = [
-        [{"current": {}}],  # PrimarySource ps-1 item
-        [{"current": {}}],  # PrimarySource ps-2 item
-        [{"current": {}}],  # ContactPoint cp-1 item
-        [{"current": {}}],  # ContactPoint cp-2 item
-        [{"current": {}}],  # OrganizationalUnit ou-1 item
-        [{"current": {}}],  # OrganizationalUnit ou-1.6 item
-        [{"current": {}}],  # Activity a-1 item
+        [{"current": {}, "$comment": "mock response for PrimarySource ps-1 item"}],
+        [{"current": {}, "$comment": "mock response for PrimarySource ps-2 item"}],
+        [{"current": {}, "$comment": "mock response for ContactPoint cp-1 item"}],
+        [{"current": {}, "$comment": "mock response for ContactPoint cp-2 item"}],
+        [{"current": {}, "$comment": "mock response for Organization rki item"}],
         [
-            # PrimarySource ps-1 edges
-            {"edges": ["hadPrimarySource", "stableTargetId"]},
+            {
+                "current": {},
+                "$comment": "mock response for Organization robert-koch-institute item",
+            }
+        ],
+        [{"current": {}, "$comment": "mock response for OrganizationalUnit ou-1 item"}],
+        [
+            {
+                "current": {},
+                "$comment": "mock response for OrganizationalUnit ou-1.6 item",
+            }
+        ],
+        [{"current": {}, "$comment": "mock response for Activity a-1 item"}],
+        [
+            {
+                "edges": ["hadPrimarySource", "stableTargetId"],
+                "$comment": "mock response for PrimarySource ps-1 edges",
+            },
         ],
         [
-            # PrimarySource ps-2 edges
-            {"edges": ["hadPrimarySource", "stableTargetId"]},
+            {
+                "edges": ["hadPrimarySource", "stableTargetId"],
+                "$comment": "mock response for PrimarySource ps-2 edges",
+            },
         ],
         [
-            # ContactPoint cp-1 edges
-            {"edges": ["hadPrimarySource", "stableTargetId"]},
+            {
+                "edges": ["hadPrimarySource", "stableTargetId"],
+                "$comment": "mock response for ContactPoint cp-1 edges",
+            },
         ],
         [
-            # ContactPoint cp-2 edges
-            {"edges": ["hadPrimarySource", "stableTargetId"]},
+            {
+                "edges": ["hadPrimarySource", "stableTargetId"],
+                "$comment": "mock response for ContactPoint cp-2 edges",
+            },
         ],
         [
-            # OrganizationalUnit ou-1 edges
-            {"edges": ["hadPrimarySource", "stableTargetId"]}
+            {
+                "edges": ["hadPrimarySource", "stableTargetId"],
+                "$comment": "mock response for Organization rki edges",
+            }
         ],
         [
-            # OrganizationalUnit ou-1.6 edges
-            {"edges": ["hadPrimarySource", "parentUnit", "stableTargetId"]}
+            {
+                "edges": ["hadPrimarySource", "stableTargetId"],
+                "$comment": "mock response for Organization robert-koch-institute edges",
+            }
         ],
         [
-            # Activity a-1 edges
+            {
+                "edges": ["hadPrimarySource", "unitOf", "stableTargetId"],
+                "$comment": "mock response for OrganizationalUnit ou-1 edges",
+            }
+        ],
+        [
+            {
+                "edges": ["hadPrimarySource", "parentUnit", "unitOf", "stableTargetId"],
+                "$comment": "mock response for OrganizationalUnit ou-1.6 edges",
+            }
+        ],
+        [
             {
                 "edges": [
                     "hadPrimarySource",
@@ -849,10 +886,12 @@ def test_mocked_graph_ingests_models(
                     "contact",
                     "responsibleUnit",
                     "stableTargetId",
-                ]
+                ],
+                "$comment": "mock response for Activity a-1 edges",
             },
         ],
     ]
+
     graph = GraphConnector.get()
     identifiers = graph.ingest(list(dummy_data.values()))
 

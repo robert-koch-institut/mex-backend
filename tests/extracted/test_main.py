@@ -86,23 +86,23 @@ def test_search_extracted_items_mocked(
                         "version": None,
                     }
                 ],
-                "total": 8,
+                "total": 10,
             },
         ),
         (
-            "?limit=1&skip=6",
+            "?limit=1&skip=9",
             {
                 "items": [
                     {
                         "$type": "ExtractedContactPoint",
                         "email": ["info@contact-point.one"],
                         "hadPrimarySource": "bFQoRhcVH5DHUr",
-                        "identifier": "bFQoRhcVH5DHUw",
+                        "identifier": "bFQoRhcVH5DHUy",
                         "identifierInPrimarySource": "cp-1",
-                        "stableTargetId": "bFQoRhcVH5DHUx",
+                        "stableTargetId": "bFQoRhcVH5DHUz",
                     }
                 ],
-                "total": 8,
+                "total": 10,
             },
         ),
         (
@@ -111,18 +111,18 @@ def test_search_extracted_items_mocked(
                 "items": [
                     {
                         "$type": "ExtractedContactPoint",
-                        "email": ["info@contact-point.one"],
+                        "email": ["help@contact-point.two"],
                         "hadPrimarySource": "bFQoRhcVH5DHUr",
-                        "identifier": "bFQoRhcVH5DHUw",
-                        "identifierInPrimarySource": "cp-1",
-                        "stableTargetId": "bFQoRhcVH5DHUx",
+                        "identifier": "bFQoRhcVH5DHUA",
+                        "identifierInPrimarySource": "cp-2",
+                        "stableTargetId": "bFQoRhcVH5DHUB",
                     },
                     {
                         "$type": "ExtractedContactPoint",
-                        "email": ["help@contact-point.two"],
+                        "email": ["info@contact-point.one"],
                         "hadPrimarySource": "bFQoRhcVH5DHUr",
                         "identifier": "bFQoRhcVH5DHUy",
-                        "identifierInPrimarySource": "cp-2",
+                        "identifierInPrimarySource": "cp-1",
                         "stableTargetId": "bFQoRhcVH5DHUz",
                     },
                 ],
@@ -153,7 +153,7 @@ def test_search_extracted_items_mocked(
             },
         ),
         (
-            "?stableTargetId=bFQoRhcVH5DHUv",
+            "?stableTargetId=bFQoRhcVH5DHUx",
             {
                 "items": [
                     {
@@ -161,13 +161,13 @@ def test_search_extracted_items_mocked(
                         "alternativeName": [],
                         "email": [],
                         "hadPrimarySource": "bFQoRhcVH5DHUt",
-                        "identifier": "bFQoRhcVH5DHUu",
+                        "identifier": "bFQoRhcVH5DHUw",
                         "identifierInPrimarySource": "ou-1",
                         "name": [{"language": "en", "value": "Unit 1"}],
                         "parentUnit": None,
                         "shortName": [],
-                        "stableTargetId": "bFQoRhcVH5DHUv",
-                        "unitOf": [],
+                        "stableTargetId": "bFQoRhcVH5DHUx",
+                        "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [],
                     }
                 ],
