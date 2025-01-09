@@ -76,7 +76,7 @@ def extracted_primary_source_ldap() -> ExtractedPrimarySource:
 
 @cache
 def extracted_organizational_unit() -> list[ExtractedOrganizationalUnit]:
-    """Auxilary function to get ldap as primary resource."""
+    """Auxiliary function to get ldap as primary resource."""
     extracted_organigram_units = extract_organigram_units()
     extracted_organizational_units = transform_organigram_units_to_organizational_units(
         extracted_organigram_units, extracted_primary_source_ldap()

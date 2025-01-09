@@ -92,6 +92,8 @@ class QueryBuilder(BaseConnector):
             merged_labels=list(MERGED_MODEL_CLASSES_BY_NAME),
             nested_labels=list(NESTED_MODEL_CLASSES_BY_NAME),
             rule_labels=list(RULE_MODEL_CLASSES_BY_NAME),
+            extracted_or_rule_labels=list(EXTRACTED_MODEL_CLASSES_BY_NAME)
+            + list(RULE_MODEL_CLASSES_BY_NAME),
         )
 
     def __getattr__(self, name: str) -> Callable[..., Query]:

@@ -1,3 +1,4 @@
+import pytest
 from fastapi.testclient import TestClient
 from pytest import MonkeyPatch
 from starlette import status
@@ -11,6 +12,7 @@ def test_health_check(client: TestClient) -> None:
     assert response.json() == {"status": "ok"}
 
 
+@pytest.mark.integration
 def test_flush_graph_database_unauthorized(client: TestClient) -> None:
     response = client.delete("/v0/_system/graph")
     assert response.status_code == status.HTTP_401_UNAUTHORIZED, response.text
@@ -19,6 +21,7 @@ def test_flush_graph_database_unauthorized(client: TestClient) -> None:
     }
 
 
+@pytest.mark.integration
 def test_flush_graph_database_forbidden(
     client_with_api_key_read_permission: TestClient,
 ) -> None:
@@ -35,6 +38,7 @@ def test_flush_graph_database_refused(
     assert response.json() == {"detail": "refusing to flush the database"}
 
 
+@pytest.mark.integration
 def test_flush_graph_database(
     client_with_api_key_write_permission: TestClient,
     monkeypatch: MonkeyPatch,

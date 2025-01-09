@@ -9,13 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- add `extracted_or_rule_labels` to query builder globals
+
 ### Changes
+
+- rename short and obscure cypher query variables to more expressive and verbose ones
 
 ### Deprecated
 
 ### Removed
 
 ### Fixed
+
+- avoid recursive retries in `GraphConnector._check_connectivity_and_authentication`
+- fix integration tests not properly marked as integration tests
 
 ### Security
 

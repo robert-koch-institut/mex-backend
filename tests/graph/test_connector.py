@@ -859,6 +859,7 @@ def test_mocked_graph_ingests_models(
     assert identifiers == [d.identifier for d in dummy_data.values()]
 
 
+@pytest.mark.integration
 def test_connector_flush_fails(monkeypatch: MonkeyPatch) -> None:
     settings = BackendSettings.get()
 
