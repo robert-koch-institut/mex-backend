@@ -11,9 +11,5 @@ SEARCHABLE_FIELDS = sorted(
 
 # classes that have fields that should be searchable
 SEARCHABLE_CLASSES = sorted(
-    {
-        class_name
-        for class_name, field_names in STRING_FIELDS_BY_CLASS_NAME.items()
-        if field_names
-    }
+    {name for name, field_names in STRING_FIELDS_BY_CLASS_NAME.items() if field_names}
 )

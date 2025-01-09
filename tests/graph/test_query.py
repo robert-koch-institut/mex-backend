@@ -90,7 +90,7 @@ CALL () {
         WHERE elementId(hit) = elementId(extracted_or_rule_node)
         RETURN extracted_or_rule_node, merged_node
     UNION
-        MATCH (nested_node:Link|Text|Location)<--(extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
+        MATCH (nested_node:Link|Text|Location)<-[]-(extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
         WHERE elementId(hit) = elementId(nested_node)
         RETURN extracted_or_rule_node, merged_node
     }
@@ -108,7 +108,7 @@ CALL () {
         WHERE elementId(hit) = elementId(extracted_or_rule_node)
         RETURN extracted_or_rule_node, merged_node
     UNION
-        MATCH (nested_node:Link|Text|Location)<--(extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
+        MATCH (nested_node:Link|Text|Location)<-[]-(extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
         WHERE elementId(hit) = elementId(nested_node)
         RETURN extracted_or_rule_node, merged_node
     }
@@ -213,11 +213,11 @@ CALL () {
         WHERE elementId(hit) = elementId(extracted_or_rule_node)
         RETURN merged_node
     UNION
-        MATCH (nested_node:Link|Text|Location)<--(:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
+        MATCH (nested_node:Link|Text|Location)<-[]-(:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
         WHERE elementId(hit) = elementId(nested_node)
         RETURN merged_node
     }
-    WITH DISTINCT merged_node
+    WITH DISTINCT merged_node AS merged_node
     WHERE
         merged_node.identifier = $identifier
         AND ANY(label IN labels(merged_node) WHERE label IN $labels)
@@ -231,11 +231,11 @@ CALL () {
         WHERE elementId(hit) = elementId(extracted_or_rule_node)
         RETURN merged_node
     UNION
-        MATCH (nested_node:Link|Text|Location)<--(:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
+        MATCH (nested_node:Link|Text|Location)<-[]-(:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
         WHERE elementId(hit) = elementId(nested_node)
         RETURN merged_node
     }
-    WITH DISTINCT merged_node
+    WITH DISTINCT merged_node AS merged_node
     WHERE
         merged_node.identifier = $identifier
         AND ANY(label IN labels(merged_node) WHERE label IN $labels)

@@ -306,22 +306,6 @@ def dummy_data(
         title=[Text(value="Aktivität 1", language=TextLanguage.DE)],
         website=[Link(title="Activity Homepage", url="https://activity-1")],
     )
-    organization_1 = ExtractedOrganization(
-        hadPrimarySource=primary_source_1.stableTargetId,
-        identifierInPrimarySource="rki",
-        officialName=[
-            Text(value="RKI", language=None),
-            Text(value="Robert Koch Institut ist the best", language=TextLanguage.DE),
-        ],
-    )
-    organization_2 = ExtractedOrganization(
-        hadPrimarySource=primary_source_2.stableTargetId,
-        identifierInPrimarySource="robert-koch-institute",
-        officialName=[
-            Text(value="RKI", language=None),
-            Text(value="Robert Koch Institute", language=TextLanguage.EN),
-        ],
-    )
 
     return {
         "primary_source_1": primary_source_1,
