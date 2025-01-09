@@ -9,20 +9,18 @@ from starlette import status
     ("stable_target_id", "json_body", "expected"),
     [
         (
-            "bFQoRhcVH5DHUD",
+            "bFQoRhcVH5DHUH",
             {
                 "additive": {
                     "$type": "AdditiveActivity",
                     "end": ["2025"],
                     "title": [{"value": "A new beginning", "language": "en"}],
                 },
-                "preventive": {"$type": "PreventiveActivity"},
-                "subtractive": {"$type": "SubtractiveActivity"},
             },
             {
                 "$type": "MergedActivity",
-                "contact": ["bFQoRhcVH5DHUx", "bFQoRhcVH5DHUz", "bFQoRhcVH5DHUv"],
-                "responsibleUnit": ["bFQoRhcVH5DHUv"],
+                "contact": ["bFQoRhcVH5DHUz", "bFQoRhcVH5DHUB", "bFQoRhcVH5DHUx"],
+                "responsibleUnit": ["bFQoRhcVH5DHUx"],
                 "title": [
                     {"value": "Aktivität 1", "language": "de"},
                     {"value": "A new beginning", "language": "en"},
@@ -41,34 +39,27 @@ from starlette import status
                         "url": "https://activity-1",
                     }
                 ],
-                "identifier": "bFQoRhcVH5DHUD",
+                "identifier": "bFQoRhcVH5DHUH",
             },
         ),
         (
-            "bFQoRhcVH5DHUD",
+            "bFQoRhcVH5DHUH",
             {
-                "additive": {"$type": "AdditiveActivity"},
-                "preventive": {"$type": "PreventiveActivity"},
                 "subtractive": {
                     "$type": "SubtractiveActivity",
                     "start": ["2014"],
-                    "contact": ["bFQoRhcVH5DHUv"],
+                    "contact": ["bFQoRhcVH5DHUx"],
                     "abstract": [
                         {"value": "Une activité active.", "language": None},
                     ],
                 },
             },
             {
-                "$type": "MergedActivity",
-                "contact": ["bFQoRhcVH5DHUx", "bFQoRhcVH5DHUz"],
-                "responsibleUnit": ["bFQoRhcVH5DHUv"],
+                "contact": ["bFQoRhcVH5DHUz", "bFQoRhcVH5DHUB"],
+                "responsibleUnit": ["bFQoRhcVH5DHUx"],
+                "title": [{"value": "Aktivität 1", "language": "de"}],
+                "abstract": [{"value": "An active activity.", "language": "en"}],
                 "start": ["2014-08-24"],
-                "title": [
-                    {"value": "Aktivität 1", "language": "de"},
-                ],
-                "abstract": [
-                    {"value": "An active activity.", "language": "en"},
-                ],
                 "theme": ["https://mex.rki.de/item/theme-11"],
                 "website": [
                     {
@@ -77,36 +68,28 @@ from starlette import status
                         "url": "https://activity-1",
                     }
                 ],
-                "identifier": "bFQoRhcVH5DHUD",
+                "$type": "MergedActivity",
+                "identifier": "bFQoRhcVH5DHUH",
             },
         ),
         (
-            "bFQoRhcVH5DHUD",
+            "bFQoRhcVH5DHUH",
             {
-                "additive": {
-                    "$type": "AdditiveActivity",
-                },
                 "preventive": {
                     "$type": "PreventiveActivity",
                     "theme": ["bFQoRhcVH5DHUr"],
                     "title": ["bFQoRhcVH5DHUt"],
                 },
-                "subtractive": {
-                    "$type": "SubtractiveActivity",
-                },
             },
             {
-                "$type": "MergedActivity",
-                "contact": ["bFQoRhcVH5DHUx", "bFQoRhcVH5DHUz", "bFQoRhcVH5DHUv"],
-                "responsibleUnit": ["bFQoRhcVH5DHUv"],
-                "start": ["2014-08-24"],
-                "title": [
-                    {"value": "Aktivität 1", "language": "de"},
-                ],
+                "contact": ["bFQoRhcVH5DHUz", "bFQoRhcVH5DHUB", "bFQoRhcVH5DHUx"],
+                "responsibleUnit": ["bFQoRhcVH5DHUx"],
+                "title": [{"value": "Aktivität 1", "language": "de"}],
                 "abstract": [
                     {"value": "An active activity.", "language": "en"},
                     {"value": "Une activité active.", "language": None},
                 ],
+                "start": ["2014-08-24"],
                 "website": [
                     {
                         "language": None,
@@ -114,7 +97,8 @@ from starlette import status
                         "url": "https://activity-1",
                     }
                 ],
-                "identifier": "bFQoRhcVH5DHUD",
+                "$type": "MergedActivity",
+                "identifier": "bFQoRhcVH5DHUH",
             },
         ),
         (

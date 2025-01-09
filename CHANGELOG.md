@@ -10,10 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - add `extracted_or_rule_labels` to query builder globals
+- add two matched organizations to the test dummy data
 
 ### Changes
 
 - rename short and obscure cypher query variables to more expressive and verbose ones
+- rename `stable_target_id` to more appropriate `identifier` argument for merged queries
 
 ### Deprecated
 

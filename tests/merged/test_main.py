@@ -109,20 +109,20 @@ def test_search_merged_items_mocked(
                         "version": None,
                     }
                 ],
-                "total": 8,
+                "total": 9,
             },
         ),
         (
-            "?limit=1&skip=6",
+            "?limit=1&skip=8",
             {
                 "items": [
                     {
-                        "$type": "MergedContactPoint",
                         "email": ["info@contact-point.one"],
-                        "identifier": "bFQoRhcVH5DHUx",
+                        "$type": "MergedContactPoint",
+                        "identifier": "bFQoRhcVH5DHUz",
                     }
                 ],
-                "total": 8,
+                "total": 9,
             },
         ),
         (
@@ -131,12 +131,12 @@ def test_search_merged_items_mocked(
                 "items": [
                     {
                         "$type": "MergedContactPoint",
-                        "email": ["info@contact-point.one"],
-                        "identifier": "bFQoRhcVH5DHUx",
+                        "email": ["help@contact-point.two"],
+                        "identifier": "bFQoRhcVH5DHUB",
                     },
                     {
                         "$type": "MergedContactPoint",
-                        "email": ["help@contact-point.two"],
+                        "email": ["info@contact-point.one"],
                         "identifier": "bFQoRhcVH5DHUz",
                     },
                 ],
@@ -164,40 +164,40 @@ def test_search_merged_items_mocked(
             },
         ),
         (
-            "?identifier=bFQoRhcVH5DHUv",
+            "?identifier=bFQoRhcVH5DHUx",
             {
                 "items": [
                     {
                         "$type": "MergedOrganizationalUnit",
                         "alternativeName": [],
                         "email": [],
-                        "identifier": "bFQoRhcVH5DHUv",
+                        "identifier": "bFQoRhcVH5DHUx",
                         "name": [{"language": "en", "value": "Unit 1"}],
                         "parentUnit": None,
                         "shortName": [],
-                        "unitOf": [],
+                        "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [],
-                    }
+                    },
                 ],
                 "total": 1,
             },
         ),
         (
-            "?identifier=bFQoRhcVH5DHUB",
+            "?identifier=bFQoRhcVH5DHUF",
             {
                 "items": [
                     {
                         "$type": "MergedOrganizationalUnit",
                         "alternativeName": [],
                         "email": [],
-                        "identifier": "bFQoRhcVH5DHUB",
+                        "identifier": "bFQoRhcVH5DHUF",
                         "name": [
                             {"language": "en", "value": "Unit 1.6"},
                             {"language": "en", "value": "Unit 1.7"},
                         ],
-                        "parentUnit": "bFQoRhcVH5DHUv",
+                        "parentUnit": "bFQoRhcVH5DHUx",
                         "shortName": [],
-                        "unitOf": [],
+                        "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [
                             {
                                 "language": None,
