@@ -11,6 +11,7 @@ from neo4j import Driver, Session, SummaryCounters
 from pytest import MonkeyPatch
 
 from mex.backend.graph.connector import GraphConnector
+from mex.backend.identity.provider import GraphIdentityProvider
 from mex.backend.main import app
 from mex.backend.rules.helpers import create_and_get_rule_set
 from mex.backend.settings import BackendSettings
@@ -183,7 +184,7 @@ def isolate_identifier_seeds(monkeypatch: MonkeyPatch) -> None:
 @pytest.fixture(autouse=True)
 def set_identity_provider(is_integration_test: bool, monkeypatch: MonkeyPatch) -> None:
     """Ensure the identifier provider is set correctly for unit and int tests."""
-    # yuck, all this needs cleaning up after MX-1596
+    # TODO(ND): yuck, all this needs cleaning up after MX-1596
     for settings in (BaseSettings.get(), BackendSettings.get()):
         if is_integration_test:
             monkeypatch.setitem(settings.model_config, "validate_assignment", False)
@@ -235,7 +236,9 @@ RETURN nodes, relations;
 
 
 @pytest.fixture
-def dummy_data() -> dict[str, AnyExtractedModel]:
+def dummy_data(
+    set_identity_provider: None,  # noqa: ARG001
+) -> dict[str, AnyExtractedModel]:
     """Create a set of interlinked dummy data."""
     primary_source_1 = ExtractedPrimarySource(
         hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -256,16 +259,34 @@ def dummy_data() -> dict[str, AnyExtractedModel]:
         hadPrimarySource=primary_source_1.stableTargetId,
         identifierInPrimarySource="cp-2",
     )
+    organization_1 = ExtractedOrganization(
+        hadPrimarySource=primary_source_1.stableTargetId,
+        identifierInPrimarySource="rki",
+        officialName=[
+            Text(value="RKI", language=TextLanguage.DE),
+            Text(value="Robert Koch Institut ist the best", language=TextLanguage.DE),
+        ],
+    )
+    organization_2 = ExtractedOrganization(
+        hadPrimarySource=primary_source_2.stableTargetId,
+        identifierInPrimarySource="robert-koch-institute",
+        officialName=[
+            Text(value="RKI", language=TextLanguage.DE),
+            Text(value="Robert Koch Institute", language=TextLanguage.EN),
+        ],
+    )
     organizational_unit_1 = ExtractedOrganizationalUnit(
         hadPrimarySource=primary_source_2.stableTargetId,
         identifierInPrimarySource="ou-1",
         name=[Text(value="Unit 1", language=TextLanguage.EN)],
+        unitOf=[organization_1.stableTargetId],
     )
     organizational_unit_2 = ExtractedOrganizationalUnit(
         hadPrimarySource=primary_source_2.stableTargetId,
         identifierInPrimarySource="ou-1.6",
         name=[Text(value="Unit 1.6", language=TextLanguage.EN)],
         parentUnit=organizational_unit_1.stableTargetId,
+        unitOf=[organization_1.stableTargetId],
     )
     activity_1 = ExtractedActivity(
         abstract=[
@@ -307,12 +328,33 @@ def dummy_data() -> dict[str, AnyExtractedModel]:
         "primary_source_2": primary_source_2,
         "contact_point_1": contact_point_1,
         "contact_point_2": contact_point_2,
+        "organization_1": organization_1,
+        "organization_2": organization_2,
         "organizational_unit_1": organizational_unit_1,
         "organizational_unit_2": organizational_unit_2,
         "activity_1": activity_1,
-        "organization_1": organization_1,
-        "organization_2": organization_2,
     }
+
+
+def _match_organization_items(dummy_data: dict[str, AnyExtractedModel]) -> None:
+    # TODO(ND): replace this crude item matching implementation (stopgap MX-1530)
+    connector = GraphConnector.get()
+    # remove the merged item for org2
+    connector.commit(
+        f"""\
+MATCH(n) WHERE n.identifier='{dummy_data['organization_2'].stableTargetId}'
+DETACH DELETE n;"""
+    )
+    # connect the extracted item for org2 with the merged item for org1
+    connector.commit(
+        f"""\
+MATCH(n :ExtractedOrganization) WHERE n.identifier = '{dummy_data['organization_2'].identifier}'
+MATCH(m :MergedOrganization) WHERE m.identifier = '{dummy_data['organization_1'].stableTargetId}'
+MERGE (n)-[:stableTargetId {{position:0}}]->(m);"""
+    )
+    # clear the identity provider cache to refresh the `stableTargetId` property on org2
+    provider = GraphIdentityProvider.get()
+    provider._cached_assign.cache_clear()
 
 
 @pytest.fixture
@@ -321,18 +363,7 @@ def load_dummy_data(
 ) -> dict[str, AnyExtractedModel]:
     """Ingest dummy data into the graph."""
     GraphConnector.get().ingest(list(dummy_data.values()))
-
-    # crude item matching implementation (stopgap MX-1530)
-    delete_merged_node = f"MATCH(n) WHERE n.identifier='{dummy_data['organization_2'].stableTargetId}' DETACH DELETE n"
-    merge_organizations = (
-        f"MATCH(n :ExtractedOrganization) WHERE n.identifier = '{dummy_data['organization_2'].identifier}' "
-        f"MATCH(m :MergedOrganization) WHERE m.identifier = '{dummy_data['organization_1'].stableTargetId}' "
-        "MERGE (n)-[:stableTargetId {position:0}]->(m)"
-    )
-    connector = GraphConnector.get()
-    connector.commit(delete_merged_node)
-    connector.commit(merge_organizations)
-
+    _match_organization_items(dummy_data)
     return dummy_data
 
 
@@ -361,19 +392,19 @@ def organizational_unit_rule_set_request(
 @pytest.fixture
 def load_dummy_rule_set(
     organizational_unit_rule_set_request: OrganizationalUnitRuleSetRequest,
-    dummy_data: dict[str, AnyExtractedModel],
+    load_dummy_data: dict[str, AnyExtractedModel],
 ) -> OrganizationalUnitRuleSetResponse:
     GraphConnector.get().ingest(
         [
-            dummy_data["primary_source_2"],
-            dummy_data["organizational_unit_1"],
-            dummy_data["organizational_unit_2"],
+            load_dummy_data["primary_source_2"],
+            load_dummy_data["organizational_unit_1"],
+            load_dummy_data["organizational_unit_2"],
         ]
     )
     return cast(
         OrganizationalUnitRuleSetResponse,
         create_and_get_rule_set(
             organizational_unit_rule_set_request,
-            stable_target_id=dummy_data["organizational_unit_2"].stableTargetId,
+            stable_target_id=load_dummy_data["organizational_unit_2"].stableTargetId,
         ),
     )

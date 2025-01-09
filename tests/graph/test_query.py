@@ -197,7 +197,7 @@ def test_fetch_extracted_or_rule_items(
 @pytest.mark.parametrize(
     (
         "filter_by_query_string",
-        "filter_by_stable_target_id",
+        "filter_by_identifier",
         "expected",
     ),
     [
@@ -219,7 +219,7 @@ CALL () {
     }
     WITH DISTINCT merged_node
     WHERE
-        merged_node.identifier = $stable_target_id
+        merged_node.identifier = $identifier
         AND ANY(label IN labels(merged_node) WHERE label IN $labels)
     RETURN COUNT(merged_node) AS total
 }
@@ -237,7 +237,7 @@ CALL () {
     }
     WITH DISTINCT merged_node
     WHERE
-        merged_node.identifier = $stable_target_id
+        merged_node.identifier = $identifier
         AND ANY(label IN labels(merged_node) WHERE label IN $labels)
     OPTIONAL MATCH (extracted_or_rule_node)-[:stableTargetId]->(merged_node)
     WITH extracted_or_rule_node, merged_node
@@ -311,12 +311,12 @@ RETURN collect(merged_node) AS items, total;""",
 def test_fetch_merged_items(
     query_builder: QueryBuilder,
     filter_by_query_string: bool,
-    filter_by_stable_target_id: bool,
+    filter_by_identifier: bool,
     expected: str,
 ) -> None:
     query = query_builder.fetch_merged_items(
         filter_by_query_string=filter_by_query_string,
-        filter_by_stable_target_id=filter_by_stable_target_id,
+        filter_by_identifier=filter_by_identifier,
     )
     assert str(query) == expected
 

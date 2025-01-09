@@ -103,9 +103,9 @@ def test_assign_identity_inconsistency_mocked(
             },
             {
                 "hadPrimarySource": "bFQoRhcVH5DHUr",
-                "identifier": "bFQoRhcVH5DHUE",
+                "identifier": "bFQoRhcVH5DHUI",
                 "identifierInPrimarySource": "new-item",
-                "stableTargetId": "bFQoRhcVH5DHUF",
+                "stableTargetId": "bFQoRhcVH5DHUJ",
             },
         ),
         (
@@ -115,9 +115,9 @@ def test_assign_identity_inconsistency_mocked(
             },
             {
                 "hadPrimarySource": "bFQoRhcVH5DHUr",
-                "identifier": "bFQoRhcVH5DHUy",
+                "identifier": "bFQoRhcVH5DHUA",
                 "identifierInPrimarySource": "cp-2",
-                "stableTargetId": "bFQoRhcVH5DHUz",
+                "stableTargetId": "bFQoRhcVH5DHUB",
             },
         ),
         (
@@ -242,24 +242,45 @@ def test_fetch_identities_mocked(
             },
         ),
         (
+            "?stableTargetId=bFQoRhcVH5DHUx",
+            {
+                "items": [
+                    {
+                        "identifier": "bFQoRhcVH5DHUw",
+                        "hadPrimarySource": "bFQoRhcVH5DHUt",
+                        "identifierInPrimarySource": "ou-1",
+                        "stableTargetId": "bFQoRhcVH5DHUx",
+                    }
+                ],
+                "total": 1,
+            },
+        ),
+        (
             "?stableTargetId=bFQoRhcVH5DHUv",
             {
                 "items": [
                     {
-                        "identifier": "bFQoRhcVH5DHUu",
+                        "identifier": "bFQoRhcVH5DHUC",
                         "hadPrimarySource": "bFQoRhcVH5DHUt",
-                        "identifierInPrimarySource": "ou-1",
+                        "identifierInPrimarySource": "robert-koch-institute",
                         "stableTargetId": "bFQoRhcVH5DHUv",
-                    }
+                    },
+                    {
+                        "identifier": "bFQoRhcVH5DHUu",
+                        "hadPrimarySource": "bFQoRhcVH5DHUr",
+                        "identifierInPrimarySource": "rki",
+                        "stableTargetId": "bFQoRhcVH5DHUv",
+                    },
                 ],
-                "total": 1,
+                "total": 2,
             },
         ),
     ],
     ids=[
         "nothing found",
         "by hadPrimarySource and identifierInPrimarySource",
-        "by stableTargetId",
+        "by stableTargetId find single unit",
+        "by stableTargetId find matched orgs",
     ],
 )
 @pytest.mark.usefixtures("load_dummy_data")

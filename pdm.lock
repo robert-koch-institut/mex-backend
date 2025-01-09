@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:97a578f12da7f4c89819bbd7a0d62772f94b76d9228c65bff7582d1ac83af7a4"
+content_hash = "sha256:f2007b6143bd40d05b587b3044b6e9b5a270a55917021d33411460221c9a85ec"
 
 [[metadata.targets]]
 requires_python = "==3.11.*"
@@ -539,11 +539,11 @@ files = [
 
 [[package]]
 name = "mex-common"
-version = "0.45.0"
+version = "0.46.0"
 requires_python = ">=3.11,<3.13"
 git = "https://github.com/robert-koch-institut/mex-common.git"
-ref = "feature/mx-1673-nested-model-inspection"
-revision = "bee2c373fc127d0576ec356a5df25c0117e0da51"
+ref = "0.46.0"
+revision = "ca1f62afdf09587d68fbb86c89bdbb2a1176377c"
 summary = "Common library for MEx python projects."
 groups = ["default"]
 marker = "python_version == \"3.11\""

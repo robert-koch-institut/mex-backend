@@ -101,19 +101,19 @@ def test_assign_identity_inconsistency_mocked(
             "new-item",
             {
                 "hadPrimarySource": "bFQoRhcVH5DHUr",
-                "identifier": "bFQoRhcVH5DHUE",
+                "identifier": "bFQoRhcVH5DHUI",
                 "identifierInPrimarySource": "new-item",
-                "stableTargetId": "bFQoRhcVH5DHUF",
+                "stableTargetId": "bFQoRhcVH5DHUJ",
             },
         ),
         (
             "bFQoRhcVH5DHUr",
             "cp-2",
             {
-                "identifier": "bFQoRhcVH5DHUy",
+                "identifier": "bFQoRhcVH5DHUA",
                 "hadPrimarySource": "bFQoRhcVH5DHUr",
                 "identifierInPrimarySource": "cp-2",
-                "stableTargetId": "bFQoRhcVH5DHUz",
+                "stableTargetId": "bFQoRhcVH5DHUB",
             },
         ),
         (
@@ -254,13 +254,13 @@ def test_fetch_identities_mocked(  # noqa: PLR0913
         (
             None,
             None,
-            MergedOrganizationalUnitIdentifier("bFQoRhcVH5DHUv"),
+            MergedOrganizationalUnitIdentifier("bFQoRhcVH5DHUx"),
             [
                 {
-                    "identifier": "bFQoRhcVH5DHUu",
+                    "identifier": "bFQoRhcVH5DHUw",
                     "hadPrimarySource": "bFQoRhcVH5DHUt",
                     "identifierInPrimarySource": "ou-1",
-                    "stableTargetId": "bFQoRhcVH5DHUv",
+                    "stableTargetId": "bFQoRhcVH5DHUx",
                 }
             ],
         ),

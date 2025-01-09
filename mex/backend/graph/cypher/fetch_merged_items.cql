@@ -8,7 +8,7 @@ Globals:
 
 Args:
     filter_by_query_string: Whether the final query should accept a full text query string
-    filter_by_stable_target_id: Whether the final query should filter by stableTargetId
+    filter_by_identifier: Whether the final query should filter by the merged identifier
 
 Returns:
     total: Count of all items found by this query
@@ -39,8 +39,8 @@ CALL () {
 <%- endif %>
 <%- set and_ = joiner("AND ") %>
     WHERE
-    <%- if filter_by_stable_target_id %>
-        <<and_()>>merged_node.identifier = $stable_target_id
+    <%- if filter_by_identifier %>
+        <<and_()>>merged_node.identifier = $identifier
     <%- endif %>
         <<and_()>>ANY(label IN labels(merged_node) WHERE label IN $labels)
 <%- endblock %>
