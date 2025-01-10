@@ -200,12 +200,12 @@ def merge_search_result_item(
     """
     extracted_items = [
         EXTRACTED_MODEL_ADAPTER.validate_python(component)
-        for component in item["components"]
+        for component in item["_components"]
         if component["entityType"] in EXTRACTED_MODEL_CLASSES_BY_NAME
     ]
     raw_rules = [
         component
-        for component in item["components"]
+        for component in item["_components"]
         if component["entityType"] in RULE_MODEL_CLASSES_BY_NAME
     ]
     if raw_rules:

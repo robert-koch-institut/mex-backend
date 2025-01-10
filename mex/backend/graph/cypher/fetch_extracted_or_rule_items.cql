@@ -23,48 +23,53 @@ CALL () {
     YIELD node AS hit, score
     CALL (hit) {
         MATCH (extracted_or_rule_node:<<extracted_or_rule_labels|join("|")>>)-[:stableTargetId]->(merged_node:<<merged_labels|join("|")>>)
-        WHERE elementId(hit) = elementId(extracted_or_rule_node)
+        WHERE
+            elementId(hit) = elementId(extracted_or_rule_node)
+            AND ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
+            <%- if filter_by_stable_target_id %>
+            AND merged_node.identifier = $stable_target_id
+            <%- endif %>
         RETURN extracted_or_rule_node, merged_node
     UNION
         MATCH (nested_node:<<nested_labels|join("|")>>)<-[]-(extracted_or_rule_node:<<extracted_or_rule_labels|join("|")>>)-[:stableTargetId]->(merged_node:<<merged_labels|join("|")>>)
-        WHERE elementId(hit) = elementId(nested_node)
+        WHERE
+            elementId(hit) = elementId(nested_node)
+            AND ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
+            <%- if filter_by_stable_target_id %>
+            AND merged_node.identifier = $stable_target_id
+            <%- endif %>
         RETURN extracted_or_rule_node, merged_node
     }
     WITH DISTINCT extracted_or_rule_node, merged_node
 <%- else %>
     OPTIONAL MATCH (extracted_or_rule_node:<<extracted_or_rule_labels|join("|")>>)-[:stableTargetId]->(merged_node:<<merged_labels|join("|")>>)
-<%- endif %>
-<%- set and_ = joiner("AND ") %>
     WHERE
-    <%- if filter_by_stable_target_id %>
-        <<and_()>>merged_node.identifier = $stable_target_id
-    <%- endif %>
-        <<and_()>>ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
+        ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
+        <%- if filter_by_stable_target_id %>
+        AND merged_node.identifier = $stable_target_id
+        <%- endif %>
+<%- endif %>
 <%- endblock %>
     RETURN COUNT(extracted_or_rule_node) AS total
 }
 CALL () {
     <<-self.match_clause()>>
-    WITH extracted_or_rule_node
-    CALL (extracted_or_rule_node) {
-        OPTIONAL MATCH (extracted_or_rule_node)-[r]->(referenced_merged_node:<<merged_labels|join("|")>>)
-        RETURN CASE WHEN referenced_merged_node IS NOT NULL THEN {
-            label: type(r),
-            position: r.position,
-            value: referenced_merged_node.identifier
-        } ELSE NULL END AS ref
-    UNION
-        OPTIONAL MATCH (extracted_or_rule_node)-[r]->(referenced_nested_node:<<nested_labels|join("|")>>)
-        RETURN CASE WHEN referenced_nested_node IS NOT NULL THEN {
-            label: type(r),
-            position: r.position,
-            value: properties(referenced_nested_node)
-        } ELSE NULL END AS ref
-    }
-    WITH extracted_or_rule_node, collect(ref) AS refs
-    RETURN extracted_or_rule_node{.*, entityType: head(labels(extracted_or_rule_node)), _refs: refs}
-    ORDER BY extracted_or_rule_node.identifier, extracted_or_rule_node.entityType ASC
+    ORDER BY extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
     SKIP $skip
     LIMIT $limit
+    WITH
+        extracted_or_rule_node,
+        [
+            (extracted_or_rule_node)-[r]->(referenced_merged_node:<<merged_labels|join("|")>>) |
+            {value: referenced_merged_node.identifier, position:r.position, label: type(r)}
+        ] + [
+            (extracted_or_rule_node)-[r]->(referenced_nested_node:<<nested_labels|join("|")>>) |
+            {value: properties(referenced_nested_node), position:r.position , label: type(r)}
+        ] AS refs
+    WITH
+        collect(
+            extracted_or_rule_node{.*, entityType: head(labels(extracted_or_rule_node)), _refs: refs}
+        ) AS items
+    RETURN items
 }
-RETURN collect(extracted_or_rule_node) AS items, total;
+RETURN items, total;

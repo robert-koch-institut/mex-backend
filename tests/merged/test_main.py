@@ -26,7 +26,7 @@ def test_search_merged_items_mocked(
         {
             "items": [
                 {
-                    "components": [
+                    "_components": [
                         {
                             "identifier": unit.identifier,
                             "identifierInPrimarySource": unit.identifierInPrimarySource,

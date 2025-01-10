@@ -357,7 +357,7 @@ def test_search_merged_items_in_graph() -> None:
                 {
                     "items": [
                         {
-                            "components": [
+                            "_components": [
                                 {
                                     "identifier": "jbZ5Br9Vninm08ptYZFxW",
                                     "identifierInPrimarySource": "unit-1",
@@ -406,7 +406,7 @@ def test_search_merged_items_in_graph() -> None:
                 {
                     "items": [
                         {
-                            "components": [
+                            "_components": [
                                 {
                                     "identifier": "jbZ5Br9Vninm08ptYZFxW",
                                     "identifierInPrimarySource": "unit-1",
@@ -450,7 +450,7 @@ def test_search_merged_items_in_graph() -> None:
                 {
                     "items": [
                         {
-                            "components": [
+                            "_components": [
                                 {
                                     "identifier": "jbZ5Br9Vninm08ptYZFxW",
                                     "identifierInPrimarySource": "unit-1",

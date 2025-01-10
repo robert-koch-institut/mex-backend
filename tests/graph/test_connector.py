@@ -284,34 +284,52 @@ fetch_extracted_or_rule_items(
     }
 
 
+@pytest.mark.parametrize(
+    ("query_string", "stable_target_id", "entity_type", "expected"),
+    [
+        (None, "thisIdDoesNotExist", None, {"items": [], "total": 0}),
+        ("this_search_term_is_not_findable", None, None, {"items": [], "total": 0}),
+        (
+            None,
+            None,
+            None,
+            {
+                "items": [
+                    {
+                        "entityType": MEX_EXTRACTED_PRIMARY_SOURCE.entityType,
+                        "hadPrimarySource": [
+                            MEX_EXTRACTED_PRIMARY_SOURCE.hadPrimarySource
+                        ],
+                        "identifier": MEX_EXTRACTED_PRIMARY_SOURCE.identifier,
+                        "identifierInPrimarySource": MEX_EXTRACTED_PRIMARY_SOURCE.identifierInPrimarySource,
+                        "stableTargetId": [MEX_EXTRACTED_PRIMARY_SOURCE.stableTargetId],
+                    }
+                ],
+                "total": 10,
+            },
+        ),
+    ],
+    ids=["id not found", "search not found", "find mex primary source"],
+)
 @pytest.mark.usefixtures("load_dummy_data")
 @pytest.mark.integration
-def test_fetch_extracted_items() -> None:
+def test_fetch_extracted_items(
+    query_string: str | None,
+    stable_target_id: str | None,
+    entity_type: list[str] | None,
+    expected: dict[str, object],
+) -> None:
     connector = GraphConnector.get()
 
-    result = connector.fetch_extracted_items(None, None, None, 0, 1)
+    result = connector.fetch_extracted_items(
+        query_string=query_string,
+        stable_target_id=stable_target_id,
+        entity_type=entity_type,
+        skip=0,
+        limit=1,
+    )
 
-    assert result.one() == {
-        "items": [
-            {
-                "entityType": MEX_EXTRACTED_PRIMARY_SOURCE.entityType,
-                "hadPrimarySource": [MEX_EXTRACTED_PRIMARY_SOURCE.hadPrimarySource],
-                "identifier": MEX_EXTRACTED_PRIMARY_SOURCE.identifier,
-                "identifierInPrimarySource": MEX_EXTRACTED_PRIMARY_SOURCE.identifierInPrimarySource,
-                "stableTargetId": [MEX_EXTRACTED_PRIMARY_SOURCE.stableTargetId],
-            }
-        ],
-        "total": 10,
-    }
-
-
-@pytest.mark.integration
-def test_fetch_extracted_items_empty() -> None:
-    connector = GraphConnector.get()
-
-    result = connector.fetch_extracted_items(None, "thisIdDoesNotExist", None, 0, 1)
-
-    assert result.one() == {"items": [], "total": 0}
+    assert result.one() == expected
 
 
 @pytest.mark.usefixtures("mocked_query_class")
@@ -408,7 +426,7 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
         {
             "items": [
                 {
-                    "components": [
+                    "_components": [
                         {
                             "inlineProperty": "foo",
                             "entityType": "ExtractedThis",
@@ -471,7 +489,7 @@ fetch_merged_items(filter_by_query_string=True, filter_by_identifier=True)""",
     assert result.one() == {
         "items": [
             {
-                "components": [
+                "_components": [
                     {
                         "entityType": "ExtractedThis",
                         "inlineProperty": "foo",
@@ -506,7 +524,7 @@ def test_fetch_merged_items() -> None:
     assert result.one() == {
         "items": [
             {
-                "components": [
+                "_components": [
                     {
                         "identifierInPrimarySource": "ou-1",
                         "email": [],

@@ -306,7 +306,6 @@ def dummy_data(
         title=[Text(value="Aktivität 1", language=TextLanguage.DE)],
         website=[Link(title="Activity Homepage", url="https://activity-1")],
     )
-
     return {
         "primary_source_1": primary_source_1,
         "primary_source_2": primary_source_2,
