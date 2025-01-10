@@ -9,7 +9,7 @@ from neo4j.exceptions import IncompleteCommit, SessionExpired
 from pytest import LogCaptureFixture, MonkeyPatch
 
 from mex.backend.graph import connector as connector_module
-from mex.backend.graph.connector import MEX_EXTRACTED_PRIMARY_SOURCE, GraphConnector
+from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import InconsistentGraphError
 from mex.backend.graph.query import Query
 from mex.backend.settings import BackendSettings
@@ -285,31 +285,169 @@ fetch_extracted_or_rule_items(
 
 
 @pytest.mark.parametrize(
-    ("query_string", "stable_target_id", "entity_type", "expected"),
+    ("query_string", "stable_target_id", "entity_type", "limit", "expected"),
     [
-        (None, "thisIdDoesNotExist", None, {"items": [], "total": 0}),
-        ("this_search_term_is_not_findable", None, None, {"items": [], "total": 0}),
+        (None, "thisIdDoesNotExist", None, 10, {"items": [], "total": 0}),
+        ("this_search_term_is_not_findable", None, None, 10, {"items": [], "total": 0}),
         (
             None,
             None,
             None,
+            1,
             {
                 "items": [
                     {
-                        "entityType": MEX_EXTRACTED_PRIMARY_SOURCE.entityType,
-                        "hadPrimarySource": [
-                            MEX_EXTRACTED_PRIMARY_SOURCE.hadPrimarySource
-                        ],
-                        "identifier": MEX_EXTRACTED_PRIMARY_SOURCE.identifier,
-                        "identifierInPrimarySource": MEX_EXTRACTED_PRIMARY_SOURCE.identifierInPrimarySource,
-                        "stableTargetId": [MEX_EXTRACTED_PRIMARY_SOURCE.stableTargetId],
+                        "identifierInPrimarySource": "mex",
+                        "entityType": "ExtractedPrimarySource",
+                        "identifier": "00000000000001",
+                        "stableTargetId": ["00000000000000"],
+                        "hadPrimarySource": ["00000000000000"],
                     }
                 ],
                 "total": 10,
             },
         ),
+        (
+            '"info@contact-point.one"',
+            None,
+            None,
+            10,
+            {
+                "items": [
+                    {
+                        "identifierInPrimarySource": "cp-1",
+                        "email": ["info@contact-point.one"],
+                        "entityType": "ExtractedContactPoint",
+                        "identifier": "bFQoRhcVH5DHUy",
+                        "stableTargetId": ["bFQoRhcVH5DHUz"],
+                        "hadPrimarySource": ["bFQoRhcVH5DHUr"],
+                    }
+                ],
+                "total": 1,
+            },
+        ),
+        (
+            "contact point",
+            None,
+            None,
+            10,
+            {
+                "items": [
+                    {
+                        "identifierInPrimarySource": "cp-2",
+                        "email": ["help@contact-point.two"],
+                        "entityType": "ExtractedContactPoint",
+                        "identifier": "bFQoRhcVH5DHUA",
+                        "stableTargetId": ["bFQoRhcVH5DHUB"],
+                        "hadPrimarySource": ["bFQoRhcVH5DHUr"],
+                    },
+                    {
+                        "identifierInPrimarySource": "cp-1",
+                        "email": ["info@contact-point.one"],
+                        "entityType": "ExtractedContactPoint",
+                        "identifier": "bFQoRhcVH5DHUy",
+                        "stableTargetId": ["bFQoRhcVH5DHUz"],
+                        "hadPrimarySource": ["bFQoRhcVH5DHUr"],
+                    },
+                ],
+                "total": 2,
+            },
+        ),
+        (
+            "RKI",
+            None,
+            None,
+            10,
+            {
+                "items": [
+                    {
+                        "rorId": [],
+                        "gndId": [],
+                        "wikidataId": [],
+                        "identifierInPrimarySource": "robert-koch-institute",
+                        "viafId": [],
+                        "geprisId": [],
+                        "isniId": [],
+                        "entityType": "ExtractedOrganization",
+                        "identifier": "bFQoRhcVH5DHUC",
+                        "stableTargetId": ["bFQoRhcVH5DHUv"],
+                        "hadPrimarySource": ["bFQoRhcVH5DHUt"],
+                        "officialName": [
+                            {"value": "RKI", "language": "de"},
+                            {"value": "Robert Koch Institute", "language": "en"},
+                        ],
+                    },
+                    {
+                        "rorId": [],
+                        "gndId": [],
+                        "wikidataId": [],
+                        "identifierInPrimarySource": "rki",
+                        "viafId": [],
+                        "geprisId": [],
+                        "isniId": [],
+                        "entityType": "ExtractedOrganization",
+                        "identifier": "bFQoRhcVH5DHUu",
+                        "stableTargetId": ["bFQoRhcVH5DHUv"],
+                        "hadPrimarySource": ["bFQoRhcVH5DHUr"],
+                        "officialName": [
+                            {"value": "RKI", "language": "de"},
+                            {
+                                "value": "Robert Koch Institut ist the best",
+                                "language": "de",
+                            },
+                        ],
+                    },
+                ],
+                "total": 2,
+            },
+        ),
+        (
+            "Homepage",
+            None,
+            None,
+            10,
+            {
+                "items": [
+                    {
+                        "fundingProgram": [],
+                        "identifierInPrimarySource": "a-1",
+                        "start": ["2014-08-24"],
+                        "theme": ["https://mex.rki.de/item/theme-11"],
+                        "entityType": "ExtractedActivity",
+                        "activityType": [],
+                        "identifier": "bFQoRhcVH5DHUG",
+                        "end": [],
+                        "stableTargetId": ["bFQoRhcVH5DHUH"],
+                        "hadPrimarySource": ["bFQoRhcVH5DHUr"],
+                        "contact": [
+                            "bFQoRhcVH5DHUz",
+                            "bFQoRhcVH5DHUB",
+                            "bFQoRhcVH5DHUx",
+                        ],
+                        "responsibleUnit": ["bFQoRhcVH5DHUx"],
+                        "title": [{"value": "Aktivität 1", "language": "de"}],
+                        "abstract": [
+                            {"value": "An active activity.", "language": "en"},
+                            {"value": "Une activité active."},
+                        ],
+                        "website": [
+                            {"title": "Activity Homepage", "url": "https://activity-1"}
+                        ],
+                    }
+                ],
+                "total": 1,
+            },
+        ),
     ],
-    ids=["id not found", "search not found", "find mex primary source"],
+    ids=[
+        "id not found",
+        "search not found",
+        "no filters",
+        "find strict",
+        "find fuzzy",
+        "find Text",
+        "find Link",
+    ],
 )
 @pytest.mark.usefixtures("load_dummy_data")
 @pytest.mark.integration
@@ -317,6 +455,7 @@ def test_fetch_extracted_items(
     query_string: str | None,
     stable_target_id: str | None,
     entity_type: list[str] | None,
+    limit: int,
     expected: dict[str, object],
 ) -> None:
     connector = GraphConnector.get()
@@ -326,7 +465,7 @@ def test_fetch_extracted_items(
         stable_target_id=stable_target_id,
         entity_type=entity_type,
         skip=0,
-        limit=1,
+        limit=limit,
     )
 
     assert result.one() == expected

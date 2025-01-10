@@ -225,8 +225,6 @@ class GraphConnector(BaseConnector):
             skip=skip,
             limit=limit,
         )
-        if len(result.all()) == 0:
-            pass  # breakpoint()
         for query_result in result.all():
             for item in query_result["items"]:
                 expand_references_in_search_result(item)
