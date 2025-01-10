@@ -21,7 +21,6 @@ from mex.common.models import (
     AnyExtractedModel,
     ExtractedOrganizationalUnit,
     OrganizationalUnitRuleSetRequest,
-    OrganizationalUnitRuleSetResponse,
 )
 from mex.common.types import Identifier
 from tests.conftest import MockedGraph, get_graph
@@ -308,6 +307,34 @@ fetch_extracted_or_rule_items(
             },
         ),
         (
+            None,
+            None,
+            ["ExtractedOrganization"],
+            1,
+            {
+                "items": [
+                    {
+                        "rorId": [],
+                        "gndId": [],
+                        "wikidataId": [],
+                        "identifierInPrimarySource": "robert-koch-institute",
+                        "viafId": [],
+                        "geprisId": [],
+                        "isniId": [],
+                        "entityType": "ExtractedOrganization",
+                        "identifier": "bFQoRhcVH5DHUC",
+                        "stableTargetId": ["bFQoRhcVH5DHUv"],
+                        "hadPrimarySource": ["bFQoRhcVH5DHUt"],
+                        "officialName": [
+                            {"value": "RKI", "language": "de"},
+                            {"value": "Robert Koch Institute", "language": "en"},
+                        ],
+                    },
+                ],
+                "total": 2,
+            },
+        ),
+        (
             '"info@contact-point.one"',
             None,
             None,
@@ -443,6 +470,7 @@ fetch_extracted_or_rule_items(
         "id not found",
         "search not found",
         "no filters",
+        "entity type filter",
         "find strict",
         "find fuzzy",
         "find Text",
@@ -527,27 +555,75 @@ fetch_extracted_or_rule_items(
     }
 
 
+@pytest.mark.parametrize(
+    ("query_string", "stable_target_id", "expected"),
+    [
+        (None, "thisIdDoesNotExist", {"items": [], "total": 0}),
+        ("this_search_term_is_not_findable", None, {"items": [], "total": 0}),
+        (
+            None,
+            None,
+            {
+                "items": [
+                    {
+                        "email": [],
+                        "entityType": "AdditiveOrganizationalUnit",
+                        "stableTargetId": ["bFQoRhcVH5DHUF"],
+                        "parentUnit": ["bFQoRhcVH5DHUx"],
+                        "name": [{"value": "Unit 1.7", "language": "en"}],
+                        "website": [
+                            {"title": "Unit Homepage", "url": "https://unit-1-7"}
+                        ],
+                    }
+                ],
+                "total": 3,
+            },
+        ),
+        (
+            '"Unit 1.7"',
+            None,
+            {
+                "items": [
+                    {
+                        "email": [],
+                        "entityType": "AdditiveOrganizationalUnit",
+                        "stableTargetId": ["bFQoRhcVH5DHUF"],
+                        "parentUnit": ["bFQoRhcVH5DHUx"],
+                        "name": [{"value": "Unit 1.7", "language": "en"}],
+                        "website": [
+                            {"title": "Unit Homepage", "url": "https://unit-1-7"}
+                        ],
+                    }
+                ],
+                "total": 1,
+            },
+        ),
+    ],
+    ids=[
+        "id not found",
+        "search not found",
+        "no filters",
+        "find Link",
+    ],
+)
+@pytest.mark.usefixtures("load_dummy_data", "load_dummy_rule_set")
 @pytest.mark.integration
 def test_fetch_rule_items(
-    load_dummy_rule_set: OrganizationalUnitRuleSetResponse,
+    query_string: str | None,
+    stable_target_id: str | None,
+    expected: dict[str, object],
 ) -> None:
     connector = GraphConnector.get()
 
-    result = connector.fetch_rule_items(None, None, None, 0, 1)
+    result = connector.fetch_rule_items(
+        query_string=query_string,
+        stable_target_id=stable_target_id,
+        entity_type=None,
+        skip=0,
+        limit=1,
+    )
 
-    assert result.one() == {
-        "items": [
-            {
-                "email": [],
-                "entityType": "AdditiveOrganizationalUnit",
-                "name": [{"value": "Unit 1.7", "language": "en"}],
-                "website": [{"title": "Unit Homepage", "url": "https://unit-1-7"}],
-                "parentUnit": [load_dummy_rule_set.additive.parentUnit],
-                "stableTargetId": [load_dummy_rule_set.stableTargetId],
-            }
-        ],
-        "total": 3,
-    }
+    assert result.one() == expected
 
 
 @pytest.mark.integration
@@ -647,55 +723,330 @@ fetch_merged_items(filter_by_query_string=True, filter_by_identifier=True)""",
     }
 
 
-@pytest.mark.usefixtures("load_dummy_data", "load_dummy_rule_set")
-@pytest.mark.integration
-def test_fetch_merged_items() -> None:
-    connector = GraphConnector.get()
-
-    result = connector.fetch_merged_items(
-        query_string=None,
-        identifier=None,
-        entity_type=["MergedOrganizationalUnit"],
-        skip=1,
-        limit=1,
-    )
-
-    assert result.one() == {
-        "items": [
+@pytest.mark.parametrize(
+    ("query_string", "identifier", "entity_type", "limit", "expected"),
+    [
+        (None, "thisIdDoesNotExist", None, 10, {"items": [], "total": 0}),
+        ("this_search_term_is_not_findable", None, None, 10, {"items": [], "total": 0}),
+        (
+            None,
+            None,
+            None,
+            1,
             {
-                "_components": [
+                "items": [
                     {
-                        "identifierInPrimarySource": "ou-1",
-                        "email": [],
-                        "entityType": "ExtractedOrganizationalUnit",
-                        "identifier": "bFQoRhcVH5DHUw",
-                        "stableTargetId": ["bFQoRhcVH5DHUx"],
-                        "hadPrimarySource": ["bFQoRhcVH5DHUt"],
-                        "unitOf": ["bFQoRhcVH5DHUv"],
-                        "name": [{"value": "Unit 1", "language": "en"}],
+                        "_components": [
+                            {
+                                "identifierInPrimarySource": "mex",
+                                "entityType": "ExtractedPrimarySource",
+                                "identifier": "00000000000001",
+                                "stableTargetId": ["00000000000000"],
+                                "hadPrimarySource": ["00000000000000"],
+                            }
+                        ],
+                        "entityType": "MergedPrimarySource",
+                        "identifier": "00000000000000",
                     }
                 ],
-                "entityType": "MergedOrganizationalUnit",
-                "identifier": "bFQoRhcVH5DHUx",
-            }
-        ],
-        "total": 2,
-    }
-
-
+                "total": 9,
+            },
+        ),
+        (
+            None,
+            None,
+            ["MergedOrganization"],
+            1,
+            {
+                "items": [
+                    {
+                        "_components": [
+                            {
+                                "rorId": [],
+                                "gndId": [],
+                                "wikidataId": [],
+                                "identifierInPrimarySource": "robert-koch-institute",
+                                "viafId": [],
+                                "geprisId": [],
+                                "isniId": [],
+                                "entityType": "ExtractedOrganization",
+                                "identifier": "bFQoRhcVH5DHUC",
+                                "stableTargetId": ["bFQoRhcVH5DHUv"],
+                                "hadPrimarySource": ["bFQoRhcVH5DHUt"],
+                                "officialName": [
+                                    {"value": "RKI", "language": "de"},
+                                    {
+                                        "value": "Robert Koch Institute",
+                                        "language": "en",
+                                    },
+                                ],
+                            },
+                            {
+                                "rorId": [],
+                                "gndId": [],
+                                "wikidataId": [],
+                                "identifierInPrimarySource": "rki",
+                                "viafId": [],
+                                "geprisId": [],
+                                "isniId": [],
+                                "entityType": "ExtractedOrganization",
+                                "identifier": "bFQoRhcVH5DHUu",
+                                "stableTargetId": ["bFQoRhcVH5DHUv"],
+                                "hadPrimarySource": ["bFQoRhcVH5DHUr"],
+                                "officialName": [
+                                    {"value": "RKI", "language": "de"},
+                                    {
+                                        "value": "Robert Koch Institut ist the best",
+                                        "language": "de",
+                                    },
+                                ],
+                            },
+                        ],
+                        "entityType": "MergedOrganization",
+                        "identifier": "bFQoRhcVH5DHUv",
+                    }
+                ],
+                "total": 1,
+            },
+        ),
+        (
+            '"info@contact-point.one"',
+            None,
+            None,
+            10,
+            {
+                "items": [
+                    {
+                        "_components": [
+                            {
+                                "identifierInPrimarySource": "cp-1",
+                                "email": ["info@contact-point.one"],
+                                "entityType": "ExtractedContactPoint",
+                                "identifier": "bFQoRhcVH5DHUy",
+                                "stableTargetId": ["bFQoRhcVH5DHUz"],
+                                "hadPrimarySource": ["bFQoRhcVH5DHUr"],
+                            }
+                        ],
+                        "entityType": "MergedContactPoint",
+                        "identifier": "bFQoRhcVH5DHUz",
+                    }
+                ],
+                "total": 1,
+            },
+        ),
+        (
+            "contact point",
+            None,
+            None,
+            10,
+            {
+                "items": [
+                    {
+                        "_components": [
+                            {
+                                "identifierInPrimarySource": "cp-2",
+                                "email": ["help@contact-point.two"],
+                                "entityType": "ExtractedContactPoint",
+                                "identifier": "bFQoRhcVH5DHUA",
+                                "stableTargetId": ["bFQoRhcVH5DHUB"],
+                                "hadPrimarySource": ["bFQoRhcVH5DHUr"],
+                            }
+                        ],
+                        "entityType": "MergedContactPoint",
+                        "identifier": "bFQoRhcVH5DHUB",
+                    },
+                    {
+                        "_components": [
+                            {
+                                "identifierInPrimarySource": "cp-1",
+                                "email": ["info@contact-point.one"],
+                                "entityType": "ExtractedContactPoint",
+                                "identifier": "bFQoRhcVH5DHUy",
+                                "stableTargetId": ["bFQoRhcVH5DHUz"],
+                                "hadPrimarySource": ["bFQoRhcVH5DHUr"],
+                            }
+                        ],
+                        "entityType": "MergedContactPoint",
+                        "identifier": "bFQoRhcVH5DHUz",
+                    },
+                ],
+                "total": 2,
+            },
+        ),
+        (
+            "RKI",
+            None,
+            None,
+            10,
+            {
+                "items": [
+                    {
+                        "_components": [
+                            {
+                                "rorId": [],
+                                "gndId": [],
+                                "wikidataId": [],
+                                "identifierInPrimarySource": "robert-koch-institute",
+                                "viafId": [],
+                                "geprisId": [],
+                                "isniId": [],
+                                "entityType": "ExtractedOrganization",
+                                "identifier": "bFQoRhcVH5DHUC",
+                                "stableTargetId": ["bFQoRhcVH5DHUv"],
+                                "hadPrimarySource": ["bFQoRhcVH5DHUt"],
+                                "officialName": [
+                                    {"value": "RKI", "language": "de"},
+                                    {
+                                        "value": "Robert Koch Institute",
+                                        "language": "en",
+                                    },
+                                ],
+                            },
+                            {
+                                "rorId": [],
+                                "gndId": [],
+                                "wikidataId": [],
+                                "identifierInPrimarySource": "rki",
+                                "viafId": [],
+                                "geprisId": [],
+                                "isniId": [],
+                                "entityType": "ExtractedOrganization",
+                                "identifier": "bFQoRhcVH5DHUu",
+                                "stableTargetId": ["bFQoRhcVH5DHUv"],
+                                "hadPrimarySource": ["bFQoRhcVH5DHUr"],
+                                "officialName": [
+                                    {"value": "RKI", "language": "de"},
+                                    {
+                                        "value": "Robert Koch Institut ist the best",
+                                        "language": "de",
+                                    },
+                                ],
+                            },
+                        ],
+                        "entityType": "MergedOrganization",
+                        "identifier": "bFQoRhcVH5DHUv",
+                    }
+                ],
+                "total": 1,
+            },
+        ),
+        (
+            "Homepage",
+            None,
+            None,
+            10,
+            {
+                "items": [
+                    {
+                        "_components": [
+                            {
+                                "identifierInPrimarySource": "ou-1.6",
+                                "email": [],
+                                "entityType": "ExtractedOrganizationalUnit",
+                                "identifier": "bFQoRhcVH5DHUE",
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                                "hadPrimarySource": ["bFQoRhcVH5DHUt"],
+                                "parentUnit": ["bFQoRhcVH5DHUx"],
+                                "unitOf": ["bFQoRhcVH5DHUv"],
+                                "name": [{"value": "Unit 1.6", "language": "en"}],
+                            },
+                            {
+                                "email": [],
+                                "entityType": "AdditiveOrganizationalUnit",
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                                "parentUnit": ["bFQoRhcVH5DHUx"],
+                                "name": [{"value": "Unit 1.7", "language": "en"}],
+                                "website": [
+                                    {
+                                        "title": "Unit Homepage",
+                                        "url": "https://unit-1-7",
+                                    }
+                                ],
+                            },
+                            {
+                                "entityType": "PreventiveOrganizationalUnit",
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                            },
+                            {
+                                "email": [],
+                                "entityType": "SubtractiveOrganizationalUnit",
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                            },
+                        ],
+                        "entityType": "MergedOrganizationalUnit",
+                        "identifier": "bFQoRhcVH5DHUF",
+                    },
+                    {
+                        "_components": [
+                            {
+                                "fundingProgram": [],
+                                "identifierInPrimarySource": "a-1",
+                                "start": ["2014-08-24"],
+                                "theme": ["https://mex.rki.de/item/theme-11"],
+                                "entityType": "ExtractedActivity",
+                                "activityType": [],
+                                "identifier": "bFQoRhcVH5DHUG",
+                                "end": [],
+                                "stableTargetId": ["bFQoRhcVH5DHUH"],
+                                "hadPrimarySource": ["bFQoRhcVH5DHUr"],
+                                "contact": [
+                                    "bFQoRhcVH5DHUz",
+                                    "bFQoRhcVH5DHUB",
+                                    "bFQoRhcVH5DHUx",
+                                ],
+                                "responsibleUnit": ["bFQoRhcVH5DHUx"],
+                                "title": [{"value": "Aktivität 1", "language": "de"}],
+                                "abstract": [
+                                    {"value": "An active activity.", "language": "en"},
+                                    {"value": "Une activité active."},
+                                ],
+                                "website": [
+                                    {
+                                        "title": "Activity Homepage",
+                                        "url": "https://activity-1",
+                                    }
+                                ],
+                            }
+                        ],
+                        "entityType": "MergedActivity",
+                        "identifier": "bFQoRhcVH5DHUH",
+                    },
+                ],
+                "total": 2,
+            },
+        ),
+    ],
+    ids=[
+        "id not found",
+        "search not found",
+        "no filters",
+        "entity type filter",
+        "find strict",
+        "find fuzzy",
+        "find Text",
+        "find Link",
+    ],
+)
+@pytest.mark.usefixtures("load_dummy_data", "load_dummy_rule_set")
 @pytest.mark.integration
-def test_fetch_merged_items_empty() -> None:
+def test_fetch_merged_items(
+    query_string: str | None,
+    identifier: str | None,
+    entity_type: list[str] | None,
+    limit: int,
+    expected: dict[str, object],
+) -> None:
     connector = GraphConnector.get()
 
     result = connector.fetch_merged_items(
-        query_string=None,
-        identifier="thisIdDoesNotExist",
-        entity_type=None,
+        query_string=query_string,
+        identifier=identifier,
+        entity_type=entity_type,
         skip=0,
-        limit=1,
+        limit=limit,
     )
 
-    assert result.one() == {"items": [], "total": 0}
+    assert result.one() == expected
 
 
 @pytest.mark.usefixtures("mocked_query_class")
