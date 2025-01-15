@@ -323,14 +323,14 @@ def _match_organization_items(dummy_data: dict[str, AnyExtractedModel]) -> None:
     # remove the merged item for org2
     connector.commit(
         f"""\
-MATCH(n) WHERE n.identifier='{dummy_data['organization_2'].stableTargetId}'
+MATCH(n) WHERE n.identifier='{dummy_data["organization_2"].stableTargetId}'
 DETACH DELETE n;"""
     )
     # connect the extracted item for org2 with the merged item for org1
     connector.commit(
         f"""\
-MATCH(n :ExtractedOrganization) WHERE n.identifier = '{dummy_data['organization_2'].identifier}'
-MATCH(m :MergedOrganization) WHERE m.identifier = '{dummy_data['organization_1'].stableTargetId}'
+MATCH(n :ExtractedOrganization) WHERE n.identifier = '{dummy_data["organization_2"].identifier}'
+MATCH(m :MergedOrganization) WHERE m.identifier = '{dummy_data["organization_1"].stableTargetId}'
 MERGE (n)-[:stableTargetId {{position:0}}]->(m);"""
     )
     # clear the identity provider cache to refresh the `stableTargetId` property on org2
