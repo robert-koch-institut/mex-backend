@@ -25,7 +25,7 @@ optional-dependencies.dev = [
     "pytest-cov>=6,<7",
     "pytest-random-order>=1,<2",
     "pytest>=8,<9",
-    "ruff>=0.8,<1",
+    "ruff>=0.9,<1",
     "sphinx>=8,<9",
     "types-pytz>=2024,<2025",
 ]
