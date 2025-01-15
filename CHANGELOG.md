@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changes
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [0.28.0] - 2025-01-15
+
+### Added
+
 - add `extracted_or_rule_labels` to query builder globals
 - add two matched organizations to the test dummy data
 
@@ -23,16 +37,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - prefix `components` in merged queries with `_`, to be more harmonious with `_refs`
 - add email fields to `SEARCHABLE_FIELDS` and `SEARCHABLE_CLASSES` (stop-gap MX-1766)
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 
 - avoid recursive retries in `GraphConnector._check_connectivity_and_authentication`
 - fix integration tests not properly marked as integration tests
-
-### Security
 
 ## [0.27.0] - 2024-12-19
 
