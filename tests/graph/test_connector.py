@@ -335,6 +335,8 @@ fetch_extracted_or_rule_items(
             },
         ),
         (
+            # find exact matches. without the quotes this might also match the second
+            # contact point's email `help@contact-point.two`
             '"info@contact-point.one"',
             None,
             None,
@@ -471,7 +473,7 @@ fetch_extracted_or_rule_items(
         "search not found",
         "no filters",
         "entity type filter",
-        "find strict",
+        "find exact",
         "find fuzzy",
         "find Text",
         "find Link",
@@ -810,6 +812,8 @@ fetch_merged_items(filter_by_query_string=True, filter_by_identifier=True)""",
             },
         ),
         (
+            # find exact matches. without the quotes this might also match the second
+            # contact point's email `help@contact-point.two`
             '"info@contact-point.one"',
             None,
             None,
@@ -1021,7 +1025,7 @@ fetch_merged_items(filter_by_query_string=True, filter_by_identifier=True)""",
         "search not found",
         "no filters",
         "entity type filter",
-        "find strict",
+        "find exact",
         "find fuzzy",
         "find Text",
         "find Link",
