@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Annotated
+from typing import Annotated, Any
 
 from black import Mode, format_str
 from jinja2 import (
@@ -42,9 +42,7 @@ class Query:
 
     REPR_MODE = Mode(line_length=1024)
 
-    def __init__(
-        self, name: str, template: Template, kwargs: dict[str, object]
-    ) -> None:
+    def __init__(self, name: str, template: Template, kwargs: dict[str, Any]) -> None:
         """Create a new query instance."""
         self.name = name
         self.template = template

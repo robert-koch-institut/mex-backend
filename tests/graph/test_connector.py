@@ -1,4 +1,4 @@
-from typing import cast
+from typing import Any, cast
 from unittest.mock import MagicMock, Mock, call
 
 import pytest
@@ -486,7 +486,7 @@ def test_fetch_extracted_items(
     stable_target_id: str | None,
     entity_type: list[str] | None,
     limit: int,
-    expected: dict[str, object],
+    expected: dict[str, Any],
 ) -> None:
     connector = GraphConnector.get()
 
@@ -613,7 +613,7 @@ fetch_extracted_or_rule_items(
 def test_fetch_rule_items(
     query_string: str | None,
     stable_target_id: str | None,
-    expected: dict[str, object],
+    expected: dict[str, Any],
 ) -> None:
     connector = GraphConnector.get()
 
@@ -1038,7 +1038,7 @@ def test_fetch_merged_items(
     identifier: str | None,
     entity_type: list[str] | None,
     limit: int,
-    expected: dict[str, object],
+    expected: dict[str, Any],
 ) -> None:
     connector = GraphConnector.get()
 
