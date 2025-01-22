@@ -28,8 +28,6 @@ from mex.common.models import (
     ExtractedPrimarySource,
     OrganizationalUnitRuleSetRequest,
     OrganizationalUnitRuleSetResponse,
-    PreventiveOrganizationalUnit,
-    SubtractiveOrganizationalUnit,
 )
 from mex.common.settings import BaseSettings
 from mex.common.transform import MExEncoder
@@ -365,11 +363,7 @@ def additive_organizational_unit(
 def organizational_unit_rule_set_request(
     additive_organizational_unit: AdditiveOrganizationalUnit,
 ) -> OrganizationalUnitRuleSetRequest:
-    return OrganizationalUnitRuleSetRequest(
-        additive=additive_organizational_unit,
-        preventive=PreventiveOrganizationalUnit(),
-        subtractive=SubtractiveOrganizationalUnit(),
-    )
+    return OrganizationalUnitRuleSetRequest(additive=additive_organizational_unit)
 
 
 @pytest.fixture

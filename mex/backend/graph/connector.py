@@ -321,7 +321,7 @@ class GraphConnector(BaseConnector):
         )
         for query_result in result.all():
             for item in query_result["items"]:
-                for component in item["components"]:
+                for component in item["_components"]:
                     expand_references_in_search_result(component)
         return result
 
