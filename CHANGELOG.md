@@ -11,13 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- add support for full text queries on nested models to find extracted/rule/merged items
-- optimize extracted/rule/merged search queries by applying sorting and pagination
-  before pulling in nested models as well as identifiers from referenced merged items
-  and by replacing subqueries with cypher "pattern comprehension" syntax
-- prefix `components` in merged queries with `_`, to be more harmonious with `_refs`
-- add email fields to `SEARCHABLE_FIELDS` and `SEARCHABLE_CLASSES` (stop-gap MX-1766)
-
 ### Deprecated
 
 ### Removed
@@ -25,6 +18,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [0.29.0] - 2025-01-22
+
+### Changes
+
+- add support for full text queries on nested models to find extracted/rule/merged items
+- optimize extracted/rule/merged search queries by applying sorting and pagination
+  before pulling in nested models as well as identifiers from referenced merged items
+  and by replacing subqueries with cypher "pattern comprehension" syntax
+- prefix `components` in merged queries with `_`, to be more harmonious with `_refs`
+- add email fields to `SEARCHABLE_FIELDS` and `SEARCHABLE_CLASSES` (stop-gap MX-1766)
 
 ## [0.28.0] - 2025-01-15
 
