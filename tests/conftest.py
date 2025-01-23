@@ -29,7 +29,6 @@ from mex.common.models import (
     OrganizationalUnitRuleSetRequest,
     OrganizationalUnitRuleSetResponse,
 )
-from mex.common.settings import BaseSettings
 from mex.common.transform import MExEncoder
 from mex.common.types import (
     Email,
@@ -183,14 +182,14 @@ def isolate_identifier_seeds(monkeypatch: MonkeyPatch) -> None:
 def set_identity_provider(is_integration_test: bool, monkeypatch: MonkeyPatch) -> None:
     """Ensure the identifier provider is set correctly for unit and int tests."""
     # TODO(ND): yuck, all this needs cleaning up after MX-1596
-    for settings in (BaseSettings.get(), BackendSettings.get()):
-        if is_integration_test:
-            monkeypatch.setitem(settings.model_config, "validate_assignment", False)
-            monkeypatch.setattr(
-                settings, "identity_provider", BackendIdentityProvider.GRAPH
-            )
-        else:
-            monkeypatch.setattr(settings, "identity_provider", IdentityProvider.MEMORY)
+    settings = BackendSettings.get()
+    if is_integration_test:
+        monkeypatch.setitem(settings.model_config, "validate_assignment", False)
+        monkeypatch.setattr(
+            settings, "identity_provider", BackendIdentityProvider.GRAPH
+        )
+    else:
+        monkeypatch.setattr(settings, "identity_provider", IdentityProvider.MEMORY)
 
 
 @pytest.fixture(autouse=True)
