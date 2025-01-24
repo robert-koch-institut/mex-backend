@@ -1,6 +1,6 @@
 [project]
 name = "mex-backend"
-version = "0.29.0"
+version = "0.29.1"
 description = "Backend server for the RKI metadata exchange."
 authors = [{ name = "MEx Team", email = "mex@rki.de" }]
 readme = { file = "README.md", content-type = "text/markdown" }
