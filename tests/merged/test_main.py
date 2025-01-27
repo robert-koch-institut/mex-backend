@@ -164,7 +164,7 @@ def test_search_merged_items_mocked(
             },
         ),
         (
-            "?identifier=bFQoRhcVH5DHUz",
+            "?identifier=bFQoRhcVH5DHUx",
             {
                 "items": [
                     {
