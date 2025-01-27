@@ -12,10 +12,11 @@ router = APIRouter()
 
 
 @router.get("/merged-item", tags=["editor", "public"])
-def search_merged_items(
+def search_merged_items(  # noqa: PLR0913
     q: Annotated[str, Query(max_length=100)] = "",
     identifier: Identifier | None = None,
     entityType: Annotated[Sequence[MergedType], Query(max_length=len(MergedType))] = [],
+    hadPrimarySource: Identifier | None = None,
     skip: Annotated[int, Query(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> MergedItemSearch:
@@ -24,6 +25,7 @@ def search_merged_items(
         q,
         identifier,
         [str(t.value) for t in entityType or MergedType],
+        hadPrimarySource,
         skip,
         limit,
         validate_cardinality=True,
