@@ -683,6 +683,7 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
         query_string="my-query",
         identifier=Identifier.generate(99),
         entity_type=["MergedFoo", "MergedBar", "MergedBatz"],
+        had_primary_source=Identifier.generate(100),
         skip=10,
         limit=100,
     )
@@ -692,9 +693,10 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
 fetch_merged_items(
     filter_by_query_string=True,
     filter_by_identifier=True,
-    filter_by_primary_source=False,
+    filter_by_had_primary_source=True,
 )""",
         {
+            "had_primary_source": "bFQoRhcVH5DHV2",
             "labels": [
                 "MergedFoo",
                 "MergedBar",
@@ -1050,6 +1052,7 @@ def test_fetch_merged_items(
         query_string=query_string,
         identifier=identifier,
         entity_type=entity_type,
+        had_primary_source=None,
         skip=0,
         limit=limit,
     )

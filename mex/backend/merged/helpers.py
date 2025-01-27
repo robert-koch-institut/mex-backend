@@ -128,6 +128,7 @@ def search_merged_items_in_graph(  # noqa: PLR0913
         query_string=query_string,
         identifier=identifier,
         entity_type=entity_type,
+        had_primary_source=None,
         skip=skip,
         limit=limit,
     )
