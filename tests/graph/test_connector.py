@@ -732,11 +732,26 @@ fetch_merged_items(
 
 
 @pytest.mark.parametrize(
-    ("query_string", "identifier", "entity_type", "limit", "expected"),
+    (
+        "query_string",
+        "identifier",
+        "entity_type",
+        "had_primary_source",
+        "limit",
+        "expected",
+    ),
     [
-        (None, "thisIdDoesNotExist", None, 10, {"items": [], "total": 0}),
-        ("this_search_term_is_not_findable", None, None, 10, {"items": [], "total": 0}),
+        (None, "thisIdDoesNotExist", None, None, 10, {"items": [], "total": 0}),
         (
+            "this_search_term_is_not_findable",
+            None,
+            None,
+            None,
+            10,
+            {"items": [], "total": 0},
+        ),
+        (
+            None,
             None,
             None,
             None,
@@ -764,6 +779,7 @@ fetch_merged_items(
             None,
             None,
             ["MergedOrganization"],
+            None,
             1,
             {
                 "items": [
@@ -818,9 +834,61 @@ fetch_merged_items(
             },
         ),
         (
+            None,
+            None,
+            None,
+            "bFQoRhcVH5DHUt",
+            1,
+            {
+                "items": [
+                    {
+                        "_components": [
+                            {
+                                "email": [],
+                                "entityType": "ExtractedOrganizationalUnit",
+                                "hadPrimarySource": ["bFQoRhcVH5DHUt"],
+                                "identifier": "bFQoRhcVH5DHUE",
+                                "identifierInPrimarySource": "ou-1.6",
+                                "name": [{"language": "en", "value": "Unit 1.6"}],
+                                "parentUnit": ["bFQoRhcVH5DHUx"],
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                                "unitOf": ["bFQoRhcVH5DHUv"],
+                            },
+                            {
+                                "email": [],
+                                "entityType": "AdditiveOrganizationalUnit",
+                                "name": [{"language": "en", "value": "Unit 1.7"}],
+                                "parentUnit": ["bFQoRhcVH5DHUx"],
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                                "website": [
+                                    {
+                                        "title": "Unit Homepage",
+                                        "url": "https://unit-1-7",
+                                    }
+                                ],
+                            },
+                            {
+                                "entityType": "PreventiveOrganizationalUnit",
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                            },
+                            {
+                                "email": [],
+                                "entityType": "SubtractiveOrganizationalUnit",
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                            },
+                        ],
+                        "entityType": "MergedOrganizationalUnit",
+                        "identifier": "bFQoRhcVH5DHUF",
+                    }
+                ],
+                "total": 3,
+            },
+        ),
+        (
             # find exact matches. without the quotes this might also match the second
             # contact point's email `help@contact-point.two`
             '"info@contact-point.one"',
+            None,
             None,
             None,
             10,
@@ -846,6 +914,7 @@ fetch_merged_items(
         ),
         (
             "contact point",
+            None,
             None,
             None,
             10,
@@ -885,6 +954,7 @@ fetch_merged_items(
         ),
         (
             "RKI",
+            None,
             None,
             None,
             10,
@@ -942,6 +1012,7 @@ fetch_merged_items(
         ),
         (
             "Homepage",
+            None,
             None,
             None,
             10,
@@ -1031,6 +1102,7 @@ fetch_merged_items(
         "search not found",
         "no filters",
         "entity type filter",
+        "had primary source filter",
         "find exact",
         "find fuzzy",
         "find Text",
@@ -1039,10 +1111,11 @@ fetch_merged_items(
 )
 @pytest.mark.usefixtures("load_dummy_data", "load_dummy_rule_set")
 @pytest.mark.integration
-def test_fetch_merged_items(
+def test_fetch_merged_items(  # noqa: PLR0913
     query_string: str | None,
     identifier: str | None,
     entity_type: list[str] | None,
+    had_primary_source: str | None,
     limit: int,
     expected: dict[str, Any],
 ) -> None:
@@ -1052,7 +1125,7 @@ def test_fetch_merged_items(
         query_string=query_string,
         identifier=identifier,
         entity_type=entity_type,
-        had_primary_source=None,
+        had_primary_source=had_primary_source,
         skip=0,
         limit=limit,
     )
