@@ -693,10 +693,10 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
 fetch_merged_items(
     filter_by_query_string=True,
     filter_by_identifier=True,
-    filter_by_had_primary_source=True,
+    filter_by_reference_to_merged_item=True,
+    reference_field_name="hadPrimarySource",
 )""",
         {
-            "had_primary_source": "bFQoRhcVH5DHV2",
             "labels": [
                 "MergedFoo",
                 "MergedBar",
@@ -704,6 +704,7 @@ fetch_merged_items(
             ],
             "limit": 100,
             "query_string": "my-query",
+            "referenced_identifier": "bFQoRhcVH5DHV2",
             "skip": 10,
             "identifier": "bFQoRhcVH5DHV1",
         },

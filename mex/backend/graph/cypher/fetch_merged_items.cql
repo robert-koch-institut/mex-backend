@@ -9,7 +9,8 @@ Globals:
 Args:
     filter_by_query_string: Whether the final query should accept a full text query string
     filter_by_identifier: Whether the final query should filter by the merged identifier
-    filter_by_had_primary_source: Whether to filter for merged items that contain data from a specific primary source
+    filter_by_reference_to_merged_item: Whether to filter for merged items that have a relation to a specific merged item
+    reference_field_name: name of the relationship to use for filtering by reference
 
 Returns:
     total: Count of all items found by this query
@@ -22,10 +23,10 @@ Returns:
 -#>
 CALL () {
 <%- block match_clause -%>
-<%- if filter_by_had_primary_source %>
-    OPTIONAL MATCH (merged_node:<<merged_labels|join("|")>>)<-[:stableTargetId]-(:<<extracted_labels|join("|")>>)-[:hadPrimarySource]->(primary_source:MergedPrimarySource)
+<%- if filter_by_reference_to_merged_item %>
+    OPTIONAL MATCH (merged_node:<<merged_labels|join("|")>>)<-[:stableTargetId]-(:<<extracted_labels|join("|")>>)-[:<<reference_field_name>>]->(referenced_merged_node_to_filter_by)
     WHERE
-         primary_source.identifier = $had_primary_source
+         referenced_merged_node_to_filter_by.identifier = $referenced_identifier
 <%- endif %>
 <%- if filter_by_query_string %>
     OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)

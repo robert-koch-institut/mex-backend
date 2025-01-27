@@ -312,14 +312,15 @@ class GraphConnector(BaseConnector):
         query = query_builder.fetch_merged_items(
             filter_by_query_string=bool(query_string),
             filter_by_identifier=bool(identifier),
-            filter_by_had_primary_source=bool(had_primary_source),
+            filter_by_reference_to_merged_item=bool(had_primary_source),
+            reference_field_name="hadPrimarySource",
         )
         result = self.commit(
             query,
             query_string=query_string,
             identifier=identifier,
             labels=entity_type or list(MERGED_MODEL_CLASSES_BY_NAME),
-            had_primary_source=had_primary_source,
+            referenced_identifier=had_primary_source,
             skip=skip,
             limit=limit,
         )
