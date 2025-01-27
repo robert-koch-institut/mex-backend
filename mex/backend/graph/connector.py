@@ -310,6 +310,7 @@ class GraphConnector(BaseConnector):
         query = query_builder.fetch_merged_items(
             filter_by_query_string=bool(query_string),
             filter_by_identifier=bool(identifier),
+            filter_by_primary_source=False,
         )
         result = self.commit(
             query,

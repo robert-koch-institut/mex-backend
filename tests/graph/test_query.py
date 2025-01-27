@@ -194,13 +194,18 @@ def test_fetch_extracted_or_rule_items(
     (
         "filter_by_query_string",
         "filter_by_identifier",
+        "filter_by_primary_source",
         "expected",
     ),
     [
         (
             True,
             True,
+            True,
             r"""CALL () {
+    OPTIONAL MATCH (merged_node:MergedThis|MergedThat|MergedOther)<-[:stableTargetId]-(:ExtractedThis|ExtractedThat|ExtractedOther)-[:hadPrimarySource]->(primary_source:MergedPrimarySource)
+    WHERE
+         primary_source.identifier = $primary_source_identifier
     OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
     CALL (hit) {
@@ -222,6 +227,9 @@ def test_fetch_extracted_or_rule_items(
     RETURN COUNT(merged_node) AS total
 }
 CALL () {
+    OPTIONAL MATCH (merged_node:MergedThis|MergedThat|MergedOther)<-[:stableTargetId]-(:ExtractedThis|ExtractedThat|ExtractedOther)-[:hadPrimarySource]->(primary_source:MergedPrimarySource)
+    WHERE
+         primary_source.identifier = $primary_source_identifier
     OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
     CALL (hit) {
@@ -269,6 +277,7 @@ CALL () {
 RETURN items, total;""",
         ),
         (
+            False,
             False,
             False,
             r"""CALL () {
@@ -316,11 +325,13 @@ def test_fetch_merged_items(
     query_builder: QueryBuilder,
     filter_by_query_string: bool,
     filter_by_identifier: bool,
+    filter_by_primary_source: bool,
     expected: str,
 ) -> None:
     query = query_builder.fetch_merged_items(
         filter_by_query_string=filter_by_query_string,
         filter_by_identifier=filter_by_identifier,
+        filter_by_primary_source=filter_by_primary_source,
     )
     assert str(query) == expected
 

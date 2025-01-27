@@ -689,7 +689,11 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
 
     assert mocked_graph.call_args_list[-1].args == (
         """\
-fetch_merged_items(filter_by_query_string=True, filter_by_identifier=True)""",
+fetch_merged_items(
+    filter_by_query_string=True,
+    filter_by_identifier=True,
+    filter_by_primary_source=False,
+)""",
         {
             "labels": [
                 "MergedFoo",
