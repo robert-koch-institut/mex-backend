@@ -11,9 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- update mex-common to 0.48.0
+
 ### Deprecated
 
 ### Removed
+
+- remove backend settings that were just duplicating common settings
+- removed BackendIdentityProvider enum, because it is now included in common
 
 ### Fixed
 
