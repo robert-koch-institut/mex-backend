@@ -15,7 +15,7 @@ from mex.backend.identity.provider import GraphIdentityProvider
 from mex.backend.main import app
 from mex.backend.rules.helpers import create_and_get_rule_set
 from mex.backend.settings import BackendSettings
-from mex.backend.types import APIKeyDatabase, APIUserDatabase, BackendIdentityProvider
+from mex.backend.types import APIKeyDatabase, APIUserDatabase
 from mex.common.connector import CONNECTOR_STORE
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -186,9 +186,7 @@ def set_identity_provider(is_integration_test: bool, monkeypatch: MonkeyPatch) -
     for settings in (BaseSettings.get(), BackendSettings.get()):
         if is_integration_test:
             monkeypatch.setitem(settings.model_config, "validate_assignment", False)
-            monkeypatch.setattr(
-                settings, "identity_provider", BackendIdentityProvider.GRAPH
-            )
+            monkeypatch.setattr(settings, "identity_provider", IdentityProvider.GRAPH)
         else:
             monkeypatch.setattr(settings, "identity_provider", IdentityProvider.MEMORY)
 
