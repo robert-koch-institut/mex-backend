@@ -43,12 +43,6 @@ class APIUserDatabase(BaseModel):
     write: dict[str, APIUserPassword] = {}
 
 
-class BackendIdentityProvider(Enum):
-    """Identity providers implemented by mex-backend."""
-
-    GRAPH = "graph"
-
-
 class DynamicStrEnum(EnumMeta):
     """Metaclass to dynamically populate an enumeration from a list of strings."""
 
