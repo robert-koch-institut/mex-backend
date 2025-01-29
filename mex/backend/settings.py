@@ -1,26 +1,12 @@
 from pydantic import Field, SecretStr
 
-from mex.backend.types import APIKeyDatabase, APIUserDatabase, BackendIdentityProvider
+from mex.backend.types import APIKeyDatabase, APIUserDatabase
 from mex.common.settings import BaseSettings
-from mex.common.types import IdentityProvider, Sink
 
 
 class BackendSettings(BaseSettings):
     """Settings definition for the backend server."""
 
-    debug: bool = Field(
-        False,
-        alias="reload",
-        description="Enable debug mode.",
-        validation_alias="MEX_DEBUG",
-    )
-    sink: list[Sink] = Field(
-        [Sink.GRAPH],
-        description=(
-            "Where to send ingested data. Defaults to writing to the graph db."
-        ),
-        validation_alias="MEX_SINK",
-    )
     backend_host: str = Field(
         "localhost",
         min_length=1,
@@ -70,8 +56,3 @@ class BackendSettings(BaseSettings):
         description="Database of users.",
         validation_alias="MEX_BACKEND_API_USER_DATABASE",
     )
-    identity_provider: IdentityProvider | BackendIdentityProvider = Field(
-        IdentityProvider.MEMORY,
-        description="Provider to assign stableTargetIds to new model instances.",
-        validation_alias="MEX_IDENTITY_PROVIDER",
-    )  # type: ignore[assignment]
