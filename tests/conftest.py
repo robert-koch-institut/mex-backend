@@ -365,6 +365,15 @@ def organizational_unit_rule_set_request(
 
 
 @pytest.fixture
+def organizational_unit_rule_set_response(
+    additive_organizational_unit: AdditiveOrganizationalUnit,
+) -> OrganizationalUnitRuleSetResponse:
+    return OrganizationalUnitRuleSetResponse(
+        additive=additive_organizational_unit, stableTargetId=Identifier.generate(42)
+    )
+
+
+@pytest.fixture
 def load_dummy_rule_set(
     organizational_unit_rule_set_request: OrganizationalUnitRuleSetRequest,
     load_dummy_data: dict[str, AnyExtractedModel],
