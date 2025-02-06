@@ -8,7 +8,13 @@ from pytest import MonkeyPatch
 from starlette import status
 
 from mex.backend.graph.connector import GraphConnector
-from mex.common.models import EXTRACTED_MODEL_CLASSES, AnyExtractedModel
+from mex.common.models import (
+    EXTRACTED_MODEL_CLASSES,
+    RULE_SET_RESPONSE_CLASSES,
+    AnyExtractedModel,
+    ItemsContainer,
+    PaginatedItemsContainer,
+)
 
 Payload = dict[str, list[dict[str, Any]]]
 
@@ -27,7 +33,7 @@ def test_bulk_insert_empty(client_with_api_key_write_permission: TestClient) -> 
         "/v0/ingest", json={"items": []}
     )
     assert response.status_code == status.HTTP_201_CREATED, response.text
-    assert response.json() == {"identifiers": []}
+    assert response.json() == {"items": []}
 
 
 @pytest.mark.integration
@@ -36,22 +42,24 @@ def test_bulk_insert(
     post_payload: Payload,
     dummy_data: dict[str, AnyExtractedModel],
 ) -> None:
-    # get expected identifiers from the dummy data
-    expected_identifiers = sorted(d.identifier for d in dummy_data.values())
-
     # post the dummy data to the ingest endpoint
     response = client_with_api_key_write_permission.post(
         "/v0/ingest", json=post_payload
     )
 
-    # assert the response is the identifier of the contact point
+    # assert the response are the dummy data items
     assert response.status_code == status.HTTP_201_CREATED, response.text
-    assert sorted(response.json()["identifiers"]) == expected_identifiers
+    assert ItemsContainer[AnyExtractedModel].model_validate(
+        response.json()
+    ).items == list(dummy_data.values())
 
     # verify the nodes have actually been stored in the database
     graph = GraphConnector.get()
     result = graph.fetch_extracted_items(None, None, None, 1, len(dummy_data))
-    assert [i["identifier"] for i in result["items"]] == expected_identifiers
+    result_container = PaginatedItemsContainer[AnyExtractedModel].model_validate(
+        result.one()
+    )
+    assert set(result_container.items) == set(dummy_data.values())
 
 
 def test_bulk_insert_malformed(
@@ -62,11 +70,19 @@ def test_bulk_insert_malformed(
         "ctx": {"error": {}},
         "input": "FAIL!",
         "loc": ["body", "items", 0, "function-wrap[fix_listyness()]"],
-        "msg": "Assertion failed, Input should be a valid dictionary, validating "
-        "other types is not supported for models with computed fields.",
+        "msg": "Assertion failed, Input should be a valid dictionary, "
+        "validating other types is not supported for models with "
+        "computed fields.",
         "type": "assertion_error",
     }
     expected_response += [exp_err] * len(EXTRACTED_MODEL_CLASSES)
+    exp_err = {
+        "input": "FAIL!",
+        "loc": ["body", "items", 0, "function-wrap[fix_listyness()]"],
+        "msg": "Input should be a valid dictionary or object to extract fields from",
+        "type": "model_attributes_type",
+    }
+    expected_response += [exp_err] * len(RULE_SET_RESPONSE_CLASSES)
 
     response = client_with_api_key_write_permission.post(
         "/v0/ingest",
@@ -89,6 +105,6 @@ def test_bulk_insert_mocked(
         "/v0/ingest", json=post_payload
     )
     assert response.status_code == status.HTTP_201_CREATED, response.text
-    assert sorted(response.json()["identifiers"]) == sorted(
-        d.identifier for d in dummy_data.values()
-    )
+    assert ItemsContainer[AnyExtractedModel].model_validate(
+        response.json()
+    ).items == list(dummy_data.values())
