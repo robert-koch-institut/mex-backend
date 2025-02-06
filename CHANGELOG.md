@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- bumped cookiecutter template to robert-koch-institut/mex-template@5446da
 - update mex-common to 0.50.0
 - GraphConnector.ingest now accepts rule-set requests as well
 - BREAKING: GraphConnector.ingest returns a list of ingested models, instead of ids
