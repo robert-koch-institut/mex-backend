@@ -64,7 +64,15 @@ def create_and_get_rule_set(
         stable_target_id = Identifier.generate()
 
     connector = GraphConnector.get()
-    connector.create_rule_set(rule_set, stable_target_id)
+    response_class_name = ensure_postfix(rule_set.stemType, "RuleSetResponse")
+    response_class = RULE_SET_RESPONSE_CLASSES_BY_NAME[response_class_name]
+    rule_set_response = response_class(
+        additive=rule_set.additive,
+        preventive=rule_set.preventive,
+        subtractive=rule_set.subtractive,
+        stableTargetId=stable_target_id,
+    )
+    connector.ingest([rule_set_response])
     rule_types = [
         rule_set.additive.entityType,
         rule_set.subtractive.entityType,

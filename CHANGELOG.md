@@ -11,7 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- update mex-common to 0.48.0
+- bumped cookiecutter template to robert-koch-institut/mex-template@5446da
+- update mex-common to 0.50.0
+- GraphConnector.ingest now accepts rule-set requests as well
+- BREAKING: GraphConnector.ingest returns a list of ingested models, instead of ids
+- POST /ingest now accepts rule-set requests as well as extracted items
+- BREAKING: POST /ingest returns a container of ingested models, instead of ids
 
 ### Deprecated
 
@@ -19,6 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - remove backend settings that were just duplicating common settings
 - removed BackendIdentityProvider enum, because it is now included in common
+- remove GraphConnector.create_rule_set, in favor of combined ingest method
+- remove unused ingest_extracted_items_into_graph helper
+- remove unused BulkIngestRequest and BulkIngestResponse
 
 ### Fixed
 

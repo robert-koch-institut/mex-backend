@@ -34,7 +34,7 @@ from mex.common.models import (
     RULE_MODEL_CLASSES_BY_NAME,
     AnyExtractedModel,
     AnyRuleModel,
-    AnyRuleSetRequest,
+    AnyRuleSetResponse,
     BasePrimarySource,
     ExtractedPrimarySource,
 )
@@ -138,9 +138,9 @@ class GraphConnector(BaseConnector):
             },
         )
 
-    def _seed_data(self) -> list[Identifier]:
+    def _seed_data(self) -> None:
         """Ensure the primary source `mex` is seeded and linked to itself."""
-        return self.ingest([cast(ExtractedPrimarySource, MEX_EXTRACTED_PRIMARY_SOURCE)])
+        self.ingest([cast(ExtractedPrimarySource, MEX_EXTRACTED_PRIMARY_SOURCE)])
 
     def close(self) -> None:
         """Close the connector's underlying requests session."""
@@ -511,31 +511,9 @@ class GraphConnector(BaseConnector):
             raise InconsistentGraphError(msg)
         return result
 
-    def create_rule_set(
-        self,
-        model: AnyRuleSetRequest,
-        stable_target_id: Identifier,
-    ) -> None:
-        """Create a new rule set to be applied to one merged item.
-
-        This is a two-step process: first the rule and merged items are created
-        along with their nested objects (like Text and Link); then all edges that
-        represent references (like hadPrimarySource, parentUnit, etc.) are added to
-        the graph in a second step.
-
-        Args:
-            model: A rule-set model
-            stable_target_id: Identifier of the merged item
-        """
-        for rule in (model.additive, model.subtractive, model.preventive):
-            self._merge_item(rule, stable_target_id)
-            self._merge_edges(
-                rule,
-                stable_target_id,
-                extra_refs={"stableTargetId": stable_target_id},
-            )
-
-    def ingest(self, models: list[AnyExtractedModel]) -> list[Identifier]:
+    def ingest(
+        self, models: list[AnyExtractedModel | AnyRuleSetResponse]
+    ) -> list[AnyExtractedModel | AnyRuleSetResponse]:
         """Ingest a list of models into the graph as nodes and connect all edges.
 
         This is a two-step process: first all extracted and merged items are created
@@ -550,12 +528,28 @@ class GraphConnector(BaseConnector):
             List of identifiers of the ingested models
         """
         for model in models:
-            self._merge_item(model, model.stableTargetId, identifier=model.identifier)
+            if isinstance(model, AnyRuleSetResponse):
+                for rule in (model.additive, model.subtractive, model.preventive):
+                    self._merge_item(rule, model.stableTargetId)
+            else:
+                self._merge_item(
+                    model, model.stableTargetId, identifier=model.identifier
+                )
 
         for model in models:
-            self._merge_edges(model, model.stableTargetId, identifier=model.identifier)
+            if isinstance(model, AnyRuleSetResponse):
+                for rule in (model.additive, model.subtractive, model.preventive):
+                    self._merge_edges(
+                        rule,
+                        model.stableTargetId,
+                        extra_refs={"stableTargetId": model.stableTargetId},
+                    )
+            else:
+                self._merge_edges(
+                    model, model.stableTargetId, identifier=model.identifier
+                )
 
-        return [m.identifier for m in models]
+        return models
 
     def flush(self) -> None:
         """Flush the database (only in debug mode)."""
