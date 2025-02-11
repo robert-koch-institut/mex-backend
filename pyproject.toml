@@ -27,7 +27,7 @@ optional-dependencies.dev = [
     "pytest>=8,<9",
     "ruff>=0.9,<1",
     "sphinx>=8,<9",
-    "types-pytz>=2024,<2025",
+    "types-pytz>=2025,<2026",
 ]
 
 [project.scripts]
