@@ -32,7 +32,7 @@ CALL () {
             elementId(hit) = elementId(extracted_or_rule_node)
         RETURN merged_node
     UNION
-        MATCH (nested_node:<<nested_labels|join("|")>>)<-[]-(extracted_or_rule_node:<<extracted_or_rule_labels|join("|")>>)-[:stableTargetId]->(merged_node:<<merged_labels|join("|")>>)
+        MATCH (nested_node:<<nested_labels|join("|")>>)<-[]-(:<<extracted_or_rule_labels|join("|")>>)-[:stableTargetId]->(merged_node:<<merged_labels|join("|")>>)
         WHERE
             elementId(hit) = elementId(nested_node)
         RETURN merged_node

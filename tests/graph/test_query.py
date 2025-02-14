@@ -88,18 +88,17 @@ YIELD currentStatus;"""
         MATCH (extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
         WHERE
             elementId(hit) = elementId(extracted_or_rule_node)
-            AND ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
-            AND merged_node.identifier = $stable_target_id
         RETURN extracted_or_rule_node, merged_node
     UNION
         MATCH (nested_node:Link|Text|Location)<-[]-(extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
         WHERE
             elementId(hit) = elementId(nested_node)
-            AND ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
-            AND merged_node.identifier = $stable_target_id
         RETURN extracted_or_rule_node, merged_node
     }
     WITH DISTINCT extracted_or_rule_node, merged_node
+    WHERE
+        ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
+        AND merged_node.identifier = $stable_target_id
     RETURN COUNT(extracted_or_rule_node) AS total
 }
 CALL () {
@@ -109,18 +108,17 @@ CALL () {
         MATCH (extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
         WHERE
             elementId(hit) = elementId(extracted_or_rule_node)
-            AND ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
-            AND merged_node.identifier = $stable_target_id
         RETURN extracted_or_rule_node, merged_node
     UNION
         MATCH (nested_node:Link|Text|Location)<-[]-(extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
         WHERE
             elementId(hit) = elementId(nested_node)
-            AND ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
-            AND merged_node.identifier = $stable_target_id
         RETURN extracted_or_rule_node, merged_node
     }
     WITH DISTINCT extracted_or_rule_node, merged_node
+    WHERE
+        ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
+        AND merged_node.identifier = $stable_target_id
     ORDER BY extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
     SKIP $skip
     LIMIT $limit
@@ -203,51 +201,47 @@ def test_fetch_extracted_or_rule_items(
             True,
             True,
             r"""CALL () {
-    OPTIONAL MATCH (merged_node:MergedThis|MergedThat|MergedOther)<-[:stableTargetId]-(:ExtractedThis|ExtractedThat|ExtractedOther)-[:hadPrimarySource]->(referenced_merged_node_to_filter_by)
-    WHERE
-         referenced_merged_node_to_filter_by.identifier = $referenced_identifier
     OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
     CALL (hit) {
         MATCH (extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
         WHERE
             elementId(hit) = elementId(extracted_or_rule_node)
-            AND ANY(label IN labels(merged_node) WHERE label IN $labels)
-            AND merged_node.identifier = $identifier
         RETURN merged_node
     UNION
         MATCH (nested_node:Link|Text|Location)<-[]-(:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
         WHERE
             elementId(hit) = elementId(nested_node)
-            AND ANY(label IN labels(merged_node) WHERE label IN $labels)
-            AND merged_node.identifier = $identifier
         RETURN merged_node
     }
     WITH DISTINCT merged_node AS merged_node
+    MATCH (merged_node)<-[:stableTargetId]-(:ExtractedThis|ExtractedThat|ExtractedOther)-[:hadPrimarySource]->(referenced_merged_node_to_filter_by)
+    WHERE
+        ANY(label IN labels(merged_node) WHERE label IN $labels)
+        AND merged_node.identifier = $identifier
+        AND referenced_merged_node_to_filter_by.identifier = $referenced_identifier
     RETURN COUNT(merged_node) AS total
 }
 CALL () {
-    OPTIONAL MATCH (merged_node:MergedThis|MergedThat|MergedOther)<-[:stableTargetId]-(:ExtractedThis|ExtractedThat|ExtractedOther)-[:hadPrimarySource]->(referenced_merged_node_to_filter_by)
-    WHERE
-         referenced_merged_node_to_filter_by.identifier = $referenced_identifier
     OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
     CALL (hit) {
         MATCH (extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
         WHERE
             elementId(hit) = elementId(extracted_or_rule_node)
-            AND ANY(label IN labels(merged_node) WHERE label IN $labels)
-            AND merged_node.identifier = $identifier
         RETURN merged_node
     UNION
         MATCH (nested_node:Link|Text|Location)<-[]-(:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
         WHERE
             elementId(hit) = elementId(nested_node)
-            AND ANY(label IN labels(merged_node) WHERE label IN $labels)
-            AND merged_node.identifier = $identifier
         RETURN merged_node
     }
     WITH DISTINCT merged_node AS merged_node
+    MATCH (merged_node)<-[:stableTargetId]-(:ExtractedThis|ExtractedThat|ExtractedOther)-[:hadPrimarySource]->(referenced_merged_node_to_filter_by)
+    WHERE
+        ANY(label IN labels(merged_node) WHERE label IN $labels)
+        AND merged_node.identifier = $identifier
+        AND referenced_merged_node_to_filter_by.identifier = $referenced_identifier
     ORDER BY merged_node.identifier, head(labels(merged_node)) ASC
     SKIP $skip
     LIMIT $limit
