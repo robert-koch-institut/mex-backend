@@ -886,6 +886,57 @@ fetch_merged_items(
             },
         ),
         (
+            '"Unit 1.6"',
+            None,
+            None,
+            "bFQoRhcVH5DHUt",
+            1,
+            {
+                "items": [
+                    {
+                        "_components": [
+                            {
+                                "email": [],
+                                "entityType": "ExtractedOrganizationalUnit",
+                                "hadPrimarySource": ["bFQoRhcVH5DHUt"],
+                                "identifier": "bFQoRhcVH5DHUE",
+                                "identifierInPrimarySource": "ou-1.6",
+                                "name": [{"language": "en", "value": "Unit 1.6"}],
+                                "parentUnit": ["bFQoRhcVH5DHUx"],
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                                "unitOf": ["bFQoRhcVH5DHUv"],
+                            },
+                            {
+                                "email": [],
+                                "entityType": "AdditiveOrganizationalUnit",
+                                "name": [{"language": "en", "value": "Unit 1.7"}],
+                                "parentUnit": ["bFQoRhcVH5DHUx"],
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                                "website": [
+                                    {
+                                        "title": "Unit Homepage",
+                                        "url": "https://unit-1-7",
+                                    }
+                                ],
+                            },
+                            {
+                                "entityType": "PreventiveOrganizationalUnit",
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                            },
+                            {
+                                "email": [],
+                                "entityType": "SubtractiveOrganizationalUnit",
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                            },
+                        ],
+                        "entityType": "MergedOrganizationalUnit",
+                        "identifier": "bFQoRhcVH5DHUF",
+                    }
+                ],
+                "total": 1,
+            },
+        ),
+        (
             # find exact matches. without the quotes this might also match the second
             # contact point's email `help@contact-point.two`
             '"info@contact-point.one"',
@@ -1104,6 +1155,7 @@ fetch_merged_items(
         "no filters",
         "entity type filter",
         "had primary source filter",
+        "had primary source filter and filter by query",
         "find exact",
         "find fuzzy",
         "find Text",

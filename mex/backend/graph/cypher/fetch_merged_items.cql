@@ -23,40 +23,53 @@ Returns:
 -#>
 CALL () {
 <%- block match_clause -%>
-<%- if filter_by_reference_to_merged_item %>
-    OPTIONAL MATCH (merged_node:<<merged_labels|join("|")>>)<-[:stableTargetId]-(:<<extracted_labels|join("|")>>)-[:<<reference_field_name>>]->(referenced_merged_node_to_filter_by)
-    WHERE
-         referenced_merged_node_to_filter_by.identifier = $referenced_identifier
-<%- endif %>
 <%- if filter_by_query_string %>
     OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
     CALL (hit) {
         MATCH (extracted_or_rule_node:<<extracted_or_rule_labels|join("|")>>)-[:stableTargetId]->(merged_node:<<merged_labels|join("|")>>)
+        <%- if filter_by_reference_to_merged_item %>
+        MATCH (extracted_or_rule_node)-[:<<reference_field_name>>]->(referenced_merged_node_to_filter_by)
+        <%- endif %>
         WHERE
             elementId(hit) = elementId(extracted_or_rule_node)
             AND ANY(label IN labels(merged_node) WHERE label IN $labels)
             <%- if filter_by_identifier %>
             AND merged_node.identifier = $identifier
             <%- endif %>
+            <%- if filter_by_reference_to_merged_item %>
+            AND referenced_merged_node_to_filter_by.identifier = $referenced_identifier
+            <%- endif %>
         RETURN merged_node
     UNION
-        MATCH (nested_node:<<nested_labels|join("|")>>)<-[]-(:<<extracted_or_rule_labels|join("|")>>)-[:stableTargetId]->(merged_node:<<merged_labels|join("|")>>)
+        MATCH (nested_node:<<nested_labels|join("|")>>)<-[]-(extracted_or_rule_node:<<extracted_or_rule_labels|join("|")>>)-[:stableTargetId]->(merged_node:<<merged_labels|join("|")>>)
+        <%- if filter_by_reference_to_merged_item %>
+        MATCH (extracted_or_rule_node)-[:<<reference_field_name>>]->(referenced_merged_node_to_filter_by)
+        <%- endif %>
         WHERE
             elementId(hit) = elementId(nested_node)
             AND ANY(label IN labels(merged_node) WHERE label IN $labels)
             <%- if filter_by_identifier %>
             AND merged_node.identifier = $identifier
             <%- endif %>
+            <%- if filter_by_reference_to_merged_item %>
+            AND referenced_merged_node_to_filter_by.identifier = $referenced_identifier
+            <%- endif %>
         RETURN merged_node
     }
     WITH DISTINCT merged_node AS merged_node
 <%- else %>
     OPTIONAL MATCH (merged_node:<<merged_labels|join("|")>>)
+    <%- if filter_by_reference_to_merged_item %>
+    MATCH (merged_node:<<merged_labels|join("|")>>)<-[:stableTargetId]-(:<<extracted_labels|join("|")>>)-[:<<reference_field_name>>]->(referenced_merged_node_to_filter_by)
+    <%- endif %>
     WHERE
         ANY(label IN labels(merged_node) WHERE label IN $labels)
         <%- if filter_by_identifier %>
         AND merged_node.identifier = $identifier
+        <%- endif %>
+        <%- if filter_by_reference_to_merged_item %>
+        AND referenced_merged_node_to_filter_by.identifier = $referenced_identifier
         <%- endif %>
 <%- endif %>
 <%- endblock %>
