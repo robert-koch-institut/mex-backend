@@ -886,7 +886,7 @@ fetch_merged_items(
             },
         ),
         (
-            '"Unit 1.6"',
+            "Unit",
             None,
             None,
             "bFQoRhcVH5DHUt",
@@ -933,7 +933,7 @@ fetch_merged_items(
                         "identifier": "bFQoRhcVH5DHUF",
                     }
                 ],
-                "total": 1,
+                "total": 2,
             },
         ),
         (
