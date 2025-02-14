@@ -25,30 +25,22 @@ CALL () {
         MATCH (extracted_or_rule_node:<<extracted_or_rule_labels|join("|")>>)-[:stableTargetId]->(merged_node:<<merged_labels|join("|")>>)
         WHERE
             elementId(hit) = elementId(extracted_or_rule_node)
-            AND ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
-            <%- if filter_by_stable_target_id %>
-            AND merged_node.identifier = $stable_target_id
-            <%- endif %>
         RETURN extracted_or_rule_node, merged_node
     UNION
         MATCH (nested_node:<<nested_labels|join("|")>>)<-[]-(extracted_or_rule_node:<<extracted_or_rule_labels|join("|")>>)-[:stableTargetId]->(merged_node:<<merged_labels|join("|")>>)
         WHERE
             elementId(hit) = elementId(nested_node)
-            AND ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
-            <%- if filter_by_stable_target_id %>
-            AND merged_node.identifier = $stable_target_id
-            <%- endif %>
         RETURN extracted_or_rule_node, merged_node
     }
     WITH DISTINCT extracted_or_rule_node, merged_node
 <%- else %>
     OPTIONAL MATCH (extracted_or_rule_node:<<extracted_or_rule_labels|join("|")>>)-[:stableTargetId]->(merged_node:<<merged_labels|join("|")>>)
+<%- endif %>
     WHERE
         ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
         <%- if filter_by_stable_target_id %>
         AND merged_node.identifier = $stable_target_id
         <%- endif %>
-<%- endif %>
 <%- endblock %>
     RETURN COUNT(extracted_or_rule_node) AS total
 }
