@@ -20,7 +20,7 @@ from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     AnyExtractedModel,
     ExtractedOrganizationalUnit,
-    OrganizationalUnitRuleSetRequest,
+    OrganizationalUnitRuleSetResponse,
 )
 from mex.common.types import Identifier
 from tests.conftest import MockedGraph, get_graph
@@ -1400,23 +1400,23 @@ def test_mocked_graph_merge_edges_fails(
 
 
 @pytest.mark.usefixtures("mocked_query_class")
-def test_mocked_graph_creates_rule_set(
+def test_mocked_graph_ingests_rule_set(
     mocked_graph: MockedGraph,
-    organizational_unit_rule_set_request: OrganizationalUnitRuleSetRequest,
+    organizational_unit_rule_set_response: OrganizationalUnitRuleSetResponse,
 ) -> None:
     mocked_graph.side_effect = [
-        [{"current": {}}],  # additive item
-        [{"edges": ["parentUnit", "stableTargetId"]}],  # additive edges
-        [{"current": {}}],  # subtractive item
-        [{"edges": ["stableTargetId"]}],  # subtractive edges
-        [{"current": {}}],  # preventive item
-        [{"edges": ["stableTargetId"]}],  # preventive edges
+        [{"current": {}, "$comment": "additive item"}],
+        [{"current": {}, "$comment": "subtractive item"}],
+        [{"current": {}, "$comment": "preventive item"}],
+        [{"edges": ["parentUnit", "stableTargetId"], "$comment": "additive edges"}],
+        [{"edges": ["stableTargetId"], "$comment": "subtractive edges"}],
+        [{"edges": ["stableTargetId"], "$comment": "preventive edges"}],
     ]
     graph = GraphConnector.get()
-    graph.create_rule_set(organizational_unit_rule_set_request, Identifier.generate(42))
+    graph.ingest([organizational_unit_rule_set_response])
 
     assert len(mocked_graph.call_args_list) == 6
-    assert mocked_graph.call_args_list[-2].args == (
+    assert mocked_graph.call_args_list[2].args == (
         """\
 merge_item(
     current_label="PreventiveOrganizationalUnit",
@@ -1433,7 +1433,7 @@ merge_item(
             "nested_positions": [],
         },
     )
-    assert mocked_graph.call_args_list[-1].args == (
+    assert mocked_graph.call_args_list[5].args == (
         """\
 merge_edges(
     current_label="PreventiveOrganizationalUnit",
@@ -1449,7 +1449,7 @@ merge_edges(
     )
 
 
-def test_mocked_graph_ingests_models(
+def test_mocked_graph_ingests_extracted_models(
     mocked_graph: MockedGraph,
     dummy_data: dict[str, AnyExtractedModel],
 ) -> None:
@@ -1538,9 +1538,9 @@ def test_mocked_graph_ingests_models(
     ]
 
     graph = GraphConnector.get()
-    identifiers = graph.ingest(list(dummy_data.values()))
+    models = graph.ingest(list(dummy_data.values()))
 
-    assert identifiers == [d.identifier for d in dummy_data.values()]
+    assert models == list(dummy_data.values())
 
 
 @pytest.mark.integration
