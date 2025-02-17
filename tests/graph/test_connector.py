@@ -683,13 +683,19 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
         query_string="my-query",
         identifier=Identifier.generate(99),
         entity_type=["MergedFoo", "MergedBar", "MergedBatz"],
+        had_primary_source=Identifier.generate(100),
         skip=10,
         limit=100,
     )
 
     assert mocked_graph.call_args_list[-1].args == (
         """\
-fetch_merged_items(filter_by_query_string=True, filter_by_identifier=True)""",
+fetch_merged_items(
+    filter_by_query_string=True,
+    filter_by_identifier=True,
+    filter_by_reference_to_merged_item=True,
+    reference_field_name="hadPrimarySource",
+)""",
         {
             "labels": [
                 "MergedFoo",
@@ -698,6 +704,7 @@ fetch_merged_items(filter_by_query_string=True, filter_by_identifier=True)""",
             ],
             "limit": 100,
             "query_string": "my-query",
+            "referenced_identifier": "bFQoRhcVH5DHV2",
             "skip": 10,
             "identifier": "bFQoRhcVH5DHV1",
         },
@@ -726,11 +733,26 @@ fetch_merged_items(filter_by_query_string=True, filter_by_identifier=True)""",
 
 
 @pytest.mark.parametrize(
-    ("query_string", "identifier", "entity_type", "limit", "expected"),
+    (
+        "query_string",
+        "identifier",
+        "entity_type",
+        "had_primary_source",
+        "limit",
+        "expected",
+    ),
     [
-        (None, "thisIdDoesNotExist", None, 10, {"items": [], "total": 0}),
-        ("this_search_term_is_not_findable", None, None, 10, {"items": [], "total": 0}),
+        (None, "thisIdDoesNotExist", None, None, 10, {"items": [], "total": 0}),
         (
+            "this_search_term_is_not_findable",
+            None,
+            None,
+            None,
+            10,
+            {"items": [], "total": 0},
+        ),
+        (
+            None,
             None,
             None,
             None,
@@ -758,6 +780,7 @@ fetch_merged_items(filter_by_query_string=True, filter_by_identifier=True)""",
             None,
             None,
             ["MergedOrganization"],
+            None,
             1,
             {
                 "items": [
@@ -812,9 +835,112 @@ fetch_merged_items(filter_by_query_string=True, filter_by_identifier=True)""",
             },
         ),
         (
+            None,
+            None,
+            None,
+            "bFQoRhcVH5DHUt",
+            1,
+            {
+                "items": [
+                    {
+                        "_components": [
+                            {
+                                "email": [],
+                                "entityType": "ExtractedOrganizationalUnit",
+                                "hadPrimarySource": ["bFQoRhcVH5DHUt"],
+                                "identifier": "bFQoRhcVH5DHUE",
+                                "identifierInPrimarySource": "ou-1.6",
+                                "name": [{"language": "en", "value": "Unit 1.6"}],
+                                "parentUnit": ["bFQoRhcVH5DHUx"],
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                                "unitOf": ["bFQoRhcVH5DHUv"],
+                            },
+                            {
+                                "email": [],
+                                "entityType": "AdditiveOrganizationalUnit",
+                                "name": [{"language": "en", "value": "Unit 1.7"}],
+                                "parentUnit": ["bFQoRhcVH5DHUx"],
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                                "website": [
+                                    {
+                                        "title": "Unit Homepage",
+                                        "url": "https://unit-1-7",
+                                    }
+                                ],
+                            },
+                            {
+                                "entityType": "PreventiveOrganizationalUnit",
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                            },
+                            {
+                                "email": [],
+                                "entityType": "SubtractiveOrganizationalUnit",
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                            },
+                        ],
+                        "entityType": "MergedOrganizationalUnit",
+                        "identifier": "bFQoRhcVH5DHUF",
+                    }
+                ],
+                "total": 3,
+            },
+        ),
+        (
+            "Unit",
+            None,
+            None,
+            "bFQoRhcVH5DHUt",
+            1,
+            {
+                "items": [
+                    {
+                        "_components": [
+                            {
+                                "email": [],
+                                "entityType": "ExtractedOrganizationalUnit",
+                                "hadPrimarySource": ["bFQoRhcVH5DHUt"],
+                                "identifier": "bFQoRhcVH5DHUE",
+                                "identifierInPrimarySource": "ou-1.6",
+                                "name": [{"language": "en", "value": "Unit 1.6"}],
+                                "parentUnit": ["bFQoRhcVH5DHUx"],
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                                "unitOf": ["bFQoRhcVH5DHUv"],
+                            },
+                            {
+                                "email": [],
+                                "entityType": "AdditiveOrganizationalUnit",
+                                "name": [{"language": "en", "value": "Unit 1.7"}],
+                                "parentUnit": ["bFQoRhcVH5DHUx"],
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                                "website": [
+                                    {
+                                        "title": "Unit Homepage",
+                                        "url": "https://unit-1-7",
+                                    }
+                                ],
+                            },
+                            {
+                                "entityType": "PreventiveOrganizationalUnit",
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                            },
+                            {
+                                "email": [],
+                                "entityType": "SubtractiveOrganizationalUnit",
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                            },
+                        ],
+                        "entityType": "MergedOrganizationalUnit",
+                        "identifier": "bFQoRhcVH5DHUF",
+                    }
+                ],
+                "total": 2,
+            },
+        ),
+        (
             # find exact matches. without the quotes this might also match the second
             # contact point's email `help@contact-point.two`
             '"info@contact-point.one"',
+            None,
             None,
             None,
             10,
@@ -840,6 +966,7 @@ fetch_merged_items(filter_by_query_string=True, filter_by_identifier=True)""",
         ),
         (
             "contact point",
+            None,
             None,
             None,
             10,
@@ -879,6 +1006,7 @@ fetch_merged_items(filter_by_query_string=True, filter_by_identifier=True)""",
         ),
         (
             "RKI",
+            None,
             None,
             None,
             10,
@@ -936,6 +1064,7 @@ fetch_merged_items(filter_by_query_string=True, filter_by_identifier=True)""",
         ),
         (
             "Homepage",
+            None,
             None,
             None,
             10,
@@ -1025,6 +1154,8 @@ fetch_merged_items(filter_by_query_string=True, filter_by_identifier=True)""",
         "search not found",
         "no filters",
         "entity type filter",
+        "had primary source filter",
+        "had primary source filter and filter by query",
         "find exact",
         "find fuzzy",
         "find Text",
@@ -1033,10 +1164,11 @@ fetch_merged_items(filter_by_query_string=True, filter_by_identifier=True)""",
 )
 @pytest.mark.usefixtures("load_dummy_data", "load_dummy_rule_set")
 @pytest.mark.integration
-def test_fetch_merged_items(
+def test_fetch_merged_items(  # noqa: PLR0913
     query_string: str | None,
     identifier: str | None,
     entity_type: list[str] | None,
+    had_primary_source: str | None,
     limit: int,
     expected: dict[str, Any],
 ) -> None:
@@ -1046,6 +1178,7 @@ def test_fetch_merged_items(
         query_string=query_string,
         identifier=identifier,
         entity_type=entity_type,
+        had_primary_source=had_primary_source,
         skip=0,
         limit=limit,
     )

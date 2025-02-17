@@ -44,7 +44,7 @@ class APIUserDatabase(BaseModel):
 
 
 class DynamicStrEnum(EnumMeta):
-    """Meta class to dynamically populate the an enumeration from a list of strings."""
+    """Metaclass to dynamically populate an enumeration from a list of strings."""
 
     def __new__(
         cls: type["DynamicStrEnum"], name: str, bases: tuple[type], dct: _EnumDict

@@ -2,13 +2,15 @@
 
 Globals:
     extracted_labels: List of all extracted class labels
-    rule_labels: List of all rule class labels
+    extracted_or_rule_labels: List of all extracted and rule class labels
     merged_labels: List of all merged class labels
     nested_labels: List of labels for all nestable objects
 
 Args:
     filter_by_query_string: Whether the final query should accept a full text query string
     filter_by_identifier: Whether the final query should filter by the merged identifier
+    filter_by_reference_to_merged_item: Whether to filter for merged items that have a relation to a specific merged item
+    reference_field_name: name of the relationship to use for filtering by reference
 
 Returns:
     total: Count of all items found by this query
@@ -28,30 +30,28 @@ CALL () {
         MATCH (extracted_or_rule_node:<<extracted_or_rule_labels|join("|")>>)-[:stableTargetId]->(merged_node:<<merged_labels|join("|")>>)
         WHERE
             elementId(hit) = elementId(extracted_or_rule_node)
-            AND ANY(label IN labels(merged_node) WHERE label IN $labels)
-            <%- if filter_by_identifier %>
-            AND merged_node.identifier = $identifier
-            <%- endif %>
         RETURN merged_node
     UNION
         MATCH (nested_node:<<nested_labels|join("|")>>)<-[]-(:<<extracted_or_rule_labels|join("|")>>)-[:stableTargetId]->(merged_node:<<merged_labels|join("|")>>)
         WHERE
             elementId(hit) = elementId(nested_node)
-            AND ANY(label IN labels(merged_node) WHERE label IN $labels)
-            <%- if filter_by_identifier %>
-            AND merged_node.identifier = $identifier
-            <%- endif %>
         RETURN merged_node
     }
     WITH DISTINCT merged_node AS merged_node
 <%- else %>
     OPTIONAL MATCH (merged_node:<<merged_labels|join("|")>>)
+<%- endif %>
+    <%- if filter_by_reference_to_merged_item %>
+    MATCH (merged_node)<-[:stableTargetId]-(:<<extracted_labels|join("|")>>)-[:<<reference_field_name>>]->(referenced_merged_node_to_filter_by)
+    <%- endif %>
     WHERE
         ANY(label IN labels(merged_node) WHERE label IN $labels)
         <%- if filter_by_identifier %>
         AND merged_node.identifier = $identifier
         <%- endif %>
-<%- endif %>
+        <%- if filter_by_reference_to_merged_item %>
+        AND referenced_merged_node_to_filter_by.identifier = $referenced_identifier
+        <%- endif %>
 <%- endblock %>
     RETURN COUNT(merged_node) AS total
 }

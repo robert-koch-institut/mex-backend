@@ -286,11 +286,12 @@ class GraphConnector(BaseConnector):
             limit,
         )
 
-    def fetch_merged_items(
+    def fetch_merged_items(  # noqa: PLR0913
         self,
         query_string: str | None,
         identifier: str | None,
         entity_type: Sequence[str] | None,
+        had_primary_source: str | None,
         skip: int,
         limit: int,
     ) -> Result:
@@ -300,6 +301,7 @@ class GraphConnector(BaseConnector):
             query_string: Optional full text search query term
             identifier: Optional merged item identifier filter
             entity_type: Optional merged entity type filter
+            had_primary_source: optional merged primary source identifier filter
             skip: How many items to skip for pagination
             limit: How many items to return at most
 
@@ -310,12 +312,15 @@ class GraphConnector(BaseConnector):
         query = query_builder.fetch_merged_items(
             filter_by_query_string=bool(query_string),
             filter_by_identifier=bool(identifier),
+            filter_by_reference_to_merged_item=bool(had_primary_source),
+            reference_field_name="hadPrimarySource",
         )
         result = self.commit(
             query,
             query_string=query_string,
             identifier=identifier,
             labels=entity_type or list(MERGED_MODEL_CLASSES_BY_NAME),
+            referenced_identifier=had_primary_source,
             skip=skip,
             limit=limit,
         )

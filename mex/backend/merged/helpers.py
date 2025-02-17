@@ -80,6 +80,7 @@ def search_merged_items_in_graph(
     query_string: str | None = None,
     identifier: str | None = None,
     entity_type: list[str] | None = None,
+    had_primary_source: str | None = None,
     skip: int = 0,
     limit: int = 100,
     validate_cardinality: Literal[False] = False,
@@ -91,6 +92,7 @@ def search_merged_items_in_graph(
     query_string: str | None = None,
     identifier: str | None = None,
     entity_type: list[str] | None = None,
+    had_primary_source: str | None = None,
     skip: int = 0,
     limit: int = 100,
     validate_cardinality: Literal[True] = True,
@@ -101,6 +103,7 @@ def search_merged_items_in_graph(  # noqa: PLR0913
     query_string: str | None = None,
     identifier: str | None = None,
     entity_type: list[str] | None = None,
+    had_primary_source: str | None = None,
     skip: int = 0,
     limit: int = 100,
     validate_cardinality: Literal[True, False] = True,
@@ -111,6 +114,7 @@ def search_merged_items_in_graph(  # noqa: PLR0913
         query_string: Full text search query term
         identifier: Optional merged item identifier filter
         entity_type: Optional entity type filter
+        had_primary_source: optional merged primary source identifier filter
         skip: How many items to skip for pagination
         limit: How many items to return at most
         validate_cardinality: Merged items validate the existence of required fields and
@@ -128,6 +132,7 @@ def search_merged_items_in_graph(  # noqa: PLR0913
         query_string=query_string,
         identifier=identifier,
         entity_type=entity_type,
+        had_primary_source=had_primary_source,
         skip=skip,
         limit=limit,
     )
