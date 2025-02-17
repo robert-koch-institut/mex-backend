@@ -9,11 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- add option to filter by primary source to merged and preview endpoint
-
 ### Changes
-
-- update mex-common to 0.51.1
 
 ### Deprecated
 
@@ -22,6 +18,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [0.30.1] - 2025-02-17
+
+### Added
+
+- add option to filter by primary source to merged and preview endpoint
+
+### Changes
+
+- update mex-common to 0.51.1
 
 ## [0.30.0] - 2025-02-10
 
