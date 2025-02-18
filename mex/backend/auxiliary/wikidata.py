@@ -2,8 +2,11 @@ from functools import cache
 from typing import Annotated
 
 from fastapi import APIRouter, Query
+from requests import HTTPError
 
 from mex.backend.auxiliary.models import AuxiliarySearch
+from mex.common.backend_api.connector import BackendApiConnector
+from mex.common.logging import logger
 from mex.common.models import ExtractedOrganization, ExtractedPrimarySource
 from mex.common.primary_source.extract import extract_seed_primary_sources
 from mex.common.primary_source.transform import (
@@ -54,7 +57,7 @@ def search_organization_in_wikidata(
 
 @cache
 def extracted_primary_source_wikidata() -> ExtractedPrimarySource:
-    """Load and return wikidata primary source."""
+    """Load, ingest and return wikidata primary source."""
     seed_primary_sources = extract_seed_primary_sources()
     extracted_primary_sources = list(
         transform_seed_primary_sources_to_extracted_primary_sources(
@@ -65,5 +68,12 @@ def extracted_primary_source_wikidata() -> ExtractedPrimarySource:
         extracted_primary_sources,
         "wikidata",
     )
-
+    connector = BackendApiConnector.get()
+    try:
+        connector.ingest([extracted_primary_source_wikidata])
+    except HTTPError as exc:
+        logger.exception(
+            "Failed to ingest primary sources into the backend: %s",
+            exc.response.text,
+        )
     return extracted_primary_source_wikidata
