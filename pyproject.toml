@@ -18,7 +18,6 @@ dependencies = [
     "pydantic>=2,<3",
     "starlette>=0.41,<1",
     "uvicorn[standard]>=0.30,<1",
-    "types-requests>=2.32.0.20241016",
 ]
 optional-dependencies.dev = [
     "ipdb>=0.13,<1",

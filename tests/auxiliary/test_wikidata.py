@@ -1,5 +1,3 @@
-from unittest.mock import patch
-
 import pytest
 from fastapi.testclient import TestClient
 from pytest import MonkeyPatch
@@ -10,13 +8,10 @@ from mex.common.models import ExtractedPrimarySource
 from mex.common.types import Text
 
 
+@pytest.mark.integration
 def test_extracted_primary_source_wikidata() -> None:
-    with patch(
-        "mex.backend.auxiliary.wikidata.BackendApiConnector.get"
-    ) as mock_connector:
-        mock_connector.return_value.ingest = lambda x: None
-        primary_source = extracted_primary_source_wikidata()
-        assert primary_source.identifierInPrimarySource == "wikidata"
+    primary_source = extracted_primary_source_wikidata()
+    assert primary_source.identifierInPrimarySource == "wikidata"
 
 
 @pytest.mark.usefixtures("mocked_wikidata")

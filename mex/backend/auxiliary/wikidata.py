@@ -2,11 +2,9 @@ from functools import cache
 from typing import Annotated
 
 from fastapi import APIRouter, Query
-from requests import HTTPError
 
 from mex.backend.auxiliary.models import AuxiliarySearch
-from mex.common.backend_api.connector import BackendApiConnector
-from mex.common.logging import logger
+from mex.backend.graph.connector import GraphConnector
 from mex.common.models import ExtractedOrganization, ExtractedPrimarySource
 from mex.common.primary_source.extract import extract_seed_primary_sources
 from mex.common.primary_source.transform import (
@@ -69,11 +67,5 @@ def extracted_primary_source_wikidata() -> ExtractedPrimarySource:
         "wikidata",
     )
     connector = GraphConnector.get()
-    try:
-        connector.ingest([extracted_primary_source_wikidata])
-    except HTTPError as exc:
-        logger.exception(
-            "Failed to ingest primary sources into the backend: %s",
-            exc.response.text,
-        )
+    connector.ingest([extracted_primary_source_wikidata])
     return extracted_primary_source_wikidata
