@@ -8,6 +8,7 @@ from mex.common.models import ExtractedPrimarySource
 from mex.common.types import Text
 
 
+@pytest.mark.integration
 def test_extracted_primary_source_wikidata() -> None:
     primary_source = extracted_primary_source_wikidata()
     assert primary_source.identifierInPrimarySource == "wikidata"
