@@ -68,7 +68,7 @@ def extracted_primary_source_wikidata() -> ExtractedPrimarySource:
         extracted_primary_sources,
         "wikidata",
     )
-    connector = BackendApiConnector.get()
+    connector = GraphConnector.get()
     try:
         connector.ingest([extracted_primary_source_wikidata])
     except HTTPError as exc:
