@@ -50,7 +50,7 @@ CALL () {
         AND merged_node.identifier = $identifier
         <%- endif %>
         <%- if filter_by_reference_to_merged_item %>
-        AND referenced_merged_node_to_filter_by.identifier = $referenced_identifier
+        AND referenced_merged_node_to_filter_by.identifier IN $referenced_identifiers
         <%- endif %>
 <%- endblock %>
     RETURN COUNT(merged_node) AS total

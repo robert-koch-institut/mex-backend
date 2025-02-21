@@ -219,7 +219,7 @@ def test_fetch_extracted_or_rule_items(
     WHERE
         ANY(label IN labels(merged_node) WHERE label IN $labels)
         AND merged_node.identifier = $identifier
-        AND referenced_merged_node_to_filter_by.identifier = $referenced_identifier
+        AND referenced_merged_node_to_filter_by.identifier IN $referenced_identifiers
     RETURN COUNT(merged_node) AS total
 }
 CALL () {
@@ -241,7 +241,7 @@ CALL () {
     WHERE
         ANY(label IN labels(merged_node) WHERE label IN $labels)
         AND merged_node.identifier = $identifier
-        AND referenced_merged_node_to_filter_by.identifier = $referenced_identifier
+        AND referenced_merged_node_to_filter_by.identifier IN $referenced_identifiers
     ORDER BY merged_node.identifier, head(labels(merged_node)) ASC
     SKIP $skip
     LIMIT $limit

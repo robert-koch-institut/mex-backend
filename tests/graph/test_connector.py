@@ -683,7 +683,7 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
         query_string="my-query",
         identifier=Identifier.generate(99),
         entity_type=["MergedFoo", "MergedBar", "MergedBatz"],
-        had_primary_source=Identifier.generate(100),
+        had_primary_source=[Identifier.generate(100)],
         skip=10,
         limit=100,
     )
@@ -704,7 +704,7 @@ fetch_merged_items(
             ],
             "limit": 100,
             "query_string": "my-query",
-            "referenced_identifier": "bFQoRhcVH5DHV2",
+            "referenced_identifiers": ["bFQoRhcVH5DHV2"],
             "skip": 10,
             "identifier": "bFQoRhcVH5DHV1",
         },
@@ -838,7 +838,7 @@ fetch_merged_items(
             None,
             None,
             None,
-            "bFQoRhcVH5DHUt",
+            ["bFQoRhcVH5DHUt"],
             1,
             {
                 "items": [
@@ -889,7 +889,7 @@ fetch_merged_items(
             "Unit",
             None,
             None,
-            "bFQoRhcVH5DHUt",
+            ["bFQoRhcVH5DHUt"],
             1,
             {
                 "items": [
@@ -1168,7 +1168,7 @@ def test_fetch_merged_items(  # noqa: PLR0913
     query_string: str | None,
     identifier: str | None,
     entity_type: list[str] | None,
-    had_primary_source: str | None,
+    had_primary_source: list[str] | None,
     limit: int,
     expected: dict[str, Any],
 ) -> None:
