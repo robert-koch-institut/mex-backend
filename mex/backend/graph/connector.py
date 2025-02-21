@@ -291,7 +291,7 @@ class GraphConnector(BaseConnector):
         query_string: str | None,
         identifier: str | None,
         entity_type: Sequence[str] | None,
-        had_primary_source: str | None,
+        had_primary_source: Sequence[str] | None,
         skip: int,
         limit: int,
     ) -> Result:
@@ -320,7 +320,7 @@ class GraphConnector(BaseConnector):
             query_string=query_string,
             identifier=identifier,
             labels=entity_type or list(MERGED_MODEL_CLASSES_BY_NAME),
-            referenced_identifier=had_primary_source,
+            referenced_identifiers=had_primary_source,
             skip=skip,
             limit=limit,
         )
