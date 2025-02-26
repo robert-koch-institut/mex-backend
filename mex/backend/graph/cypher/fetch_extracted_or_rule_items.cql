@@ -8,7 +8,7 @@ Globals:
 
 Args:
     filter_by_query_string: Whether the final query should accept a full text query string
-    filter_by_stable_target_ids: Whether the final query should filter by stableTargetIds
+    filter_by_stable_target_id: Whether the final query should filter by stableTargetIds
 
 Returns:
     total: Count of all items found by this query
