@@ -39,7 +39,7 @@ def preview_items(  # noqa: PLR0913
     q: Annotated[str, Query(max_length=100)] = "",
     identifier: Identifier | None = None,
     entityType: Annotated[Sequence[MergedType], Query(max_length=len(MergedType))] = [],
-    hadPrimarySource: Annotated[list[Identifier] | None, Query()] = None,
+    hadPrimarySource: Annotated[Sequence[Identifier] | None, Query()] = None,
     skip: Annotated[int, Query(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> PreviewItemSearch:
