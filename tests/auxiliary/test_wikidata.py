@@ -4,6 +4,7 @@ from pytest import MonkeyPatch
 
 from mex.backend.auxiliary import wikidata
 from mex.backend.auxiliary.wikidata import extracted_primary_source_wikidata
+from mex.backend.graph.connector import GraphConnector
 from mex.common.models import ExtractedPrimarySource
 from mex.common.types import Text
 
@@ -12,6 +13,14 @@ from mex.common.types import Text
 def test_extracted_primary_source_wikidata() -> None:
     primary_source = extracted_primary_source_wikidata()
     assert primary_source.identifierInPrimarySource == "wikidata"
+
+    # verify the primary source wikidata has been stored in the database
+    graph = GraphConnector.get()
+    result = graph.fetch_extracted_items(
+        "wikidata", None, ["ExtractedPrimarySource"], 0, 10
+    )
+    title_value = result["items"][0]["title"][0]["value"]
+    assert title_value == "Wikidata"
 
 
 @pytest.mark.usefixtures("mocked_wikidata")
