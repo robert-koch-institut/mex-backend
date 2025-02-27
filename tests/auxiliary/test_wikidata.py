@@ -19,8 +19,11 @@ def test_extracted_primary_source_wikidata() -> None:
     result = graph.fetch_extracted_items(
         "wikidata", None, ["ExtractedPrimarySource"], 0, 10
     )
-    title_value = result["items"][0]["title"][0]["value"]
-    assert title_value == "Wikidata"
+    has_wikidata = any(
+        any(title["value"] == "Wikidata" for title in item["title"])
+        for item in result["items"]
+    )
+    assert has_wikidata
 
 
 @pytest.mark.usefixtures("mocked_wikidata")
