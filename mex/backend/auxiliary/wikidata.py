@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query
 
 from mex.backend.auxiliary.models import AuxiliarySearch
+from mex.backend.graph.connector import GraphConnector
 from mex.common.models import ExtractedOrganization, ExtractedPrimarySource
 from mex.common.primary_source.extract import extract_seed_primary_sources
 from mex.common.primary_source.transform import (
@@ -54,7 +55,7 @@ def search_organization_in_wikidata(
 
 @cache
 def extracted_primary_source_wikidata() -> ExtractedPrimarySource:
-    """Load and return wikidata primary source."""
+    """Load, ingest and return wikidata primary source."""
     seed_primary_sources = extract_seed_primary_sources()
     extracted_primary_sources = list(
         transform_seed_primary_sources_to_extracted_primary_sources(
@@ -65,5 +66,6 @@ def extracted_primary_source_wikidata() -> ExtractedPrimarySource:
         extracted_primary_sources,
         "wikidata",
     )
-
+    connector = GraphConnector.get()
+    connector.ingest([extracted_primary_source_wikidata])
     return extracted_primary_source_wikidata
