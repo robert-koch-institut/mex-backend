@@ -17,13 +17,13 @@ def test_extracted_primary_source_wikidata() -> None:
     # verify the primary source wikidata has been stored in the database
     graph = GraphConnector.get()
     result = graph.fetch_extracted_items(
-        "wikidata", None, ["ExtractedPrimarySource"], 0, 100
+        "wikidata",
+        str(primary_source.stableTargetId),
+        ["ExtractedPrimarySource"],
+        0,
+        100,
     )
-    has_wikidata = any(
-        any(title["value"] == "Wikidata" for title in item["title"])
-        for item in result["items"]
-    )
-    assert has_wikidata
+    assert result["total"] == 1
 
 
 @pytest.mark.usefixtures("mocked_wikidata")
