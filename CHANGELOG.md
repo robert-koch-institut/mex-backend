@@ -21,6 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [0.30.2] - 2025-02-27
+
+### Changes
+- preview and merged endpoint filter by multiple primary sources (was: one)
+
 ## [0.30.1] - 2025-02-17
 
 ### Added
