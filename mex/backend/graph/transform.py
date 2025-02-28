@@ -1,4 +1,5 @@
-from typing import Any, TypedDict, cast
+from itertools import groupby
+from typing import TypedDict
 
 
 class _SearchResultReference(TypedDict):
@@ -9,7 +10,9 @@ class _SearchResultReference(TypedDict):
     value: str | dict[str, str | None]  # this can be a raw Identifier, Text or Link
 
 
-def expand_references_in_search_result(item: dict[str, Any]) -> None:
+def expand_references_in_search_result(
+    refs: list[_SearchResultReference],
+) -> dict[str, list[str | dict[str, str | None]]]:
     """Expand the `_refs` collection in a search result item.
 
     Each item in a search result has a collection of `_refs` in the form of
@@ -17,8 +20,6 @@ def expand_references_in_search_result(item: dict[str, Any]) -> None:
     the references back into the `item` dictionary.
     """
     # TODO(ND): try to re-write directly in the cypher query, if we can use `apoc`
-    for ref in cast(list[_SearchResultReference], item.pop("_refs")):
-        target_list = item.setdefault(ref["label"], [None])
-        length_needed = 1 + ref["position"] - len(target_list)
-        target_list.extend([None] * length_needed)
-        target_list[ref["position"]] = ref["value"]
+    sorted_refs = sorted(refs, key=lambda ref: (ref["label"], ref["position"]))
+    groups = groupby(sorted_refs, lambda ref: (ref["label"]))
+    return {label: [ref["value"] for ref in group] for label, group in groups}

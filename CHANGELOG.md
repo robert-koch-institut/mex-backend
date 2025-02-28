@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- simplify `expand_references_in_search_result` (not operating inline anymore)
+- update mex-common to 0.54.1
+
 ### Deprecated
 
 ### Removed
@@ -24,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.30.2] - 2025-02-27
 
 ### Changes
+
 - preview and merged endpoint filter by multiple primary sources (was: one)
 
 ## [0.30.1] - 2025-02-17
