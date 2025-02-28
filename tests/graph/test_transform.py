@@ -40,7 +40,6 @@ def test_expand_references_in_search_result() -> None:
         ],
         "contact": ["bFQoRhcVH5DHUv", "bFQoRhcVH5DHUx", "bFQoRhcVH5DHUz"],
         "hadPrimarySource": ["bFQoRhcVH5DHUr"],
-        "identifier": "bFQoRhcVH5DHUA",
         "responsibleUnit": ["bFQoRhcVH5DHUz"],
         "stableTargetId": ["bFQoRhcVH5DHUB"],
         "title": [{"language": "de", "value": "Aktivität 1"}],
