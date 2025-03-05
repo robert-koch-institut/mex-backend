@@ -9,12 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- wikidata search ingests PrimarySource into backend
-
 ### Changes
-
-- simplify `expand_references_in_search_result` (not operating inline anymore)
-- update mex-common to 0.54.1
 
 ### Deprecated
 
@@ -23,6 +18,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [0.31.0] - 2025-03-05
+
+### Added
+
+- wikidata search ingests PrimarySource into backend
+
+### Changes
+
+- simplify `expand_references_in_search_result` (not operating inline anymore)
+- update mex-common to 0.54.1
 
 ## [0.30.2] - 2025-02-27
 
