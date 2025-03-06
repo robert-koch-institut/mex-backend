@@ -1381,17 +1381,46 @@ merge_edges(
 
 
 @pytest.mark.usefixtures("mocked_query_class")
-def test_mocked_graph_merge_edges_fails(
+def test_mocked_graph_merge_edges_fails_inconsistent(
+    mocked_graph: MockedGraph, dummy_data: dict[str, AnyExtractedModel]
+) -> None:
+    mocked_graph.return_value = [{"edges": [({}, "stableTargetId")]}]
+    graph = GraphConnector.get()
+    extracted_organizational_unit = dummy_data["organizational_unit_1"]
+
+    with pytest.raises(
+        InconsistentGraphError,
+        match="could not merge all edges: unitOf, hadPrimarySource",
+    ):
+        graph._merge_edges(
+            extracted_organizational_unit,
+            extracted_organizational_unit.stableTargetId,
+            identifier=extracted_organizational_unit.identifier,
+        )
+
+
+@pytest.mark.usefixtures("mocked_query_class")
+def test_mocked_graph_merge_edges_fails_unexpected(
     mocked_graph: MockedGraph, dummy_data: dict[str, AnyExtractedModel]
 ) -> None:
     mocked_graph.return_value = [
-        {"edges": ["stableTargetId"]},  # missing hadPrimarySource
+        {
+            "edges": [
+                ({}, "stableTargetId"),
+                ({}, "unitOf"),
+                ({}, "stableTargetId"),
+                ({}, "hadPrimarySource"),
+                ({}, "newEdgeWhoDis"),
+            ]
+        },
     ]
     graph = GraphConnector.get()
-
     extracted_organizational_unit = dummy_data["organizational_unit_1"]
 
-    with pytest.raises(InconsistentGraphError, match="could not merge all edges"):
+    with pytest.raises(
+        RuntimeError,
+        match="merged more edges than expected: newEdgeWhoDis",
+    ):
         graph._merge_edges(
             extracted_organizational_unit,
             extracted_organizational_unit.stableTargetId,
