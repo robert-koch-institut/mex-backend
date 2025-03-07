@@ -30,9 +30,9 @@ def summary() -> Mock:
 @pytest.fixture
 def multiple_results(summary: Mock) -> Mock:
     records = [
-        Mock(spec=Neo4jRecord, data=MagicMock(return_value={"num": 40})),
-        Mock(spec=Neo4jRecord, data=MagicMock(return_value={"num": 41})),
-        Mock(spec=Neo4jRecord, data=MagicMock(return_value={"num": 42})),
+        Mock(spec=Neo4jRecord, items=MagicMock(return_value=[("num", 40)])),
+        Mock(spec=Neo4jRecord, items=MagicMock(return_value=[("num", 41)])),
+        Mock(spec=Neo4jRecord, items=MagicMock(return_value=[("num", 42)])),
     ]
     return Mock(
         spec=Neo4jResult, to_eager_result=MagicMock(return_value=(records, summary, []))
@@ -51,13 +51,11 @@ def single_result(summary: Mock) -> Mock:
     records = [
         Mock(
             spec=Neo4jRecord,
-            data=MagicMock(
-                return_value={
-                    "text": "Lorem adipisicing elit consequat sint consectetur "
-                    "proident cupidatat culpa voluptate. Aute commodo ea sunt mollit. "
-                    "Lorem sint amet reprehenderit aliqua."
-                }
-            ),
+            items={
+                "text": "Lorem adipisicing elit consequat sint consectetur "
+                "proident cupidatat culpa voluptate. Aute commodo ea sunt mollit. "
+                "Lorem sint amet reprehenderit aliqua."
+            }.items,
         ),
     ]
     return Mock(

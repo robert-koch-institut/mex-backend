@@ -512,9 +512,17 @@ class GraphConnector(BaseConnector):
             ref_identifiers=ref_identifiers,
             ref_positions=ref_positions,
         )
-        if len(result["edges"]) != len(ref_labels):
-            msg = "could not merge all edges"
+        merged_edges = set(result["edges"])
+        expected_edges = {
+            f"{label}[{position}]"
+            for label, position in zip(ref_labels, ref_positions, strict=True)
+        }
+        if missing_edges := sorted(expected_edges - merged_edges):
+            msg = f"could not merge all edges: {', '.join(missing_edges)}"
             raise InconsistentGraphError(msg)
+        if unexpected_edges := sorted(merged_edges - expected_edges):
+            msg = f"merged more edges than expected: {', '.join(unexpected_edges)}"
+            raise RuntimeError(msg)
         return result
 
     def ingest(
