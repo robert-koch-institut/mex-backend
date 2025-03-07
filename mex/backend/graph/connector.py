@@ -512,11 +512,15 @@ class GraphConnector(BaseConnector):
             ref_identifiers=ref_identifiers,
             ref_positions=ref_positions,
         )
-        merged_edges = {edge[1] for edge in result["edges"]}
-        if missing_edges := set(ref_labels) - merged_edges:
+        merged_edges = set(result["edges"])
+        expected_edges = {
+            f"{label}[{position}]"
+            for label, position in zip(ref_labels, ref_positions, strict=True)
+        }
+        if missing_edges := sorted(expected_edges - merged_edges):
             msg = f"could not merge all edges: {', '.join(missing_edges)}"
             raise InconsistentGraphError(msg)
-        if unexpected_edges := merged_edges - set(ref_labels):
+        if unexpected_edges := sorted(merged_edges - expected_edges):
             msg = f"merged more edges than expected: {', '.join(unexpected_edges)}"
             raise RuntimeError(msg)
         return result

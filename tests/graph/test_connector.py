@@ -1,3 +1,4 @@
+import re
 from typing import Any, cast
 from unittest.mock import MagicMock, Mock, call
 
@@ -120,7 +121,9 @@ create_full_text_search_index(
 
 @pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
-    mocked_graph.return_value = [{"edges": ["hadPrimarySource", "stableTargetId"]}]
+    mocked_graph.return_value = [
+        {"edges": ["hadPrimarySource[0]", "stableTargetId[0]"]}
+    ]
     graph = GraphConnector.get()
     graph._seed_data()
 
@@ -1346,7 +1349,7 @@ def test_mocked_graph_merge_edges(
     mocked_graph: MockedGraph, dummy_data: dict[str, AnyExtractedModel]
 ) -> None:
     mocked_graph.return_value = [
-        {"edges": ["hadPrimarySource", "unitOf", "stableTargetId"]},
+        {"edges": ["hadPrimarySource[0]", "unitOf[0]", "stableTargetId[0]"]},
     ]
     graph = GraphConnector.get()
 
@@ -1384,13 +1387,13 @@ merge_edges(
 def test_mocked_graph_merge_edges_fails_inconsistent(
     mocked_graph: MockedGraph, dummy_data: dict[str, AnyExtractedModel]
 ) -> None:
-    mocked_graph.return_value = [{"edges": [({}, "stableTargetId")]}]
+    mocked_graph.return_value = [{"edges": ["stableTargetId[0]"]}]
     graph = GraphConnector.get()
     extracted_organizational_unit = dummy_data["organizational_unit_1"]
 
     with pytest.raises(
         InconsistentGraphError,
-        match="could not merge all edges: unitOf, hadPrimarySource",
+        match=re.escape("could not merge all edges: hadPrimarySource[0], unitOf[0]"),
     ):
         graph._merge_edges(
             extracted_organizational_unit,
@@ -1406,11 +1409,11 @@ def test_mocked_graph_merge_edges_fails_unexpected(
     mocked_graph.return_value = [
         {
             "edges": [
-                ({}, "stableTargetId"),
-                ({}, "unitOf"),
-                ({}, "stableTargetId"),
-                ({}, "hadPrimarySource"),
-                ({}, "newEdgeWhoDis"),
+                "stableTargetId[0]",
+                "unitOf[0]",
+                "stableTargetId[0]",
+                "hadPrimarySource[0]",
+                "newEdgeWhoDis[0]",
             ]
         },
     ]
@@ -1419,7 +1422,7 @@ def test_mocked_graph_merge_edges_fails_unexpected(
 
     with pytest.raises(
         RuntimeError,
-        match="merged more edges than expected: newEdgeWhoDis",
+        match=re.escape("merged more edges than expected: newEdgeWhoDis[0]"),
     ):
         graph._merge_edges(
             extracted_organizational_unit,
@@ -1437,9 +1440,14 @@ def test_mocked_graph_ingests_rule_set(
         [{"current": {}, "$comment": "additive item"}],
         [{"current": {}, "$comment": "subtractive item"}],
         [{"current": {}, "$comment": "preventive item"}],
-        [{"edges": ["parentUnit", "stableTargetId"], "$comment": "additive edges"}],
-        [{"edges": ["stableTargetId"], "$comment": "subtractive edges"}],
-        [{"edges": ["stableTargetId"], "$comment": "preventive edges"}],
+        [
+            {
+                "edges": ["parentUnit[0]", "stableTargetId[0]"],
+                "$comment": "additive edges",
+            }
+        ],
+        [{"edges": ["stableTargetId[0]"], "$comment": "subtractive edges"}],
+        [{"edges": ["stableTargetId[0]"], "$comment": "preventive edges"}],
     ]
     graph = GraphConnector.get()
     graph.ingest([organizational_unit_rule_set_response])
@@ -1505,61 +1513,66 @@ def test_mocked_graph_ingests_extracted_models(
         [{"current": {}, "$comment": "mock response for Activity a-1 item"}],
         [
             {
-                "edges": ["hadPrimarySource", "stableTargetId"],
+                "edges": ["hadPrimarySource[0]", "stableTargetId[0]"],
                 "$comment": "mock response for PrimarySource ps-1 edges",
             },
         ],
         [
             {
-                "edges": ["hadPrimarySource", "stableTargetId"],
+                "edges": ["hadPrimarySource[0]", "stableTargetId[0]"],
                 "$comment": "mock response for PrimarySource ps-2 edges",
             },
         ],
         [
             {
-                "edges": ["hadPrimarySource", "stableTargetId"],
+                "edges": ["hadPrimarySource[0]", "stableTargetId[0]"],
                 "$comment": "mock response for ContactPoint cp-1 edges",
             },
         ],
         [
             {
-                "edges": ["hadPrimarySource", "stableTargetId"],
+                "edges": ["hadPrimarySource[0]", "stableTargetId[0]"],
                 "$comment": "mock response for ContactPoint cp-2 edges",
             },
         ],
         [
             {
-                "edges": ["hadPrimarySource", "stableTargetId"],
+                "edges": ["hadPrimarySource[0]", "stableTargetId[0]"],
                 "$comment": "mock response for Organization rki edges",
             }
         ],
         [
             {
-                "edges": ["hadPrimarySource", "stableTargetId"],
+                "edges": ["hadPrimarySource[0]", "stableTargetId[0]"],
                 "$comment": "mock response for Organization robert-koch-institute edges",
             }
         ],
         [
             {
-                "edges": ["hadPrimarySource", "unitOf", "stableTargetId"],
+                "edges": ["hadPrimarySource[0]", "unitOf[0]", "stableTargetId[0]"],
                 "$comment": "mock response for OrganizationalUnit ou-1 edges",
             }
         ],
         [
             {
-                "edges": ["hadPrimarySource", "parentUnit", "unitOf", "stableTargetId"],
+                "edges": [
+                    "hadPrimarySource[0]",
+                    "parentUnit[0]",
+                    "unitOf[0]",
+                    "stableTargetId[0]",
+                ],
                 "$comment": "mock response for OrganizationalUnit ou-1.6 edges",
             }
         ],
         [
             {
                 "edges": [
-                    "hadPrimarySource",
-                    "contact",
-                    "contact",
-                    "contact",
-                    "responsibleUnit",
-                    "stableTargetId",
+                    "hadPrimarySource[0]",
+                    "contact[0]",
+                    "contact[1]",
+                    "contact[2]",
+                    "responsibleUnit[0]",
+                    "stableTargetId[0]",
                 ],
                 "$comment": "mock response for Activity a-1 edges",
             },

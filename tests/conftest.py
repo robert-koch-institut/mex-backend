@@ -119,11 +119,11 @@ class MockedGraph:
         raise NotImplementedError
 
     @return_value.setter
-    def return_value(self, value: list[Any]) -> None:
+    def return_value(self, value: list[dict[str, Any]]) -> None:
         self.run.return_value = Mock(
             to_eager_result=MagicMock(
                 return_value=(
-                    [Mock(data=MagicMock(return_value=v)) for v in value],
+                    [Mock(items=v.items) for v in value],
                     Mock(counters=SummaryCounters({})),
                     None,
                 ),
@@ -135,12 +135,12 @@ class MockedGraph:
         raise NotImplementedError
 
     @side_effect.setter
-    def side_effect(self, values: list[list[Any]]) -> None:
+    def side_effect(self, values: list[list[dict[str, Any]]]) -> None:
         self.run.side_effect = [
             Mock(
                 to_eager_result=MagicMock(
                     return_value=(
-                        [Mock(data=MagicMock(return_value=v)) for v in value],
+                        [Mock(items=v.items) for v in value],
                         Mock(counters=SummaryCounters({})),
                         None,
                     ),
