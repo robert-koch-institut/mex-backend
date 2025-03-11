@@ -9,11 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- show package version in system check endpoint
-
 ### Changes
-
-- improve exception messages for edge merging failures
 
 ### Deprecated
 
@@ -22,6 +18,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [0.31.1] - 2025-03-11
+
+### Added
+
+- show package version in system check endpoint
+
+### Changes
+
+- improve exception messages for edge merging failures
 
 ## [0.31.0] - 2025-03-05
 
