@@ -1,6 +1,8 @@
 from itertools import groupby
 from typing import TypedDict
 
+from mex.common.types import AnyPrimitiveType
+
 
 class _SearchResultReference(TypedDict):
     """Helper class to show the structure of search result references."""
@@ -23,3 +25,24 @@ def expand_references_in_search_result(
     sorted_refs = sorted(refs, key=lambda ref: (ref["label"], ref["position"]))
     groups = groupby(sorted_refs, lambda ref: (ref["label"]))
     return {label: [ref["value"] for ref in group] for label, group in groups}
+
+
+def transform_edges_into_expectations_by_edge_locator(
+    start_node_type: str,
+    start_node_constraints: dict[str, AnyPrimitiveType],
+    ref_labels: list[str],
+    ref_identifiers: list[str],
+    ref_positions: list[int],
+) -> dict[str, str]:
+    """Generate a all expected edges and render a CYPHER-style merge statement."""
+    start_node = ", ".join(f'{k}: "{v!s}"' for k, v in start_node_constraints.items())
+    return {
+        (edge_locator := f"{label} {{position: {position}}}"): (
+            f"(:{start_node_type} {{{start_node}}})"
+            f"-[:{edge_locator}]->"
+            f'({{identifier: "{identifier}"}})'
+        )
+        for label, position, identifier in zip(
+            ref_labels, ref_positions, ref_identifiers, strict=True
+        )
+    }

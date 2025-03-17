@@ -11,12 +11,17 @@ from mex.backend.logging import LOGGING_LINE_LENGTH
 
 
 class EdgeExporter(RecordExporter):
-    """Transformer class that turns edges into a string of format `label[position]`."""
+    """Transformer class that turns edges into a string of format `label {props}`.
+
+    Full example:
+        `shortName {position: 0}`
+    """
 
     def transform(self, x: Any) -> Any:
         """Transform a value, or collection of values."""
         if isinstance(x, Relationship):
-            return f"{x.type}[{x.get('position', 0)}]"
+            properties = ", ".join(f"{k}: {x.get(k)!r}" for k in sorted(x))
+            return f"{x.type} {{{properties}}}"
         return super().transform(x)  # type: ignore[no-untyped-call]
 
 

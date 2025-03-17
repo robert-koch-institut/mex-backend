@@ -20,10 +20,11 @@ from mex.common.models import (
     MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     AnyExtractedModel,
+    ExtractedOrganization,
     ExtractedOrganizationalUnit,
     OrganizationalUnitRuleSetResponse,
 )
-from mex.common.types import Identifier
+from mex.common.types import Identifier, Text, TextLanguage
 from tests.conftest import MockedGraph, get_graph
 
 
@@ -122,7 +123,7 @@ create_full_text_search_index(
 @pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
     mocked_graph.return_value = [
-        {"edges": ["hadPrimarySource[0]", "stableTargetId[0]"]}
+        {"edges": ["hadPrimarySource {position: 0}", "stableTargetId {position: 0}"]}
     ]
     graph = GraphConnector.get()
     graph._seed_data()
@@ -1349,7 +1350,13 @@ def test_mocked_graph_merge_edges(
     mocked_graph: MockedGraph, dummy_data: dict[str, AnyExtractedModel]
 ) -> None:
     mocked_graph.return_value = [
-        {"edges": ["hadPrimarySource[0]", "unitOf[0]", "stableTargetId[0]"]},
+        {
+            "edges": [
+                "hadPrimarySource {position: 0}",
+                "unitOf {position: 0}",
+                "stableTargetId {position: 0}",
+            ]
+        },
     ]
     graph = GraphConnector.get()
 
@@ -1387,19 +1394,54 @@ merge_edges(
 def test_mocked_graph_merge_edges_fails_inconsistent(
     mocked_graph: MockedGraph, dummy_data: dict[str, AnyExtractedModel]
 ) -> None:
-    mocked_graph.return_value = [{"edges": ["stableTargetId[0]"]}]
+    mocked_graph.return_value = [{"edges": ["stableTargetId {position: 0}"]}]
     graph = GraphConnector.get()
     extracted_organizational_unit = dummy_data["organizational_unit_1"]
 
     with pytest.raises(
         InconsistentGraphError,
-        match=re.escape("could not merge all edges: hadPrimarySource[0], unitOf[0]"),
+        match=re.escape("""InconsistentGraphError: failed to merge 2 edges: \
+(:ExtractedOrganizationalUnit {identifier: "gIyDlXYbq0JwItPRU0NcFN"})-[:hadPrimarySource {position: 0}]->({identifier: "bbTqJnQc3TA8dBJmLMBimb"}), \
+(:ExtractedOrganizationalUnit {identifier: "gIyDlXYbq0JwItPRU0NcFN"})-[:unitOf {position: 0}]->({identifier: "gGsD37g2jyzxedMSHozDZa"})\
+"""),
     ):
         graph._merge_edges(
             extracted_organizational_unit,
             extracted_organizational_unit.stableTargetId,
             identifier=extracted_organizational_unit.identifier,
         )
+
+
+@pytest.mark.integration
+@pytest.mark.usefixtures("load_dummy_data")
+def test_graph_merge_edges_fails_inconsistent(
+    load_dummy_data: dict[str, AnyExtractedModel],
+) -> None:
+    graph = GraphConnector.get()
+    consistent_org = ExtractedOrganization(
+        identifierInPrimarySource="10000000",
+        hadPrimarySource=load_dummy_data["primary_source_2"].stableTargetId,
+        officialName=[Text(value="Consistent Org", language=TextLanguage.EN)],
+    )
+    inconsistent_unit = ExtractedOrganizationalUnit(
+        identifierInPrimarySource="199999",
+        hadPrimarySource="whatPrimarySource",  # inconsistent identifier
+        name=[Text(value="Inconsistent Unit", language=TextLanguage.EN)],
+        unitOf=[
+            load_dummy_data["organization_1"].stableTargetId,  # consistent identifier
+            "whatOrganizationalUnit",  # inconsistent identifier
+            consistent_org.stableTargetId,  # consistent identifier
+        ],
+    )
+
+    with pytest.raises(
+        InconsistentGraphError,
+        match=re.escape("""InconsistentGraphError: failed to merge 2 edges: \
+(:ExtractedOrganizationalUnit {identifier: "bFQoRhcVH5DHUK"})-[:hadPrimarySource {position: 0}]->({identifier: "whatPrimarySource"}), \
+(:ExtractedOrganizationalUnit {identifier: "bFQoRhcVH5DHUK"})-[:unitOf {position: 1}]->({identifier: "whatOrganizationalUnit"})\
+"""),
+    ):
+        graph.ingest([consistent_org, inconsistent_unit])
 
 
 @pytest.mark.usefixtures("mocked_query_class")
@@ -1409,11 +1451,11 @@ def test_mocked_graph_merge_edges_fails_unexpected(
     mocked_graph.return_value = [
         {
             "edges": [
-                "stableTargetId[0]",
-                "unitOf[0]",
-                "stableTargetId[0]",
-                "hadPrimarySource[0]",
-                "newEdgeWhoDis[0]",
+                "stableTargetId {position: 0}",
+                "unitOf {position: 0}",
+                "stableTargetId {position: 0}",
+                "hadPrimarySource {position: 0}",
+                "newEdgeWhoDis {position: 0}",
             ]
         },
     ]
@@ -1422,7 +1464,9 @@ def test_mocked_graph_merge_edges_fails_unexpected(
 
     with pytest.raises(
         RuntimeError,
-        match=re.escape("merged more edges than expected: newEdgeWhoDis[0]"),
+        match=re.escape(
+            "merged 1 edges more than expected: newEdgeWhoDis {position: 0}"
+        ),
     ):
         graph._merge_edges(
             extracted_organizational_unit,
@@ -1442,12 +1486,12 @@ def test_mocked_graph_ingests_rule_set(
         [{"current": {}, "$comment": "preventive item"}],
         [
             {
-                "edges": ["parentUnit[0]", "stableTargetId[0]"],
+                "edges": ["parentUnit {position: 0}", "stableTargetId {position: 0}"],
                 "$comment": "additive edges",
             }
         ],
-        [{"edges": ["stableTargetId[0]"], "$comment": "subtractive edges"}],
-        [{"edges": ["stableTargetId[0]"], "$comment": "preventive edges"}],
+        [{"edges": ["stableTargetId {position: 0}"], "$comment": "subtractive edges"}],
+        [{"edges": ["stableTargetId {position: 0}"], "$comment": "preventive edges"}],
     ]
     graph = GraphConnector.get()
     graph.ingest([organizational_unit_rule_set_response])
@@ -1513,53 +1557,75 @@ def test_mocked_graph_ingests_extracted_models(
         [{"current": {}, "$comment": "mock response for Activity a-1 item"}],
         [
             {
-                "edges": ["hadPrimarySource[0]", "stableTargetId[0]"],
+                "edges": [
+                    "hadPrimarySource {position: 0}",
+                    "stableTargetId {position: 0}",
+                ],
                 "$comment": "mock response for PrimarySource ps-1 edges",
             },
         ],
         [
             {
-                "edges": ["hadPrimarySource[0]", "stableTargetId[0]"],
+                "edges": [
+                    "hadPrimarySource {position: 0}",
+                    "stableTargetId {position: 0}",
+                ],
                 "$comment": "mock response for PrimarySource ps-2 edges",
             },
         ],
         [
             {
-                "edges": ["hadPrimarySource[0]", "stableTargetId[0]"],
+                "edges": [
+                    "hadPrimarySource {position: 0}",
+                    "stableTargetId {position: 0}",
+                ],
                 "$comment": "mock response for ContactPoint cp-1 edges",
             },
         ],
         [
             {
-                "edges": ["hadPrimarySource[0]", "stableTargetId[0]"],
+                "edges": [
+                    "hadPrimarySource {position: 0}",
+                    "stableTargetId {position: 0}",
+                ],
                 "$comment": "mock response for ContactPoint cp-2 edges",
             },
         ],
         [
             {
-                "edges": ["hadPrimarySource[0]", "stableTargetId[0]"],
+                "edges": [
+                    "hadPrimarySource {position: 0}",
+                    "stableTargetId {position: 0}",
+                ],
                 "$comment": "mock response for Organization rki edges",
             }
         ],
         [
             {
-                "edges": ["hadPrimarySource[0]", "stableTargetId[0]"],
+                "edges": [
+                    "hadPrimarySource {position: 0}",
+                    "stableTargetId {position: 0}",
+                ],
                 "$comment": "mock response for Organization robert-koch-institute edges",
             }
         ],
         [
             {
-                "edges": ["hadPrimarySource[0]", "unitOf[0]", "stableTargetId[0]"],
+                "edges": [
+                    "hadPrimarySource {position: 0}",
+                    "unitOf {position: 0}",
+                    "stableTargetId {position: 0}",
+                ],
                 "$comment": "mock response for OrganizationalUnit ou-1 edges",
             }
         ],
         [
             {
                 "edges": [
-                    "hadPrimarySource[0]",
-                    "parentUnit[0]",
-                    "unitOf[0]",
-                    "stableTargetId[0]",
+                    "hadPrimarySource {position: 0}",
+                    "parentUnit {position: 0}",
+                    "unitOf {position: 0}",
+                    "stableTargetId {position: 0}",
                 ],
                 "$comment": "mock response for OrganizationalUnit ou-1.6 edges",
             }
@@ -1567,12 +1633,12 @@ def test_mocked_graph_ingests_extracted_models(
         [
             {
                 "edges": [
-                    "hadPrimarySource[0]",
-                    "contact[0]",
-                    "contact[1]",
-                    "contact[2]",
-                    "responsibleUnit[0]",
-                    "stableTargetId[0]",
+                    "hadPrimarySource {position: 0}",
+                    "contact {position: 0}",
+                    "contact {position: 1}",
+                    "contact {position: 2}",
+                    "responsibleUnit {position: 0}",
+                    "stableTargetId {position: 0}",
                 ],
                 "$comment": "mock response for Activity a-1 edges",
             },

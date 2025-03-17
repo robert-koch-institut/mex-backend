@@ -13,7 +13,10 @@ from mex.backend.fields import SEARCHABLE_CLASSES, SEARCHABLE_FIELDS
 from mex.backend.graph.exceptions import InconsistentGraphError
 from mex.backend.graph.models import Result
 from mex.backend.graph.query import Query, QueryBuilder
-from mex.backend.graph.transform import expand_references_in_search_result
+from mex.backend.graph.transform import (
+    expand_references_in_search_result,
+    transform_edges_into_expectations_by_edge_locator,
+)
 from mex.backend.settings import BackendSettings
 from mex.common.connector import BaseConnector
 from mex.common.exceptions import MExError
@@ -512,17 +515,26 @@ class GraphConnector(BaseConnector):
             ref_identifiers=ref_identifiers,
             ref_positions=ref_positions,
         )
+
+        expectations_by_locator = transform_edges_into_expectations_by_edge_locator(
+            start_node_type=model.entityType,
+            start_node_constraints=constraints,
+            ref_labels=ref_labels,
+            ref_identifiers=ref_identifiers,
+            ref_positions=ref_positions,
+        )
+        expected_edges = set(expectations_by_locator)
         merged_edges = set(result["edges"])
-        expected_edges = {
-            f"{label}[{position}]"
-            for label, position in zip(ref_labels, ref_positions, strict=True)
-        }
+
         if missing_edges := sorted(expected_edges - merged_edges):
-            msg = f"could not merge all edges: {', '.join(missing_edges)}"
+            expectations = ", ".join(expectations_by_locator[e] for e in missing_edges)
+            msg = f"failed to merge {len(missing_edges)} edges: {expectations}"
             raise InconsistentGraphError(msg)
         if unexpected_edges := sorted(merged_edges - expected_edges):
-            msg = f"merged more edges than expected: {', '.join(unexpected_edges)}"
+            surplus = ", ".join(unexpected_edges)
+            msg = f"merged {len(unexpected_edges)} edges more than expected: {surplus}"
             raise RuntimeError(msg)
+
         return result
 
     def ingest(
