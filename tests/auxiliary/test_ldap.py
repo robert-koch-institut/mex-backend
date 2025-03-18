@@ -113,7 +113,6 @@ def test_search_persons_in_ldap_mocked(
         assert count_results(search_string, data["items"]) == match_total
 
 
-@pytest.mark.integration
 def test_extracted_primary_source_ldap() -> None:
     expected_result = ExtractedPrimarySource(
         hadPrimarySource="00000000000000",
@@ -134,7 +133,11 @@ def test_extracted_primary_source_ldap() -> None:
     assert isinstance(result, ExtractedPrimarySource)
     assert result == expected_result
 
+
+@pytest.mark.integration
+def test_extracted_primary_source_ldap_ingest() -> None:
     # verify the primary source ldap has been stored in the database
+    result = extracted_primary_source_ldap()
     graph = GraphConnector.get()
     ingested_primary_source = graph.fetch_extracted_items(
         "ldap",
