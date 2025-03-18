@@ -136,8 +136,8 @@ def test_extracted_primary_source_ldap() -> None:
     # verify the primary source ldap has been stored in the database
     graph = GraphConnector.get()
     ingested_primary_source = graph.fetch_extracted_items(
-        "ldap",
-        str(result.stableTargetId),
+        "Active Directory",
+        None,
         ["ExtractedPrimarySource"],
         0,
         100,
