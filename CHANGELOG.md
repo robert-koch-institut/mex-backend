@@ -11,8 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- further improve exceptions for edge merging failures with start and end node props
-
 ### Deprecated
 
 ### Removed
@@ -20,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [0.31.4] - 2025-03-18
+
+### Changes
+
+- further improve exceptions for edge merging failures with start and end node props
 
 ## [0.31.3] - 2025-03-12
 
