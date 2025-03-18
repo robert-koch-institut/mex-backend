@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- wikidata search ingests PrimarySource into backend
+- wikidata and ldap search ingests PrimarySource into backend
 
 ### Changes
 

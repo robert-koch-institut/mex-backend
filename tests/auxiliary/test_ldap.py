@@ -5,6 +5,7 @@ from mex.backend.auxiliary.ldap import (
     extracted_organizational_unit,
     extracted_primary_source_ldap,
 )
+from mex.backend.graph.connector import GraphConnector
 from mex.common.models import (
     ExtractedOrganizationalUnit,
     ExtractedPrimarySource,
@@ -131,6 +132,17 @@ def test_extracted_primary_source_ldap() -> None:
     result = extracted_primary_source_ldap()
     assert isinstance(result, ExtractedPrimarySource)
     assert result == expected_result
+
+    # verify the primary source ldap has been stored in the database
+    graph = GraphConnector.get()
+    ingested_primary_source = graph.fetch_extracted_items(
+        "ldap",
+        str(result.stableTargetId),
+        ["ExtractedPrimarySource"],
+        0,
+        100,
+    )
+    assert ingested_primary_source["total"] == 1
 
 
 def test_extracted_organizational_unit() -> None:
