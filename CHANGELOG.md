@@ -9,12 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- wikidata and ldap search ingests PrimarySource into backend
+- ldap search ingests PrimarySource into backend
 
 ### Changes
-
-- simplify `expand_references_in_search_result` (not operating inline anymore)
-- update mex-common to 0.54.1
 
 ### Deprecated
 
@@ -23,6 +20,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [0.31.4] - 2025-03-18
+
+### Changes
+
+- further improve exceptions for edge merging failures with start and end node props
+
+## [0.31.3] - 2025-03-12
+
+### Changes
+
+- bump cookiecutter template to 716a58
+
+## [0.31.2] - 2025-03-11
+
+### Fixed
+
+- use the latest git tag for containerize job
+
+## [0.31.1] - 2025-03-11
+
+### Added
+
+- show package version in system check endpoint
+
+### Changes
+
+- improve exception messages for edge merging failures
+
+## [0.31.0] - 2025-03-05
+
+### Added
+
+- wikidata search ingests PrimarySource into backend
+
+### Changes
+
+- simplify `expand_references_in_search_result` (not operating inline anymore)
+- update mex-common to 0.54.1
 
 ## [0.30.2] - 2025-02-27
 
