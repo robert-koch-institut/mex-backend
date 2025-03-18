@@ -1,11 +1,28 @@
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from functools import cache
-from typing import Any
+from typing import Any, cast
 
 from neo4j import Result as Neo4jResult
+from neo4j._data import RecordExporter
+from neo4j.graph import Relationship
 
 from mex.backend.graph.exceptions import MultipleResultsFoundError, NoResultFoundError
 from mex.backend.logging import LOGGING_LINE_LENGTH
+
+
+class EdgeExporter(RecordExporter):
+    """Transformer class that turns edges into a string of format `label {props}`.
+
+    Full example:
+        `shortName {position: 0}`
+    """
+
+    def transform(self, x: Any) -> Any:
+        """Transform a value, or collection of values."""
+        if isinstance(x, Relationship):
+            properties = ", ".join(f"{k}: {x.get(k)!r}" for k in sorted(x))
+            return f"{x.type} {{{properties}}}"
+        return super().transform(x)  # type: ignore[no-untyped-call]
 
 
 class Result:
@@ -19,7 +36,10 @@ class Result:
     def __init__(self, result: Neo4jResult) -> None:
         """Wrap a neo4j result object in a mex-backend result."""
         self._records, self._summary, _ = result.to_eager_result()
-        self._get_cached_data = cache(lambda i: self._records[i].data())
+        transformer = cast(Callable[[Any], dict[str, Any]], EdgeExporter().transform)
+        self._get_cached_data = cache(
+            lambda i: transformer(dict(cast(dict[str, Any], self._records[i]).items()))
+        )
 
     def __getitem__(self, key: str) -> Any:
         """Proxy a getitem instruction to the first record if exactly one exists."""
