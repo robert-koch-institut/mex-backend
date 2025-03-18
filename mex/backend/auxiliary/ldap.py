@@ -61,7 +61,7 @@ def search_person_in_ldap(
 
 @cache
 def extracted_primary_source_ldap() -> ExtractedPrimarySource:
-    """Load and return ldap primary source."""
+    """Load, ingest and return ldap primary source."""
     seed_primary_sources = extract_seed_primary_sources()
     extracted_primary_sources = list(
         transform_seed_primary_sources_to_extracted_primary_sources(
