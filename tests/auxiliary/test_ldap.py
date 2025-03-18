@@ -113,6 +113,7 @@ def test_search_persons_in_ldap_mocked(
         assert count_results(search_string, data["items"]) == match_total
 
 
+@pytest.mark.integration
 def test_extracted_primary_source_ldap() -> None:
     expected_result = ExtractedPrimarySource(
         hadPrimarySource="00000000000000",
@@ -140,7 +141,7 @@ def test_extracted_primary_source_ldap() -> None:
         str(result.stableTargetId),
         ["ExtractedPrimarySource"],
         0,
-        1000,
+        100,
     )
     assert ingested_primary_source["total"] == 1
 
