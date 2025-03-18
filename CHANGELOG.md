@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- further improve exceptions for edge merging failures with start and end node props
+
 ### Deprecated
 
 ### Removed
@@ -20,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 ## [0.31.3] - 2025-03-12
+
+### Changes
+
+- bump cookiecutter template to 716a58
 
 ## [0.31.2] - 2025-03-11
 
