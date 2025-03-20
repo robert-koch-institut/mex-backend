@@ -9,8 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- ldap search ingests PrimarySource into backend
-
 ### Changes
 
 ### Deprecated
@@ -20,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [0.31.5] - 2025-03-20
+
+### Added
+
+- ldap search ingests PrimarySource into backend
 
 ## [0.31.4] - 2025-03-18
 
