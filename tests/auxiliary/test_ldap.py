@@ -140,7 +140,7 @@ def test_extracted_primary_source_ldap_ingest() -> None:
     result = extracted_primary_source_ldap()
     graph = GraphConnector.get()
     ingested_primary_source = graph.fetch_extracted_items(
-        "ldap",
+        "Active Directory",
         str(result.stableTargetId),
         ["ExtractedPrimarySource"],
         0,
