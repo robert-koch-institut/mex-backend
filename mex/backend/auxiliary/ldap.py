@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query
 
 from mex.backend.auxiliary.models import AuxiliarySearch
+from mex.backend.graph.connector import GraphConnector
 from mex.common.ldap.extract import (
     get_count_of_found_persons_by_name,
     get_persons_by_name,
@@ -60,7 +61,7 @@ def search_person_in_ldap(
 
 @cache
 def extracted_primary_source_ldap() -> ExtractedPrimarySource:
-    """Load and return ldap primary source."""
+    """Load, ingest and return ldap primary source."""
     seed_primary_sources = extract_seed_primary_sources()
     extracted_primary_sources = list(
         transform_seed_primary_sources_to_extracted_primary_sources(
@@ -71,6 +72,8 @@ def extracted_primary_source_ldap() -> ExtractedPrimarySource:
         extracted_primary_sources,
         "ldap",
     )
+    connector = GraphConnector.get()
+    connector.ingest([extracted_primary_source_ldap])
     return extracted_primary_source_ldap
 
 

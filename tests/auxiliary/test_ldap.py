@@ -5,6 +5,7 @@ from mex.backend.auxiliary.ldap import (
     extracted_organizational_unit,
     extracted_primary_source_ldap,
 )
+from mex.backend.graph.connector import GraphConnector
 from mex.common.models import (
     ExtractedOrganizationalUnit,
     ExtractedPrimarySource,
@@ -17,6 +18,7 @@ from mex.common.types import (
     Text,
     TextLanguage,
 )
+from tests.conftest import get_graph
 
 
 def count_results(search_string: str, persons: list) -> tuple:
@@ -131,6 +133,21 @@ def test_extracted_primary_source_ldap() -> None:
     result = extracted_primary_source_ldap()
     assert isinstance(result, ExtractedPrimarySource)
     assert result == expected_result
+
+
+@pytest.mark.integration
+def test_extracted_primary_source_ldap_ingest() -> None:
+    # verify the primary source ldap has been stored in the database
+    result = extracted_primary_source_ldap()
+    graph = GraphConnector.get()
+    ingested_primary_source = graph.fetch_extracted_items(
+        "Active Directory",
+        str(result.stableTargetId),
+        ["ExtractedPrimarySource"],
+        0,
+        100,
+    )
+    assert ingested_primary_source["total"] == 1, get_graph()
 
 
 def test_extracted_organizational_unit() -> None:
