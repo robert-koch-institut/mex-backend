@@ -59,6 +59,7 @@ def search_person_in_ldap(
     return AuxiliarySearch(items=extracted_persons, total=count_persons)
 
 
+@cache
 def extracted_primary_source_ldap() -> ExtractedPrimarySource:
     """Load, ingest and return ldap primary source."""
     seed_primary_sources = extract_seed_primary_sources()

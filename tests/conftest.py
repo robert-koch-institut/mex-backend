@@ -10,6 +10,11 @@ from fastapi.testclient import TestClient
 from neo4j import Driver, Session, SummaryCounters
 from pytest import MonkeyPatch
 
+from mex.backend.auxiliary.ldap import (
+    extracted_organizational_unit,
+    extracted_primary_source_ldap,
+)
+from mex.backend.auxiliary.wikidata import extracted_primary_source_wikidata
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.identity.provider import GraphIdentityProvider
 from mex.backend.main import app
@@ -391,3 +396,11 @@ def load_dummy_rule_set(
             stable_target_id=load_dummy_data["organizational_unit_2"].stableTargetId,
         ),
     )
+
+
+@pytest.fixture(autouse=True)
+def reset_caches() -> None:
+    """Reset the caches for each test."""
+    extracted_primary_source_wikidata.cache_clear()
+    extracted_primary_source_ldap.cache_clear()
+    extracted_organizational_unit.cache_clear()
