@@ -18,6 +18,7 @@ from mex.common.types import (
     Text,
     TextLanguage,
 )
+from tests.conftest import get_graph
 
 
 def count_results(search_string: str, persons: list) -> tuple:
@@ -146,7 +147,7 @@ def test_extracted_primary_source_ldap_ingest() -> None:
         0,
         100,
     )
-    assert ingested_primary_source["total"] == 1
+    assert ingested_primary_source["total"] == 1, get_graph()
 
 
 def test_extracted_organizational_unit() -> None:
