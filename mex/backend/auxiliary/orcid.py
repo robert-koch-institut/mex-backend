@@ -3,11 +3,13 @@ from typing import Annotated
 from fastapi import APIRouter, HTTPException, Query
 
 from mex.backend.auxiliary.models import AuxiliarySearch
-from mex.common.exceptions import EmptySearchResultError, FoundMoreThanOneError
+from mex.common.exceptions import EmptySearchResultError
 from mex.common.models import (
     ExtractedPerson,
 )
-from mex.common.orcid.extract import get_orcid_record_by_name
+from mex.common.orcid.extract import (
+    get_orcid_records_by_given_or_family_name,
+)
 from mex.common.orcid.transform import transform_orcid_person_to_mex_person
 
 router = APIRouter()
@@ -30,17 +32,16 @@ def search_person_in_orcid(
         ExtractedPerson and the total count of persons found.
     """
     try:
-        found_persons = [get_orcid_record_by_name(given_and_family_names=q)]
+        orcid_records = list(
+            get_orcid_records_by_given_or_family_name(given_and_family_names=q)
+        )
+
     except EmptySearchResultError as e:
         raise HTTPException(
             status_code=404, detail=f"No results found for '{q}'."
         ) from e
-    except FoundMoreThanOneError as e:
-        raise HTTPException(
-            status_code=400, detail=f"Multiple persons found for '{q}'."
-        ) from e
-    total_results = len(found_persons)
-    paginated_persons = found_persons[offset : offset + limit]
+    total_results = len(orcid_records)
+    paginated_persons = orcid_records[offset : offset + limit]
     extracted_persons = [
         transform_orcid_person_to_mex_person(person) for person in paginated_persons
     ]

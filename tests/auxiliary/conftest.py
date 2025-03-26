@@ -210,7 +210,7 @@ def mocked_orcid(
     monkeypatch.setattr(OrcidConnector, "build_query", build_query)
 
     def get_data_by_id(_self: OrcidConnector, orcid_id: str) -> dict[str, Any]:
-        if orcid_id == "0009-0004-3041-5706":
+        if orcid_id:
             return orcid_person_raw
         return None
 
