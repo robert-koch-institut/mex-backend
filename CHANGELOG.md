@@ -8,9 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- ORCID search endpoint in mex-backend
+  - endpoint returning orcid persons (tranformed to ExtractedPersons)
+  - full-text search query parameter `q` and pagination parameters `offset` and `limit`
+  - response body contains
+      - items: list[ExtractedPerson]  - the current "page" of search results
+      - total: int  - the total number of persons found for this request
 
 ### Changes
-
+- bumped common dependency to 0.56.0
 ### Deprecated
 
 ### Removed
