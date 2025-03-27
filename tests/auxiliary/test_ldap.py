@@ -150,7 +150,6 @@ def test_extracted_primary_source_ldap_ingest() -> None:
     assert ingested_primary_source["total"] == 1, get_graph()
 
 
-@pytest.mark.integration
 def test_extracted_organizational_unit() -> None:
     expected_result = [
         ExtractedOrganizationalUnit(
@@ -216,12 +215,30 @@ def test_extracted_organizational_unit() -> None:
     for item in result:
         assert isinstance(item, ExtractedOrganizationalUnit)
     assert result == expected_result
+
+    # check org units are ingested into graph
     graph = GraphConnector.get()
-    ingested_org_units = graph.fetch_extracted_items(
-        None,
-        None,
+    ingested_org_unit_1 = graph.fetch_extracted_items(
+        "CHLD Unterabteilung",
+        "eaWrYZHz9arDWHYYgJ3Jvd",
         ["ExtractedOrganizationalUnit"],
         0,
         100,
     )
-    assert ingested_org_units["total"] == 3, get_graph()
+    assert ingested_org_unit_1["total"] == 1, get_graph()
+    ingested_org_unit_2 = graph.fetch_extracted_items(
+        "PRNT Abteilung",
+        "g7U6F67JzQgCwy6SFIzoVH",
+        ["ExtractedOrganizationalUnit"],
+        0,
+        100,
+    )
+    assert ingested_org_unit_2["total"] == 1, get_graph()
+    ingested_org_unit_3 = graph.fetch_extracted_items(
+        "Fachgebiet 99",
+        "guUvX7rDQJIaMD8LbZV40E",
+        ["ExtractedOrganizationalUnit"],
+        0,
+        100,
+    )
+    assert ingested_org_unit_3["total"] == 1, get_graph()
