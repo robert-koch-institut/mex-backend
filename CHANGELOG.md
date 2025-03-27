@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
       - total: int  - the total number of persons found for this request
 
 ### Changes
-
+- bumped common dependency to 0.56.0
 ### Deprecated
 
 ### Removed
