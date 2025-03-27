@@ -150,6 +150,7 @@ def test_extracted_primary_source_ldap_ingest() -> None:
     assert ingested_primary_source["total"] == 1, get_graph()
 
 
+@pytest.mark.integration
 def test_extracted_organizational_unit() -> None:
     expected_result = [
         ExtractedOrganizationalUnit(
