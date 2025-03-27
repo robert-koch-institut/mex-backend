@@ -215,3 +215,12 @@ def test_extracted_organizational_unit() -> None:
     for item in result:
         assert isinstance(item, ExtractedOrganizationalUnit)
     assert result == expected_result
+    graph = GraphConnector.get()
+    ingested_org_units = graph.fetch_extracted_items(
+        None,
+        None,
+        ["ExtractedOrganizationalUnit"],
+        0,
+        100,
+    )
+    assert ingested_org_units["total"] == 3, get_graph()
