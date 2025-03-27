@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic_core import SchemaError, ValidationError
 
 from mex.backend.auxiliary.ldap import router as ldap_router
+from mex.backend.auxiliary.orcid import router as orcid_router
 from mex.backend.auxiliary.wikidata import router as wikidata_router
 from mex.backend.exceptions import (
     BackendError,
@@ -58,6 +59,8 @@ router.include_router(preview_router, dependencies=[Depends(has_read_access)])
 router.include_router(rules_router, dependencies=[Depends(has_write_access)])
 router.include_router(wikidata_router, dependencies=[Depends(has_read_access)])
 router.include_router(ldap_router, dependencies=[Depends(has_read_access)])
+router.include_router(orcid_router, dependencies=[Depends(has_read_access)])
+
 router.include_router(system_router)
 
 app.include_router(router)
