@@ -79,9 +79,12 @@ def extracted_primary_source_ldap() -> ExtractedPrimarySource:
 
 @cache
 def extracted_organizational_unit() -> list[ExtractedOrganizationalUnit]:
-    """Auxiliary function to get ldap as primary resource."""
+    """Auxiliary function to get ldap as primary resource and ingest org units."""
     extracted_organigram_units = extract_organigram_units()
     extracted_organizational_units = transform_organigram_units_to_organizational_units(
         extracted_organigram_units, extracted_primary_source_ldap()
     )
-    return list(extracted_organizational_units)
+    connector = GraphConnector.get()
+    list_of_extracted_organizational_units = list(extracted_organizational_units)
+    connector.ingest(list_of_extracted_organizational_units)  # type: ignore [arg-type]
+    return list_of_extracted_organizational_units
