@@ -1316,6 +1316,7 @@ def test_mocked_graph_merge_item(
     extracted_organizational_unit = dummy_data["organizational_unit_1"]
     graph = GraphConnector.get()
     graph._merge_item(
+        mocked_graph.session,
         extracted_organizational_unit,
         extracted_organizational_unit.stableTargetId,
         identifier=extracted_organizational_unit.identifier,
@@ -1361,9 +1362,10 @@ def test_mocked_graph_merge_edges(
     graph = GraphConnector.get()
 
     extracted_organizational_unit = cast(
-        ExtractedOrganizationalUnit, dummy_data["organizational_unit_1"]
+        "ExtractedOrganizationalUnit", dummy_data["organizational_unit_1"]
     )
     graph._merge_edges(
+        mocked_graph.session,
         extracted_organizational_unit,
         extracted_organizational_unit.stableTargetId,
         identifier=extracted_organizational_unit.identifier,
@@ -1406,6 +1408,7 @@ def test_mocked_graph_merge_edges_fails_inconsistent(
 """),
     ):
         graph._merge_edges(
+            mocked_graph.session,
             extracted_organizational_unit,
             extracted_organizational_unit.stableTargetId,
             identifier=extracted_organizational_unit.identifier,
@@ -1469,6 +1472,7 @@ def test_mocked_graph_merge_edges_fails_unexpected(
         ),
     ):
         graph._merge_edges(
+            mocked_graph.session,
             extracted_organizational_unit,
             extracted_organizational_unit.stableTargetId,
             identifier=extracted_organizational_unit.identifier,

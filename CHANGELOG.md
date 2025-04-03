@@ -11,14 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - ingest extracted organizational units on ldap search
 - ORCID search endpoint in mex-backend
-  - endpoint returning orcid persons (tranformed to ExtractedPersons)
+  - endpoint returning orcid persons (transformed to ExtractedPersons)
   - full-text search query parameter `q` and pagination parameters `offset` and `limit`
   - response body contains
       - items: list[ExtractedPerson]  - the current "page" of search results
       - total: int  - the total number of persons found for this request
 
 ### Changes
+
 - bumped common dependency to 0.56.0
+- run ingest transactions in one single neo4j session to improve performance
+- changed query to stop deduplication of merged edges
+- reduced max time out of neo4j commits to 10 secs
+
 ### Deprecated
 
 ### Removed
