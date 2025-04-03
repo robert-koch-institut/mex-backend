@@ -181,7 +181,7 @@ class GraphConnector(BaseConnector):
             message = f"\n{Template(str(query)).safe_substitute(params)}"
         else:
             message = f": {query!r}"
-        logger.error("error committing query %s", message)
+        logger.error("error committing query%s", message)
 
     def _do_commit(
         self, query: Query | str, session: Session | None = None, **parameters: Any
