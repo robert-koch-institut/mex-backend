@@ -143,7 +143,7 @@ class GraphConnector(BaseConnector):
 
     def _seed_data(self) -> None:
         """Ensure the primary source `mex` is seeded and linked to itself."""
-        self.ingest([cast(ExtractedPrimarySource, MEX_EXTRACTED_PRIMARY_SOURCE)])
+        self.ingest([cast("ExtractedPrimarySource", MEX_EXTRACTED_PRIMARY_SOURCE)])
 
     def close(self) -> None:
         """Close the connector's underlying requests session."""
@@ -152,12 +152,12 @@ class GraphConnector(BaseConnector):
     @staticmethod
     def _should_giveup_commit(error: Exception) -> bool:
         """When to give up on committing."""
-        return not cast(DriverError, error).is_retryable()
+        return not cast("DriverError", error).is_retryable()
 
     @staticmethod
     def _on_commit_backoff(event: BackoffDetails) -> None:
         """Re-connect to the graph database."""
-        self = cast(GraphConnector, event["args"][0])
+        self = cast("GraphConnector", event["args"][0])
         try:
             self.close()
         except DriverError as error:
@@ -168,7 +168,7 @@ class GraphConnector(BaseConnector):
     @staticmethod
     def _on_commit_giveup(event: BackoffDetails) -> None:
         """Log the query when giving up on committing."""
-        query = cast(Query | str, event["args"][1])
+        query = cast("Query | str", event["args"][1])
         kwargs = event["kwargs"]
         settings = BackendSettings.get()
         if settings.debug:
@@ -538,7 +538,8 @@ class GraphConnector(BaseConnector):
         return result
 
     def ingest(
-        self, models: list[AnyExtractedModel | AnyRuleSetResponse]
+        self,
+        models: Sequence[AnyExtractedModel | AnyRuleSetResponse],
     ) -> list[AnyExtractedModel | AnyRuleSetResponse]:
         """Ingest a list of models into the graph as nodes and connect all edges.
 
@@ -548,7 +549,7 @@ class GraphConnector(BaseConnector):
         the graph in a second step.
 
         Args:
-            models: List of extracted models
+            models: Sequence of extracted models
 
         Returns:
             List of identifiers of the ingested models
@@ -575,7 +576,7 @@ class GraphConnector(BaseConnector):
                     model, model.stableTargetId, identifier=model.identifier
                 )
 
-        return models
+        return list(models)
 
     def flush(self) -> None:
         """Flush the database (only in debug mode)."""

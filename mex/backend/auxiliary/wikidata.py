@@ -1,19 +1,9 @@
-from functools import cache
 from typing import Annotated
 
 from fastapi import APIRouter, Query
 
-from mex.backend.graph.connector import GraphConnector
-from mex.common.models import (
-    ExtractedOrganization,
-    ExtractedPrimarySource,
-    PaginatedItemsContainer,
-)
-from mex.common.primary_source.extract import extract_seed_primary_sources
-from mex.common.primary_source.transform import (
-    get_primary_sources_by_name,
-    transform_seed_primary_sources_to_extracted_primary_sources,
-)
+from mex.backend.auxiliary.primary_source import extracted_primary_source_wikidata
+from mex.common.models import ExtractedOrganization, PaginatedItemsContainer
 from mex.common.types import TextLanguage
 from mex.common.wikidata.extract import (
     get_count_of_found_organizations_by_label,
@@ -54,21 +44,3 @@ def search_organization_in_wikidata(
     return PaginatedItemsContainer[ExtractedOrganization](
         items=extracted_organizations, total=total_count
     )
-
-
-@cache
-def extracted_primary_source_wikidata() -> ExtractedPrimarySource:
-    """Load, ingest and return wikidata primary source."""
-    seed_primary_sources = extract_seed_primary_sources()
-    extracted_primary_sources = list(
-        transform_seed_primary_sources_to_extracted_primary_sources(
-            seed_primary_sources
-        )
-    )
-    (extracted_primary_source_wikidata,) = get_primary_sources_by_name(
-        extracted_primary_sources,
-        "wikidata",
-    )
-    connector = GraphConnector.get()
-    connector.ingest([extracted_primary_source_wikidata])
-    return extracted_primary_source_wikidata
