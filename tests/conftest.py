@@ -115,8 +115,9 @@ def patch_test_client_json_encoder(monkeypatch: MonkeyPatch) -> None:
 
 
 class MockedGraph:
-    def __init__(self, run: MagicMock) -> None:
+    def __init__(self, run: MagicMock, session: MagicMock) -> None:
         self.run = run
+        self.session = session
         self.return_value = []
 
     @property
@@ -168,7 +169,7 @@ def mocked_graph(monkeypatch: MonkeyPatch) -> MockedGraph:
     monkeypatch.setattr(
         GraphConnector, "__init__", lambda self: setattr(self, "driver", driver)
     )
-    return MockedGraph(run)
+    return MockedGraph(run, session)
 
 
 @pytest.fixture(autouse=True)
@@ -390,7 +391,7 @@ def load_dummy_rule_set(
         ]
     )
     return cast(
-        OrganizationalUnitRuleSetResponse,
+        "OrganizationalUnitRuleSetResponse",
         create_and_get_rule_set(
             organizational_unit_rule_set_request,
             stable_target_id=load_dummy_data["organizational_unit_2"].stableTargetId,

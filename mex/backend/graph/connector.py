@@ -5,7 +5,12 @@ from typing import Annotated, Any, Literal, cast
 
 import backoff
 from backoff.types import Details as BackoffDetails
-from neo4j import Driver, GraphDatabase, NotificationDisabledCategory
+from neo4j import (
+    Driver,
+    GraphDatabase,
+    NotificationDisabledCategory,
+    Session,
+)
 from neo4j.exceptions import DriverError
 from pydantic import Field
 
@@ -143,7 +148,7 @@ class GraphConnector(BaseConnector):
 
     def _seed_data(self) -> None:
         """Ensure the primary source `mex` is seeded and linked to itself."""
-        self.ingest([cast(ExtractedPrimarySource, MEX_EXTRACTED_PRIMARY_SOURCE)])
+        self.ingest([cast("ExtractedPrimarySource", MEX_EXTRACTED_PRIMARY_SOURCE)])
 
     def close(self) -> None:
         """Close the connector's underlying requests session."""
@@ -152,12 +157,12 @@ class GraphConnector(BaseConnector):
     @staticmethod
     def _should_giveup_commit(error: Exception) -> bool:
         """When to give up on committing."""
-        return not cast(DriverError, error).is_retryable()
+        return not cast("DriverError", error).is_retryable()
 
     @staticmethod
     def _on_commit_backoff(event: BackoffDetails) -> None:
         """Re-connect to the graph database."""
-        self = cast(GraphConnector, event["args"][0])
+        self = cast("GraphConnector", event["args"][0])
         try:
             self.close()
         except DriverError as error:
@@ -168,7 +173,7 @@ class GraphConnector(BaseConnector):
     @staticmethod
     def _on_commit_giveup(event: BackoffDetails) -> None:
         """Log the query when giving up on committing."""
-        query = cast(Query | str, event["args"][1])
+        query = cast("Query | str", event["args"][1])
         kwargs = event["kwargs"]
         settings = BackendSettings.get()
         if settings.debug:
@@ -178,10 +183,14 @@ class GraphConnector(BaseConnector):
             message = f": {query!r}"
         logger.error("error committing query%s", message)
 
-    def _do_commit(self, query: Query | str, **parameters: Any) -> Result:
+    def _do_commit(
+        self, query: Query | str, session: Session | None = None, **parameters: Any
+    ) -> Result:
         """Send and commit a single graph transaction."""
-        with self.driver.session() as session:
+        if session:
             return Result(session.run(str(query), parameters))
+        with self.driver.session() as closing_session:
+            return Result(closing_session.run(str(query), parameters))
 
     @backoff.on_exception(
         backoff.fibo,
@@ -189,11 +198,13 @@ class GraphConnector(BaseConnector):
         giveup=_should_giveup_commit,
         on_backoff=_on_commit_backoff,
         on_giveup=_on_commit_giveup,
-        max_time=1000,
+        max_time=10,  # seconds
     )
-    def commit(self, query: Query | str, **parameters: Any) -> Result:
+    def commit(
+        self, query: Query | str, session: Session | None = None, **parameters: Any
+    ) -> Result:
         """Send and commit a single graph transaction with retry configuration."""
-        return self._do_commit(query, **parameters)
+        return self._do_commit(query, session=session, **parameters)
 
     def _fetch_extracted_or_rule_items(
         self,
@@ -392,6 +403,7 @@ class GraphConnector(BaseConnector):
 
     def _merge_item(
         self,
+        session: Session,
         model: AnyExtractedModel | AnyRuleModel,
         stable_target_id: Identifier,
         **constraints: AnyPrimitiveType,
@@ -409,6 +421,7 @@ class GraphConnector(BaseConnector):
 
         Args:
             model: Model to merge into the graph as a node
+            session: Active Neo4j driver Session
             stable_target_id: Identifier the connected merged item should have
             constraints: Mapping of field names and values to use as constraints
                          when finding potential items to update
@@ -453,16 +466,18 @@ class GraphConnector(BaseConnector):
 
         return self.commit(
             query,
-            **constraints,
+            session=session,
             stable_target_id=stable_target_id,
             on_match=mutable_values,
             on_create=all_values,
             nested_values=nested_values,
             nested_positions=nested_positions,
+            **constraints,
         )
 
     def _merge_edges(
         self,
+        session: Session,
         model: AnyExtractedModel | AnyRuleModel,
         stable_target_id: Identifier,
         extra_refs: dict[str, Any] | None = None,
@@ -478,6 +493,7 @@ class GraphConnector(BaseConnector):
 
         Args:
             model: Model to ensure all edges are created in the graph
+            session: Active Neo4j driver Session
             stable_target_id: Identifier of the connected merged item
             extra_refs: Optional extra references to inject into the merge
             constraints: Mapping of field names and values to use as constraints
@@ -510,10 +526,11 @@ class GraphConnector(BaseConnector):
         )
         result = self.commit(
             query,
-            **constraints,
+            session=session,
             stable_target_id=stable_target_id,
             ref_identifiers=ref_identifiers,
             ref_positions=ref_positions,
+            **constraints,
         )
 
         expectations_by_locator = transform_edges_into_expectations_by_edge_locator(
@@ -553,27 +570,35 @@ class GraphConnector(BaseConnector):
         Returns:
             List of identifiers of the ingested models
         """
-        for model in models:
-            if isinstance(model, AnyRuleSetResponse):
-                for rule in (model.additive, model.subtractive, model.preventive):
-                    self._merge_item(rule, model.stableTargetId)
-            else:
-                self._merge_item(
-                    model, model.stableTargetId, identifier=model.identifier
-                )
-
-        for model in models:
-            if isinstance(model, AnyRuleSetResponse):
-                for rule in (model.additive, model.subtractive, model.preventive):
-                    self._merge_edges(
-                        rule,
+        with self.driver.session() as session:
+            for model in models:
+                if isinstance(model, AnyRuleSetResponse):
+                    for rule in (model.additive, model.subtractive, model.preventive):
+                        self._merge_item(session, rule, model.stableTargetId)
+                else:
+                    self._merge_item(
+                        session,
+                        model,
                         model.stableTargetId,
-                        extra_refs={"stableTargetId": model.stableTargetId},
+                        identifier=model.identifier,
                     )
-            else:
-                self._merge_edges(
-                    model, model.stableTargetId, identifier=model.identifier
-                )
+
+            for model in models:
+                if isinstance(model, AnyRuleSetResponse):
+                    for rule in (model.additive, model.subtractive, model.preventive):
+                        self._merge_edges(
+                            session,
+                            rule,
+                            model.stableTargetId,
+                            extra_refs={"stableTargetId": model.stableTargetId},
+                        )
+                else:
+                    self._merge_edges(
+                        session,
+                        model,
+                        model.stableTargetId,
+                        identifier=model.identifier,
+                    )
 
         return models
 

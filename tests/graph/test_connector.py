@@ -1315,11 +1315,13 @@ def test_mocked_graph_merge_item(
 ) -> None:
     extracted_organizational_unit = dummy_data["organizational_unit_1"]
     graph = GraphConnector.get()
-    graph._merge_item(
-        extracted_organizational_unit,
-        extracted_organizational_unit.stableTargetId,
-        identifier=extracted_organizational_unit.identifier,
-    )
+    with mocked_graph.session as session:
+        graph._merge_item(
+            session,
+            extracted_organizational_unit,
+            extracted_organizational_unit.stableTargetId,
+            identifier=extracted_organizational_unit.identifier,
+        )
 
     assert mocked_graph.call_args_list[-1].args == (
         """\
@@ -1361,13 +1363,15 @@ def test_mocked_graph_merge_edges(
     graph = GraphConnector.get()
 
     extracted_organizational_unit = cast(
-        ExtractedOrganizationalUnit, dummy_data["organizational_unit_1"]
+        "ExtractedOrganizationalUnit", dummy_data["organizational_unit_1"]
     )
-    graph._merge_edges(
-        extracted_organizational_unit,
-        extracted_organizational_unit.stableTargetId,
-        identifier=extracted_organizational_unit.identifier,
-    )
+    with mocked_graph.session as session:
+        graph._merge_edges(
+            session,
+            extracted_organizational_unit,
+            extracted_organizational_unit.stableTargetId,
+            identifier=extracted_organizational_unit.identifier,
+        )
 
     assert mocked_graph.call_args_list[-1].args == (
         """\
@@ -1398,18 +1402,20 @@ def test_mocked_graph_merge_edges_fails_inconsistent(
     graph = GraphConnector.get()
     extracted_organizational_unit = dummy_data["organizational_unit_1"]
 
-    with pytest.raises(
+    with pytest.raises(  # noqa: SIM117
         InconsistentGraphError,
         match=re.escape("""InconsistentGraphError: failed to merge 2 edges: \
 (:ExtractedOrganizationalUnit {identifier: "gIyDlXYbq0JwItPRU0NcFN"})-[:hadPrimarySource {position: 0}]->({identifier: "bbTqJnQc3TA8dBJmLMBimb"}), \
 (:ExtractedOrganizationalUnit {identifier: "gIyDlXYbq0JwItPRU0NcFN"})-[:unitOf {position: 0}]->({identifier: "gGsD37g2jyzxedMSHozDZa"})\
 """),
     ):
-        graph._merge_edges(
-            extracted_organizational_unit,
-            extracted_organizational_unit.stableTargetId,
-            identifier=extracted_organizational_unit.identifier,
-        )
+        with mocked_graph.session as session:
+            graph._merge_edges(
+                session,
+                extracted_organizational_unit,
+                extracted_organizational_unit.stableTargetId,
+                identifier=extracted_organizational_unit.identifier,
+            )
 
 
 @pytest.mark.integration
@@ -1462,17 +1468,19 @@ def test_mocked_graph_merge_edges_fails_unexpected(
     graph = GraphConnector.get()
     extracted_organizational_unit = dummy_data["organizational_unit_1"]
 
-    with pytest.raises(
+    with pytest.raises(  # noqa: SIM117
         RuntimeError,
         match=re.escape(
             "merged 1 edges more than expected: newEdgeWhoDis {position: 0}"
         ),
     ):
-        graph._merge_edges(
-            extracted_organizational_unit,
-            extracted_organizational_unit.stableTargetId,
-            identifier=extracted_organizational_unit.identifier,
-        )
+        with mocked_graph.session as session:
+            graph._merge_edges(
+                session,
+                extracted_organizational_unit,
+                extracted_organizational_unit.stableTargetId,
+                identifier=extracted_organizational_unit.identifier,
+            )
 
 
 @pytest.mark.usefixtures("mocked_query_class")
