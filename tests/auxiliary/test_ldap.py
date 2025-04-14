@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -6,22 +8,17 @@ from mex.backend.auxiliary.ldap import (
     extracted_primary_source_ldap,
 )
 from mex.backend.graph.connector import GraphConnector
-from mex.common.models import (
-    ExtractedOrganizationalUnit,
-    ExtractedPrimarySource,
-)
+from mex.common.models import ExtractedOrganizationalUnit, ExtractedPrimarySource
 from mex.common.types import (
     ExtractedOrganizationalUnitIdentifier,
-    ExtractedPrimarySourceIdentifier,
     MergedOrganizationalUnitIdentifier,
-    MergedPrimarySourceIdentifier,
     Text,
     TextLanguage,
 )
 from tests.conftest import get_graph
 
 
-def count_results(search_string: str, persons: list) -> tuple:
+def count_results(search_string: str, persons: list[dict[str, Any]]) -> int:
     return sum(
         1
         for person in persons
@@ -50,9 +47,9 @@ def count_results(search_string: str, persons: list) -> tuple:
 @pytest.mark.usefixtures("mocked_ldap")
 def test_search_persons_in_ldap_mocked(
     client_with_api_key_read_permission: TestClient,
-    search_string,
-    status_code,
-    match_total,
+    search_string: str,
+    status_code: int,
+    match_total: int,
 ) -> None:
     result = {
         "items": [
@@ -115,24 +112,23 @@ def test_search_persons_in_ldap_mocked(
 
 
 def test_extracted_primary_source_ldap() -> None:
-    expected_result = ExtractedPrimarySource(
-        hadPrimarySource="00000000000000",
-        identifierInPrimarySource="ldap",
-        version=None,
-        alternativeTitle=[],
-        contact=[],
-        description=[],
-        documentation=[],
-        locatedAt=[],
-        title=[Text(value="Active Directory", language=TextLanguage.EN)],
-        unitInCharge=[],
-        entityType="ExtractedPrimarySource",
-        identifier=ExtractedPrimarySourceIdentifier("cmiaN880A6fm1Ggno4kl7m"),
-        stableTargetId=MergedPrimarySourceIdentifier("ebs5siX85RkdrhBRlsYgRP"),
-    )
     result = extracted_primary_source_ldap()
     assert isinstance(result, ExtractedPrimarySource)
-    assert result == expected_result
+    assert result.model_dump() == {
+        "hadPrimarySource": "00000000000000",
+        "identifierInPrimarySource": "ldap",
+        "version": None,
+        "alternativeTitle": [],
+        "contact": [],
+        "description": [],
+        "documentation": [],
+        "locatedAt": [],
+        "title": [{"value": "Active Directory", "language": TextLanguage.EN}],
+        "unitInCharge": [],
+        "entityType": "ExtractedPrimarySource",
+        "identifier": "cmiaN880A6fm1Ggno4kl7m",
+        "stableTargetId": "ebs5siX85RkdrhBRlsYgRP",
+    }
 
 
 @pytest.mark.integration

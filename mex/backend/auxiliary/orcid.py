@@ -2,11 +2,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query
 
-from mex.common.exceptions import EmptySearchResultError
+from mex.backend.auxiliary.primary_source import extracted_primary_source_orcid
 from mex.common.models import ExtractedPerson, PaginatedItemsContainer
-from mex.common.orcid.extract import (
-    get_orcid_records_by_given_or_family_name,
-)
+from mex.common.orcid.extract import search_records_by_name
 from mex.common.orcid.transform import transform_orcid_person_to_mex_person
 
 router = APIRouter()
@@ -14,7 +12,7 @@ router = APIRouter()
 
 @router.get("/orcid", tags=["editor"])
 def search_person_in_orcid(
-    q: Annotated[str, Query(max_length=1000)] = "",
+    q: Annotated[str, Query(min_length=1, max_length=1000)],
     offset: Annotated[int, Query(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> PaginatedItemsContainer[ExtractedPerson]:
@@ -28,16 +26,18 @@ def search_person_in_orcid(
     Returns:
         Paginated list of ExtractedPersons
     """
-    params = {"given_and_family_names": q} if q else {}
-    try:
-        orcid_records = list(get_orcid_records_by_given_or_family_name(**params))
-    except EmptySearchResultError:
-        orcid_records = []
-    total_count = len(orcid_records)
+    orcid_records = search_records_by_name(
+        given_and_family_names=q,
+        skip=offset,
+        limit=limit,
+    )
     extracted_persons = [
-        transform_orcid_person_to_mex_person(person)
-        for person in orcid_records[offset : offset + limit]
+        transform_orcid_person_to_mex_person(
+            person,
+            extracted_primary_source_orcid(),
+        )
+        for person in orcid_records.items
     ]
     return PaginatedItemsContainer[ExtractedPerson](
-        items=extracted_persons, total=total_count
+        items=extracted_persons, total=orcid_records.total
     )

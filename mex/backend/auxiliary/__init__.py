@@ -6,11 +6,9 @@ from mex.backend.auxiliary.primary_source import (
     extracted_primary_source_ldap,
     extracted_primary_source_orcid,
     extracted_primary_source_wikidata,
-    extracted_primary_sources,
 )
 
 startup_tasks: list[Callable[[], Any]] = [
-    extracted_primary_sources,
     extracted_primary_source_ldap,
     extracted_primary_source_orcid,
     extracted_primary_source_wikidata,

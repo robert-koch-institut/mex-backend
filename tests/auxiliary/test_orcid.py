@@ -27,16 +27,14 @@ john_doe_response = {
     [
         ("John Doe", 200),
         ("Multiple Doe", 200),
-        ("john doe", 200),
         ("John O'Doe", 200),
         ("", 422),
     ],
     ids=[
-        "existing Person by name",
+        "existing person by name",
         "multiple results",
-        "case insensitiv",
         "special symbols",
-        "empty search String",
+        "empty search string",
     ],
 )
 @pytest.mark.usefixtures("mocked_orcid")
@@ -49,16 +47,15 @@ def test_search_persons_in_orcid_mocked(
         "/v0/orcid", params={"q": search_string}
     )
     assert response.status_code == status_code
+    response_data = response.json()
 
     if response.status_code == 200:
-        response_data = response.json()
         assert response_data["total"] == len(response_data["items"])
         if search_string == "Multiple Doe":
             assert response_data["items"] == [john_doe_response] * 10
         else:
             assert response_data["items"] == [john_doe_response]
     elif response.status_code == 422:
-        response_data = response.json()
         assert response_data == {
             "detail": [
                 {
@@ -88,7 +85,7 @@ def test_search_persons_in_orcid_empty(
     [
         (
             {"given-and-family-names": "'John Doe'"},
-            "given-and-family-names:\"'John Doe'\"",
+            "given-and-family-names:'John Doe'",
         ),
         (
             {"given-names": "John", "family-name": "Doe"},
@@ -97,6 +94,8 @@ def test_search_persons_in_orcid_empty(
     ],
     ids=["One param", "two params"],
 )
+@pytest.mark.usefixtures("mocked_orcid")
 def test_build_query(filters: dict[str, Any], expected_output: str) -> None:
-    built_query = OrcidConnector.build_query(filters)
+    connector = OrcidConnector.get()
+    built_query = connector.build_query(filters)
     assert built_query == expected_output

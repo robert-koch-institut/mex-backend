@@ -14,6 +14,7 @@ from mex.backend.auxiliary.ldap import (
     extracted_organizational_unit,
     extracted_primary_source_ldap,
 )
+from mex.backend.auxiliary.primary_source import extracted_primary_source_orcid
 from mex.backend.auxiliary.wikidata import extracted_primary_source_wikidata
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.identity.provider import GraphIdentityProvider
@@ -194,6 +195,14 @@ def set_identity_provider(is_integration_test: bool, monkeypatch: MonkeyPatch) -
         monkeypatch.setattr(settings, "identity_provider", IdentityProvider.GRAPH)
     else:
         monkeypatch.setattr(settings, "identity_provider", IdentityProvider.MEMORY)
+
+
+@pytest.fixture(autouse=True)
+def suppress_lifespan_tasks(monkeypatch: MonkeyPatch) -> None:
+    """Skip auxiliary startup lifespan tasks for general integration tests."""
+    from mex.backend import main
+
+    monkeypatch.setattr(main, "auxiliary_startup_tasks", [])
 
 
 @pytest.fixture(autouse=True)
@@ -404,4 +413,5 @@ def reset_caches() -> None:
     """Reset the caches for each test."""
     extracted_primary_source_wikidata.cache_clear()
     extracted_primary_source_ldap.cache_clear()
+    extracted_primary_source_orcid.cache_clear()
     extracted_organizational_unit.cache_clear()

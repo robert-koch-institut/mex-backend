@@ -32,7 +32,6 @@ from mex.common.logging import logger
 
 startup_tasks: list[Callable[[], Any]] = [
     BackendSettings.get,
-    *auxiliary_startup_tasks,
 ]
 teardown_tasks: list[Callable[[], Any]] = [
     CONNECTOR_STORE.reset,
@@ -42,13 +41,15 @@ teardown_tasks: list[Callable[[], Any]] = [
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     """Async context manager to execute startup and teardown of the FastAPI app."""
-    for task in startup_tasks:
+    for task in (*startup_tasks, *auxiliary_startup_tasks):
         task()
-        logger.info(f"startup {task} complete")
+        task_name = getattr(task, "__wrapped__", task).__name__
+        logger.info(f"startup {task_name} complete")
     yield None
     for task in teardown_tasks:
         task()
-        logger.info(f"teardown {task} complete")
+        task_name = getattr(task, "__wrapped__", task).__name__
+        logger.info(f"teardown {task_name} complete")
 
 
 app = FastAPI(
