@@ -9,11 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- seed primary sources and organigram on fastAPI startup
-
 ### Changes
-
-- simplify and harmonize aux endpoints
 
 ### Deprecated
 
@@ -22,6 +18,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [0.33.0] - 2025-04-14
+
+### Added
+
+- seed primary sources and organigram on fastAPI startup
+
+### Changes
+
+- simplify and harmonize aux endpoints
 
 ## [0.32.0] - 2025-04-03
 
