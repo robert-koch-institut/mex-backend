@@ -423,12 +423,12 @@ CALL (source) {
     MATCH (target_0 {identifier: $ref_identifiers[0]})
     MERGE (source)-[edge:personInCharge {position: $ref_positions[0]}]->(target_0)
     RETURN edge
-    UNION
+    UNION ALL
     WITH source
     MATCH (target_1 {identifier: $ref_identifiers[1]})
     MERGE (source)-[edge:meetingScheduledBy {position: $ref_positions[1]}]->(target_1)
     RETURN edge
-    UNION
+    UNION ALL
     WITH source
     MATCH (target_2 {identifier: $ref_identifiers[2]})
     MERGE (source)-[edge:agendaSignedOff {position: $ref_positions[2]}]->(target_2)

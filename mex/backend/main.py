@@ -1,5 +1,6 @@
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
+from typing import Any
 
 import uvicorn
 from fastapi import APIRouter, Depends, FastAPI
@@ -29,11 +30,11 @@ from mex.common.cli import entrypoint
 from mex.common.connector import CONNECTOR_STORE
 from mex.common.logging import logger
 
-startup_tasks = [
+startup_tasks: list[Callable[[], Any]] = [
     BackendSettings.get,
     *auxiliary_startup_tasks,
 ]
-teardown_tasks = [
+teardown_tasks: list[Callable[[], Any]] = [
     CONNECTOR_STORE.reset,
 ]
 

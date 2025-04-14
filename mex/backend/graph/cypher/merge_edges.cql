@@ -22,7 +22,7 @@ Returns:
 MATCH (source:<<current_label>> {<<current_constraints|render_constraints>>})-[:stableTargetId]->({identifier: $stable_target_id})
 CALL (source) {
 <%- if ref_labels %>
-<%- set union = joiner("UNION\n    ") %>
+<%- set union = joiner("UNION ALL\n    ") %>
 <%- for ref_label in ref_labels %>
 <%- set index = loop.index0 %>
     <<union()>>WITH source

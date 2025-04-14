@@ -9,12 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- ingest extracted organizational units on ldap search
-- implement ORCID search endpoint returning persons
-
 ### Changes
 
-- bumped common dependency to 0.56.0
+- simplify and harmonize aux endpoints
 
 ### Deprecated
 
@@ -23,6 +20,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [0.32.0] - 2025-04-03
+
+### Added
+
+- ingest extracted organizational units on ldap search
+- implement ORCID search endpoint returning persons
+
+### Changes
+
+- bumped common dependency to 0.56.0
+- run ingest transactions in one single neo4j session to improve performance
+- changed query to stop deduplication of merged edges
+- reduced max time out of neo4j commits to 10 secs
 
 ## [0.31.5] - 2025-03-20
 
