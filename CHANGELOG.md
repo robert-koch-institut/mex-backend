@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- seed primary sources and organigram on fastAPI startup
+
 ### Changes
 
 - simplify and harmonize aux endpoints

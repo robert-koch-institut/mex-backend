@@ -27,7 +27,7 @@ def test_search_organization_in_wikidata_mocked(
         "items": [
             {
                 "$type": "ExtractedOrganization",
-                "alternativeName": [Joker()],
+                "alternativeName": Joker(),
                 "geprisId": [],
                 "gndId": [],
                 "hadPrimarySource": "djbNGb5fLgYHFyMh3fZE2g",
