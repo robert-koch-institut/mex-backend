@@ -9,19 +9,12 @@ import requests
 from ldap3 import Connection
 from pytest import MonkeyPatch
 from requests import Response
-from starlette import status
 
 from mex.common.ldap.connector import LDAPConnector
-from mex.common.ldap.models.person import LDAPPerson
-from mex.common.models import (
-    ExtractedOrganizationalUnit,
-    ExtractedPrimarySource,
-)
+from mex.common.ldap.models import LDAPPerson
 from mex.common.orcid.connector import OrcidConnector
-from mex.common.wikidata.connector import (
-    WikidataAPIConnector,
-    WikidataQueryServiceConnector,
-)
+from mex.common.orcid.models import OrcidRecord, OrcidSearchResponse
+from mex.common.wikidata.connector import WikidataAPIConnector
 
 TEST_DATA_DIR = Path(__file__).parent / "test_data"
 
@@ -88,64 +81,24 @@ def mocked_ldap(monkeypatch: MonkeyPatch) -> None:
 
 
 @pytest.fixture
-def extracted_unit(
-    extracted_primary_sources: dict[str, ExtractedPrimarySource],
-) -> ExtractedOrganizationalUnit:
-    return ExtractedOrganizationalUnit(
-        name=["MF"],
-        hadPrimarySource=extracted_primary_sources["ldap"].stableTargetId,
-        identifierInPrimarySource="mf",
-    )
-
-
-@pytest.fixture
 def mocked_wikidata(monkeypatch: MonkeyPatch) -> None:
-    response_query = Mock(spec=Response, status_code=status.HTTP_200_OK)
+    response_query = Mock(spec=Response, status_code=200)
 
     session = MagicMock(spec=requests.Session)
     session.get = MagicMock(side_effect=[response_query])
 
-    def mocked_init(self: WikidataQueryServiceConnector) -> None:
+    def mocked_init(self: WikidataAPIConnector) -> None:
         self.session = session
 
-    monkeypatch.setattr(WikidataQueryServiceConnector, "__init__", mocked_init)
     monkeypatch.setattr(WikidataAPIConnector, "__init__", mocked_init)
-
-    # mock search_wikidata_with_query
-
-    def get_data_by_query(
-        _self: WikidataQueryServiceConnector, _query: str
-    ) -> list[dict[str, dict[str, str]]]:
-        return [
-            {
-                "item": {
-                    "type": "uri",
-                    "value": "http://www.wikidata.org/entity/Q26678",
-                },
-                "itemLabel": {"xml:lang": "en", "type": "literal", "value": "BMW"},
-                "itemDescription": {
-                    "xml:lang": "en",
-                    "type": "literal",
-                    "value": "German automotive manufacturer, and conglomerate",
-                },
-                "count": {
-                    "datatype": "http://www.w3.org/2001/XMLSchema#integer",
-                    "type": "literal",
-                    "value": "3",
-                },
-            },
-        ]
-
-    monkeypatch.setattr(
-        WikidataQueryServiceConnector, "get_data_by_query", get_data_by_query
-    )
 
     # mock get_wikidata_org_with_org_id
     with open(TEST_DATA_DIR / "wikidata_organization_raw.json") as fh:
         wikidata_organization_raw = json.load(fh)
 
     def get_wikidata_item_details_by_id(
-        _self: WikidataQueryServiceConnector, _item_id: str
+        _self: WikidataAPIConnector,
+        _item_id: str,
     ) -> dict[str, str]:
         return wikidata_organization_raw
 
@@ -160,14 +113,14 @@ def mocked_wikidata(monkeypatch: MonkeyPatch) -> None:
 def orcid_person_raw() -> dict[str, Any]:
     """Return a raw orcid person."""
     with open(TEST_DATA_DIR / "orcid_person_raw.json") as fh:
-        return cast(dict[str, Any], json.load(fh))
+        return cast("dict[str, Any]", json.load(fh))
 
 
 @pytest.fixture
 def orcid_multiple_matches() -> dict[str, Any]:
     """Return a raw orcid person."""
     with open(TEST_DATA_DIR / "orcid_multiple_matches.json") as fh:
-        return cast(dict[str, Any], json.load(fh))
+        return cast("dict[str, Any]", json.load(fh))
 
 
 @pytest.fixture
@@ -181,37 +134,36 @@ def mocked_orcid(
     session.get = MagicMock(side_effect=[response_query])
 
     def __init__(self: OrcidConnector) -> None:
-        self._connection = MagicMock(spec=Connection, extend=Mock())
-        self._connection.extend.standard.paged_search = MagicMock(side_effect=[])
         self.session = session
 
     monkeypatch.setattr(OrcidConnector, "__init__", __init__)
 
-    def fetch(_self: OrcidConnector, filters: dict[str, Any]) -> dict[str, Any]:
-        if filters.get("given-and-family-names") in {
-            "john doe",
-            "John Doe",
-            "John O'Doe",
-        }:
-            return {"num-found": 1, "result": [orcid_person_raw]}
-        if filters.get("given-and-family-names") == "Multiple Doe":
-            return orcid_multiple_matches
-        return {"result": None, "num-found": 0}
+    def search_records_by_name(
+        _self: OrcidConnector, given_and_family_names: str | None = None, **_: Any
+    ) -> OrcidSearchResponse:
+        if given_and_family_names in {"John Doe", "John O'Doe"}:
+            return OrcidSearchResponse(num_found=1, result=[orcid_person_raw])
+        if given_and_family_names in {"Multiple Doe"}:
+            return OrcidSearchResponse.model_validate(orcid_multiple_matches)
+        return OrcidSearchResponse(num_found=0, result=[])
 
-    monkeypatch.setattr(OrcidConnector, "fetch", fetch)
+    monkeypatch.setattr(
+        OrcidConnector, "search_records_by_name", search_records_by_name
+    )
 
-    def build_query(filters: dict[str, Any]) -> str:
-        if "given-and-family-names" in filters:
-            return f'given-and-family-names:"{filters["given-and-family-names"]}"'
-        if "given-names" in filters:
-            return f"given-names:{filters['given-names']} AND family-name:{filters.get('family-name', '*')}"
-        return ""
+    def get_record_by_id(_self: OrcidConnector, _orcid_id: str) -> OrcidRecord:
+        return OrcidRecord.model_validate(orcid_person_raw)
 
-    monkeypatch.setattr(OrcidConnector, "build_query", build_query)
+    monkeypatch.setattr(OrcidConnector, "get_record_by_id", get_record_by_id)
 
-    def get_data_by_id(_self: OrcidConnector, orcid_id: str) -> dict[str, Any]:
-        if orcid_id:
-            return orcid_person_raw
-        return None
 
-    monkeypatch.setattr(OrcidConnector, "get_data_by_id", get_data_by_id)
+@pytest.fixture(autouse=True)
+def suppress_lifespan_tasks(
+    is_integration_test: bool,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Allow aux startup tasks for integration tests by overwriting main fixture."""
+    if not is_integration_test:
+        from mex.backend import main
+
+        monkeypatch.setattr(main, "auxiliary_startup_tasks", [])

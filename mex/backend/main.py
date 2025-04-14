@@ -1,11 +1,13 @@
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
+from typing import Any
 
 import uvicorn
 from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic_core import SchemaError, ValidationError
 
+from mex.backend.auxiliary import startup_tasks as auxiliary_startup_tasks
 from mex.backend.auxiliary.ldap import router as ldap_router
 from mex.backend.auxiliary.orcid import router as orcid_router
 from mex.backend.auxiliary.wikidata import router as wikidata_router
@@ -26,13 +28,28 @@ from mex.backend.settings import BackendSettings
 from mex.backend.system.main import router as system_router
 from mex.common.cli import entrypoint
 from mex.common.connector import CONNECTOR_STORE
+from mex.common.logging import logger
+
+startup_tasks: list[Callable[[], Any]] = [
+    BackendSettings.get,
+]
+teardown_tasks: list[Callable[[], Any]] = [
+    CONNECTOR_STORE.reset,
+]
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-    """Async context manager to execute setup and teardown of the FastAPI app."""
+    """Async context manager to execute startup and teardown of the FastAPI app."""
+    for task in (*startup_tasks, *auxiliary_startup_tasks):
+        task()
+        task_name = getattr(task, "__wrapped__", task).__name__
+        logger.info(f"startup {task_name} complete")
     yield None
-    CONNECTOR_STORE.reset()
+    for task in teardown_tasks:
+        task()
+        task_name = getattr(task, "__wrapped__", task).__name__
+        logger.info(f"teardown {task_name} complete")
 
 
 app = FastAPI(

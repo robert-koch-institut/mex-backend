@@ -27,38 +27,35 @@ john_doe_response = {
     [
         ("John Doe", 200),
         ("Multiple Doe", 200),
-        ("john doe", 200),
         ("John O'Doe", 200),
         ("", 422),
     ],
     ids=[
-        "existing Person by name",
+        "existing person by name",
         "multiple results",
-        "case insensitiv",
         "special symbols",
-        "empty search String",
+        "empty search string",
     ],
 )
 @pytest.mark.usefixtures("mocked_orcid")
 def test_search_persons_in_orcid_mocked(
     client_with_api_key_read_permission: TestClient,
-    search_string,
-    status_code,
+    search_string: str,
+    status_code: int,
 ) -> None:
     response = client_with_api_key_read_permission.get(
         "/v0/orcid", params={"q": search_string}
     )
     assert response.status_code == status_code
+    response_data = response.json()
 
     if response.status_code == 200:
-        response_data = response.json()
         assert response_data["total"] == len(response_data["items"])
         if search_string == "Multiple Doe":
             assert response_data["items"] == [john_doe_response] * 10
         else:
             assert response_data["items"] == [john_doe_response]
     elif response.status_code == 422:
-        response_data = response.json()
         assert response_data == {
             "detail": [
                 {
@@ -72,23 +69,15 @@ def test_search_persons_in_orcid_mocked(
         }
 
 
-@pytest.mark.parametrize(
-    ("search_string", "expected_status", "expected_txt"),
-    [("None Doe", 404, '{"detail":"No results found for \'None Doe\'."}')],
-    ids=["Non-existent"],
-)
 @pytest.mark.usefixtures("mocked_orcid")
-def test_search_persons_in_orcid_errors(
+def test_search_persons_in_orcid_empty(
     client_with_api_key_read_permission: TestClient,
-    search_string,
-    expected_status,
-    expected_txt,
-):
+) -> None:
     response = client_with_api_key_read_permission.get(
-        "/v0/orcid", params={"q": search_string}
+        "/v0/orcid", params={"q": "none shall be found"}
     )
-    assert response.status_code == expected_status
-    assert response.text == expected_txt
+    assert response.status_code == 200
+    assert response.json() == {"items": [], "total": 0}
 
 
 @pytest.mark.parametrize(
@@ -96,7 +85,7 @@ def test_search_persons_in_orcid_errors(
     [
         (
             {"given-and-family-names": "'John Doe'"},
-            "given-and-family-names:\"'John Doe'\"",
+            "given-and-family-names:'John Doe'",
         ),
         (
             {"given-names": "John", "family-name": "Doe"},
@@ -106,6 +95,7 @@ def test_search_persons_in_orcid_errors(
     ids=["One param", "two params"],
 )
 @pytest.mark.usefixtures("mocked_orcid")
-def test_build_query(filters: dict[str, Any], expected_output: str):
-    built_query = OrcidConnector.build_query(filters)
+def test_build_query(filters: dict[str, Any], expected_output: str) -> None:
+    connector = OrcidConnector.get()
+    built_query = connector.build_query(filters)
     assert built_query == expected_output

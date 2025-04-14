@@ -555,7 +555,8 @@ class GraphConnector(BaseConnector):
         return result
 
     def ingest(
-        self, models: list[AnyExtractedModel | AnyRuleSetResponse]
+        self,
+        models: Sequence[AnyExtractedModel | AnyRuleSetResponse],
     ) -> list[AnyExtractedModel | AnyRuleSetResponse]:
         """Ingest a list of models into the graph as nodes and connect all edges.
 
@@ -565,7 +566,7 @@ class GraphConnector(BaseConnector):
         the graph in a second step.
 
         Args:
-            models: List of extracted models
+            models: Sequence of extracted models
 
         Returns:
             List of identifiers of the ingested models
@@ -600,7 +601,7 @@ class GraphConnector(BaseConnector):
                         identifier=model.identifier,
                     )
 
-        return models
+        return list(models)
 
     def flush(self) -> None:
         """Flush the database (only in debug mode)."""

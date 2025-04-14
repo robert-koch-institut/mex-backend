@@ -9,7 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- seed primary sources and organigram on fastAPI startup
+
 ### Changes
+
+- simplify and harmonize aux endpoints
 
 ### Deprecated
 
@@ -24,12 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - ingest extracted organizational units on ldap search
-- ORCID search endpoint in mex-backend
-  - endpoint returning orcid persons (transformed to ExtractedPersons)
-  - full-text search query parameter `q` and pagination parameters `offset` and `limit`
-  - response body contains
-      - items: list[ExtractedPerson]  - the current "page" of search results
-      - total: int  - the total number of persons found for this request
+- implement ORCID search endpoint returning persons
 
 ### Changes
 
