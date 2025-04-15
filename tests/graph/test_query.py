@@ -85,14 +85,10 @@ YIELD currentStatus;"""
     OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
     CALL (hit) {
-        MATCH (extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
-        WHERE
-            elementId(hit) = elementId(extracted_or_rule_node)
-        RETURN extracted_or_rule_node, merged_node
+        MATCH (hit:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
+        RETURN hit as extracted_or_rule_node, merged_node
     UNION
-        MATCH (nested_node:Link|Text|Location)<-[]-(extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
-        WHERE
-            elementId(hit) = elementId(nested_node)
+        MATCH (hit:Link|Text|Location)<-[]-(extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
         RETURN extracted_or_rule_node, merged_node
     }
     WITH DISTINCT extracted_or_rule_node, merged_node
@@ -105,14 +101,10 @@ CALL () {
     OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
     CALL (hit) {
-        MATCH (extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
-        WHERE
-            elementId(hit) = elementId(extracted_or_rule_node)
-        RETURN extracted_or_rule_node, merged_node
+        MATCH (hit:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
+        RETURN hit as extracted_or_rule_node, merged_node
     UNION
-        MATCH (nested_node:Link|Text|Location)<-[]-(extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
-        WHERE
-            elementId(hit) = elementId(nested_node)
+        MATCH (hit:Link|Text|Location)<-[]-(extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
         RETURN extracted_or_rule_node, merged_node
     }
     WITH DISTINCT extracted_or_rule_node, merged_node
@@ -204,15 +196,11 @@ def test_fetch_extracted_or_rule_items(
     OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
     CALL (hit) {
-        MATCH (extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
-        WHERE
-            elementId(hit) = elementId(extracted_or_rule_node)
-        RETURN merged_node
+        MATCH (hit:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
+        RETURN hit as extracted_or_rule_node, merged_node
     UNION
-        MATCH (nested_node:Link|Text|Location)<-[]-(:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
-        WHERE
-            elementId(hit) = elementId(nested_node)
-        RETURN merged_node
+        MATCH (hit:Link|Text|Location)<-[]-(extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
+        RETURN extracted_or_rule_node, merged_node
     }
     WITH DISTINCT merged_node AS merged_node
     MATCH (merged_node)<-[:stableTargetId]-(:ExtractedThis|ExtractedThat|ExtractedOther)-[:hadPrimarySource]->(referenced_merged_node_to_filter_by)
@@ -226,15 +214,11 @@ CALL () {
     OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
     CALL (hit) {
-        MATCH (extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
-        WHERE
-            elementId(hit) = elementId(extracted_or_rule_node)
-        RETURN merged_node
+        MATCH (hit:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
+        RETURN hit as extracted_or_rule_node, merged_node
     UNION
-        MATCH (nested_node:Link|Text|Location)<-[]-(:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
-        WHERE
-            elementId(hit) = elementId(nested_node)
-        RETURN merged_node
+        MATCH (hit:Link|Text|Location)<-[]-(extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
+        RETURN extracted_or_rule_node, merged_node
     }
     WITH DISTINCT merged_node AS merged_node
     MATCH (merged_node)<-[:stableTargetId]-(:ExtractedThis|ExtractedThat|ExtractedOther)-[:hadPrimarySource]->(referenced_merged_node_to_filter_by)
