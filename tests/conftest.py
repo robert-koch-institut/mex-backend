@@ -328,7 +328,7 @@ def dummy_data(
 def artificial_extracted_items(
     locale: str = "de_DE",
     seed: int = 42,
-    count: int = 500,
+    count: int = 1,
     chattiness: int = 25,
     stem_types: Sequence[str] = EXTRACTED_MODEL_CLASSES_BY_NAME,
 ) -> list[AnyExtractedModel]:
