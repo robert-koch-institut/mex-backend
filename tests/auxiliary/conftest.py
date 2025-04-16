@@ -10,6 +10,12 @@ from ldap3 import Connection
 from pytest import MonkeyPatch
 from requests import Response
 
+from mex.backend.auxiliary.organigram import extracted_organizational_unit
+from mex.backend.auxiliary.primary_source import (
+    extracted_primary_source_ldap,
+    extracted_primary_source_orcid,
+    extracted_primary_source_wikidata,
+)
 from mex.common.ldap.connector import LDAPConnector
 from mex.common.ldap.models import LDAPPerson
 from mex.common.orcid.connector import OrcidConnector
@@ -158,12 +164,14 @@ def mocked_orcid(
 
 
 @pytest.fixture(autouse=True)
-def suppress_lifespan_tasks(
-    is_integration_test: bool,
-    monkeypatch: MonkeyPatch,
-) -> None:
-    """Allow aux startup tasks for integration tests by overwriting main fixture."""
-    if not is_integration_test:
-        from mex.backend import main
+def seed_primary_sources(is_integration_test: bool) -> None:
+    if is_integration_test:
+        extracted_primary_source_ldap()
+        extracted_primary_source_orcid()
+        extracted_primary_source_wikidata()
 
-        monkeypatch.setattr(main, "auxiliary_startup_tasks", [])
+
+@pytest.fixture(autouse=True)
+def seed_organizational_units(is_integration_test: bool) -> None:
+    if is_integration_test:
+        extracted_organizational_unit()
