@@ -15,11 +15,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- remove startup tasks to seed primary sources and units
-
 ### Fixed
 
 ### Security
+
+## [0.33.2] - 2025-04-16
+
+### Removed
+
+- remove startup tasks to seed primary sources and units
 
 ## [0.33.1] - 2025-04-15
 
