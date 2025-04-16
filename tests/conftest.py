@@ -1,5 +1,6 @@
 import json
 from base64 import b64encode
+from collections.abc import Sequence
 from functools import partial
 from itertools import count
 from typing import Any, cast
@@ -10,6 +11,7 @@ from fastapi.testclient import TestClient
 from neo4j import Driver, Session, SummaryCounters
 from pytest import MonkeyPatch
 
+from mex.artificial.helpers import generate_artificial_extracted_items
 from mex.backend.auxiliary.ldap import (
     extracted_organizational_unit,
     extracted_primary_source_ldap,
@@ -24,6 +26,7 @@ from mex.backend.settings import BackendSettings
 from mex.backend.types import APIKeyDatabase, APIUserDatabase
 from mex.common.connector import CONNECTOR_STORE
 from mex.common.models import (
+    EXTRACTED_MODEL_CLASSES_BY_NAME,
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     AdditiveOrganizationalUnit,
     AnyExtractedModel,
@@ -321,6 +324,19 @@ def dummy_data(
     }
 
 
+@pytest.fixture
+def artificial_extracted_items(
+    locale: str = "de_DE",
+    seed: int = 42,
+    count: int = 500,
+    chattiness: int = 25,
+    stem_types: Sequence[str] = EXTRACTED_MODEL_CLASSES_BY_NAME,
+) -> list[AnyExtractedModel]:
+    return generate_artificial_extracted_items(
+        locale, seed, count, chattiness, stem_types
+    )
+
+
 def _match_organization_items(dummy_data: dict[str, AnyExtractedModel]) -> None:
     # TODO(ND): replace this crude item matching implementation (stopgap MX-1530)
     connector = GraphConnector.get()
@@ -350,6 +366,15 @@ def load_dummy_data(
     GraphConnector.get().ingest(list(dummy_data.values()))
     _match_organization_items(dummy_data)
     return dummy_data
+
+
+@pytest.fixture
+def load_artificial_extracted_items(
+    artificial_extracted_items: list[AnyExtractedModel],
+) -> list[AnyExtractedModel]:
+    """Ingest artificial data into the graph."""
+    GraphConnector.get().ingest(artificial_extracted_items)
+    return artificial_extracted_items
 
 
 @pytest.fixture

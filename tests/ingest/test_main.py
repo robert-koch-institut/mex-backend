@@ -20,9 +20,9 @@ Payload = dict[str, list[dict[str, Any]]]
 
 
 @pytest.fixture
-def post_payload(dummy_data: dict[str, AnyExtractedModel]) -> Payload:
+def post_payload(artificial_extracted_items: list[AnyExtractedModel]) -> Payload:
     payload = defaultdict(list)
-    for model in dummy_data.values():
+    for model in artificial_extracted_items:
         payload["items"].append(model.model_dump())
     return cast(Payload, dict(payload))
 
@@ -40,26 +40,29 @@ def test_bulk_insert_empty(client_with_api_key_write_permission: TestClient) -> 
 def test_bulk_insert(
     client_with_api_key_write_permission: TestClient,
     post_payload: Payload,
-    dummy_data: dict[str, AnyExtractedModel],
+    artificial_extracted_items: list[AnyExtractedModel],
 ) -> None:
-    # post the dummy data to the ingest endpoint
+    # post the aartifical data to the ingest endpoint
     response = client_with_api_key_write_permission.post(
         "/v0/ingest", json=post_payload
     )
 
     # assert the response are the dummy data items
     assert response.status_code == status.HTTP_201_CREATED, response.text
-    assert ItemsContainer[AnyExtractedModel].model_validate(
-        response.json()
-    ).items == list(dummy_data.values())
+    assert (
+        ItemsContainer[AnyExtractedModel].model_validate(response.json()).items
+        == artificial_extracted_items
+    )
 
     # verify the nodes have actually been stored in the database
     graph = GraphConnector.get()
-    result = graph.fetch_extracted_items(None, None, None, 1, len(dummy_data))
+    result = graph.fetch_extracted_items(
+        None, None, None, 1, len(artificial_extracted_items)
+    )
     result_container = PaginatedItemsContainer[AnyExtractedModel].model_validate(
         result.one()
     )
-    assert set(result_container.items) == set(dummy_data.values())
+    assert set(result_container.items) == set(artificial_extracted_items)
 
 
 def test_bulk_insert_malformed(
