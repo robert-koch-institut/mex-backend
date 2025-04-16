@@ -42,7 +42,7 @@ def test_bulk_insert(
     post_payload: Payload,
     artificial_extracted_items: list[AnyExtractedModel],
 ) -> None:
-    # post the aartifical data to the ingest endpoint
+    # post the artificial data to the ingest endpoint
     response = client_with_api_key_write_permission.post(
         "/v0/ingest", json=post_payload
     )
