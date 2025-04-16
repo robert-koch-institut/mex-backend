@@ -24,7 +24,7 @@ def post_payload(artificial_extracted_items: list[AnyExtractedModel]) -> Payload
     payload = defaultdict(list)
     for model in artificial_extracted_items:
         payload["items"].append(model.model_dump())
-    return cast(Payload, dict(payload))
+    return cast("Payload", dict(payload))
 
 
 @pytest.mark.integration
@@ -47,7 +47,7 @@ def test_bulk_insert(
         "/v0/ingest", json=post_payload
     )
 
-    # assert the response are the dummy data items
+    # assert the response are the artificial data items
     assert response.status_code == status.HTTP_201_CREATED, response.text
     assert (
         ItemsContainer[AnyExtractedModel].model_validate(response.json()).items

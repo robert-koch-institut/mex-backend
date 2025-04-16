@@ -326,7 +326,7 @@ def dummy_data(
 
 @pytest.fixture
 def artificial_extracted_items(
-    locale: str = "de_DE",
+    locale: str = "de_DE",  # adapt parameters to your liking
     seed: int = 42,
     count: int = 1,
     chattiness: int = 2,
