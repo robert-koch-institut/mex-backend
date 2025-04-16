@@ -99,7 +99,7 @@ def test_bulk_insert_malformed(
 def test_bulk_insert_mocked(
     client_with_api_key_write_permission: TestClient,
     post_payload: Payload,
-    dummy_data: dict[str, AnyExtractedModel],
+    artificial_extracted_items: list[AnyExtractedModel],
     monkeypatch: MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(GraphConnector, "_merge_item", MagicMock())
@@ -108,6 +108,7 @@ def test_bulk_insert_mocked(
         "/v0/ingest", json=post_payload
     )
     assert response.status_code == status.HTTP_201_CREATED, response.text
-    assert ItemsContainer[AnyExtractedModel].model_validate(
-        response.json()
-    ).items == list(dummy_data.values())
+    assert (
+        ItemsContainer[AnyExtractedModel].model_validate(response.json()).items
+        == artificial_extracted_items
+    )
