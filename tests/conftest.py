@@ -198,14 +198,6 @@ def set_identity_provider(is_integration_test: bool, monkeypatch: MonkeyPatch) -
 
 
 @pytest.fixture(autouse=True)
-def suppress_lifespan_tasks(monkeypatch: MonkeyPatch) -> None:
-    """Skip auxiliary startup lifespan tasks for general integration tests."""
-    from mex.backend import main
-
-    monkeypatch.setattr(main, "auxiliary_startup_tasks", [])
-
-
-@pytest.fixture(autouse=True)
 def isolate_graph_database(
     is_integration_test: bool, settings: BackendSettings
 ) -> None:
