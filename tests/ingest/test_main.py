@@ -8,11 +8,11 @@ from pytest import MonkeyPatch
 from starlette import status
 
 from mex.backend.graph.connector import GraphConnector
+from mex.backend.merged.helpers import search_merged_items_in_graph
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES,
     RULE_SET_RESPONSE_CLASSES,
     AnyExtractedModel,
-    AnyMergedModel,
     ItemsContainer,
     PaginatedItemsContainer,
 )
@@ -60,22 +60,23 @@ def test_bulk_insert(
     result_extracted = graph.fetch_extracted_items(
         None, None, None, 1, len(artificial_extracted_items)
     )
-
     result_extracted_container = PaginatedItemsContainer[
         AnyExtractedModel
     ].model_validate(result_extracted.one())
-
     assert set(result_extracted_container.items) == set(artificial_extracted_items)
 
-    result_merged = graph.fetch_merged_items(
+    # verify that the merging worked correctly
+    result_merged = search_merged_items_in_graph(
         None, None, None, None, 1, len(artificial_extracted_items)
     )
 
-    result_merged_container = PaginatedItemsContainer[AnyMergedModel].model_validate(
-        result_merged.one()
-    )
-
-    assert set(result_merged_container.items) == set(artificial_extracted_items)
+    assert (
+        {merged_item.identifier for merged_item in result_merged.items}
+        == {
+            artifical_item.stableTargetId
+            for artifical_item in artificial_extracted_items
+        }
+    )  # compare length (indirectly) and if IDs of extracted & merged items are identical
 
 
 def test_bulk_insert_malformed(
