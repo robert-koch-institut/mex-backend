@@ -16,6 +16,7 @@ from mex.backend.graph.query import Query
 from mex.backend.settings import BackendSettings
 from mex.common.exceptions import MExError
 from mex.common.models import (
+    EXTRACTED_MODEL_CLASSES_BY_NAME,
     MEX_PRIMARY_SOURCE_IDENTIFIER,
     MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -1683,3 +1684,26 @@ def test_connector_flush(monkeypatch: MonkeyPatch) -> None:
     connector.flush()
 
     assert len(get_graph()) == 0
+
+
+@pytest.mark.integration
+def test_connector_ingest() -> None:
+    import time
+
+    from mex.artificial.helpers import generate_artificial_extracted_items
+
+    t0 = time.time()
+    items = generate_artificial_extracted_items(
+        locale=["de", "en"],
+        seed=None,
+        count=20,
+        chattiness=20,
+        stem_types=list(EXTRACTED_MODEL_CLASSES_BY_NAME),
+    )
+    connector = GraphConnector.get()
+    connector.ingest_v2(items)
+    print("finished in", time.time() - t0)
+
+    result = connector.commit("MATCH (n) RETURN count(n)")
+
+    print(result)

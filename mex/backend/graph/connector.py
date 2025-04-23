@@ -16,7 +16,7 @@ from pydantic import Field
 
 from mex.backend.fields import SEARCHABLE_CLASSES, SEARCHABLE_FIELDS
 from mex.backend.graph.exceptions import InconsistentGraphError
-from mex.backend.graph.models import Result
+from mex.backend.graph.models import IngestRelation, IngestSource, Result
 from mex.backend.graph.query import Query, QueryBuilder
 from mex.backend.graph.transform import (
     expand_references_in_search_result,
@@ -553,6 +553,109 @@ class GraphConnector(BaseConnector):
             raise RuntimeError(msg)
 
         return result
+
+    def ingest_one(self, model: AnyExtractedModel) -> None:
+        """Ingest a single model and connect all its edges."""
+        merged_label = ensure_prefix(model.stemType, "Merged")
+
+        text_fields = TEXT_FIELDS_BY_CLASS_NAME[model.entityType]
+        link_fields = LINK_FIELDS_BY_CLASS_NAME[model.entityType]
+        mutable_fields = MUTABLE_FIELDS_BY_CLASS_NAME[model.entityType]
+        final_fields = FINAL_FIELDS_BY_CLASS_NAME[model.entityType]
+        ref_fields = REFERENCE_FIELDS_BY_CLASS_NAME[model.entityType]
+
+        mutable_values = model.model_dump(include=set(mutable_fields))
+        final_values = model.model_dump(include=set(final_fields))
+        all_values = {**mutable_values, **final_values}
+
+        text_values = model.model_dump(include=set(text_fields))
+        link_values = model.model_dump(include=set(link_fields))
+
+        ref_values = model.model_dump(include=set(ref_fields))
+
+        source = IngestSource(
+            stableTargetId=model.stableTargetId,
+            identifier=model.identifier,
+            nodeLabels=[model.entityType],
+            nodeProps=all_values,
+            gcDetach=ref_fields,
+            gcDelete=[*text_fields, *link_fields],
+            linkRels=[],
+            createRels=[],
+            mergedLabel=merged_label,
+        )
+
+        for nested_type, raws in [(Text, text_values), (Link, link_values)]:
+            for nested_edge_label, raw_values in to_key_and_values(raws):
+                for position, raw_value in enumerate(raw_values):
+                    source["createRels"].append(
+                        IngestRelation(
+                            edgeLabel=nested_edge_label,
+                            edgeProps={"position": position},
+                            nodeLabels=[nested_type.__name__],
+                            nodeProps=raw_value,
+                        )
+                    )
+
+        for field, identifiers in to_key_and_values(ref_values):
+            for position, identifier in enumerate(identifiers):
+                source["linkRels"].append(
+                    IngestRelation(
+                        edgeLabel=field,
+                        edgeProps={"position": position},
+                        nodeLabels=list(MERGED_MODEL_CLASSES_BY_NAME),
+                        nodeProps={"identifier": identifier},
+                    )
+                )
+
+        query = """
+WITH $data AS data
+
+MERGE (:$($data.mergedLabel) {identifier: data.stableTargetId})
+MERGE (main:$($data.nodeLabels) {identifier: data.nodeProps.identifier})
+SET main += data.nodeProps
+
+WITH main, data
+
+CALL (main, data) {
+    UNWIND data.createRels AS rel
+    MERGE (main)-[newEdge:$(rel.edgeLabel) {position: rel.edgeProps.position}]->(target:$(rel.nodeLabels))
+    SET target += rel.nodeProps
+
+    WITH rel, collect(newEdge) as newEdges, collect(target) AS createdTargets
+    MATCH (main)-[gcEdge:$(data.gcDetach)]->()
+    WHERE NOT gcEdge IN newEdges
+    DELETE gcEdge
+}
+
+CALL (main, data) {
+    UNWIND data.linkRels AS rel
+    MATCH (target:$(rel.nodeLabels) {identifier: rel.nodeProps.identifier})
+    MERGE (main)-[newEdge:$(rel.edgeLabel) {position: rel.edgeProps.position}]->(target)
+
+    WITH rel, collect(newEdge) as newEdges, collect(target) AS createdTargets
+    MATCH (main)-[gcEdge:$(data.gcDelete)]->(x)
+    WHERE NOT gcEdge IN newEdges
+    DETACH DELETE x
+}
+
+RETURN main;
+"""
+        resp = self.commit(
+            query,
+            data=source,
+        )
+        print(*resp.all())
+
+    def ingest_v2(
+        self,
+        models: Sequence[AnyExtractedModel | AnyRuleSetResponse],
+    ) -> None:
+        for model in models:
+            if isinstance(model, AnyExtractedModel):
+                self.ingest_one(model)
+            else:
+                raise NotImplementedError(AnyRuleSetResponse)
 
     def ingest(
         self,

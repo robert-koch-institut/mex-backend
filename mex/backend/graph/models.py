@@ -1,6 +1,6 @@
 from collections.abc import Callable, Iterator
 from functools import cache
-from typing import Any, cast
+from typing import Any, TypedDict, cast
 
 from neo4j import Result as Neo4jResult
 from neo4j._data import RecordExporter
@@ -8,6 +8,8 @@ from neo4j.graph import Relationship
 
 from mex.backend.graph.exceptions import MultipleResultsFoundError, NoResultFoundError
 from mex.backend.logging import LOGGING_LINE_LENGTH
+
+GraphValueType = None | str | int | list[str] | list[int]
 
 
 class EdgeExporter(RecordExporter):
@@ -36,9 +38,11 @@ class Result:
     def __init__(self, result: Neo4jResult) -> None:
         """Wrap a neo4j result object in a mex-backend result."""
         self._records, self._summary, _ = result.to_eager_result()
-        transformer = cast(Callable[[Any], dict[str, Any]], EdgeExporter().transform)
+        transformer = cast("Callable[[Any], dict[str, Any]]", EdgeExporter().transform)
         self._get_cached_data = cache(
-            lambda i: transformer(dict(cast(dict[str, Any], self._records[i]).items()))
+            lambda i: transformer(
+                dict(cast("dict[str, Any]", self._records[i]).items())
+            )
         )
 
     def __getitem__(self, key: str) -> Any:
@@ -87,3 +91,26 @@ class Result:
     def get_update_counters(self) -> dict[str, int]:
         """Return a summary of counters for operations the query triggered."""
         return {k: v for k, v in vars(self._summary.counters).items() if v}
+
+
+class IngestRelation(TypedDict):
+    """Type definition for ingestion payloads."""
+
+    nodeLabels: list[str]
+    nodeProps: dict[str, GraphValueType]
+    edgeLabel: str
+    edgeProps: dict[str, GraphValueType]
+
+
+class IngestSource(TypedDict):
+    """Type definition for ingestion payloads."""
+
+    mergedLabel: str
+    stableTargetId: str
+    identifier: str
+    gcDetach: list[str]
+    gcDelete: list[str]
+    nodeLabels: list[str]
+    nodeProps: dict[str, GraphValueType]
+    linkRels: list[IngestRelation]
+    createRels: list[IngestRelation]
