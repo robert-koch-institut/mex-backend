@@ -12,6 +12,7 @@ from mex.common.models import (
     EXTRACTED_MODEL_CLASSES,
     RULE_SET_RESPONSE_CLASSES,
     AnyExtractedModel,
+    AnyMergedModel,
     ItemsContainer,
     PaginatedItemsContainer,
 )
@@ -56,13 +57,25 @@ def test_bulk_insert(
 
     # verify the nodes have actually been stored in the database
     graph = GraphConnector.get()
-    result = graph.fetch_extracted_items(
+    result_extracted = graph.fetch_extracted_items(
         None, None, None, 1, len(artificial_extracted_items)
     )
-    result_container = PaginatedItemsContainer[AnyExtractedModel].model_validate(
-        result.one()
+
+    result_extracted_container = PaginatedItemsContainer[
+        AnyExtractedModel
+    ].model_validate(result_extracted.one())
+
+    assert set(result_extracted_container.items) == set(artificial_extracted_items)
+
+    result_merged = graph.fetch_merged_items(
+        None, None, None, None, 1, len(artificial_extracted_items)
     )
-    assert set(result_container.items) == set(artificial_extracted_items)
+
+    result_merged_container = PaginatedItemsContainer[AnyMergedModel].model_validate(
+        result_merged.one()
+    )
+
+    assert set(result_merged_container.items) == set(artificial_extracted_items)
 
 
 def test_bulk_insert_malformed(
