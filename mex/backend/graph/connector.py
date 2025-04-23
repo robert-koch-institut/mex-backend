@@ -1,4 +1,5 @@
 import json
+import time
 from collections.abc import Sequence
 from string import Template
 from typing import Annotated, Any, Literal, cast
@@ -55,7 +56,7 @@ from mex.common.types import (
     MergedPrimarySourceIdentifier,
     Text,
 )
-import time
+
 
 class MExPrimarySource(BasePrimarySource):
     """An automatically extracted metadata set describing a primary source."""
@@ -584,7 +585,7 @@ class GraphConnector(BaseConnector):
                         model.stableTargetId,
                         identifier=model.identifier,
                     )
-            print(f"ingest items time: {time.time()-t0}")
+            print(f"ingest items time: {time.time() - t0}")
             t0 = time.time()
             for model in models:
                 if isinstance(model, AnyRuleSetResponse):
@@ -602,7 +603,7 @@ class GraphConnector(BaseConnector):
                         model.stableTargetId,
                         identifier=model.identifier,
                     )
-            print(f"ingest edges time: {time.time()-t0}")
+            print(f"ingest edges time: {time.time() - t0}")
 
         return list(models)
 
