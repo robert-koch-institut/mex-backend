@@ -55,7 +55,7 @@ from mex.common.types import (
     MergedPrimarySourceIdentifier,
     Text,
 )
-
+import time
 
 class MExPrimarySource(BasePrimarySource):
     """An automatically extracted metadata set describing a primary source."""
@@ -572,6 +572,7 @@ class GraphConnector(BaseConnector):
             List of identifiers of the ingested models
         """
         with self.driver.session() as session:
+            t0 = time.time()
             for model in models:
                 if isinstance(model, AnyRuleSetResponse):
                     for rule in (model.additive, model.subtractive, model.preventive):
@@ -583,7 +584,8 @@ class GraphConnector(BaseConnector):
                         model.stableTargetId,
                         identifier=model.identifier,
                     )
-
+            print(f"ingest items time: {time.time()-t0}")
+            t0 = time.time()
             for model in models:
                 if isinstance(model, AnyRuleSetResponse):
                     for rule in (model.additive, model.subtractive, model.preventive):
@@ -600,6 +602,7 @@ class GraphConnector(BaseConnector):
                         model.stableTargetId,
                         identifier=model.identifier,
                     )
+            print(f"ingest edges time: {time.time()-t0}")
 
         return list(models)
 
