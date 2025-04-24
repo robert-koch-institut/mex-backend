@@ -523,15 +523,17 @@ class GraphConnector(BaseConnector):
             current_label=model.entityType,
             current_constraints=sorted(constraints),
             merged_label=ensure_prefix(model.stemType, "Merged"),
-            ref_labels=ref_labels,
         )
+        references = [
+            {"identifier": i, "position": p, "rel_type": r}
+            for i, p, r in zip(ref_identifiers, ref_positions, ref_labels, strict=True)
+        ]
         result = self.commit(
             query,
             session=session,
             stable_target_id=stable_target_id,
-            ref_identifiers=ref_identifiers,
-            ref_positions=ref_positions,
             **constraints,
+            references=references,
         )
 
         expectations_by_locator = transform_edges_into_expectations_by_edge_locator(

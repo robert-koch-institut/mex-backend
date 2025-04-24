@@ -21,24 +21,17 @@ Returns:
 -#>
 MATCH (source:<<current_label>> {<<current_constraints|render_constraints>>})-[:stableTargetId]->({identifier: $stable_target_id})
 CALL (source) {
-<%- if ref_labels %>
-<%- set union = joiner("UNION ALL\n    ") %>
-<%- for ref_label in ref_labels %>
-<%- set index = loop.index0 %>
-    <<union()>>WITH source
-    MATCH (target_<<index>> {identifier: $ref_identifiers[<<index>>]})
-    MERGE (source)-[edge:<<ref_label>> {position: $ref_positions[<<index>>]}]->(target_<<index>>)
-    RETURN edge
-<%- endfor %>
-<%- else %>
-    RETURN null AS edge
-<%- endif %>
+  WITH source
+  UNWIND $references AS ref
+  MATCH (target {identifier: ref.identifier})
+  CALL apoc.merge.relationship(source, ref.rel_type, {position: ref.position}, {}, target) YIELD rel AS edge
+  RETURN edge
 }
 WITH source, count(edge) AS merged, collect(edge) AS edges
 CALL (source, edges) {
-    MATCH (source)-[outdated_edge]->(:<<merged_labels|join("|")>>)
-    WHERE NOT outdated_edge IN edges
-    DELETE outdated_edge
-    RETURN count(outdated_edge) AS pruned
+  MATCH (source)-[outdated_edge]->(:<<merged_labels|join("|")>>)
+  WHERE NOT outdated_edge IN edges
+  DELETE outdated_edge
+  RETURN count(outdated_edge) AS pruned
 }
 RETURN merged, pruned, edges;
