@@ -10,7 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - print runtimes in backend api connector for ingesting merged items and edges
-- test data set for benchmarking runtimes (not working yet
+- test data set for benchmarking runtimes (not working yet)
+- simplify merge_edges query template
 
 ### Changes
 
