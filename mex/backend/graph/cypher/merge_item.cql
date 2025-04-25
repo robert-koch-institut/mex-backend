@@ -31,15 +31,22 @@ MERGE (merged:<<merged_label>> {identifier: $stable_target_id})
 MERGE (current:<<current_label>> {<<current_constraints|render_constraints>>})-[:stableTargetId {position: 0}]->(merged)
 ON CREATE SET current = $on_create
 ON MATCH SET current += $on_match
-<%- for edge_label in nested_edge_labels -%>
-<%- set index = loop.index0 %>
-MERGE (current)-[edge_<<index>>:<<edge_label>> {position: $nested_positions[<<index>>]}]->(value_<<index>>:<<nested_node_labels[index]>>)
-ON CREATE SET value_<<index>> = $nested_values[<<index>>]
-ON MATCH SET value_<<index>> += $nested_values[<<index>>]
-<%- endfor %>
-WITH current,
-    [<<range(nested_edge_labels|count)|map("ensure_prefix", "edge_")|join(", ")>>] AS edges,
-    [<<range(nested_edge_labels|count)|map("ensure_prefix", "value_")|join(", ")>>] AS values
+
+WITH current, $nested_nodes AS nested_data
+UNWIND nested_data AS row
+
+CALL (row) {
+    WITH row
+    CALL apoc.cypher.run(
+      'MATCH (value:`' + row.label + '` {identifier: $id}) RETURN value',
+      {id: row.value.identifier}
+    ) YIELD value
+    RETURN value
+}
+
+CALL apoc.merge.relationship(current, row.rel_type, {position: row.position}, {}, value) YIELD rel AS edge
+
+WITH current, collect(edge) AS edges, collect(value) AS values
 CALL (current, values) {
     MATCH (current)-[]->(outdated_node:<<nested_labels|join("|")>>)
     WHERE NOT outdated_node IN values

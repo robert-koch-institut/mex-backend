@@ -461,9 +461,17 @@ class GraphConnector(BaseConnector):
             current_label=model.entityType,
             current_constraints=sorted(constraints),
             merged_label=ensure_prefix(model.stemType, "Merged"),
-            nested_edge_labels=nested_edge_labels,
-            nested_node_labels=nested_node_labels,
         )
+        nested_nodes = [
+            {"label": nl, "rel_type": r, "position": p, "value": v}
+            for nl, r, p, v in zip(
+                nested_node_labels,
+                nested_edge_labels,
+                nested_positions,
+                nested_values,
+                strict=True,
+            )
+        ]
 
         return self.commit(
             query,
@@ -471,9 +479,8 @@ class GraphConnector(BaseConnector):
             stable_target_id=stable_target_id,
             on_match=mutable_values,
             on_create=all_values,
-            nested_values=nested_values,
-            nested_positions=nested_positions,
             **constraints,
+            nested_nodes=nested_nodes,
         )
 
     def _merge_edges(
