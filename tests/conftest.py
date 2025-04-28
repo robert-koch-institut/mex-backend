@@ -1,6 +1,5 @@
 import json
 from base64 import b64encode
-from collections.abc import Sequence
 from functools import partial
 from itertools import count
 from typing import Any, cast
@@ -325,15 +324,13 @@ def dummy_data(
 
 
 @pytest.fixture
-def artificial_extracted_items(
-    locale: str = "de_DE",  # adapt parameters to your liking
-    seed: int = 42,
-    count: int = 25,
-    chattiness: int = 16,
-    stem_types: Sequence[str] = EXTRACTED_MODEL_CLASSES_BY_NAME,
-) -> list[AnyExtractedModel]:
+def artificial_extracted_items() -> list[AnyExtractedModel]:
     return generate_artificial_extracted_items(
-        locale, seed, count, chattiness, stem_types
+        locale="de_DE",
+        seed=42,
+        count=25,
+        chattiness=16,
+        stem_types=EXTRACTED_MODEL_CLASSES_BY_NAME,
     )
 
 
