@@ -176,6 +176,7 @@ def test_fetch_extracted_or_rule_items(
     query = query_builder.fetch_extracted_or_rule_items(
         filter_by_query_string=filter_by_query_string,
         filter_by_stable_target_id=filter_by_stable_target_id,
+        filter_by_reference_to_merged_item=False,
     )
     assert str(query) == expected
 

@@ -23,12 +23,12 @@ john_doe_response = {
 
 
 @pytest.mark.parametrize(
-    ("search_string", "status_code"),
+    "search_string",
     [
-        ("John Doe", 200),
-        ("Multiple Doe", 200),
-        ("John O'Doe", 200),
-        ("", 422),
+        "John Doe",
+        "Multiple Doe",
+        "John O'Doe",
+        "",
     ],
     ids=[
         "existing person by name",
@@ -41,32 +41,18 @@ john_doe_response = {
 def test_search_persons_in_orcid_mocked(
     client_with_api_key_read_permission: TestClient,
     search_string: str,
-    status_code: int,
 ) -> None:
     response = client_with_api_key_read_permission.get(
         "/v0/orcid", params={"q": search_string}
     )
-    assert response.status_code == status_code
+    assert response.status_code == 200
     response_data = response.json()
 
-    if response.status_code == 200:
-        assert response_data["total"] == len(response_data["items"])
-        if search_string == "Multiple Doe":
-            assert response_data["items"] == [john_doe_response] * 10
-        else:
-            assert response_data["items"] == [john_doe_response]
-    elif response.status_code == 422:
-        assert response_data == {
-            "detail": [
-                {
-                    "type": "string_too_short",
-                    "loc": ["query", "q"],
-                    "msg": "String should have at least 1 character",
-                    "input": "",
-                    "ctx": {"min_length": 1},
-                }
-            ]
-        }
+    assert response_data["total"] == len(response_data["items"])
+    if search_string == "Multiple Doe":
+        assert response_data["items"] == [john_doe_response] * 10
+    else:
+        assert response_data["items"] == [john_doe_response]
 
 
 @pytest.mark.usefixtures("mocked_orcid")

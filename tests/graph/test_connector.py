@@ -498,6 +498,7 @@ def test_fetch_extracted_items(
         query_string=query_string,
         stable_target_id=stable_target_id,
         entity_type=entity_type,
+        had_primary_source=None,
         skip=0,
         limit=limit,
     )
