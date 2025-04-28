@@ -2,21 +2,15 @@ from fastapi import APIRouter
 from starlette import status
 
 from mex.backend.graph.connector import GraphConnector
-from mex.common.models import (
-    AnyExtractedModel,
-    AnyRuleSetResponse,
-    ItemsContainer,
-)
+from mex.common.models import AnyExtractedModel, AnyRuleSetResponse, ItemsContainer
 
 router = APIRouter()
 
 
-@router.post("/ingest", status_code=status.HTTP_201_CREATED, tags=["extractors"])
-def ingest(
+@router.post("/ingest", status_code=status.HTTP_204_NO_CONTENT, tags=["extractors"])
+def ingest_items(
     request: ItemsContainer[AnyExtractedModel | AnyRuleSetResponse],
-) -> ItemsContainer[AnyExtractedModel | AnyRuleSetResponse]:
-    """Ingest a batch of extracted items or rule-sets and return them."""
+) -> None:
+    """Ingest a batch of extracted items or rule-sets."""
     connector = GraphConnector.get()
-    return ItemsContainer[AnyExtractedModel | AnyRuleSetResponse](
-        items=connector.ingest(request.items)
-    )
+    connector.ingest(request.items)

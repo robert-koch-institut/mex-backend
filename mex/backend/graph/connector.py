@@ -206,11 +206,12 @@ class GraphConnector(BaseConnector):
         """Send and commit a single graph transaction with retry configuration."""
         return self._do_commit(query, session=session, **parameters)
 
-    def _fetch_extracted_or_rule_items(
+    def _fetch_extracted_or_rule_items(  # noqa: PLR0913
         self,
         query_string: str | None,
         stable_target_id: str | None,
         entity_type: Sequence[str],
+        had_primary_source: Sequence[str] | None,
         skip: int,
         limit: int,
     ) -> Result:
@@ -220,6 +221,7 @@ class GraphConnector(BaseConnector):
             query_string: Optional full text search query term
             stable_target_id: Optional stable target ID filter
             entity_type: List of allowed entity types
+            had_primary_source: Optional merged primary source identifier filter
             skip: How many items to skip for pagination
             limit: How many items to return at most
 
@@ -230,12 +232,15 @@ class GraphConnector(BaseConnector):
         query = query_builder.fetch_extracted_or_rule_items(
             filter_by_query_string=bool(query_string),
             filter_by_stable_target_id=bool(stable_target_id),
+            filter_by_reference_to_merged_item=bool(had_primary_source),
+            reference_field_name="hadPrimarySource",
         )
         result = self.commit(
             query,
             query_string=query_string,
             stable_target_id=stable_target_id,
             labels=entity_type,
+            referenced_identifiers=had_primary_source,
             skip=skip,
             limit=limit,
         )
@@ -244,11 +249,12 @@ class GraphConnector(BaseConnector):
                 item.update(expand_references_in_search_result(item.pop("_refs")))
         return result
 
-    def fetch_extracted_items(
+    def fetch_extracted_items(  # noqa: PLR0913
         self,
         query_string: str | None,
         stable_target_id: str | None,
         entity_type: Sequence[str] | None,
+        had_primary_source: Sequence[str] | None,
         skip: int,
         limit: int,
     ) -> Result:
@@ -258,6 +264,7 @@ class GraphConnector(BaseConnector):
             query_string: Optional full text search query term
             stable_target_id: Optional stable target ID filter
             entity_type: Optional entity type filter
+            had_primary_source: Optional merged primary source identifier filter
             skip: How many items to skip for pagination
             limit: How many items to return at most
 
@@ -268,15 +275,17 @@ class GraphConnector(BaseConnector):
             query_string,
             stable_target_id,
             entity_type or list(EXTRACTED_MODEL_CLASSES_BY_NAME),
+            had_primary_source,
             skip,
             limit,
         )
 
-    def fetch_rule_items(
+    def fetch_rule_items(  # noqa: PLR0913
         self,
         query_string: str | None,
         stable_target_id: str | None,
         entity_type: Sequence[str] | None,
+        had_primary_source: Sequence[str] | None,
         skip: int,
         limit: int,
     ) -> Result:
@@ -286,6 +295,7 @@ class GraphConnector(BaseConnector):
             query_string: Optional full text search query term
             stable_target_id: Optional stable target ID filter
             entity_type: Optional entity type filter
+            had_primary_source: Optional merged primary source identifier filter
             skip: How many items to skip for pagination
             limit: How many items to return at most
 
@@ -296,6 +306,7 @@ class GraphConnector(BaseConnector):
             query_string,
             stable_target_id,
             entity_type or list(RULE_MODEL_CLASSES_BY_NAME),
+            had_primary_source,
             skip,
             limit,
         )
@@ -315,7 +326,7 @@ class GraphConnector(BaseConnector):
             query_string: Optional full text search query term
             identifier: Optional merged item identifier filter
             entity_type: Optional merged entity type filter
-            had_primary_source: optional merged primary source identifier filter
+            had_primary_source: Optional merged primary source identifier filter
             skip: How many items to skip for pagination
             limit: How many items to return at most
 
@@ -557,7 +568,7 @@ class GraphConnector(BaseConnector):
     def ingest(
         self,
         models: Sequence[AnyExtractedModel | AnyRuleSetResponse],
-    ) -> list[AnyExtractedModel | AnyRuleSetResponse]:
+    ) -> None:
         """Ingest a list of models into the graph as nodes and connect all edges.
 
         This is a two-step process: first all extracted and merged items are created
@@ -567,9 +578,6 @@ class GraphConnector(BaseConnector):
 
         Args:
             models: Sequence of extracted models
-
-        Returns:
-            List of identifiers of the ingested models
         """
         with self.driver.session() as session:
             for model in models:
@@ -600,8 +608,6 @@ class GraphConnector(BaseConnector):
                         model.stableTargetId,
                         identifier=model.identifier,
                     )
-
-        return list(models)
 
     def flush(self) -> None:
         """Flush the database (only in debug mode)."""

@@ -4,7 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from mex.backend.auxiliary.ldap import (
-    extracted_organizational_unit,
+    extracted_organizational_units,
     extracted_primary_source_ldap,
 )
 from mex.backend.graph.connector import GraphConnector
@@ -207,7 +207,7 @@ def test_extracted_organizational_unit() -> None:
             stableTargetId=MergedOrganizationalUnitIdentifier("guUvX7rDQJIaMD8LbZV40E"),
         ),
     ]
-    result = extracted_organizational_unit()
+    result = extracted_organizational_units()
     for item in result:
         assert isinstance(item, ExtractedOrganizationalUnit)
     assert result == expected_result

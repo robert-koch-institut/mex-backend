@@ -524,11 +524,12 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
     ]
     graph = GraphConnector.get()
     result = graph.fetch_rule_items(
-        query_string="my-query",
-        stable_target_id=Identifier.generate(99),
-        entity_type=["AdditiveFoo", "SubtractiveBar", "PreventiveBatz"],
-        skip=10,
-        limit=100,
+        "my-query",
+        Identifier.generate(99),
+        ["AdditiveFoo", "SubtractiveBar", "PreventiveBatz"],
+        None,
+        10,
+        100,
     )
 
     assert mocked_graph.call_args_list[-1].args == (
