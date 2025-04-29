@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changes
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [0.34.0] - 2025-04-29
+
+### Added
+
 - added `hadPrimarySource` parameter to extracted items search
 - added `/v0/_system/metrics` endpoint for prometheus metrics
 - add artificial data creator helper and use in test
@@ -17,15 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - change unit and primary source helpers from caching to graph lookup
 
-### Deprecated
-
 ### Removed
 
 - BREAKING: remove response body from ingest endpoint
-
-### Fixed
-
-### Security
 
 ## [0.33.2] - 2025-04-16
 
