@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 from neo4j import Driver, Session, SummaryCounters
 from pytest import MonkeyPatch
 
+from mex.artificial.helpers import generate_artificial_extracted_items
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.identity.provider import GraphIdentityProvider
 from mex.backend.main import app
@@ -18,6 +19,7 @@ from mex.backend.settings import BackendSettings
 from mex.backend.types import APIKeyDatabase, APIUserDatabase
 from mex.common.connector import CONNECTOR_STORE
 from mex.common.models import (
+    EXTRACTED_MODEL_CLASSES_BY_NAME,
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     AdditiveOrganizationalUnit,
     AnyExtractedModel,
@@ -315,6 +317,17 @@ def dummy_data(
     }
 
 
+@pytest.fixture
+def artificial_extracted_items() -> list[AnyExtractedModel]:
+    return generate_artificial_extracted_items(
+        locale="de_DE",
+        seed=42,
+        count=25,
+        chattiness=16,
+        stem_types=EXTRACTED_MODEL_CLASSES_BY_NAME,
+    )
+
+
 def _match_organization_items(dummy_data: dict[str, AnyExtractedModel]) -> None:
     # TODO(ND): replace this crude item matching implementation (stopgap MX-1530)
     connector = GraphConnector.get()
@@ -345,6 +358,15 @@ def load_dummy_data(
     connector.ingest(list(dummy_data.values()))
     _match_organization_items(dummy_data)
     return dummy_data
+
+
+@pytest.fixture
+def load_artificial_extracted_items(
+    artificial_extracted_items: list[AnyExtractedModel],
+) -> list[AnyExtractedModel]:
+    """Ingest artificial data into the graph."""
+    GraphConnector.get().ingest(artificial_extracted_items)
+    return artificial_extracted_items
 
 
 @pytest.fixture

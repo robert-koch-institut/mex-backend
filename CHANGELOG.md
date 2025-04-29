@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - added `hadPrimarySource` parameter to extracted items search
 - added `/v0/_system/metrics` endpoint for prometheus metrics
+- add artificial data creator helper and use in test
 
 ### Changes
 
