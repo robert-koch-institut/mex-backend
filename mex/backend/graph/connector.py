@@ -1,4 +1,5 @@
 import json
+import time
 from collections.abc import Sequence
 from string import Template
 from typing import Annotated, Any, Literal, cast
@@ -471,9 +472,17 @@ class GraphConnector(BaseConnector):
             current_label=model.entityType,
             current_constraints=sorted(constraints),
             merged_label=ensure_prefix(model.stemType, "Merged"),
-            nested_edge_labels=nested_edge_labels,
-            nested_node_labels=nested_node_labels,
         )
+        nested_nodes = [
+            {"label": nl, "rel_type": r, "position": p, "value": v}
+            for nl, r, p, v in zip(
+                nested_node_labels,
+                nested_edge_labels,
+                nested_positions,
+                nested_values,
+                strict=True,
+            )
+        ]
 
         return self.commit(
             query,
@@ -481,9 +490,8 @@ class GraphConnector(BaseConnector):
             stable_target_id=stable_target_id,
             on_match=mutable_values,
             on_create=all_values,
-            nested_values=nested_values,
-            nested_positions=nested_positions,
             **constraints,
+            nested_nodes=nested_nodes,
         )
 
     def _merge_edges(
@@ -533,15 +541,17 @@ class GraphConnector(BaseConnector):
             current_label=model.entityType,
             current_constraints=sorted(constraints),
             merged_label=ensure_prefix(model.stemType, "Merged"),
-            ref_labels=ref_labels,
         )
+        references = [
+            {"identifier": i, "position": p, "rel_type": r}
+            for i, p, r in zip(ref_identifiers, ref_positions, ref_labels, strict=True)
+        ]
         result = self.commit(
             query,
             session=session,
             stable_target_id=stable_target_id,
-            ref_identifiers=ref_identifiers,
-            ref_positions=ref_positions,
             **constraints,
+            references=references,
         )
 
         expectations_by_locator = transform_edges_into_expectations_by_edge_locator(
@@ -580,6 +590,7 @@ class GraphConnector(BaseConnector):
             models: Sequence of extracted models
         """
         with self.driver.session() as session:
+            t0 = time.time()
             for model in models:
                 if isinstance(model, AnyRuleSetResponse):
                     for rule in (model.additive, model.subtractive, model.preventive):
@@ -591,7 +602,8 @@ class GraphConnector(BaseConnector):
                         model.stableTargetId,
                         identifier=model.identifier,
                     )
-
+            print(f"ingest items time: {time.time() - t0}")
+            t0 = time.time()
             for model in models:
                 if isinstance(model, AnyRuleSetResponse):
                     for rule in (model.additive, model.subtractive, model.preventive):
@@ -608,6 +620,7 @@ class GraphConnector(BaseConnector):
                         model.stableTargetId,
                         identifier=model.identifier,
                     )
+            print(f"ingest edges time: {time.time() - t0}")
 
     def flush(self) -> None:
         """Flush the database (only in debug mode)."""
