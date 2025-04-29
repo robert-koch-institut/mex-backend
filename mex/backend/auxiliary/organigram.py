@@ -28,9 +28,9 @@ def extracted_organizational_units() -> list[ExtractedOrganizationalUnit]:
     if unit_container.total >= len(organigram_units):
         return cast("list[ExtractedOrganizationalUnit]", unit_container.items)
 
-    connector = GraphConnector.get()
     extracted_units = transform_organigram_units_to_organizational_units(
         organigram_units, organigram_primary_source
     )
+    connector = GraphConnector.get()
     connector.ingest(extracted_units)
     return extracted_units

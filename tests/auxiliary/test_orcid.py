@@ -23,12 +23,12 @@ john_doe_response = {
 
 
 @pytest.mark.parametrize(
-    "search_string",
+    ("search_string", "expected"),
     [
-        "John Doe",
-        "Multiple Doe",
-        "John O'Doe",
-        "",
+        ("John Doe", {"items": [john_doe_response], "total": 1}),
+        ("Multiple Doe", {"items": [john_doe_response] * 10, "total": 10}),
+        ("John O'Doe", {"items": [john_doe_response], "total": 1}),
+        ("", {"items": [], "total": 0}),
     ],
     ids=[
         "existing person by name",
@@ -41,18 +41,13 @@ john_doe_response = {
 def test_search_persons_in_orcid_mocked(
     client_with_api_key_read_permission: TestClient,
     search_string: str,
+    expected: dict[str, Any],
 ) -> None:
     response = client_with_api_key_read_permission.get(
         "/v0/orcid", params={"q": search_string}
     )
-    assert response.status_code == 200
-    response_data = response.json()
-
-    assert response_data["total"] == len(response_data["items"])
-    if search_string == "Multiple Doe":
-        assert response_data["items"] == [john_doe_response] * 10
-    else:
-        assert response_data["items"] == [john_doe_response]
+    assert response.status_code == 200, response.text
+    assert response.json() == expected
 
 
 @pytest.mark.usefixtures("mocked_orcid")

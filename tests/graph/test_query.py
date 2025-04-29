@@ -204,7 +204,7 @@ def test_fetch_extracted_or_rule_items(
         RETURN extracted_or_rule_node, merged_node
     }
     WITH DISTINCT merged_node AS merged_node
-    MATCH (merged_node)<-[:stableTargetId]-(:ExtractedThis|ExtractedThat|ExtractedOther)-[:hadPrimarySource]->(referenced_merged_node_to_filter_by)
+    MATCH (merged_node)<-[:stableTargetId]-()-[:hadPrimarySource]->(referenced_merged_node_to_filter_by)
     WHERE
         ANY(label IN labels(merged_node) WHERE label IN $labels)
         AND merged_node.identifier = $identifier
@@ -222,7 +222,7 @@ CALL () {
         RETURN extracted_or_rule_node, merged_node
     }
     WITH DISTINCT merged_node AS merged_node
-    MATCH (merged_node)<-[:stableTargetId]-(:ExtractedThis|ExtractedThat|ExtractedOther)-[:hadPrimarySource]->(referenced_merged_node_to_filter_by)
+    MATCH (merged_node)<-[:stableTargetId]-()-[:hadPrimarySource]->(referenced_merged_node_to_filter_by)
     WHERE
         ANY(label IN labels(merged_node) WHERE label IN $labels)
         AND merged_node.identifier = $identifier

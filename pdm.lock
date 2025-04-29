@@ -559,7 +559,7 @@ version = "0.58.3"
 requires_python = ">=3.11,<3.13"
 git = "https://github.com/robert-koch-institut/mex-common.git"
 ref = "feature/mx-1846-fix-caching"
-revision = "74010b3f451c887457de750b3060b213fd5de6d4"
+revision = "aa1cdddafeb605711fa16231f671e3e1979f1180"
 summary = "Common library for MEx python projects."
 groups = ["default"]
 marker = "python_version == \"3.11\""

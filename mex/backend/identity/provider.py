@@ -69,4 +69,5 @@ class GraphIdentityProvider(BaseProvider):
         return {"cache_hits": cache_info.hits, "cache_misses": cache_info.misses}
 
     def close(self) -> None:
-        """Nothing to close because of delegation to graph connector."""
+        """Clear the connector cache."""
+        self._cached_assign.cache_clear()
