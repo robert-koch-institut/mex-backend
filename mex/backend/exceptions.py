@@ -60,7 +60,9 @@ def handle_detailed_error(request: Request, exc: Exception) -> Response:
         content=ErrorResponse(
             message=str(exc).strip(" "),
             debug=DebuggingInfo(
-                errors=[jsonable_encoder(e) for e in cast(DetailedError, exc).errors()],
+                errors=[
+                    jsonable_encoder(e) for e in cast("DetailedError", exc).errors()
+                ],
                 scope=DebuggingScope.model_validate(request.scope),
             ),
         ).model_dump_json(),
