@@ -40,8 +40,8 @@ def test_search_organization_in_wikidata_mocked(
                 ],
                 "rorId": ["https://ror.org/01k5qnb77"],
                 "shortName": [
-                    {"language": "en", "value": "RKI"},
                     {"language": "de", "value": "RKI"},
+                    {"language": "en", "value": "RKI"},
                 ],
                 "stableTargetId": "ga6xh6pgMwgq7DC7r6Wjqg",
                 "viafId": [],
