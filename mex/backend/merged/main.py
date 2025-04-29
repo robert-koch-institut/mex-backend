@@ -11,7 +11,7 @@ from mex.common.types import Identifier
 router = APIRouter()
 
 
-@router.get("/merged-item", tags=["editor", "public"])
+@router.get("/merged-item", tags=["editor"])
 def search_merged_items(  # noqa: PLR0913
     q: Annotated[str, Query(max_length=100)] = "",
     identifier: Identifier | None = None,

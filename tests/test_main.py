@@ -14,6 +14,7 @@ def test_all_endpoints_require_authorization(client: TestClient) -> None:
         "/docs/oauth2-redirect",
         "/redoc",
         "/v0/_system/check",
+        "/v0/_system/metrics",
     ]
     for route in app.routes:
         if route.path not in excluded_routes:

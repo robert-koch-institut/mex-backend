@@ -36,9 +36,11 @@ class Result:
     def __init__(self, result: Neo4jResult) -> None:
         """Wrap a neo4j result object in a mex-backend result."""
         self._records, self._summary, _ = result.to_eager_result()
-        transformer = cast(Callable[[Any], dict[str, Any]], EdgeExporter().transform)
+        transformer = cast("Callable[[Any], dict[str, Any]]", EdgeExporter().transform)
         self._get_cached_data = cache(
-            lambda i: transformer(dict(cast(dict[str, Any], self._records[i]).items()))
+            lambda i: transformer(
+                dict(cast("dict[str, Any]", self._records[i]).items())
+            )
         )
 
     def __getitem__(self, key: str) -> Any:

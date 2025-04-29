@@ -11,15 +11,15 @@ router = APIRouter()
 
 
 @router.get("/orcid", tags=["editor"])
-def search_person_in_orcid(
-    q: Annotated[str, Query(min_length=1, max_length=1000)],
+def search_persons_in_orcid(
+    q: Annotated[str, Query(max_length=1000)] = "Robert Koch",
     offset: Annotated[int, Query(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> PaginatedItemsContainer[ExtractedPerson]:
     """Search for persons in orcid.
 
     Args:
-        q: The name of the person to be searched.
+        q: The name of the person to be searched
         offset: The starting index for pagination
         limit: The maximum number of results to return
 

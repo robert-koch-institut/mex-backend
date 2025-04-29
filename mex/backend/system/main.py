@@ -1,6 +1,7 @@
 from importlib.metadata import version
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import PlainTextResponse
 from starlette import status
 
 from mex.backend.graph.connector import GraphConnector
@@ -12,7 +13,10 @@ from mex.common.connector import CONNECTOR_STORE
 router = APIRouter()
 
 
-@router.get("/_system/check", tags=["system"])
+@router.get(
+    "/_system/check",
+    tags=["system"],
+)
 def check_system_status() -> SystemStatus:
     """Check that the backend server is healthy and responsive."""
     return SystemStatus(status="ok", version=version("mex-backend"))
@@ -35,4 +39,17 @@ def flush_graph_database() -> GraphStatus:
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
         detail="refusing to flush the database",
+    )
+
+
+@router.get(
+    "/_system/metrics",
+    response_class=PlainTextResponse,
+    tags=["system"],
+)
+def get_prometheus_metrics() -> str:
+    """Get connector metrics for prometheus."""
+    return "\n\n".join(
+        f"# TYPE {key} counter\n{key} {value}"
+        for key, value in CONNECTOR_STORE.metrics().items()
     )

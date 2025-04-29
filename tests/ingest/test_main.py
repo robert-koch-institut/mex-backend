@@ -13,7 +13,6 @@ from mex.common.models import (
     EXTRACTED_MODEL_CLASSES,
     RULE_SET_RESPONSE_CLASSES,
     AnyExtractedModel,
-    ItemsContainer,
     PaginatedItemsContainer,
 )
 
@@ -33,8 +32,8 @@ def test_bulk_insert_empty(client_with_api_key_write_permission: TestClient) -> 
     response = client_with_api_key_write_permission.post(
         "/v0/ingest", json={"items": []}
     )
-    assert response.status_code == status.HTTP_201_CREATED, response.text
-    assert response.json() == {"items": []}
+    assert response.status_code == status.HTTP_204_NO_CONTENT, response.text
+    assert response.text == ""
 
 
 @pytest.mark.integration
@@ -49,21 +48,18 @@ def test_bulk_insert(
     )
 
     # assert the response are the artificial data items
-    assert response.status_code == status.HTTP_201_CREATED, response.text
-    assert (
-        ItemsContainer[AnyExtractedModel].model_validate(response.json()).items
-        == artificial_extracted_items
-    )
+    assert response.status_code == status.HTTP_204_NO_CONTENT, response.text
+    assert response.text == ""
 
     # verify the nodes have actually been stored in the database
-    graph = GraphConnector.get()
-    result_extracted = graph.fetch_extracted_items(
-        None, None, None, 1, len(artificial_extracted_items)
+    connector = GraphConnector.get()
+    result = connector.fetch_extracted_items(
+        None, None, None, None, 1, len(artificial_extracted_items)
     )
-    result_extracted_container = PaginatedItemsContainer[
-        AnyExtractedModel
-    ].model_validate(result_extracted.one())
-    assert set(result_extracted_container.items) == set(artificial_extracted_items)
+    result_container = PaginatedItemsContainer[AnyExtractedModel].model_validate(
+        result.one()
+    )
+    assert set(result_container.items) == set(artificial_extracted_items)
 
     # verify that the merging worked correctly
     result_merged = search_merged_items_in_graph(
@@ -113,7 +109,6 @@ def test_bulk_insert_malformed(
 def test_bulk_insert_mocked(
     client_with_api_key_write_permission: TestClient,
     post_payload: Payload,
-    artificial_extracted_items: list[AnyExtractedModel],
     monkeypatch: MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(GraphConnector, "_merge_item", MagicMock())
@@ -121,8 +116,4 @@ def test_bulk_insert_mocked(
     response = client_with_api_key_write_permission.post(
         "/v0/ingest", json=post_payload
     )
-    assert response.status_code == status.HTTP_201_CREATED, response.text
-    assert (
-        ItemsContainer[AnyExtractedModel].model_validate(response.json()).items
-        == artificial_extracted_items
-    )
+    assert response.status_code == status.HTTP_204_NO_CONTENT, response.text

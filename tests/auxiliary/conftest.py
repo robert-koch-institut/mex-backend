@@ -10,12 +10,6 @@ from ldap3 import Connection
 from pytest import MonkeyPatch
 from requests import Response
 
-from mex.backend.auxiliary.organigram import extracted_organizational_unit
-from mex.backend.auxiliary.primary_source import (
-    extracted_primary_source_ldap,
-    extracted_primary_source_orcid,
-    extracted_primary_source_wikidata,
-)
 from mex.common.ldap.connector import LDAPConnector
 from mex.common.ldap.models import LDAPPerson
 from mex.common.orcid.connector import OrcidConnector
@@ -106,7 +100,7 @@ def mocked_wikidata(monkeypatch: MonkeyPatch) -> None:
         _self: WikidataAPIConnector,
         _item_id: str,
     ) -> dict[str, str]:
-        return wikidata_organization_raw
+        return cast("dict[str, str]", wikidata_organization_raw)
 
     monkeypatch.setattr(
         WikidataAPIConnector,
@@ -161,17 +155,3 @@ def mocked_orcid(
         return OrcidRecord.model_validate(orcid_person_raw)
 
     monkeypatch.setattr(OrcidConnector, "get_record_by_id", get_record_by_id)
-
-
-@pytest.fixture(autouse=True)
-def seed_primary_sources(is_integration_test: bool) -> None:
-    if is_integration_test:
-        extracted_primary_source_ldap()
-        extracted_primary_source_orcid()
-        extracted_primary_source_wikidata()
-
-
-@pytest.fixture(autouse=True)
-def seed_organizational_units(is_integration_test: bool) -> None:
-    if is_integration_test:
-        extracted_organizational_unit()

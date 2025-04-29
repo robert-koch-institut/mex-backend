@@ -11,12 +11,6 @@ from neo4j import Driver, Session, SummaryCounters
 from pytest import MonkeyPatch
 
 from mex.artificial.helpers import generate_artificial_extracted_items
-from mex.backend.auxiliary.ldap import (
-    extracted_organizational_unit,
-    extracted_primary_source_ldap,
-)
-from mex.backend.auxiliary.primary_source import extracted_primary_source_orcid
-from mex.backend.auxiliary.wikidata import extracted_primary_source_wikidata
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.identity.provider import GraphIdentityProvider
 from mex.backend.main import app
@@ -360,7 +354,8 @@ def load_dummy_data(
     dummy_data: dict[str, AnyExtractedModel],
 ) -> dict[str, AnyExtractedModel]:
     """Ingest dummy data into the graph."""
-    GraphConnector.get().ingest(list(dummy_data.values()))
+    connector = GraphConnector.get()
+    connector.ingest(list(dummy_data.values()))
     _match_organization_items(dummy_data)
     return dummy_data
 
@@ -406,7 +401,8 @@ def load_dummy_rule_set(
     organizational_unit_rule_set_request: OrganizationalUnitRuleSetRequest,
     load_dummy_data: dict[str, AnyExtractedModel],
 ) -> OrganizationalUnitRuleSetResponse:
-    GraphConnector.get().ingest(
+    connector = GraphConnector.get()
+    connector.ingest(
         [
             load_dummy_data["primary_source_2"],
             load_dummy_data["organizational_unit_1"],
@@ -420,12 +416,3 @@ def load_dummy_rule_set(
             stable_target_id=load_dummy_data["organizational_unit_2"].stableTargetId,
         ),
     )
-
-
-@pytest.fixture(autouse=True)
-def reset_caches() -> None:
-    """Reset the caches for each test."""
-    extracted_primary_source_wikidata.cache_clear()
-    extracted_primary_source_ldap.cache_clear()
-    extracted_primary_source_orcid.cache_clear()
-    extracted_organizational_unit.cache_clear()

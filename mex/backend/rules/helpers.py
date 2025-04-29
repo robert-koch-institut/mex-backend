@@ -82,6 +82,7 @@ def create_and_get_rule_set(
         None,
         stable_target_id,
         rule_types,
+        None,
         0,
         3,
     )
@@ -96,6 +97,7 @@ def get_rule_set_from_graph(
     graph_result = connector.fetch_rule_items(
         None,
         stable_target_id,
+        None,
         None,
         0,
         3,
