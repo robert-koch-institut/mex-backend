@@ -12,7 +12,7 @@ from mex.common.models import (
 from mex.common.primary_source.helpers import get_extracted_primary_source_by_name
 
 
-def fetch_or_insert_primary_source(name: str) -> ExtractedPrimarySource:
+def _fetch_or_insert_primary_source(name: str) -> ExtractedPrimarySource:
     """Fetch and return or load, ingest and return a primary source by name."""
     provider = get_provider()
     identities = provider.fetch(
@@ -37,19 +37,19 @@ def fetch_or_insert_primary_source(name: str) -> ExtractedPrimarySource:
 
 def extracted_primary_source_ldap() -> ExtractedPrimarySource:
     """Get the ldap primary source."""
-    return fetch_or_insert_primary_source("ldap")
+    return _fetch_or_insert_primary_source("ldap")
 
 
 def extracted_primary_source_organigram() -> ExtractedPrimarySource:
     """Get the organigram primary source."""
-    return fetch_or_insert_primary_source("organigram")
+    return _fetch_or_insert_primary_source("organigram")
 
 
 def extracted_primary_source_orcid() -> ExtractedPrimarySource:
     """Get the orcid primary source."""
-    return fetch_or_insert_primary_source("orcid")
+    return _fetch_or_insert_primary_source("orcid")
 
 
 def extracted_primary_source_wikidata() -> ExtractedPrimarySource:
     """Get the wikidata primary source."""
-    return fetch_or_insert_primary_source("wikidata")
+    return _fetch_or_insert_primary_source("wikidata")
