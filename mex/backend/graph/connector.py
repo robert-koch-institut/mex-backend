@@ -638,7 +638,7 @@ class GraphConnector(BaseConnector):
                 "status failed %s:%s", model.entityType, model.identifier
             )
 
-        if 0:
+        if 1:
             expectations_by_locator = transform_edges_into_expectations_by_edge_locator(
                 start_node_type=model.entityType,
                 start_node_constraints={"identifier": str(model.identifier)},

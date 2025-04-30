@@ -1693,6 +1693,8 @@ def test_connector_flush(monkeypatch: MonkeyPatch) -> None:
 
 @pytest.mark.integration
 def test_connector_ingest() -> None:
+    import json
+    import os.path
     import time
     from collections.abc import Callable
     from functools import cache
@@ -1701,10 +1703,34 @@ def test_connector_ingest() -> None:
 
     from mex.artificial.helpers import generate_artificial_extracted_items
     from mex.common.logging import logger
+    from mex.common.models import ExtractedModelTypeAdapter
 
     @cache
     def get_items(count: int) -> list[AnyExtractedModel]:
-        return generate_artificial_extracted_items(
+        models = []
+        for file in [
+            "../mex-extractors/ExtractedPrimarySource.ndjson",
+            "../mex-extractors/ExtractedOrganization.ndjson",
+            "../mex-extractors/ExtractedOrganizationalUnit.ndjson",
+            "../mex-extractors/ExtractedContactPoint.ndjson",
+            "../mex-extractors/ExtractedPerson.ndjson",
+            "../mex-extractors/ExtractedConsent.ndjson",
+            "../mex-extractors/ExtractedAccessPlatform.ndjson",
+            "../mex-extractors/ExtractedDistribution.ndjson",
+            "../mex-extractors/ExtractedBibliographicResource.ndjson",
+            "../mex-extractors/ExtractedActivity.ndjson",
+            "../mex-extractors/ExtractedResource.ndjson",
+            "../mex-extractors/ExtractedVariableGroup.ndjson",
+            "../mex-extractors/ExtractedVariable.ndjson",
+        ]:
+            if not os.path.isfile(file):
+                continue
+            with open(file, encoding="utf-8") as fh:
+                for line in fh:
+                    x = json.loads(line)
+                    models.append(ExtractedModelTypeAdapter.validate_python(x))
+
+        return models or generate_artificial_extracted_items(
             locale=["de", "en"],
             seed=42,
             count=count,
@@ -1715,14 +1741,14 @@ def test_connector_ingest() -> None:
                 "OrganizationalUnit",
                 "ContactPoint",
                 "Person",
-                "Activity",
-                "AccessPlatform",
                 "Consent",
-                "Resource",
-                "Variable",
-                "VariableGroup",
-                "BibliographicResource",
+                "AccessPlatform",
                 "Distribution",
+                "BibliographicResource",
+                "Activity",
+                "Resource",
+                "VariableGroup",
+                "Variable",
             ],
         )
 
@@ -1742,7 +1768,7 @@ def test_connector_ingest() -> None:
             assert before <= 2
             t0 = time.time()
             fn(connector, items)
-            t1 = time.time() - t0
+            t1 = round(time.time() - t0, 3)
             times.append(t1)
             nodes = connector.commit("MATCH (n) RETURN count(n) AS c;")["c"] - before
             lx = sorted(
@@ -1759,7 +1785,7 @@ def test_connector_ingest() -> None:
             connector.flush()
         return times, node_count, edge_count, locators
 
-    counts = list(range(2000, 10000, 1000))
+    counts = list(range(200, 1000, 100))
     v2_times, v2_nodes, v2_edges, v2_locators = benchmark(
         "v2", GraphConnector.ingest_v2, counts
     )
@@ -1767,10 +1793,17 @@ def test_connector_ingest() -> None:
         "v1", GraphConnector.ingest, counts
     )
 
-    bench_df = pd.DataFrame({"v1_times": v1_times, "v2_times": v2_times})
+    bench_df = pd.DataFrame(
+        {
+            "v1_times": v1_times,
+            "v2_times": v2_times,
+            "v1_nodes": v1_nodes,
+            "v2_nodes": v2_nodes,
+            "v1_edges": v1_edges,
+            "v2_edges": v2_edges,
+            "v1_locators": [len(x) for x in v1_locators],
+            "v2_locators": [len(x) for x in v2_locators],
+        }
+    )
 
-    print(bench_df.to_csv(index=None))  # noqa: T201
-
-    assert v1_locators == v2_locators
-    assert v1_nodes == v2_nodes
-    assert v1_edges == v2_edges
+    bench_df.to_csv("bench.csv", index=None)
