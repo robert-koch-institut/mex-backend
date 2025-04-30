@@ -13,4 +13,4 @@ def ingest_items(
 ) -> None:
     """Ingest a batch of extracted items or rule-sets."""
     connector = GraphConnector.get()
-    connector.ingest(request.items)
+    connector.ingest_v2(request.items)

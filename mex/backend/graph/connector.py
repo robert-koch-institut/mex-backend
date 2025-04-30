@@ -15,6 +15,7 @@ from neo4j.exceptions import DriverError
 from pydantic import Field
 
 from mex.backend.fields import SEARCHABLE_CLASSES, SEARCHABLE_FIELDS
+from mex.backend.graph.exceptions import InconsistentGraphError
 from mex.backend.graph.models import GraphRel, IngestData, Result
 from mex.backend.graph.query import Query, QueryBuilder
 from mex.backend.graph.transform import (
@@ -556,7 +557,7 @@ class GraphConnector(BaseConnector):
         if missing_edges := sorted(expected_edges - merged_edges):
             expectations = ", ".join(expectations_by_locator[e] for e in missing_edges)
             msg = f"failed to merge {len(missing_edges)} edges: {expectations}"
-            logger.error("InconsistentGraphError %s", msg)
+            raise InconsistentGraphError(msg)
         if unexpected_edges := sorted(merged_edges - expected_edges):
             surplus = ", ".join(unexpected_edges)
             msg = f"merged {len(unexpected_edges)} edges more than expected: {surplus}"
@@ -564,11 +565,8 @@ class GraphConnector(BaseConnector):
 
         return result
 
-    def ingest_one(self, model: AnyExtractedModel) -> None:  # noqa: C901
+    def ingest_one(self, model: AnyExtractedModel) -> None:
         """Ingest a single model and connect all its edges."""
-        from mex.backend.extracted.helpers import search_extracted_items_in_graph
-        from mex.common.transform import MExEncoder
-
         merged_label = ensure_prefix(model.stemType, "Merged")
 
         text_fields = TEXT_FIELDS_BY_CLASS_NAME[model.entityType]
@@ -616,7 +614,7 @@ class GraphConnector(BaseConnector):
                     )
                 )
 
-        payload = IngestData(
+        data = IngestData(
             identifier=model.identifier,
             stableTargetId=model.stableTargetId,
             mergedLabels=[merged_label],
@@ -627,58 +625,34 @@ class GraphConnector(BaseConnector):
             linkRels=link_rels,
             createRels=create_rels,
         )
-        data = json.loads(json.dumps(payload, cls=MExEncoder))
 
         query_builder = QueryBuilder.get()
         query = query_builder.merge_item_v2()
 
         result = self.commit(query, data=data)
-        if result["status"] != "ok":
-            return logger.error(
-                "status failed %s:%s", model.entityType, model.identifier
-            )
 
-        if 1:
-            expectations_by_locator = transform_edges_into_expectations_by_edge_locator(
-                start_node_type=model.entityType,
-                start_node_constraints={"identifier": str(model.identifier)},
-                ref_labels=[r["edgeLabel"] for r in payload["linkRels"]],
-                ref_identifiers=[
-                    str(r["nodeProps"]["identifier"]) for r in payload["linkRels"]
-                ],
-                ref_positions=[
-                    int(str(r["edgeProps"]["position"])) for r in payload["linkRels"]
-                ],
-            )
-            expected_edges = set(expectations_by_locator)
-            merged_edges = set(result["edges"])
+        expectations_by_locator = transform_edges_into_expectations_by_edge_locator(
+            start_node_type=model.entityType,
+            start_node_constraints={"identifier": str(model.identifier)},
+            ref_labels=[r["edgeLabel"] for r in data["linkRels"]],
+            ref_identifiers=[
+                str(r["nodeProps"]["identifier"]) for r in data["linkRels"]
+            ],
+            ref_positions=[
+                int(str(r["edgeProps"]["position"])) for r in data["linkRels"]
+            ],
+        )
+        expected_edges = set(expectations_by_locator)
+        merged_edges = set(result["edges"])
 
-            if missing_edges := sorted(expected_edges - merged_edges):
-                expectations = ", ".join(
-                    expectations_by_locator[e] for e in missing_edges
-                )
-                msg = f"failed to merge {len(missing_edges)} edges: {expectations}"
-                logger.error("InconsistentGraphError %s", msg)
-            if unexpected_edges := sorted(merged_edges - expected_edges):
-                surplus = ", ".join(unexpected_edges)
-                msg = f"merged {len(unexpected_edges)} edges more than expected: {surplus}"
-                raise RuntimeError(msg)
-        else:
-            fetch_back = search_extracted_items_in_graph(
-                stable_target_id=model.stableTargetId
-            )
-
-            if len(fetch_back.items) != 1:
-                return logger.error("fetch_back.items %s", fetch_back.items)
-
-            model_out = fetch_back.items[0].model_dump()
-            model_in = model.model_dump()
-            if model_in != model_out:
-                return logger.error(
-                    "comp failed %s:%s", model.entityType, model.identifier
-                )
-
-        return None
+        if missing_edges := sorted(expected_edges - merged_edges):
+            expectations = ", ".join(expectations_by_locator[e] for e in missing_edges)
+            msg = f"failed to merge {len(missing_edges)} edges: {expectations}"
+            logger.error("InconsistentGraphError %s", msg)
+        if unexpected_edges := sorted(merged_edges - expected_edges):
+            surplus = ", ".join(unexpected_edges)
+            msg = f"merged {len(unexpected_edges)} edges more than expected: {surplus}"
+            raise RuntimeError(msg)
 
     def ingest_v2(
         self,

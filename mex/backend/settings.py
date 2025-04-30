@@ -1,6 +1,6 @@
 from pydantic import Field, SecretStr
 
-from mex.backend.types import APIKey, APIKeyDatabase, APIUserDatabase
+from mex.backend.types import APIKeyDatabase, APIUserDatabase
 from mex.common.settings import BaseSettings
 
 
@@ -47,7 +47,7 @@ class BackendSettings(BaseSettings):
         validation_alias="MEX_GRAPH_PASSWORD",
     )
     backend_api_key_database: APIKeyDatabase = Field(
-        APIKeyDatabase(write=[APIKey("dummy_write_key")]),
+        APIKeyDatabase(),
         description="Database of API keys.",
         validation_alias="MEX_BACKEND_API_KEY_DATABASE",
     )
