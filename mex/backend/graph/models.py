@@ -94,7 +94,7 @@ class Result:
 
 
 class GraphRel(TypedDict):
-    """Type definition for ingestion payloads."""
+    """Type definition for graph relations."""
 
     nodeLabels: list[str]
     nodeProps: dict[str, GraphValueType]
@@ -102,12 +102,12 @@ class GraphRel(TypedDict):
     edgeProps: dict[str, GraphValueType]
 
 
-class IngestSource(TypedDict):
-    """Type definition for ingestion payloads."""
+class IngestData(TypedDict):
+    """Type definition for ingestion data."""
 
-    mergedLabel: str
     stableTargetId: str
     identifier: str
+    mergedLabels: list[str]
     nodeLabels: list[str]
     nodeProps: dict[str, GraphValueType]
     detachNodes: list[str]
