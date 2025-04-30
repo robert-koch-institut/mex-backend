@@ -3,18 +3,10 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
-from mex.backend.auxiliary.ldap import (
-    extracted_organizational_unit,
-    extracted_primary_source_ldap,
-)
-from mex.backend.graph.connector import GraphConnector
-from mex.common.models import ExtractedOrganizationalUnit, ExtractedPrimarySource
-from mex.common.types import (
-    ExtractedOrganizationalUnitIdentifier,
-    MergedOrganizationalUnitIdentifier,
-    Text,
-    TextLanguage,
-)
+from mex.backend.auxiliary.primary_source import extracted_primary_source_ldap
+from mex.backend.extracted.helpers import search_extracted_items_in_graph
+from mex.common.models import ExtractedPrimarySource
+from mex.common.types import TextLanguage
 from tests.conftest import get_graph
 
 
@@ -33,13 +25,13 @@ def count_results(search_string: str, persons: list[dict[str, Any]]) -> int:
         ("Mueller", 200, 2),
         ("Example", 200, 1),
         ("Moritz", 200, 2),
-        ("", 422, None),
+        ("", 200, 0),
         ("None-Existent", 200, 0),
     ],
     ids=[
         "Get existing Person with same name",
         "Get existing Person with unique name",
-        "Get existing Person by givenname",
+        "Get existing Person by given name",
         "Empty Search String",
         "Non-existent string",
     ],
@@ -62,7 +54,7 @@ def test_search_persons_in_ldap_mocked(
                 "fullName": [],
                 "givenName": ["Max"],
                 "isniId": [],
-                "memberOf": ["guUvX7rDQJIaMD8LbZV40E"],
+                "memberOf": ["cjna2jitPngp6yIV63cdi9"],
                 "orcidId": [],
                 "$type": "ExtractedPerson",
                 "identifier": "uNaZQCzsY4IAJ2ahzRBQX",
@@ -77,7 +69,7 @@ def test_search_persons_in_ldap_mocked(
                 "fullName": [],
                 "givenName": ["Moritz"],
                 "isniId": [],
-                "memberOf": ["guUvX7rDQJIaMD8LbZV40E"],
+                "memberOf": ["cjna2jitPngp6yIV63cdi9"],
                 "orcidId": [],
                 "$type": "ExtractedPerson",
                 "identifier": "hiY0YTC5dUkBrf8ujMemjh",
@@ -92,7 +84,7 @@ def test_search_persons_in_ldap_mocked(
                 "fullName": [],
                 "givenName": ["Moritz"],
                 "isniId": [],
-                "memberOf": ["guUvX7rDQJIaMD8LbZV40E"],
+                "memberOf": ["cjna2jitPngp6yIV63cdi9"],
                 "orcidId": [],
                 "$type": "ExtractedPerson",
                 "identifier": "b9Dw7MmjFtoFd6upaaKQHB",
@@ -104,11 +96,10 @@ def test_search_persons_in_ldap_mocked(
     response = client_with_api_key_read_permission.get(
         "/v0/ldap", params={"q": search_string}
     )
-    assert response.status_code == status_code
-    if response.status_code == 200:
-        data = response.json()
-        assert data == result
-        assert count_results(search_string, data["items"]) == match_total
+    assert response.status_code == status_code, response.text
+    data = response.json()
+    assert data == result
+    assert count_results(search_string, data["items"]) == match_total
 
 
 def test_extracted_primary_source_ldap() -> None:
@@ -135,106 +126,11 @@ def test_extracted_primary_source_ldap() -> None:
 def test_extracted_primary_source_ldap_ingest() -> None:
     # verify the primary source ldap has been stored in the database
     result = extracted_primary_source_ldap()
-    graph = GraphConnector.get()
-    ingested_primary_source = graph.fetch_extracted_items(
-        "Active Directory",
-        str(result.stableTargetId),
-        ["ExtractedPrimarySource"],
-        0,
-        100,
-    )
-    assert ingested_primary_source["total"] == 1, get_graph()
 
+    ingested = search_extracted_items_in_graph(
+        query_string="Active Directory",
+        stable_target_id=str(result.stableTargetId),
+        entity_type=["ExtractedPrimarySource"],
+    )
 
-def test_extracted_organizational_unit() -> None:
-    expected_result = [
-        ExtractedOrganizationalUnit(
-            hadPrimarySource="ebs5siX85RkdrhBRlsYgRP",
-            identifierInPrimarySource="child-unit",
-            parentUnit=None,
-            name=[
-                Text(value="CHLD Unterabteilung", language=TextLanguage.DE),
-                Text(value="C1: Sub Unit", language=TextLanguage.EN),
-            ],
-            alternativeName=[
-                Text(value="CHLD", language=TextLanguage.EN),
-                Text(value="C1 Sub-Unit", language=TextLanguage.EN),
-                Text(value="C1 Unterabteilung", language=TextLanguage.DE),
-            ],
-            email=[],
-            shortName=[Text(value="C1", language=TextLanguage.DE)],
-            unitOf=[],
-            website=[],
-            entityType="ExtractedOrganizationalUnit",
-            identifier=ExtractedOrganizationalUnitIdentifier("guPShhkQFQY1WcGQPwhBUK"),
-            stableTargetId=MergedOrganizationalUnitIdentifier("eaWrYZHz9arDWHYYgJ3Jvd"),
-        ),
-        ExtractedOrganizationalUnit(
-            hadPrimarySource="ebs5siX85RkdrhBRlsYgRP",
-            identifierInPrimarySource="parent-unit",
-            parentUnit=None,
-            name=[
-                Text(value="Abteilung", language=TextLanguage.DE),
-                Text(value="Department", language=TextLanguage.EN),
-            ],
-            alternativeName=[
-                Text(value="PRNT Abteilung", language=TextLanguage.DE),
-                Text(value="PARENT Dept.", language=None),
-            ],
-            email=["pu@example.com", "PARENT@example.com"],
-            shortName=[Text(value="PRNT", language=TextLanguage.DE)],
-            unitOf=[],
-            website=[],
-            entityType="ExtractedOrganizationalUnit",
-            identifier=ExtractedOrganizationalUnitIdentifier("boqrd9TaaNZWxr22sAIiMZ"),
-            stableTargetId=MergedOrganizationalUnitIdentifier("g7U6F67JzQgCwy6SFIzoVH"),
-        ),
-        ExtractedOrganizationalUnit(
-            hadPrimarySource="ebs5siX85RkdrhBRlsYgRP",
-            identifierInPrimarySource="fg99",
-            parentUnit=None,
-            name=[
-                Text(value="Fachgebiet 99", language=TextLanguage.DE),
-                Text(value="Group 99", language=TextLanguage.EN),
-            ],
-            alternativeName=[Text(value="FG99", language=TextLanguage.DE)],
-            email=["fg@example.com"],
-            shortName=[Text(value="FG 99", language=TextLanguage.DE)],
-            unitOf=[],
-            website=[],
-            entityType="ExtractedOrganizationalUnit",
-            identifier=ExtractedOrganizationalUnitIdentifier("dK70rp439YPCkCedfr5Fa6"),
-            stableTargetId=MergedOrganizationalUnitIdentifier("guUvX7rDQJIaMD8LbZV40E"),
-        ),
-    ]
-    result = extracted_organizational_unit()
-    for item in result:
-        assert isinstance(item, ExtractedOrganizationalUnit)
-    assert result == expected_result
-
-    # check org units are ingested into graph
-    graph = GraphConnector.get()
-    ingested_org_unit_1 = graph.fetch_extracted_items(
-        "CHLD Unterabteilung",
-        "eaWrYZHz9arDWHYYgJ3Jvd",
-        ["ExtractedOrganizationalUnit"],
-        0,
-        100,
-    )
-    assert ingested_org_unit_1["total"] == 1, get_graph()
-    ingested_org_unit_2 = graph.fetch_extracted_items(
-        "PRNT Abteilung",
-        "g7U6F67JzQgCwy6SFIzoVH",
-        ["ExtractedOrganizationalUnit"],
-        0,
-        100,
-    )
-    assert ingested_org_unit_2["total"] == 1, get_graph()
-    ingested_org_unit_3 = graph.fetch_extracted_items(
-        "Fachgebiet 99",
-        "guUvX7rDQJIaMD8LbZV40E",
-        ["ExtractedOrganizationalUnit"],
-        0,
-        100,
-    )
-    assert ingested_org_unit_3["total"] == 1, get_graph()
+    assert ingested.total == 1, get_graph()

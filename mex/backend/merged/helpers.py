@@ -1,6 +1,4 @@
-from typing import Annotated, Any, Literal, overload
-
-from pydantic import Field, TypeAdapter
+from typing import Any, Literal, overload
 
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.merged.models import MergedItemSearch, PreviewItemSearch
@@ -9,15 +7,11 @@ from mex.common.merged.main import create_merged_item
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     RULE_MODEL_CLASSES_BY_NAME,
-    AnyExtractedModel,
     AnyMergedModel,
     AnyPreviewModel,
+    ExtractedModelTypeAdapter,
 )
 from mex.common.types import Identifier
-
-EXTRACTED_MODEL_ADAPTER: TypeAdapter[AnyExtractedModel] = TypeAdapter(
-    Annotated[AnyExtractedModel, Field(discriminator="entityType")]
-)
 
 
 @overload
@@ -53,7 +47,7 @@ def merge_search_result_item(
         Instance of a merged or preview item
     """
     extracted_items = [
-        EXTRACTED_MODEL_ADAPTER.validate_python(component)
+        ExtractedModelTypeAdapter.validate_python(component)
         for component in item["_components"]
         if component["entityType"] in EXTRACTED_MODEL_CLASSES_BY_NAME
     ]
@@ -127,8 +121,8 @@ def search_merged_items_in_graph(  # noqa: PLR0913
     Returns:
         Search response for preview or merged items
     """
-    graph = GraphConnector.get()
-    result = graph.fetch_merged_items(
+    connector = GraphConnector.get()
+    result = connector.fetch_merged_items(
         query_string=query_string,
         identifier=identifier,
         entity_type=entity_type,

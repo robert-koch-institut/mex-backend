@@ -38,7 +38,7 @@ CALL () {
     OPTIONAL MATCH (merged_node:<<merged_labels|join("|")>>)
 <%- endif %>
     <%- if filter_by_reference_to_merged_item %>
-    MATCH (merged_node)<-[:stableTargetId]-(:<<extracted_labels|join("|")>>)-[:<<reference_field_name>>]->(referenced_merged_node_to_filter_by)
+    MATCH (merged_node)<-[:stableTargetId]-()-[:<<reference_field_name>>]->(referenced_merged_node_to_filter_by)
     <%- endif %>
     WHERE
         ANY(label IN labels(merged_node) WHERE label IN $labels)

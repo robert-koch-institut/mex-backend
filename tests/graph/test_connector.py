@@ -193,8 +193,8 @@ def test_on_commit_backoff(monkeypatch: MonkeyPatch) -> None:
         check_connectivity_and_authentication,
     )
 
-    connector = GraphConnector.get()
-    event = BackoffDetails(args=(connector,))
+    graph = GraphConnector.get()
+    event = BackoffDetails(args=(graph,))
     GraphConnector._on_commit_backoff(event)
     assert init_driver.call_args_list == [call()]
     assert check_connectivity_and_authentication.call_args_list == [call()]
@@ -217,9 +217,9 @@ def test_on_commit_giveup(
         r"MATCH {{jinja_var}} RETURN $cypher_var;"
     )
 
-    connector = GraphConnector.get()
+    graph = GraphConnector.get()
     query = Query("match_something", template, {"jinja_var": "jjj"})
-    event = BackoffDetails(args=(connector, query), kwargs={"cypher_var": "ccc"})
+    event = BackoffDetails(args=(graph, query), kwargs={"cypher_var": "ccc"})
     GraphConnector._on_commit_giveup(event)
 
     assert caplog.messages[-1] == expected
@@ -227,9 +227,9 @@ def test_on_commit_giveup(
 
 def test_mocked_graph_commit_raises_error(mocked_graph: MockedGraph) -> None:
     mocked_graph.run.side_effect = Exception("query failed")
-    connector = GraphConnector.get()
+    graph = GraphConnector.get()
     with pytest.raises(Exception, match="query failed"):
-        connector.commit("RETURN 1;")
+        graph.commit("RETURN 1;")
 
 
 @pytest.mark.usefixtures("mocked_query_class")
@@ -254,6 +254,7 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
         query_string="my-query",
         stable_target_id=Identifier.generate(99),
         entity_type=["ExtractedFoo", "ExtractedBar", "ExtractedBatz"],
+        had_primary_source=None,
         skip=10,
         limit=100,
     )
@@ -261,7 +262,10 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
     assert mocked_graph.call_args_list[-1].args == (
         """\
 fetch_extracted_or_rule_items(
-    filter_by_query_string=True, filter_by_stable_target_id=True
+    filter_by_query_string=True,
+    filter_by_stable_target_id=True,
+    filter_by_reference_to_merged_item=False,
+    reference_field_name="hadPrimarySource",
 )""",
         {
             "labels": [
@@ -271,6 +275,7 @@ fetch_extracted_or_rule_items(
             ],
             "limit": 100,
             "query_string": "my-query",
+            "referenced_identifiers": None,
             "skip": 10,
             "stable_target_id": "bFQoRhcVH5DHV1",
         },
@@ -493,12 +498,13 @@ def test_fetch_extracted_items(
     limit: int,
     expected: dict[str, Any],
 ) -> None:
-    connector = GraphConnector.get()
+    graph = GraphConnector.get()
 
-    result = connector.fetch_extracted_items(
+    result = graph.fetch_extracted_items(
         query_string=query_string,
         stable_target_id=stable_target_id,
         entity_type=entity_type,
+        had_primary_source=None,
         skip=0,
         limit=limit,
     )
@@ -525,17 +531,21 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
     ]
     graph = GraphConnector.get()
     result = graph.fetch_rule_items(
-        query_string="my-query",
-        stable_target_id=Identifier.generate(99),
-        entity_type=["AdditiveFoo", "SubtractiveBar", "PreventiveBatz"],
-        skip=10,
-        limit=100,
+        "my-query",
+        Identifier.generate(99),
+        ["AdditiveFoo", "SubtractiveBar", "PreventiveBatz"],
+        None,
+        10,
+        100,
     )
 
     assert mocked_graph.call_args_list[-1].args == (
         """\
 fetch_extracted_or_rule_items(
-    filter_by_query_string=True, filter_by_stable_target_id=True
+    filter_by_query_string=True,
+    filter_by_stable_target_id=True,
+    filter_by_reference_to_merged_item=False,
+    reference_field_name="hadPrimarySource",
 )""",
         {
             "labels": [
@@ -545,6 +555,7 @@ fetch_extracted_or_rule_items(
             ],
             "limit": 100,
             "query_string": "my-query",
+            "referenced_identifiers": None,
             "skip": 10,
             "stable_target_id": "bFQoRhcVH5DHV1",
         },
@@ -620,24 +631,18 @@ def test_fetch_rule_items(
     stable_target_id: str | None,
     expected: dict[str, Any],
 ) -> None:
-    connector = GraphConnector.get()
+    graph = GraphConnector.get()
 
-    result = connector.fetch_rule_items(
-        query_string=query_string,
-        stable_target_id=stable_target_id,
-        entity_type=None,
-        skip=0,
-        limit=1,
-    )
+    result = graph.fetch_rule_items(query_string, stable_target_id, None, None, 0, 1)
 
     assert result.one() == expected
 
 
 @pytest.mark.integration
 def test_fetch_rule_items_empty() -> None:
-    connector = GraphConnector.get()
+    graph = GraphConnector.get()
 
-    result = connector.fetch_rule_items(None, "thisIdDoesNotExist", None, 0, 1)
+    result = graph.fetch_rule_items(None, "thisIdDoesNotExist", None, None, 0, 1)
 
     assert result.one() == {"items": [], "total": 0}
 
@@ -1177,9 +1182,9 @@ def test_fetch_merged_items(  # noqa: PLR0913
     limit: int,
     expected: dict[str, Any],
 ) -> None:
-    connector = GraphConnector.get()
+    graph = GraphConnector.get()
 
-    result = connector.fetch_merged_items(
+    result = graph.fetch_merged_items(
         query_string=query_string,
         identifier=identifier,
         entity_type=entity_type,
@@ -1305,9 +1310,9 @@ exists_merged_item(node_labels=["MergedFoo", "MergedBar", "MergedBatz"])""",
 def test_graph_exists_merged_item(
     stable_target_id: Identifier, stem_types: list[str] | None, exists: bool
 ) -> None:
-    connector = GraphConnector.get()
+    graph = GraphConnector.get()
 
-    assert connector.exists_merged_item(stable_target_id, stem_types) == exists
+    assert graph.exists_merged_item(stable_target_id, stem_types) == exists
 
 
 @pytest.mark.usefixtures("mocked_query_class")
@@ -1654,10 +1659,11 @@ def test_mocked_graph_ingests_extracted_models(
         ],
     ]
 
+    dummy_items = list(dummy_data.values())
     graph = GraphConnector.get()
-    models = graph.ingest(list(dummy_data.values()))
+    graph.ingest(dummy_items)
 
-    assert models == list(dummy_data.values())
+    assert len(mocked_graph.call_args_list) == 18
 
 
 @pytest.mark.integration
@@ -1665,12 +1671,12 @@ def test_connector_flush_fails(monkeypatch: MonkeyPatch) -> None:
     settings = BackendSettings.get()
 
     monkeypatch.setattr(settings, "debug", False)
-    connector = GraphConnector.get()
+    graph = GraphConnector.get()
 
     with pytest.raises(
         MExError, match="database flush was attempted outside of debug mode"
     ):
-        connector.flush()
+        graph.flush()
 
 
 @pytest.mark.integration
@@ -1680,8 +1686,8 @@ def test_connector_flush(monkeypatch: MonkeyPatch) -> None:
 
     settings = BackendSettings.get()
     monkeypatch.setattr(settings, "debug", True)
-    connector = GraphConnector.get()
-    connector.flush()
+    graph = GraphConnector.get()
+    graph.flush()
 
     assert len(get_graph()) == 0
 
@@ -1691,8 +1697,8 @@ def test_connector_ingest() -> None:
     import time
 
     from mex.artificial.helpers import generate_artificial_extracted_items
+    from mex.common.logging import logger
 
-    t0 = time.time()
     items = generate_artificial_extracted_items(
         locale=["de", "en"],
         seed=None,
@@ -1701,9 +1707,30 @@ def test_connector_ingest() -> None:
         stem_types=list(EXTRACTED_MODEL_CLASSES_BY_NAME),
     )
     connector = GraphConnector.get()
-    connector.ingest_v2(items)
-    print("finished in", time.time() - t0)
 
-    result = connector.commit("MATCH (n) RETURN count(n)")
+    v1_times = []
+    v2_times = []
 
-    print(result)
+    for _ in range(3):
+        t0 = time.time()
+        connector.ingest(items)
+        t1 = time.time() - t0
+        v1_times.append(t1)
+        result = connector.commit("MATCH (n) RETURN count(n)")
+        logger.info(
+            f"v1 finished in {t1} posting {result} items",
+        )
+        connector.flush()
+
+    for _ in range(3):
+        t0 = time.time()
+        connector.ingest_v2(items)
+        t1 = time.time() - t0
+        v2_times.append(t1)
+        result = connector.commit("MATCH (n) RETURN count(n)")
+        logger.info(
+            f"v2 finished in {t1} posting {result} items",
+        )
+        connector.flush()
+
+    logger.info(v1_times, v2_times)
