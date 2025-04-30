@@ -93,7 +93,7 @@ class Result:
         return {k: v for k, v in vars(self._summary.counters).items() if v}
 
 
-class IngestRelation(TypedDict):
+class GraphRel(TypedDict):
     """Type definition for ingestion payloads."""
 
     nodeLabels: list[str]
@@ -108,9 +108,9 @@ class IngestSource(TypedDict):
     mergedLabel: str
     stableTargetId: str
     identifier: str
-    gcDetach: list[str]
-    gcDelete: list[str]
     nodeLabels: list[str]
     nodeProps: dict[str, GraphValueType]
-    linkRels: list[IngestRelation]
-    createRels: list[IngestRelation]
+    detachNodes: list[str]
+    deleteNodes: list[str]
+    linkRels: list[GraphRel]
+    createRels: list[GraphRel]

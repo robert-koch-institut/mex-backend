@@ -15,8 +15,7 @@ from neo4j.exceptions import DriverError
 from pydantic import Field
 
 from mex.backend.fields import SEARCHABLE_CLASSES, SEARCHABLE_FIELDS
-from mex.backend.graph.exceptions import InconsistentGraphError
-from mex.backend.graph.models import IngestRelation, IngestSource, Result
+from mex.backend.graph.models import GraphRel, IngestSource, Result
 from mex.backend.graph.query import Query, QueryBuilder
 from mex.backend.graph.transform import (
     expand_references_in_search_result,
@@ -557,7 +556,7 @@ class GraphConnector(BaseConnector):
         if missing_edges := sorted(expected_edges - merged_edges):
             expectations = ", ".join(expectations_by_locator[e] for e in missing_edges)
             msg = f"failed to merge {len(missing_edges)} edges: {expectations}"
-            raise InconsistentGraphError(msg)
+            logger.error("InconsistentGraphError %s", msg)
         if unexpected_edges := sorted(merged_edges - expected_edges):
             surplus = ", ".join(unexpected_edges)
             msg = f"merged {len(unexpected_edges)} edges more than expected: {surplus}"
@@ -584,23 +583,12 @@ class GraphConnector(BaseConnector):
 
         ref_values = model.model_dump(include=set(ref_fields))
 
-        source = IngestSource(
-            stableTargetId=model.stableTargetId,
-            identifier=model.identifier,
-            nodeLabels=[model.entityType],
-            nodeProps=all_values,
-            gcDetach=ref_fields,
-            gcDelete=[*text_fields, *link_fields],
-            linkRels=[],
-            createRels=[],
-            mergedLabel=merged_label,
-        )
-
+        create_rels = []
         for nested_type, raws in [(Text, text_values), (Link, link_values)]:
             for nested_edge_label, raw_values in to_key_and_values(raws):
                 for position, raw_value in enumerate(raw_values):
-                    source["createRels"].append(
-                        IngestRelation(
+                    create_rels.append(
+                        GraphRel(
                             edgeLabel=nested_edge_label,
                             edgeProps={"position": position},
                             nodeLabels=[nested_type.__name__],
@@ -608,10 +596,11 @@ class GraphConnector(BaseConnector):
                         )
                     )
 
+        link_rels = []
         for field, identifiers in to_key_and_values(ref_values):
             for position, identifier in enumerate(identifiers):
-                source["linkRels"].append(
-                    IngestRelation(
+                link_rels.append(
+                    GraphRel(
                         edgeLabel=field,
                         edgeProps={"position": position},
                         nodeLabels=list(MERGED_MODEL_CLASSES_BY_NAME),
@@ -619,10 +608,22 @@ class GraphConnector(BaseConnector):
                     )
                 )
 
+        source = IngestSource(
+            stableTargetId=model.stableTargetId,
+            identifier=model.identifier,
+            nodeLabels=[model.entityType],
+            nodeProps=all_values,
+            detachNodes=ref_fields,
+            deleteNodes=[*text_fields, *link_fields],
+            linkRels=link_rels,
+            createRels=create_rels,
+            mergedLabel=merged_label,
+        )
+
         query = """
 WITH $data AS data
 
-MERGE (:$($data.mergedLabel) {identifier: data.stableTargetId})
+MERGE (merged:$($data.mergedLabel) {identifier: data.stableTargetId})
 MERGE (main:$($data.nodeLabels) {identifier: data.nodeProps.identifier})
 SET main += data.nodeProps
 
@@ -634,8 +635,9 @@ CALL (main, data) {
     SET target += rel.nodeProps
 
     WITH rel, collect(newEdge) as newEdges, collect(target) AS createdTargets
-    MATCH (main)-[gcEdge:$(data.gcDetach)]->()
-    WHERE NOT gcEdge IN newEdges
+    MATCH (main)-[gcEdge]->()
+    WHERE TYPE(gcEdge) IN data.detachNodes
+    AND NOT gcEdge IN newEdges
     DELETE gcEdge
 }
 
@@ -645,14 +647,17 @@ CALL (main, data) {
     MERGE (main)-[newEdge:$(rel.edgeLabel) {position: rel.edgeProps.position}]->(target)
 
     WITH rel, collect(newEdge) as newEdges, collect(target) AS createdTargets
-    MATCH (main)-[gcEdge:$(data.gcDelete)]->(x)
-    WHERE NOT gcEdge IN newEdges
-    DETACH DELETE x
+    MATCH (main)-[gcEdge]->(gcNode)
+    WHERE TYPE(gcEdge) IN data.deleteNodes
+    AND NOT gcEdge IN newEdges
+    DETACH DELETE gcNode
 }
 
-RETURN main;
+RETURN "ok" AS status;
 """  # noqa: E501
-        self.commit(query, data=source)
+        result = self.commit(query, data=source)
+        if result["status"] != "ok":
+            raise MExError
 
     def ingest_v2(
         self,

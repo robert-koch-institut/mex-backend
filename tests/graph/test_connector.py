@@ -1695,42 +1695,64 @@ def test_connector_flush(monkeypatch: MonkeyPatch) -> None:
 @pytest.mark.integration
 def test_connector_ingest() -> None:
     import time
+    from collections.abc import Callable
+    from functools import cache
+
+    import pandas as pd
 
     from mex.artificial.helpers import generate_artificial_extracted_items
     from mex.common.logging import logger
 
-    items = generate_artificial_extracted_items(
-        locale=["de", "en"],
-        seed=None,
-        count=20,
-        chattiness=20,
-        stem_types=list(EXTRACTED_MODEL_CLASSES_BY_NAME),
-    )
     connector = GraphConnector.get()
 
-    v1_times = []
-    v2_times = []
-
-    for _ in range(3):
-        t0 = time.time()
-        connector.ingest(items)
-        t1 = time.time() - t0
-        v1_times.append(t1)
-        result = connector.commit("MATCH (n) RETURN count(n)")
-        logger.info(
-            f"v1 finished in {t1} posting {result} items",
+    @cache
+    def get_items(count: int) -> list[AnyExtractedModel]:
+        return generate_artificial_extracted_items(
+            locale=["de", "en"],
+            seed=42,
+            count=count,
+            chattiness=50,
+            stem_types=list(EXTRACTED_MODEL_CLASSES_BY_NAME),
         )
-        connector.flush()
 
-    for _ in range(3):
-        t0 = time.time()
-        connector.ingest_v2(items)
-        t1 = time.time() - t0
-        v2_times.append(t1)
-        result = connector.commit("MATCH (n) RETURN count(n)")
-        logger.info(
-            f"v2 finished in {t1} posting {result} items",
-        )
-        connector.flush()
+    def benchmark(
+        id_: str,
+        fn: Callable[[list[AnyExtractedModel]], None],
+        counts: list[int],
+    ) -> tuple[list[float], list[int], list[int]]:
+        times = []
+        node_count = []
+        edge_count = []
+        for count in counts:
+            items = get_items(count)
+            result = connector.commit("MATCH (n) RETURN count(n) AS nodes;")
+            assert result["nodes"] <= 2
+            t0 = time.time()
+            fn(items)
+            t1 = time.time() - t0
+            times.append(t1)
+            nodes = connector.commit("MATCH (n) RETURN count(n) AS c;")["c"]
+            edges = connector.commit("MATCH ()-[r]-() RETURN count(r) AS c;")["c"]
+            logger.info(
+                f"{id_} finished in {t1} posting {nodes} nodes and {edges} edges",
+            )
+            node_count.append(nodes)
+            edge_count.append(edges)
+            connector.flush()
+        return times, node_count, edge_count
 
-    logger.info(v1_times, v2_times)
+    counts = list(range(30, 55, 5))
+    v1_times, v1_nodes, v1_edges = benchmark("v1", connector.ingest, counts)
+    v2_times, v2_nodes, v2_edges = benchmark("v2", connector.ingest_v2, counts)
+
+    bench_df = pd.DataFrame(
+        {
+            "v1_times": v1_times,
+            "v2_times": v2_times,
+            "v1_nodes": v1_nodes,
+            "v2_nodes": v2_nodes,
+            "v1_edges": v1_edges,
+            "v2_edges": v2_edges,
+        }
+    )
+    print(bench_df.to_csv(index=None))  # noqa: T201
