@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:6b416b9b3c42165f25b340fc19249b5b60cf5a350f241eeea246511fef275cd2"
+content_hash = "sha256:2cb727bffd9f651dca1b33b08e44f0016b9a946972b30e2dc9030755cdbbae99"
 
 [[metadata.targets]]
 requires_python = "==3.11.*"
@@ -600,7 +600,8 @@ name = "mex-artificial"
 version = "0.4.0"
 requires_python = ">=3.11,<3.13"
 git = "https://github.com/robert-koch-institut/mex-artificial.git"
-revision = "f02abc9df3c8a041f035042173ddfce64f82c999"
+ref = "0.4.0"
+revision = "8fa8b45a3258c1b1b50ac29f0a21edf23e8a96f1"
 summary = "Create artificial data for the MEx project."
 groups = ["dev"]
 marker = "python_version == \"3.11\""
