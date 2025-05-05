@@ -10,17 +10,20 @@ from neo4j import (
     GraphDatabase,
     NotificationDisabledCategory,
     Session,
+    Transaction,
 )
 from neo4j.exceptions import DriverError
 from pydantic import Field
 
 from mex.backend.fields import SEARCHABLE_CLASSES, SEARCHABLE_FIELDS
-from mex.backend.graph.exceptions import InconsistentGraphError
-from mex.backend.graph.models import GraphRel, IngestData, Result
+from mex.backend.graph.exceptions import InconsistentGraphError, IngestionError
+from mex.backend.graph.models import IngestData, Result
 from mex.backend.graph.query import Query, QueryBuilder
 from mex.backend.graph.transform import (
     expand_references_in_search_result,
     transform_edges_into_expectations_by_edge_locator,
+    transform_model_into_ingest_data,
+    validate_ingested_data,
 )
 from mex.backend.settings import BackendSettings
 from mex.common.connector import BaseConnector
@@ -184,13 +187,16 @@ class GraphConnector(BaseConnector):
         logger.error("error committing query%s", message)
 
     def _do_commit(
-        self, query: Query | str, session: Session | None = None, **parameters: Any
+        self,
+        query: Query | str,
+        runner: Session | Transaction | None = None,
+        **parameters: Any,
     ) -> Result:
         """Send and commit a single graph transaction."""
-        if session:
+        if runner:
+            return Result(runner.run(str(query), parameters))
+        with self.driver.session() as session:
             return Result(session.run(str(query), parameters))
-        with self.driver.session() as closing_session:
-            return Result(closing_session.run(str(query), parameters))
 
     @backoff.on_exception(
         backoff.fibo,
@@ -201,10 +207,13 @@ class GraphConnector(BaseConnector):
         max_time=10,  # seconds
     )
     def commit(
-        self, query: Query | str, session: Session | None = None, **parameters: Any
+        self,
+        query: Query | str,
+        runner: Session | Transaction | None = None,
+        **parameters: Any,
     ) -> Result:
         """Send and commit a single graph transaction with retry configuration."""
-        return self._do_commit(query, session=session, **parameters)
+        return self._do_commit(query, runner=runner, **parameters)
 
     def _fetch_extracted_or_rule_items(  # noqa: PLR0913
         self,
@@ -477,7 +486,7 @@ class GraphConnector(BaseConnector):
 
         return self.commit(
             query,
-            session=session,
+            runner=session,
             stable_target_id=stable_target_id,
             on_match=mutable_values,
             on_create=all_values,
@@ -537,7 +546,7 @@ class GraphConnector(BaseConnector):
         )
         result = self.commit(
             query,
-            session=session,
+            runner=session,
             stable_target_id=stable_target_id,
             ref_identifiers=ref_identifiers,
             ref_positions=ref_positions,
@@ -565,105 +574,37 @@ class GraphConnector(BaseConnector):
 
         return result
 
-    def ingest_one(self, model: AnyExtractedModel) -> None:
+    def ingest_single_v2(self, model: AnyExtractedModel, session: Session) -> None:
         """Ingest a single model and connect all its edges."""
-        merged_label = ensure_prefix(model.stemType, "Merged")
-
-        text_fields = TEXT_FIELDS_BY_CLASS_NAME[model.entityType]
-        link_fields = LINK_FIELDS_BY_CLASS_NAME[model.entityType]
-        mutable_fields = MUTABLE_FIELDS_BY_CLASS_NAME[model.entityType]
-        final_fields = FINAL_FIELDS_BY_CLASS_NAME[model.entityType]
-        ref_fields = sorted(
-            set(REFERENCE_FIELDS_BY_CLASS_NAME[model.entityType]) - {"stableTargetId"}
-        )
-
-        mutable_values = model.model_dump(include=set(mutable_fields))
-        final_values = model.model_dump(include=set(final_fields))
-        all_values = {**mutable_values, **final_values}
-
-        text_values = model.model_dump(include=set(text_fields))
-        link_values = model.model_dump(include=set(link_fields))
-
-        ref_values = model.model_dump(include=set(ref_fields))
-
-        create_rels = []
-        for node_label, raws in [
-            (Text.__name__, text_values),
-            (Link.__name__, link_values),
-        ]:
-            for edge_label, raw_values in to_key_and_values(raws):
-                for position, raw_value in enumerate(raw_values):
-                    create_rels.append(
-                        GraphRel(
-                            edgeLabel=edge_label,
-                            edgeProps={"position": position},
-                            nodeLabels=[node_label],
-                            nodeProps=raw_value,
-                        )
-                    )
-
-        link_rels = []
-        for field, identifiers in to_key_and_values(ref_values):
-            for position, identifier in enumerate(identifiers):
-                link_rels.append(
-                    GraphRel(
-                        edgeLabel=field,
-                        edgeProps={"position": position},
-                        nodeLabels=list(MERGED_MODEL_CLASSES_BY_NAME),
-                        nodeProps={"identifier": identifier},
-                    )
-                )
-
-        data = IngestData(
-            identifier=model.identifier,
-            stableTargetId=model.stableTargetId,
-            mergedLabels=[merged_label],
-            nodeLabels=[model.entityType],
-            nodeProps=all_values,
-            detachNodes=ref_fields,
-            deleteNodes=[*text_fields, *link_fields],
-            linkRels=link_rels,
-            createRels=create_rels,
-        )
+        data_in = transform_model_into_ingest_data(model)
 
         query_builder = QueryBuilder.get()
         query = query_builder.merge_item_v2()
 
-        result = self.commit(query, data=data)
-
-        expectations_by_locator = transform_edges_into_expectations_by_edge_locator(
-            start_node_type=model.entityType,
-            start_node_constraints={"identifier": str(model.identifier)},
-            ref_labels=[r["edgeLabel"] for r in data["linkRels"]],
-            ref_identifiers=[
-                str(r["nodeProps"]["identifier"]) for r in data["linkRels"]
-            ],
-            ref_positions=[
-                int(str(r["edgeProps"]["position"])) for r in data["linkRels"]
-            ],
-        )
-        expected_edges = set(expectations_by_locator)
-        merged_edges = set(result["edges"])
-
-        if missing_edges := sorted(expected_edges - merged_edges):
-            expectations = ", ".join(expectations_by_locator[e] for e in missing_edges)
-            msg = f"failed to merge {len(missing_edges)} edges: {expectations}"
-            logger.error("InconsistentGraphError %s", msg)
-        if unexpected_edges := sorted(merged_edges - expected_edges):
-            surplus = ", ".join(unexpected_edges)
-            msg = f"merged {len(unexpected_edges)} edges more than expected: {surplus}"
-            raise RuntimeError(msg)
+        with session.begin_transaction() as tx:
+            tx_result = tx.run(str(query), data=data_in.model_dump())
+            result = Result(tx_result).one()
+            data_out = IngestData.model_validate(result)
+            error_details = validate_ingested_data(data_in, data_out)
+            if error_details:
+                try:
+                    msg = f"could not merge {model.entityType}"
+                    raise IngestionError(msg, errors=error_details)
+                finally:
+                    tx.rollback()
+            tx.commit()
 
     def ingest_v2(
         self,
         models: Sequence[AnyExtractedModel | AnyRuleSetResponse],
     ) -> None:
         """Ingest a list of models into the graph as nodes and connect all edges."""
-        for model in models:
-            if isinstance(model, AnyExtractedModel):
-                self.ingest_one(model)
-            else:
-                raise NotImplementedError(AnyRuleSetResponse)
+        with self.driver.session() as session:
+            for model in models:
+                if isinstance(model, AnyExtractedModel):
+                    self.ingest_single_v2(model, session=session)
+                else:
+                    raise NotImplementedError(AnyRuleSetResponse)
 
     def ingest(
         self,

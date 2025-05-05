@@ -1,10 +1,12 @@
 from collections.abc import Callable, Iterator
 from functools import cache
-from typing import Any, TypedDict, cast
+from typing import Any, cast
 
 from neo4j import Result as Neo4jResult
 from neo4j._data import RecordExporter
 from neo4j.graph import Relationship
+from pydantic import BaseModel, field_validator
+from typing_extensions import TypedDict
 
 from mex.backend.graph.exceptions import MultipleResultsFoundError, NoResultFoundError
 from mex.backend.logging import LOGGING_LINE_LENGTH
@@ -102,7 +104,7 @@ class GraphRel(TypedDict):
     edgeProps: dict[str, GraphValueType]
 
 
-class IngestData(TypedDict):
+class IngestData(BaseModel):
     """Type definition for ingestion data."""
 
     stableTargetId: str
@@ -110,7 +112,23 @@ class IngestData(TypedDict):
     mergedLabels: list[str]
     nodeLabels: list[str]
     nodeProps: dict[str, GraphValueType]
-    detachNodes: list[str]
-    deleteNodes: list[str]
     linkRels: list[GraphRel]
     createRels: list[GraphRel]
+    detachNodes: list[str] = []
+    deleteNodes: list[str] = []
+
+    @field_validator("createRels", mode="before")
+    @classmethod
+    def sort_create_rels(cls, v: list[GraphRel]) -> list[GraphRel]:
+        """Sort the rels by edge label and position."""
+        return sorted(
+            v, key=lambda item: (item["edgeLabel"], item["edgeProps"]["position"])
+        )
+
+    @field_validator("linkRels", mode="before")
+    @classmethod
+    def sort_link_rels(cls, v: list[GraphRel]) -> list[GraphRel]:
+        """Sort the rels by edge label and position."""
+        return sorted(
+            v, key=lambda item: (item["edgeLabel"], item["edgeProps"]["position"])
+        )

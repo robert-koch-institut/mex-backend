@@ -5,33 +5,70 @@ MERGE (main:$(data.nodeLabels) {identifier: data.identifier})
 MERGE (main)-[:stableTargetId {position: 0}]->(merged)
 SET main += data.nodeProps
 
-WITH main, data
+WITH main, merged, data
 
 CALL (main, data) {
     UNWIND data.createRels AS rel
     MERGE (main)-[newEdge:$(rel.edgeLabel) {position: rel.edgeProps.position}]->(target:$(rel.nodeLabels))
     SET target += rel.nodeProps
-
-    WITH rel, collect(newEdge) as newEdges, collect(target) AS createdTargets
-    MATCH (main)-[gcEdge]->()
-    WHERE TYPE(gcEdge) IN data.detachNodes
-    AND NOT gcEdge IN newEdges
-    DELETE gcEdge
-    RETURN newEdges as createRels
+    RETURN collect(newEdge) as newCreateEdges
 }
 
 CALL (main, data) {
     UNWIND data.linkRels AS rel
     MATCH (target:$(rel.nodeLabels) {identifier: rel.nodeProps.identifier})
     MERGE (main)-[newEdge:$(rel.edgeLabel) {position: rel.edgeProps.position}]->(target)
-
-    WITH rel, collect(newEdge) as newEdges, collect(target) AS createdTargets
-    MATCH (main)-[gcEdge]->(gcNode)
-    WHERE TYPE(gcEdge) IN data.deleteNodes
-    AND NOT gcEdge IN newEdges
-    DETACH DELETE gcNode
-    RETURN newEdges as linkRels
+    RETURN collect(newEdge) as newLinkEdges
 }
 
-WITH collect(linkRels) as edges
-RETURN "ok" AS status, edges;
+CALL (main, newCreateEdges, data) {
+    OPTIONAL MATCH (main)-[gcEdge]->(gcNode)
+    WHERE TYPE(gcEdge) IN data.deleteNodes
+    AND NOT gcEdge IN newCreateEdges
+    DETACH DELETE gcNode
+}
+
+CALL (main, newLinkEdges, data) {
+    OPTIONAL MATCH (main)-[gcEdge]->()
+    WHERE TYPE(gcEdge) IN data.detachNodes
+    AND NOT gcEdge IN newLinkEdges
+    DELETE gcEdge
+}
+
+CALL (main) {
+    MATCH (main)-[linkEdge]->(linkNode:MergedAccessPlatform|MergedActivity|MergedBibliographicResource|MergedConsent|MergedContactPoint|MergedDistribution|MergedOrganization|MergedOrganizationalUnit|MergedPerson|MergedPrimarySource|MergedResource|MergedVariable|MergedVariableGroup)
+    WHERE type(linkEdge) <> "stableTargetId"
+    ORDER BY type(linkEdge), linkEdge.position
+    RETURN collect(
+        {
+            nodeLabels: [],
+            nodeProps: properties(linkNode),
+            edgeLabel: type(linkEdge),
+            edgeProps: properties(linkEdge)
+        }
+    ) AS linkRels
+}
+
+CALL (main) {
+    MATCH (main)-[createEdge]->(createNode:Link|Text)
+    ORDER BY type(createEdge), createEdge.position
+    RETURN collect(
+        {
+            nodeLabels: labels(createNode),
+            nodeProps: properties(createNode),
+            edgeLabel: type(createEdge),
+            edgeProps: properties(createEdge)
+        }
+    ) AS createRels
+}
+
+RETURN
+    main.identifier AS identifier,
+    merged.identifier AS stableTargetId,
+    labels(merged) AS mergedLabels,
+    labels(main) AS nodeLabels,
+    properties(main) AS nodeProps,
+    linkRels AS linkRels,
+    createRels AS createRels,
+    data.deleteNodes as deleteNodes,
+    data.detachNodes as detachNodes;
