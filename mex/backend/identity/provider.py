@@ -14,24 +14,6 @@ class GraphIdentityProvider(BaseProvider):
         """Create a new graph identity provider."""
         # mitigating https://docs.astral.sh/ruff/rules/cached-instance-method
         self._cached_assign = lru_cache(IDENTITY_CACHE_SIZE)(self._do_assign)
-        import json
-        import pathlib
-
-        self._trusted = {}
-        for path in list(pathlib.Path("../mex-extractors").glob("Extracted*.ndjson")):
-            with path.open() as fh:
-                for line in fh:
-                    item = json.loads(line)
-                    self._trusted[
-                        item["hadPrimarySource"]
-                        + "#"
-                        + item["identifierInPrimarySource"]
-                    ] = Identity(
-                        hadPrimarySource=item["hadPrimarySource"],
-                        identifier=item["identifier"],
-                        identifierInPrimarySource=item["identifierInPrimarySource"],
-                        stableTargetId=item["stableTargetId"],
-                    )
 
     def assign(
         self,
@@ -47,10 +29,6 @@ class GraphIdentityProvider(BaseProvider):
         identifier_in_primary_source: str,
     ) -> Identity:
         """Find an Identity in the database or assign a new one."""
-        if identity := self._trusted.get(
-            f"{had_primary_source}#{identifier_in_primary_source}"
-        ):
-            return identity
         connector = GraphConnector.get()
         result = connector.fetch_identities(
             had_primary_source=had_primary_source,

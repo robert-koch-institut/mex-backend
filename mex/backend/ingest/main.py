@@ -1,5 +1,3 @@
-import time
-
 from fastapi import APIRouter
 from starlette import status
 
@@ -15,7 +13,4 @@ def ingest_items(
 ) -> None:
     """Ingest a batch of extracted items or rule-sets."""
     connector = GraphConnector.get()
-    t0 = time.time()
     connector.ingest_v2(request.items)
-    with open("time.log", "a") as fh:
-        fh.write(str(round((time.time() - t0) / len(request.items), 3)) + "\n")
