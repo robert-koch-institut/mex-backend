@@ -1,6 +1,6 @@
 from collections.abc import Callable, Iterator
 from functools import cache
-from typing import Any, cast
+from typing import Any, TypedDict, cast
 
 from neo4j import Result as Neo4jResult
 from neo4j._data import RecordExporter
@@ -8,6 +8,8 @@ from neo4j.graph import Relationship
 
 from mex.backend.graph.exceptions import MultipleResultsFoundError, NoResultFoundError
 from mex.backend.logging import LOGGING_LINE_LENGTH
+
+GraphValueType = None | str | int | list[str] | list[int]
 
 
 class EdgeExporter(RecordExporter):
@@ -89,3 +91,26 @@ class Result:
     def get_update_counters(self) -> dict[str, int]:
         """Return a summary of counters for operations the query triggered."""
         return {k: v for k, v in vars(self._summary.counters).items() if v}
+
+
+class GraphRel(TypedDict):
+    """Type definition for graph relations."""
+
+    nodeLabels: list[str]
+    nodeProps: dict[str, GraphValueType]
+    edgeLabel: str
+    edgeProps: dict[str, GraphValueType]
+
+
+class IngestData(TypedDict):
+    """Type definition for ingestion data."""
+
+    stableTargetId: str
+    identifier: str
+    mergedLabels: list[str]
+    nodeLabels: list[str]
+    nodeProps: dict[str, GraphValueType]
+    detachNodes: list[str]
+    deleteNodes: list[str]
+    linkRels: list[GraphRel]
+    createRels: list[GraphRel]
