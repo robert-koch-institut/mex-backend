@@ -8,6 +8,14 @@ SET main += data.nodeProps
 WITH main, merged, data
 
 CALL (main, data) {
+    UNWIND data.nestedTexts AS rel
+    MATCH (t:Text {value: rel.nodeProps["value"]})
+    MERGE (main)-[newEdge:$(rel.edgeLabel) {position: rel.edgeProps.position}]->(target:$(rel.nodeLabels))
+    SET target += rel.nodeProps
+    RETURN collect(newEdge) as newTextEdges
+}
+
+CALL (main, data) {
     UNWIND data.createRels AS rel
     MERGE (main)-[newEdge:$(rel.edgeLabel) {position: rel.edgeProps.position}]->(target:$(rel.nodeLabels))
     SET target += rel.nodeProps
@@ -36,7 +44,7 @@ CALL (main, newLinkEdges, data) {
 }
 
 CALL (main) {
-    MATCH (main)-[linkEdge]->(linkNode:MergedAccessPlatform|MergedActivity|MergedBibliographicResource|MergedConsent|MergedContactPoint|MergedDistribution|MergedOrganization|MergedOrganizationalUnit|MergedPerson|MergedPrimarySource|MergedResource|MergedVariable|MergedVariableGroup)
+    MATCH (main)-[linkEdge]->(linkNode:<<merged_labels|join("|")>>)
     WHERE type(linkEdge) <> "stableTargetId"
     ORDER BY type(linkEdge), linkEdge.position
     RETURN collect(

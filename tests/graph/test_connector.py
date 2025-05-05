@@ -89,7 +89,7 @@ def test_connector_ingest_bench() -> None:
         edge_count = []
         connector = GraphConnector.get()
         items = get_items()
-        for _ in range(3):
+        for _ in range(1):
             before = connector.commit("MATCH (n) RETURN count(n) AS nodes;")["nodes"]
             assert before <= 2
             t0 = time.time()

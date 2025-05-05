@@ -81,21 +81,29 @@ def transform_model_into_ingest_data(model: AnyExtractedModel) -> IngestData:
 
     ref_values = model.model_dump(include=set(ref_fields))
 
-    create_rels = []
-    for node_label, raws in [
-        (Text.__name__, text_values),
-        (Link.__name__, link_values),
-    ]:
-        for edge_label, raw_values in to_key_and_values(raws):
-            for position, raw_value in enumerate(raw_values):
-                create_rels.append(
-                    GraphRel(
-                        edgeLabel=edge_label,
-                        edgeProps={"position": position},
-                        nodeLabels=[node_label],
-                        nodeProps=raw_value,
-                    )
+    nested_texts = []
+    for edge_label, raw_values in to_key_and_values(text_values):
+        for position, raw_value in enumerate(raw_values):
+            nested_texts.append(
+                GraphRel(
+                    edgeLabel=edge_label,
+                    edgeProps={"position": position},
+                    nodeLabels=[Text.__name__],
+                    nodeProps=raw_value,
                 )
+            )
+
+    nested_links = []
+    for edge_label, raw_values in to_key_and_values(link_values):
+        for position, raw_value in enumerate(raw_values):
+            nested_links.append(
+                GraphRel(
+                    edgeLabel=edge_label,
+                    edgeProps={"position": position},
+                    nodeLabels=[Link.__name__],
+                    nodeProps=raw_value,
+                )
+            )
 
     link_rels = []
     for field, identifiers in to_key_and_values(ref_values):
@@ -116,7 +124,8 @@ def transform_model_into_ingest_data(model: AnyExtractedModel) -> IngestData:
         nodeLabels=[model.entityType],
         nodeProps=all_values,
         linkRels=link_rels,
-        createRels=create_rels,
+        nestedTexts=nested_texts,
+        nestedLinks=nested_links,
         detachNodes=ref_fields,
         deleteNodes=[*text_fields, *link_fields],
     )

@@ -113,13 +113,22 @@ class IngestData(BaseModel):
     nodeLabels: list[str]
     nodeProps: dict[str, GraphValueType]
     linkRels: list[GraphRel]
-    createRels: list[GraphRel]
+    nestedTexts: list[GraphRel]
+    nestedLinks: list[GraphRel]
     detachNodes: list[str] = []
     deleteNodes: list[str] = []
 
-    @field_validator("createRels", mode="before")
+    @field_validator("nestedTexts", mode="before")
     @classmethod
-    def sort_create_rels(cls, v: list[GraphRel]) -> list[GraphRel]:
+    def sort_nested_texts(cls, v: list[GraphRel]) -> list[GraphRel]:
+        """Sort the rels by edge label and position."""
+        return sorted(
+            v, key=lambda item: (item["edgeLabel"], item["edgeProps"]["position"])
+        )
+
+    @field_validator("nestedLinks", mode="before")
+    @classmethod
+    def sort_nested_links(cls, v: list[GraphRel]) -> list[GraphRel]:
         """Sort the rels by edge label and position."""
         return sorted(
             v, key=lambda item: (item["edgeLabel"], item["edgeProps"]["position"])
