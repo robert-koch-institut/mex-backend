@@ -10,12 +10,14 @@ from neo4j import (
     GraphDatabase,
     NotificationDisabledCategory,
     Session,
-    Transaction,
 )
 from neo4j.exceptions import DriverError
 from pydantic import Field
 
-from mex.backend.fields import SEARCHABLE_CLASSES, SEARCHABLE_FIELDS
+from mex.backend.fields import (
+    SEARCHABLE_CLASSES,
+    SEARCHABLE_FIELDS,
+)
 from mex.backend.graph.exceptions import InconsistentGraphError, IngestionError
 from mex.backend.graph.models import IngestData, Result
 from mex.backend.graph.query import Query, QueryBuilder
@@ -128,7 +130,7 @@ class GraphConnector(BaseConnector):
             )
         ]
 
-    def _seed_indices(self) -> Result:
+    def _seed_indices(self) -> list[Result]:
         """Ensure there is a full text search index for all searchable fields."""
         query_builder = QueryBuilder.get()
         result = self.commit(query_builder.fetch_full_text_search_index())
@@ -138,7 +140,7 @@ class GraphConnector(BaseConnector):
         ):
             # only drop the index if the classes or fields have changed
             self.commit(query_builder.drop_full_text_search_index())
-        return self.commit(
+        full_text = self.commit(
             query_builder.create_full_text_search_index(
                 node_labels=SEARCHABLE_CLASSES,
                 search_fields=SEARCHABLE_FIELDS,
@@ -148,6 +150,10 @@ class GraphConnector(BaseConnector):
                 "fulltext.analyzer": "german",
             },
         )
+        nested_types = self.commit(
+            query_builder.create_nested_type_index(),
+        )
+        return [full_text, nested_types]
 
     def _seed_data(self) -> None:
         """Ensure the primary source `mex` is seeded and linked to itself."""
@@ -187,16 +193,13 @@ class GraphConnector(BaseConnector):
         logger.error("error committing query%s", message)
 
     def _do_commit(
-        self,
-        query: Query | str,
-        runner: Session | Transaction | None = None,
-        **parameters: Any,
+        self, query: Query | str, session: Session | None = None, **parameters: Any
     ) -> Result:
         """Send and commit a single graph transaction."""
-        if runner:
-            return Result(runner.run(str(query), parameters))
-        with self.driver.session() as session:
+        if session:
             return Result(session.run(str(query), parameters))
+        with self.driver.session() as closing_session:
+            return Result(closing_session.run(str(query), parameters))
 
     @backoff.on_exception(
         backoff.fibo,
@@ -207,13 +210,10 @@ class GraphConnector(BaseConnector):
         max_time=10,  # seconds
     )
     def commit(
-        self,
-        query: Query | str,
-        runner: Session | Transaction | None = None,
-        **parameters: Any,
+        self, query: Query | str, session: Session | None = None, **parameters: Any
     ) -> Result:
         """Send and commit a single graph transaction with retry configuration."""
-        return self._do_commit(query, runner=runner, **parameters)
+        return self._do_commit(query, session=session, **parameters)
 
     def _fetch_extracted_or_rule_items(  # noqa: PLR0913
         self,
@@ -486,7 +486,7 @@ class GraphConnector(BaseConnector):
 
         return self.commit(
             query,
-            runner=session,
+            session=session,
             stable_target_id=stable_target_id,
             on_match=mutable_values,
             on_create=all_values,
@@ -546,7 +546,7 @@ class GraphConnector(BaseConnector):
         )
         result = self.commit(
             query,
-            runner=session,
+            session=session,
             stable_target_id=stable_target_id,
             ref_identifiers=ref_identifiers,
             ref_positions=ref_positions,
@@ -574,35 +574,28 @@ class GraphConnector(BaseConnector):
 
         return result
 
-    def ingest_single_v2(self, model: AnyExtractedModel, session: Session) -> None:
-        """Ingest a single model and connect all its edges."""
-        data_in = transform_model_into_ingest_data(model)
-
-        query_builder = QueryBuilder.get()
-        query = query_builder.merge_item_v2()
-
-        with session.begin_transaction() as tx:
-            tx_result = tx.run(str(query), data=data_in.model_dump())
-            result = Result(tx_result).one()
-            data_out = IngestData.model_validate(result)
-            error_details = validate_ingested_data(data_in, data_out)
-            if error_details:
-                try:
-                    msg = f"could not merge {model.entityType}"
-                    raise IngestionError(msg, errors=error_details)
-                finally:
-                    tx.rollback()
-            tx.commit()
-
     def ingest_v2(
         self,
         models: Sequence[AnyExtractedModel | AnyRuleSetResponse],
     ) -> None:
         """Ingest a list of models into the graph as nodes and connect all edges."""
+        query = str(QueryBuilder.get().merge_item_v2())
         with self.driver.session() as session:
             for model in models:
                 if isinstance(model, AnyExtractedModel):
-                    self.ingest_single_v2(model, session=session)
+                    data_in = transform_model_into_ingest_data(model)
+                    with session.begin_transaction() as tx:
+                        try:
+                            tx_result = tx.run(query, data=data_in.model_dump())
+                            result = Result(tx_result).one()
+                            data_out = IngestData.model_validate(result)
+                            error_details = validate_ingested_data(data_in, data_out)
+                            if error_details:
+                                msg = f"could not merge {model.entityType}"
+                                raise IngestionError(msg, errors=error_details)
+                            tx.commit()
+                        finally:
+                            tx.rollback()
                 else:
                     raise NotImplementedError(AnyRuleSetResponse)
 

@@ -123,12 +123,12 @@ def transform_model_into_ingest_data(model: AnyExtractedModel) -> IngestData:
 
 
 def clean_dict(obj: Any) -> Any:
-    """Clean `None` and `[]` from lists."""
+    """Clean `None` and `[]` from dicts."""
     if isinstance(obj, dict):
         cleaned = {}
         for k, v in obj.items():
             cleaned_value = clean_dict(v)
-            if cleaned_value is not None and cleaned_value != []:
+            if cleaned_value not in (None, []):
                 cleaned[k] = cleaned_value
         return cleaned
     if isinstance(obj, list):

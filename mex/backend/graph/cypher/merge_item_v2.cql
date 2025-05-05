@@ -36,7 +36,7 @@ CALL (main, newLinkEdges, data) {
 }
 
 CALL (main) {
-    MATCH (main)-[linkEdge]->(linkNode:MergedAccessPlatform|MergedActivity|MergedBibliographicResource|MergedConsent|MergedContactPoint|MergedDistribution|MergedOrganization|MergedOrganizationalUnit|MergedPerson|MergedPrimarySource|MergedResource|MergedVariable|MergedVariableGroup)
+    MATCH (main)-[linkEdge]->(linkNode:<<merged_labels|join("|")>>)
     WHERE type(linkEdge) <> "stableTargetId"
     ORDER BY type(linkEdge), linkEdge.position
     RETURN collect(

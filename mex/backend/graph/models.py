@@ -121,14 +121,10 @@ class IngestData(BaseModel):
     @classmethod
     def sort_create_rels(cls, v: list[GraphRel]) -> list[GraphRel]:
         """Sort the rels by edge label and position."""
-        return sorted(
-            v, key=lambda item: (item["edgeLabel"], item["edgeProps"]["position"])
-        )
+        return sorted(v, key=lambda x: (x["edgeLabel"], x["edgeProps"]["position"]))
 
     @field_validator("linkRels", mode="before")
     @classmethod
     def sort_link_rels(cls, v: list[GraphRel]) -> list[GraphRel]:
         """Sort the rels by edge label and position."""
-        return sorted(
-            v, key=lambda item: (item["edgeLabel"], item["edgeProps"]["position"])
-        )
+        return sorted(v, key=lambda x: (x["edgeLabel"], x["edgeProps"]["position"]))
