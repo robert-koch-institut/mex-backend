@@ -1,3 +1,8 @@
+from collections.abc import Sequence
+from typing import Any
+
+from pydantic_core import ErrorDetails
+
 from mex.backend.exceptions import BackendError
 
 
@@ -11,3 +16,16 @@ class MultipleResultsFoundError(BackendError):
 
 class InconsistentGraphError(BackendError):
     """Exception raised for inconsistencies found in the graph database."""
+
+
+class IngestionError(BackendError):
+    """Error for ingestion failures with underlying details."""
+
+    def __init__(self, *args: Any, errors: Sequence[ErrorDetails] = ()) -> None:
+        """Construct a new ingestion failure with underlying details."""
+        super().__init__(*args)
+        self._errors = list(errors)
+
+    def errors(self) -> list[ErrorDetails]:
+        """Details about underlying errors."""
+        return self._errors
