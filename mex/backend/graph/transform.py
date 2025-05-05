@@ -147,8 +147,8 @@ def validate_ingested_data(
         if value_out != value_in:
             error_details.append(
                 ErrorDetails(
-                    type="mismatch",
-                    msg="ingested data did not match instructions",
+                    type="transaction_failed",
+                    msg="ingested data did not match expectation",
                     loc=(field,),
                     input=value_out,
                     ctx={"expected": value_in},
