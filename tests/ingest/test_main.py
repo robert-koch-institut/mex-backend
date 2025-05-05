@@ -1,4 +1,3 @@
-from collections import defaultdict
 from typing import Any, cast
 from unittest.mock import MagicMock
 
@@ -21,10 +20,8 @@ Payload = dict[str, list[dict[str, Any]]]
 
 @pytest.fixture
 def post_payload(artificial_extracted_items: list[AnyExtractedModel]) -> Payload:
-    payload = defaultdict(list)
-    for model in artificial_extracted_items:
-        payload["items"].append(model.model_dump())
-    return cast("Payload", dict(payload))
+    items = [model.model_dump() for model in artificial_extracted_items]
+    return cast("Payload", {"items": items})
 
 
 @pytest.mark.integration
@@ -111,8 +108,7 @@ def test_bulk_insert_mocked(
     post_payload: Payload,
     monkeypatch: MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(GraphConnector, "_merge_item", MagicMock())
-    monkeypatch.setattr(GraphConnector, "_merge_edges", MagicMock())
+    monkeypatch.setattr(GraphConnector, "ingest_v2", MagicMock())
     response = client_with_api_key_write_permission.post(
         "/v0/ingest", json=post_payload
     )

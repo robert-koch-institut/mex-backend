@@ -586,9 +586,11 @@ class GraphConnector(BaseConnector):
                             if error_details:
                                 msg = f"could not merge {model.entityType}"
                                 raise IngestionError(msg, errors=error_details)
-                            tx.commit()
-                        finally:
+                        except:
                             tx.rollback()
+                            raise
+                        else:
+                            tx.commit()
                 else:
                     raise NotImplementedError(AnyRuleSetResponse)
 
