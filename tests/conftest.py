@@ -160,9 +160,9 @@ class MockedGraph:
 def mocked_graph(monkeypatch: MonkeyPatch) -> MockedGraph:
     """Mock the graph connector and return the mocked `run` for easy manipulation."""
     run = MagicMock(spec=Session.run)
-    tx = MagicMock(spec=Transaction, return_value=Mock(run=run))
+    tx = MagicMock(spec=Transaction, run=run)
     tx.__enter__ = MagicMock(spec=Transaction.__enter__, return_value=tx)
-    session = MagicMock(spec=Session, return_value=Mock(run=run, begin_transaction=tx))
+    session = MagicMock(spec=Session, run=run, begin_transaction=tx)
     session.__enter__ = MagicMock(spec=Session.__enter__, return_value=session)
     get_session = MagicMock(spec=Driver.session, return_value=session)
     driver = Mock(spec=Driver, session=get_session)
