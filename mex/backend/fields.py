@@ -1,6 +1,8 @@
 from itertools import chain
 
 from mex.common.fields import EMAIL_FIELDS_BY_CLASS_NAME, STRING_FIELDS_BY_CLASS_NAME
+from mex.common.types import NESTED_MODEL_CLASSES, NESTED_MODEL_CLASSES_BY_NAME
+from mex.common.utils import get_all_fields
 
 # fields that should be indexed as searchable fields
 SEARCHABLE_FIELDS = sorted(
@@ -24,4 +26,15 @@ SEARCHABLE_CLASSES = sorted(
         )
         if field_names
     }
+)
+
+NESTED_TYPE_FIELDS = sorted(
+    {
+        field_name
+        for model_class in NESTED_MODEL_CLASSES
+        for field_name in get_all_fields(model_class)
+    }
+)
+NESTED_TYPE_CLASSES = sorted(
+    NESTED_MODEL_CLASSES_BY_NAME,
 )
