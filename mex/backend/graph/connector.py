@@ -14,10 +14,7 @@ from neo4j import (
 from neo4j.exceptions import DriverError
 from pydantic import Field
 
-from mex.backend.fields import (
-    SEARCHABLE_CLASSES,
-    SEARCHABLE_FIELDS,
-)
+from mex.backend.fields import SEARCHABLE_CLASSES, SEARCHABLE_FIELDS
 from mex.backend.graph.exceptions import InconsistentGraphError, IngestionError
 from mex.backend.graph.models import IngestData, Result
 from mex.backend.graph.query import Query, QueryBuilder
@@ -130,7 +127,7 @@ class GraphConnector(BaseConnector):
             )
         ]
 
-    def _seed_indices(self) -> list[Result]:
+    def _seed_indices(self) -> Result:
         """Ensure there is a full text search index for all searchable fields."""
         query_builder = QueryBuilder.get()
         result = self.commit(query_builder.fetch_full_text_search_index())
@@ -140,7 +137,7 @@ class GraphConnector(BaseConnector):
         ):
             # only drop the index if the classes or fields have changed
             self.commit(query_builder.drop_full_text_search_index())
-        full_text = self.commit(
+        return self.commit(
             query_builder.create_full_text_search_index(
                 node_labels=SEARCHABLE_CLASSES,
                 search_fields=SEARCHABLE_FIELDS,
@@ -150,10 +147,6 @@ class GraphConnector(BaseConnector):
                 "fulltext.analyzer": "german",
             },
         )
-        nested_types = self.commit(
-            query_builder.create_nested_type_index(),
-        )
-        return [full_text, nested_types]
 
     def _seed_data(self) -> None:
         """Ensure the primary source `mex` is seeded and linked to itself."""
