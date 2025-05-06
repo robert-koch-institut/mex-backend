@@ -11,8 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- try out new ingestion logic with combined merging of nodes and edges
-
 ### Deprecated
 
 ### Removed
@@ -20,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [0.35.0] - 2025-05-06
+
+### Changes
+
+- try out new ingestion logic with combined merging of nodes and edges
 
 ## [0.34.0] - 2025-04-29
 
