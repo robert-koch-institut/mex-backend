@@ -1,7 +1,19 @@
 from itertools import groupby
-from typing import TypedDict
+from typing import Any, TypedDict
 
-from mex.common.types import AnyPrimitiveType
+from pydantic_core import ErrorDetails
+
+from mex.backend.graph.models import GraphRel, IngestData
+from mex.common.fields import (
+    FINAL_FIELDS_BY_CLASS_NAME,
+    LINK_FIELDS_BY_CLASS_NAME,
+    MUTABLE_FIELDS_BY_CLASS_NAME,
+    REFERENCE_FIELDS_BY_CLASS_NAME,
+    TEXT_FIELDS_BY_CLASS_NAME,
+)
+from mex.common.models import AnyExtractedModel
+from mex.common.transform import ensure_prefix, to_key_and_values
+from mex.common.types import AnyPrimitiveType, Link, Text
 
 
 class _SearchResultReference(TypedDict):
@@ -46,3 +58,100 @@ def transform_edges_into_expectations_by_edge_locator(
             ref_labels, ref_positions, ref_identifiers, strict=True
         )
     }
+
+
+def transform_model_into_ingest_data(model: AnyExtractedModel) -> IngestData:
+    """Transform the given model into an ingestion instruction."""
+    merged_label = ensure_prefix(model.stemType, "Merged")
+
+    text_fields = TEXT_FIELDS_BY_CLASS_NAME[model.entityType]
+    link_fields = LINK_FIELDS_BY_CLASS_NAME[model.entityType]
+    mutable_fields = MUTABLE_FIELDS_BY_CLASS_NAME[model.entityType]
+    final_fields = FINAL_FIELDS_BY_CLASS_NAME[model.entityType]
+    ref_fields = sorted(
+        set(REFERENCE_FIELDS_BY_CLASS_NAME[model.entityType]) - {"stableTargetId"}
+    )
+
+    mutable_values = model.model_dump(include=set(mutable_fields))
+    final_values = model.model_dump(include=set(final_fields))
+    all_values = {**mutable_values, **final_values}
+
+    text_values = model.model_dump(include=set(text_fields))
+    link_values = model.model_dump(include=set(link_fields))
+
+    ref_values = model.model_dump(include=set(ref_fields))
+
+    create_rels = []
+    for node_label, raws in [
+        (Text.__name__, text_values),
+        (Link.__name__, link_values),
+    ]:
+        for edge_label, raw_values in to_key_and_values(raws):
+            for position, raw_value in enumerate(raw_values):
+                create_rels.append(
+                    GraphRel(
+                        edgeLabel=edge_label,
+                        edgeProps={"position": position},
+                        nodeLabels=[node_label],
+                        nodeProps=raw_value,
+                    )
+                )
+
+    link_rels = []
+    for field, identifiers in to_key_and_values(ref_values):
+        for position, identifier in enumerate(identifiers):
+            link_rels.append(
+                GraphRel(
+                    edgeLabel=field,
+                    edgeProps={"position": position},
+                    nodeLabels=[],  # list(MERGED_MODEL_CLASSES_BY_NAME),
+                    nodeProps={"identifier": identifier},
+                )
+            )
+
+    return IngestData(
+        identifier=str(model.identifier),
+        stableTargetId=str(model.stableTargetId),
+        mergedLabels=[merged_label],
+        nodeLabels=[model.entityType],
+        nodeProps=all_values,
+        linkRels=link_rels,
+        createRels=create_rels,
+        detachNodes=ref_fields,
+        deleteNodes=[*text_fields, *link_fields],
+    )
+
+
+def clean_dict(obj: Any) -> Any:
+    """Clean `None` and `[]` from dicts."""
+    if isinstance(obj, dict):
+        cleaned = {}
+        for k, v in obj.items():
+            cleaned_value = clean_dict(v)
+            if cleaned_value not in (None, []):
+                cleaned[k] = cleaned_value
+        return cleaned
+    if isinstance(obj, list):
+        return [clean_dict(item) for item in obj]
+    return obj
+
+
+def validate_ingested_data(
+    data_in: IngestData, data_out: IngestData
+) -> list[ErrorDetails]:
+    """Validate that the ingestion has been executed successfully."""
+    error_details = []
+    for field in IngestData.model_fields:
+        value_in = clean_dict(getattr(data_in, field))
+        value_out = clean_dict(getattr(data_out, field))
+        if value_out != value_in:
+            error_details.append(
+                ErrorDetails(
+                    type="transaction_failed",
+                    msg="ingested data did not match expectation",
+                    loc=(field,),
+                    input=value_out,
+                    ctx={"expected": value_in},
+                )
+            )
+    return error_details

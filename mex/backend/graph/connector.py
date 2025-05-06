@@ -15,12 +15,14 @@ from neo4j.exceptions import DriverError
 from pydantic import Field
 
 from mex.backend.fields import SEARCHABLE_CLASSES, SEARCHABLE_FIELDS
-from mex.backend.graph.exceptions import InconsistentGraphError
-from mex.backend.graph.models import Result
+from mex.backend.graph.exceptions import InconsistentGraphError, IngestionError
+from mex.backend.graph.models import IngestData, Result
 from mex.backend.graph.query import Query, QueryBuilder
 from mex.backend.graph.transform import (
     expand_references_in_search_result,
     transform_edges_into_expectations_by_edge_locator,
+    transform_model_into_ingest_data,
+    validate_ingested_data,
 )
 from mex.backend.settings import BackendSettings
 from mex.common.connector import BaseConnector
@@ -564,6 +566,32 @@ class GraphConnector(BaseConnector):
             raise RuntimeError(msg)
 
         return result
+
+    def ingest_v2(
+        self,
+        models: Sequence[AnyExtractedModel | AnyRuleSetResponse],
+    ) -> None:
+        """Ingest a list of models into the graph as nodes and connect all edges."""
+        query = str(QueryBuilder.get().merge_item_v2())
+        with self.driver.session() as session:
+            for model in models:
+                if isinstance(model, AnyRuleSetResponse):
+                    raise NotImplementedError(AnyRuleSetResponse)
+                data_in = transform_model_into_ingest_data(model)
+                with session.begin_transaction() as tx:
+                    try:
+                        tx_result = tx.run(query, data=data_in.model_dump())
+                        result = Result(tx_result).one()
+                        data_out = IngestData.model_validate(result)
+                        error_details = validate_ingested_data(data_in, data_out)
+                        if error_details:
+                            msg = f"could not merge {model.entityType}"
+                            raise IngestionError(msg, errors=error_details)
+                    except:
+                        tx.rollback()
+                        raise
+                    else:
+                        tx.commit()
 
     def ingest(
         self,

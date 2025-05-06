@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 from fastapi.testclient import TestClient
-from neo4j import Driver, Session, SummaryCounters
+from neo4j import Driver, Session, SummaryCounters, Transaction
 from pytest import MonkeyPatch
 
 from mex.artificial.helpers import generate_artificial_extracted_items
@@ -19,7 +19,6 @@ from mex.backend.settings import BackendSettings
 from mex.backend.types import APIKeyDatabase, APIUserDatabase
 from mex.common.connector import CONNECTOR_STORE
 from mex.common.models import (
-    EXTRACTED_MODEL_CLASSES_BY_NAME,
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     AdditiveOrganizationalUnit,
     AnyExtractedModel,
@@ -161,8 +160,12 @@ class MockedGraph:
 def mocked_graph(monkeypatch: MonkeyPatch) -> MockedGraph:
     """Mock the graph connector and return the mocked `run` for easy manipulation."""
     run = MagicMock(spec=Session.run)
-    session = MagicMock(spec=Session, __enter__=MagicMock(return_value=Mock(run=run)))
-    driver = Mock(spec=Driver, session=MagicMock(return_value=session))
+    tx = MagicMock(spec=Transaction, run=run)
+    tx.__enter__ = MagicMock(spec=Transaction.__enter__, return_value=tx)
+    session = MagicMock(spec=Session, run=run, begin_transaction=tx)
+    session.__enter__ = MagicMock(spec=Session.__enter__, return_value=session)
+    get_session = MagicMock(spec=Driver.session, return_value=session)
+    driver = Mock(spec=Driver, session=get_session)
     monkeypatch.setattr(
         GraphConnector, "__init__", lambda self: setattr(self, "driver", driver)
     )
@@ -324,7 +327,21 @@ def artificial_extracted_items() -> list[AnyExtractedModel]:
         seed=42,
         count=25,
         chattiness=16,
-        stem_types=EXTRACTED_MODEL_CLASSES_BY_NAME,
+        stem_types=[
+            "PrimarySource",
+            "Organization",
+            "OrganizationalUnit",
+            "ContactPoint",
+            "Person",
+            "Consent",
+            "AccessPlatform",
+            "Distribution",
+            "BibliographicResource",
+            "Activity",
+            "Resource",
+            "VariableGroup",
+            "Variable",
+        ],
     )
 
 
