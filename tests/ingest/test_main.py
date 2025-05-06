@@ -14,6 +14,7 @@ from mex.common.models import (
     AnyExtractedModel,
     PaginatedItemsContainer,
 )
+from tests.conftest import get_graph
 
 Payload = dict[str, list[dict[str, Any]]]
 
@@ -45,7 +46,10 @@ def test_bulk_insert(
     )
 
     # assert the response are the artificial data items
-    assert response.status_code == status.HTTP_204_NO_CONTENT, response.text
+    assert response.status_code == status.HTTP_204_NO_CONTENT, (
+        response.text,
+        get_graph(),
+    )
     assert response.text == ""
 
     # verify the nodes have actually been stored in the database
