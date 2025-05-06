@@ -575,24 +575,23 @@ class GraphConnector(BaseConnector):
         query = str(QueryBuilder.get().merge_item_v2())
         with self.driver.session() as session:
             for model in models:
-                if isinstance(model, AnyExtractedModel):
-                    data_in = transform_model_into_ingest_data(model)
-                    with session.begin_transaction() as tx:
-                        try:
-                            tx_result = tx.run(query, data=data_in.model_dump())
-                            result = Result(tx_result).one()
-                            data_out = IngestData.model_validate(result)
-                            error_details = validate_ingested_data(data_in, data_out)
-                            if error_details:
-                                msg = f"could not merge {model.entityType}"
-                                raise IngestionError(msg, errors=error_details)
-                        except:
-                            tx.rollback()
-                            raise
-                        else:
-                            tx.commit()
-                else:
+                if isinstance(model, AnyRuleSetResponse):
                     raise NotImplementedError(AnyRuleSetResponse)
+                data_in = transform_model_into_ingest_data(model)
+                with session.begin_transaction() as tx:
+                    try:
+                        tx_result = tx.run(query, data=data_in.model_dump())
+                        result = Result(tx_result).one()
+                        data_out = IngestData.model_validate(result)
+                        error_details = validate_ingested_data(data_in, data_out)
+                        if error_details:
+                            msg = f"could not merge {model.entityType}"
+                            raise IngestionError(msg, errors=error_details)
+                    except:
+                        tx.rollback()
+                        raise
+                    else:
+                        tx.commit()
 
     def ingest(
         self,
