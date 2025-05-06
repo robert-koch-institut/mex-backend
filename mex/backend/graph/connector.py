@@ -150,7 +150,7 @@ class GraphConnector(BaseConnector):
 
     def _seed_data(self) -> None:
         """Ensure the primary source `mex` is seeded and linked to itself."""
-        self.ingest([cast("ExtractedPrimarySource", MEX_EXTRACTED_PRIMARY_SOURCE)])
+        self.ingest_v2([cast("ExtractedPrimarySource", MEX_EXTRACTED_PRIMARY_SOURCE)])
 
     def close(self) -> None:
         """Close the connector's underlying requests session."""
