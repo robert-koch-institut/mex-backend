@@ -10,7 +10,7 @@ from mex.common.transform import MExEncoder
 
 
 class CacheProto(Protocol):
-    """Protocol for implementing a local redis fallback."""
+    """Protocol for unified cache interface."""
 
     def get(self, key: str) -> str | None: ...  # noqa: D102
 
@@ -43,10 +43,14 @@ class LocalCache(dict[str, str]):
 
 
 class CacheConnector(BaseConnector):
-    """Connector to handle getting and setting cache values in redis."""
+    """Connector to handle getting and setting cache values.
+
+    Depending on whether `redis_url` is configured, this cache connector
+    will use either a redis server or a local dictionary cache.
+    """
 
     def __init__(self) -> None:
-        """Create a new connector instance."""
+        """Create a new cache connector instance."""
         settings = BackendSettings.get()
         if settings.redis_url:
             self._cache: CacheProto = Redis.from_url(settings.redis_url)
@@ -64,7 +68,7 @@ class CacheConnector(BaseConnector):
         self._cache.set(key, json.dumps(model, cls=MExEncoder))
 
     def metrics(self) -> dict[str, int]:
-        """Generate metrics about redis."""
+        """Generate metrics about the underlying cache."""
         return {k: v for k, v in self._cache.info().items() if isinstance(v, int)}
 
     def flush(self) -> None:

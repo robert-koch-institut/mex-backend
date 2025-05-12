@@ -390,7 +390,7 @@ MERGE (n)-[:stableTargetId {{position:0}}]->(m);"""
     )
     # clear the identity provider cache to refresh the `stableTargetId` property on org2
     provider = GraphIdentityProvider.get()
-    provider._cached_assign.cache_clear()
+    provider._cache.flush()
 
 
 @pytest.fixture
