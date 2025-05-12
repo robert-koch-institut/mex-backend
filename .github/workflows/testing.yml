@@ -34,6 +34,12 @@ jobs:
           NEO4J_AUTH: neo4j/password
         ports:
           - 7687:7687
+      redis:
+        image: bitnami/redis:8.0.0
+        env:
+          ALLOW_EMPTY_PASSWORD: yes
+        ports:
+          - 6379:6379
 
     steps:
       - name: Checkout repo
@@ -70,4 +76,7 @@ jobs:
         run: make install
 
       - name: Run test suite
+        env:
+          MEX_GRAPH_URL: neo4j://localhost:7687
+          MEX_BACKEND_REDIS_URL: redis://localhost:6379
         run: make pytest

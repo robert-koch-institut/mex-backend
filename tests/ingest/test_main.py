@@ -359,7 +359,7 @@ def test_bulk_insert_malformed(
     assert response.json() == {"detail": expected_response}
 
 
-@pytest.mark.usefixtures("mocked_graph")
+@pytest.mark.usefixtures("mocked_graph", "mocked_redis")
 def test_bulk_insert_mocked(
     client_with_api_key_write_permission: TestClient,
     dummy_data: dict[str, AnyExtractedModel],
