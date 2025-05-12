@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changes
 
 - cache assigned identities in redis to enable multiprocessing
+- update mex-model and mex-common
 
 ### Deprecated
 
