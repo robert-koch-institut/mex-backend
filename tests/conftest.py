@@ -12,6 +12,7 @@ from pytest import MonkeyPatch
 from redis.client import Redis
 
 from mex.artificial.helpers import generate_artificial_extracted_items
+from mex.backend.cache.connector import CacheConnector, CacheProto, LocalCache
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.identity.provider import GraphIdentityProvider
 from mex.backend.main import app
@@ -173,17 +174,12 @@ def mocked_graph(monkeypatch: MonkeyPatch) -> MockedGraph:
     return MockedGraph(run, session)
 
 
-class MockedRedis(dict[str, str]):
-    def set(self, key: str, value: str) -> None:
-        self[key] = value
-
-
 @pytest.fixture
-def mocked_redis(monkeypatch: MonkeyPatch) -> MockedRedis:
-    """Mock the redis client to act like a dictionary."""
-    redis = MockedRedis()
-    monkeypatch.setattr(Redis, "from_url", lambda _: redis)
-    return redis
+def mocked_redis(monkeypatch: MonkeyPatch) -> CacheProto:
+    """Mock the redis client to use a local cache instead."""
+    cache = LocalCache()
+    monkeypatch.setattr(Redis, "from_url", lambda _: cache)
+    return cache
 
 
 @pytest.fixture(autouse=True)
@@ -212,15 +208,32 @@ def set_identity_provider(is_integration_test: bool, monkeypatch: MonkeyPatch) -
 
 @pytest.fixture(autouse=True)
 def isolate_graph_database(
-    is_integration_test: bool, settings: BackendSettings
+    is_integration_test: bool,
+    settings: BackendSettings,
+    monkeypatch: MonkeyPatch,
 ) -> None:
     """Automatically flush the graph database for integration testing."""
     if is_integration_test:
-        settings.debug = True
+        monkeypatch.setattr(settings, "debug", True)
         connector = GraphConnector.get()
         connector.flush()
         connector.close()
         CONNECTOR_STORE.pop(GraphConnector)
+
+
+@pytest.fixture(autouse=True)
+def isolate_redis_cache(
+    is_integration_test: bool,
+    settings: BackendSettings,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Automatically flush the redis cache for integration testing."""
+    if is_integration_test:
+        monkeypatch.setattr(settings, "debug", True)
+        connector = CacheConnector.get()
+        connector.flush()
+        connector.close()
+        CONNECTOR_STORE.pop(CacheConnector)
 
 
 def get_graph() -> list[dict[str, Any]]:

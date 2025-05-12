@@ -1,27 +1,16 @@
-from functools import lru_cache
-
-from redis.client import Redis
-
+from mex.backend.cache.connector import CacheConnector
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.settings import BackendSettings
 from mex.common.identity import BaseProvider, Identity
 from mex.common.types import Identifier, MergedPrimarySourceIdentifier
 
-IDENTITY_CACHE_SIZE = 5000
-
 
 class GraphIdentityProvider(BaseProvider):
-    """Identity provider that communicates with the graph connector.
-
-    It uses `functools.lru_cache` as an L1 cache and an optional redis as L2.
-    """
+    """Identity provider that communicates with the graph connector."""
 
     def __init__(self) -> None:
         """Create a new graph identity provider."""
-        # mitigating https://docs.astral.sh/ruff/rules/cached-instance-method
-        self._cached_assign = lru_cache(IDENTITY_CACHE_SIZE)(self._do_assign)
-        redis_url = BackendSettings.get().redis_url
-        self._redis = Redis.from_url(redis_url) if redis_url else None
+        self._cache = CacheConnector.get()
+        self._identities_generated = 0
 
     def assign(
         self,
@@ -29,33 +18,26 @@ class GraphIdentityProvider(BaseProvider):
         identifier_in_primary_source: str,
     ) -> Identity:
         """Return a cached or a newly assigned Identity."""
-        return self._cached_assign(had_primary_source, identifier_in_primary_source)
-
-    def _do_assign(
-        self,
-        had_primary_source: MergedPrimarySourceIdentifier,
-        identifier_in_primary_source: str,
-    ) -> Identity:
-        """Find an Identity in the cache or graph or assign a new one."""
         # newline is a safe delimiter because it is explicitly forbidden in both fields
         cache_key = f"{had_primary_source}\n{identifier_in_primary_source}"
-        if self._redis and (cache_value := self._redis.get(cache_key)):
-            return Identity.model_validate_json(cache_value)
+        if cache_value := self._cache.get_value(cache_key):
+            return Identity.model_validate(cache_value)
         connector = GraphConnector.get()
         result = connector.fetch_identities(
             had_primary_source=had_primary_source,
             identifier_in_primary_source=identifier_in_primary_source,
         )
         if graph_record := result.one_or_none():
-            return Identity.model_validate(graph_record)
-        identity = Identity(
-            hadPrimarySource=had_primary_source,
-            identifier=Identifier.generate(),
-            identifierInPrimarySource=identifier_in_primary_source,
-            stableTargetId=Identifier.generate(),
-        )
-        if self._redis:
-            self._redis.set(cache_key, identity.model_dump_json())
+            identity = Identity.model_validate(graph_record)
+        else:
+            identity = Identity(
+                hadPrimarySource=had_primary_source,
+                identifier=Identifier.generate(),
+                identifierInPrimarySource=identifier_in_primary_source,
+                stableTargetId=Identifier.generate(),
+            )
+            self._identities_generated += 1
+        self._cache.set_value(cache_key, identity)
         return identity
 
     def fetch(
@@ -80,9 +62,8 @@ class GraphIdentityProvider(BaseProvider):
 
     def metrics(self) -> dict[str, int]:
         """Generate metrics about identity provider usage."""
-        cache_info = self._cached_assign.cache_info()
-        return {"cache_hits": cache_info.hits, "cache_misses": cache_info.misses}
+        return {"identities_generated": self._identities_generated}
 
     def close(self) -> None:
-        """Clear the connector cache."""
-        self._cached_assign.cache_clear()
+        """Close the connector cache."""
+        self._cache.close()
