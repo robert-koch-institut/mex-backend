@@ -9,6 +9,7 @@ import pytest
 from fastapi.testclient import TestClient
 from neo4j import Driver, Session, SummaryCounters, Transaction
 from pytest import MonkeyPatch
+from redis.client import Redis
 
 from mex.artificial.helpers import generate_artificial_extracted_items
 from mex.backend.graph.connector import GraphConnector
@@ -170,6 +171,19 @@ def mocked_graph(monkeypatch: MonkeyPatch) -> MockedGraph:
         GraphConnector, "__init__", lambda self: setattr(self, "driver", driver)
     )
     return MockedGraph(run, session)
+
+
+class MockedRedis(dict[str, str]):
+    def set(self, key: str, value: str) -> None:
+        self[key] = value
+
+
+@pytest.fixture
+def mocked_redis(monkeypatch: MonkeyPatch) -> MockedRedis:
+    """Mock the redis client to act like a dictionary."""
+    redis = MockedRedis()
+    monkeypatch.setattr(Redis, "from_url", lambda _: redis)
+    return redis
 
 
 @pytest.fixture(autouse=True)

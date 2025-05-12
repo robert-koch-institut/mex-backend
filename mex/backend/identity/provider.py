@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-import redis
+from redis.client import Redis
 
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.settings import BackendSettings
@@ -21,7 +21,7 @@ class GraphIdentityProvider(BaseProvider):
         # mitigating https://docs.astral.sh/ruff/rules/cached-instance-method
         self._cached_assign = lru_cache(IDENTITY_CACHE_SIZE)(self._do_assign)
         redis_url = BackendSettings.get().redis_url
-        self._redis = redis.from_url(redis_url) if redis_url else None
+        self._redis = Redis.from_url(redis_url) if redis_url else None
 
     def assign(
         self,
@@ -37,6 +37,7 @@ class GraphIdentityProvider(BaseProvider):
         identifier_in_primary_source: str,
     ) -> Identity:
         """Find an Identity in the cache or graph or assign a new one."""
+        # newline is a safe delimiter because it is explicitly forbidden in both fields
         cache_key = f"{had_primary_source}\n{identifier_in_primary_source}"
         if self._redis and (cache_value := self._redis.get(cache_key)):
             return Identity.model_validate_json(cache_value)

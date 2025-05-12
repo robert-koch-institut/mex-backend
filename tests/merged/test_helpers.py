@@ -215,8 +215,11 @@ def test_search_merged_items_in_graph() -> None:
     ],
     ids=["no_rules", "one_rule_raises_error", "three_rules"],
 )
+@pytest.mark.usefixtures("mocked_redis")
 def test_search_merged_items_in_graph_mocked(
-    mocked_graph_result: list[dict[str, Any]], expected: Any, mocked_graph: MockedGraph
+    mocked_graph_result: list[dict[str, Any]],
+    expected: Any,
+    mocked_graph: MockedGraph,
 ) -> None:
     mocked_graph.return_value = mocked_graph_result
 

@@ -9,8 +9,10 @@ from mex.common.models import ExtractedOrganizationalUnit
 from tests.conftest import MockedGraph
 
 
+@pytest.mark.usefixtures("mocked_redis")
 def test_search_extracted_items_mocked(
-    client_with_api_key_read_permission: TestClient, mocked_graph: MockedGraph
+    client_with_api_key_read_permission: TestClient,
+    mocked_graph: MockedGraph,
 ) -> None:
     unit = ExtractedOrganizationalUnit.model_validate(
         {

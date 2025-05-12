@@ -34,7 +34,7 @@ def mocked_query_class(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(Query.REPR_MODE, "line_length", DEFAULT_LINE_LENGTH)
 
 
-@pytest.mark.usefixtures("mocked_query_class")
+@pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
 def test_check_connectivity_and_authentication(mocked_graph: MockedGraph) -> None:
     mocked_graph.return_value = [{"currentStatus": "online"}]
     graph = GraphConnector.get()
@@ -43,6 +43,7 @@ def test_check_connectivity_and_authentication(mocked_graph: MockedGraph) -> Non
     assert mocked_graph.call_args_list[-1].args == ("fetch_database_status()", {})
 
 
+@pytest.mark.usefixtures("mocked_redis")
 def test_check_connectivity_and_authentication_error(mocked_graph: MockedGraph) -> None:
     mocked_graph.return_value = [{"currentStatus": "offline"}]
     graph = GraphConnector.get()
@@ -50,7 +51,7 @@ def test_check_connectivity_and_authentication_error(mocked_graph: MockedGraph) 
         graph._check_connectivity_and_authentication()
 
 
-@pytest.mark.usefixtures("mocked_query_class")
+@pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
 def test_mocked_graph_seed_constraints(mocked_graph: MockedGraph) -> None:
     graph = GraphConnector.get()
     graph._seed_constraints()
@@ -61,7 +62,7 @@ def test_mocked_graph_seed_constraints(mocked_graph: MockedGraph) -> None:
     )
 
 
-@pytest.mark.usefixtures("mocked_query_class")
+@pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
 def test_mocked_graph_seed_indices(
     mocked_graph: MockedGraph, monkeypatch: MonkeyPatch
 ) -> None:
@@ -120,7 +121,7 @@ create_full_text_search_index(
     )
 
 
-@pytest.mark.usefixtures("mocked_query_class")
+@pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
 def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
     mocked_graph.return_value = [
         {"edges": ["hadPrimarySource {position: 0}", "stableTargetId {position: 0}"]}
@@ -173,14 +174,14 @@ merge_edges(
 
 
 def test_should_giveup_commit() -> None:
-    retryable_error = SessionExpired("session is dead")
+    retryable_error = SessionExpired("session is dead")  # type:ignore[no-untyped-call]
     assert GraphConnector._should_giveup_commit(retryable_error) is False
 
-    terminal_error = IncompleteCommit("commit broke midway")
+    terminal_error = IncompleteCommit("commit broke midway")  # type:ignore[no-untyped-call]
     assert GraphConnector._should_giveup_commit(terminal_error) is True
 
 
-@pytest.mark.usefixtures("mocked_graph")
+@pytest.mark.usefixtures("mocked_graph", "mocked_redis")
 def test_on_commit_backoff(monkeypatch: MonkeyPatch) -> None:
     init_driver = MagicMock()
     check_connectivity_and_authentication = MagicMock()
@@ -193,7 +194,7 @@ def test_on_commit_backoff(monkeypatch: MonkeyPatch) -> None:
     )
 
     graph = GraphConnector.get()
-    event = BackoffDetails(args=(graph,))
+    event = BackoffDetails(args=(graph,))  # type: ignore[typedict-item]
     GraphConnector._on_commit_backoff(event)
     assert init_driver.call_args_list == [call()]
     assert check_connectivity_and_authentication.call_args_list == [call()]
@@ -206,7 +207,7 @@ def test_on_commit_backoff(monkeypatch: MonkeyPatch) -> None:
         (False, 'error committing query: match_something(jinja_var="jjj")'),
     ],
 )
-@pytest.mark.usefixtures("mocked_graph")
+@pytest.mark.usefixtures("mocked_graph", "mocked_redis")
 def test_on_commit_giveup(
     caplog: LogCaptureFixture, monkeypatch: MonkeyPatch, debug: bool, expected: str
 ) -> None:
@@ -224,6 +225,7 @@ def test_on_commit_giveup(
     assert caplog.messages[-1] == expected
 
 
+@pytest.mark.usefixtures("mocked_redis")
 def test_mocked_graph_commit_raises_error(mocked_graph: MockedGraph) -> None:
     mocked_graph.run.side_effect = Exception("query failed")
     graph = GraphConnector.get()
@@ -231,7 +233,7 @@ def test_mocked_graph_commit_raises_error(mocked_graph: MockedGraph) -> None:
         graph.commit("RETURN 1;")
 
 
-@pytest.mark.usefixtures("mocked_query_class")
+@pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
 def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
     mocked_graph.return_value = [
         {
@@ -511,7 +513,7 @@ def test_fetch_extracted_items(
     assert result.one() == expected
 
 
-@pytest.mark.usefixtures("mocked_query_class")
+@pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
 def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
     mocked_graph.return_value = [
         {
@@ -646,7 +648,7 @@ def test_fetch_rule_items_empty() -> None:
     assert result.one() == {"items": [], "total": 0}
 
 
-@pytest.mark.usefixtures("mocked_query_class")
+@pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
 def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
     mocked_graph.return_value = [
         {
@@ -1195,7 +1197,7 @@ def test_fetch_merged_items(  # noqa: PLR0913
     assert result.one() == expected
 
 
-@pytest.mark.usefixtures("mocked_query_class")
+@pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
 def test_mocked_graph_fetch_identities(mocked_graph: MockedGraph) -> None:
     graph = GraphConnector.get()
     graph.fetch_identities(stable_target_id=Identifier.generate(99))
@@ -1253,9 +1255,10 @@ fetch_identities(
     )
 
 
-@pytest.mark.usefixtures("mocked_query_class")
+@pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
 def test_mocked_graph_exists_merged_item(
-    mocked_graph: MockedGraph, monkeypatch: MonkeyPatch
+    mocked_graph: MockedGraph,
+    monkeypatch: MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
         connector_module,
@@ -1314,9 +1317,10 @@ def test_graph_exists_merged_item(
     assert graph.exists_merged_item(stable_target_id, stem_types) == exists
 
 
-@pytest.mark.usefixtures("mocked_query_class")
+@pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
 def test_mocked_graph_merge_item(
-    mocked_graph: MockedGraph, dummy_data: dict[str, AnyExtractedModel]
+    mocked_graph: MockedGraph,
+    dummy_data: dict[str, AnyExtractedModel],
 ) -> None:
     extracted_organizational_unit = dummy_data["organizational_unit_1"]
     graph = GraphConnector.get()
@@ -1352,9 +1356,10 @@ merge_item(
     )
 
 
-@pytest.mark.usefixtures("mocked_query_class")
+@pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
 def test_mocked_graph_merge_edges(
-    mocked_graph: MockedGraph, dummy_data: dict[str, AnyExtractedModel]
+    mocked_graph: MockedGraph,
+    dummy_data: dict[str, AnyExtractedModel],
 ) -> None:
     mocked_graph.return_value = [
         {
@@ -1399,9 +1404,10 @@ merge_edges(
     )
 
 
-@pytest.mark.usefixtures("mocked_query_class")
+@pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
 def test_mocked_graph_merge_edges_fails_inconsistent(
-    mocked_graph: MockedGraph, dummy_data: dict[str, AnyExtractedModel]
+    mocked_graph: MockedGraph,
+    dummy_data: dict[str, AnyExtractedModel],
 ) -> None:
     mocked_graph.return_value = [{"edges": ["stableTargetId {position: 0}"]}]
     graph = GraphConnector.get()
@@ -1455,9 +1461,10 @@ def test_graph_merge_edges_fails_inconsistent(
         graph.ingest([consistent_org, inconsistent_unit])
 
 
-@pytest.mark.usefixtures("mocked_query_class")
+@pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
 def test_mocked_graph_merge_edges_fails_unexpected(
-    mocked_graph: MockedGraph, dummy_data: dict[str, AnyExtractedModel]
+    mocked_graph: MockedGraph,
+    dummy_data: dict[str, AnyExtractedModel],
 ) -> None:
     mocked_graph.return_value = [
         {
@@ -1488,7 +1495,7 @@ def test_mocked_graph_merge_edges_fails_unexpected(
             )
 
 
-@pytest.mark.usefixtures("mocked_query_class")
+@pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
 def test_mocked_graph_ingests_rule_set(
     mocked_graph: MockedGraph,
     organizational_unit_rule_set_response: OrganizationalUnitRuleSetResponse,
@@ -1543,6 +1550,7 @@ merge_edges(
     )
 
 
+@pytest.mark.usefixtures("mocked_redis")
 def test_mocked_graph_ingests_extracted_models(
     mocked_graph: MockedGraph,
     dummy_data: dict[str, AnyExtractedModel],

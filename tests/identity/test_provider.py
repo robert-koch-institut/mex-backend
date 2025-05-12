@@ -52,6 +52,7 @@ from tests.conftest import MockedGraph
     ],
     ids=["new item", "existing item"],
 )
+@pytest.mark.usefixtures("mocked_redis")
 def test_assign_identity_mocked(
     mocked_graph: MockedGraph,
     mocked_return: list[dict[str, str]],
@@ -68,6 +69,7 @@ def test_assign_identity_mocked(
     assert identity.model_dump() == expected
 
 
+@pytest.mark.usefixtures("mocked_redis")
 def test_assign_identity_inconsistency_mocked(
     mocked_graph: MockedGraph,
 ) -> None:
@@ -211,6 +213,7 @@ def test_assign_identity(
     ],
     ids=["nothing found", "one item", "two items"],
 )
+@pytest.mark.usefixtures("mocked_redis")
 def test_fetch_identities_mocked(  # noqa: PLR0913
     mocked_graph: MockedGraph,
     mocked_return: list[dict[str, str]],
