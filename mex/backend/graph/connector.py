@@ -1,5 +1,5 @@
 import json
-from collections.abc import Sequence
+from collections.abc import Generator, Sequence
 from string import Template
 from typing import Annotated, Any, Literal, cast
 
@@ -570,7 +570,7 @@ class GraphConnector(BaseConnector):
     def ingest_v2(
         self,
         models: Sequence[AnyExtractedModel | AnyRuleSetResponse],
-    ) -> None:
+    ) -> Generator[None, None, None]:
         """Ingest a list of models into the graph as nodes and connect all edges."""
         query = str(QueryBuilder.get().merge_item_v2())
         with self.driver.session() as session:
@@ -592,6 +592,7 @@ class GraphConnector(BaseConnector):
                         raise
                     else:
                         tx.commit()
+                yield
 
     def ingest(
         self,
