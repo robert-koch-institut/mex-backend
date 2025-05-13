@@ -15,7 +15,7 @@ async def ingest_items(
 ) -> None:
     """Ingest a batch of extracted items or rule-sets."""
     connector = GraphConnector.get()
-    for i in connector.ingest_v2(container.items):
+    for i, _ in enumerate(connector.ingest_v2(container.items), start=1):
         if await request.is_disconnected():
             logger.warning(f"client disconnected after {i} items were ingested")
             break
