@@ -6,7 +6,6 @@ from uuid import UUID
 
 import pytest
 import requests
-from ldap3 import Connection
 from pytest import MonkeyPatch
 from requests import Response
 
@@ -70,7 +69,7 @@ test_person_orcid = [
 @pytest.fixture
 def mocked_ldap(monkeypatch: MonkeyPatch) -> None:
     def __init__(self: LDAPConnector) -> None:
-        self._connection = MagicMock(spec=Connection, extend=Mock())
+        self._connection = MagicMock(extend=Mock())
         self._connection.extend.standard.paged_search = MagicMock(side_effect=[])
 
     monkeypatch.setattr(LDAPConnector, "__init__", __init__)
