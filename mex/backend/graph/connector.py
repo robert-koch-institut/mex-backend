@@ -186,7 +186,10 @@ class GraphConnector(BaseConnector):
         logger.error("error committing query%s", message)
 
     def _do_commit(
-        self, query: Query | str, session: Session | None = None, **parameters: Any
+        self,
+        query: Query | str,
+        session: Session | None = None,
+        **parameters: Any,  # noqa: ANN401
     ) -> Result:
         """Send and commit a single graph transaction."""
         if session:
@@ -203,7 +206,10 @@ class GraphConnector(BaseConnector):
         max_time=10,  # seconds
     )
     def commit(
-        self, query: Query | str, session: Session | None = None, **parameters: Any
+        self,
+        query: Query | str,
+        session: Session | None = None,
+        **parameters: Any,  # noqa: ANN401
     ) -> Result:
         """Send and commit a single graph transaction with retry configuration."""
         return self._do_commit(query, session=session, **parameters)

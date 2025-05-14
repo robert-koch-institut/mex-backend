@@ -92,7 +92,7 @@ def mocked_wikidata(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(WikidataAPIConnector, "__init__", mocked_init)
 
     # mock get_wikidata_org_with_org_id
-    with open(TEST_DATA_DIR / "wikidata_organization_raw.json") as fh:
+    with (TEST_DATA_DIR / "wikidata_organization_raw.json").open() as fh:
         wikidata_organization_raw = json.load(fh)
 
     def get_wikidata_item_details_by_id(
@@ -111,14 +111,14 @@ def mocked_wikidata(monkeypatch: MonkeyPatch) -> None:
 @pytest.fixture
 def orcid_person_raw() -> dict[str, Any]:
     """Return a raw orcid person."""
-    with open(TEST_DATA_DIR / "orcid_person_raw.json") as fh:
+    with (TEST_DATA_DIR / "orcid_person_raw.json").open() as fh:
         return cast("dict[str, Any]", json.load(fh))
 
 
 @pytest.fixture
 def orcid_multiple_matches() -> dict[str, Any]:
     """Return a raw orcid person."""
-    with open(TEST_DATA_DIR / "orcid_multiple_matches.json") as fh:
+    with (TEST_DATA_DIR / "orcid_multiple_matches.json").open() as fh:
         return cast("dict[str, Any]", json.load(fh))
 
 
@@ -138,7 +138,9 @@ def mocked_orcid(
     monkeypatch.setattr(OrcidConnector, "__init__", __init__)
 
     def search_records_by_name(
-        _self: OrcidConnector, given_and_family_names: str | None = None, **_: Any
+        _self: OrcidConnector,
+        given_and_family_names: str | None = None,
+        **_: Any,  # noqa: ANN401
     ) -> OrcidSearchResponse:
         if given_and_family_names in {"John Doe", "John O'Doe"}:
             return OrcidSearchResponse(num_found=1, result=[orcid_person_raw])

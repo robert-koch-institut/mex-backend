@@ -209,7 +209,10 @@ def test_on_commit_backoff(monkeypatch: MonkeyPatch) -> None:
 )
 @pytest.mark.usefixtures("mocked_graph", "mocked_redis")
 def test_on_commit_giveup(
-    caplog: LogCaptureFixture, monkeypatch: MonkeyPatch, debug: bool, expected: str
+    caplog: LogCaptureFixture,
+    monkeypatch: MonkeyPatch,
+    debug: bool,  # noqa: FBT001
+    expected: str,
 ) -> None:
     settings = BackendSettings.get()
     monkeypatch.setattr(settings, "debug", debug)
@@ -1310,7 +1313,9 @@ exists_merged_item(node_labels=["MergedFoo", "MergedBar", "MergedBatz"])""",
 @pytest.mark.usefixtures("load_dummy_data")
 @pytest.mark.integration
 def test_graph_exists_merged_item(
-    stable_target_id: Identifier, stem_types: list[str] | None, exists: bool
+    stable_target_id: Identifier,
+    stem_types: list[str] | None,
+    exists: bool,  # noqa: FBT001
 ) -> None:
     graph = GraphConnector.get()
 

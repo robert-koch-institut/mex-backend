@@ -37,7 +37,7 @@ def merge_search_result_item(
     Args:
         item: Raw merged search result item from the graph response
         validate_cardinality: Merged items validate the existence of required fields and
-            the lengths of lists by default, set this to `False` to avoid this and
+            the lengths of lists by default, set this to `OFF` to avoid this and
             return a "preview" of a merged item instead of a valid merged item
 
     Raises:
@@ -77,7 +77,7 @@ def search_merged_items_in_graph(
     had_primary_source: list[str] | None = None,
     skip: int = 0,
     limit: int = 100,
-    validate_cardinality: Literal[False] = False,
+    validate_cardinality: Literal[False] = False,  # noqa: FBT002
 ) -> PreviewItemSearch: ...
 
 
@@ -89,7 +89,7 @@ def search_merged_items_in_graph(
     had_primary_source: list[str] | None = None,
     skip: int = 0,
     limit: int = 100,
-    validate_cardinality: Literal[True] = True,
+    validate_cardinality: Literal[True] = True,  # noqa: FBT002
 ) -> MergedItemSearch: ...
 
 
@@ -100,7 +100,7 @@ def search_merged_items_in_graph(  # noqa: PLR0913
     had_primary_source: list[str] | None = None,
     skip: int = 0,
     limit: int = 100,
-    validate_cardinality: Literal[True, False] = True,
+    validate_cardinality: Literal[True, False] = True,  # noqa: FBT002
 ) -> PreviewItemSearch | MergedItemSearch:
     """Search for merged items.
 
@@ -112,7 +112,7 @@ def search_merged_items_in_graph(  # noqa: PLR0913
         skip: How many items to skip for pagination
         limit: How many items to return at most
         validate_cardinality: Merged items validate the existence of required fields and
-            the lengths of lists by default, set this to `False` to avoid this and
+            the lengths of lists by default, set this to `OFF` to avoid this and
             return "previews" of merged items instead of valid merged items
 
     Raises:
@@ -139,6 +139,6 @@ def search_merged_items_in_graph(  # noqa: PLR0913
         for item in result["items"]
     ]
 
-    if validate_cardinality:
+    if validate_cardinality is True:
         return MergedItemSearch(items=items, total=total)
     return PreviewItemSearch(items=items, total=total)
