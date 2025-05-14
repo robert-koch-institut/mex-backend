@@ -37,7 +37,7 @@ def merge_search_result_item(
     Args:
         item: Raw merged search result item from the graph response
         validate_cardinality: Merged items validate the existence of required fields and
-            the lengths of lists by default, set this to `OFF` to avoid this and
+            the lengths of lists by default, set this to `False` to avoid this and
             return a "preview" of a merged item instead of a valid merged item
 
     Raises:
@@ -112,7 +112,7 @@ def search_merged_items_in_graph(  # noqa: PLR0913
         skip: How many items to skip for pagination
         limit: How many items to return at most
         validate_cardinality: Merged items validate the existence of required fields and
-            the lengths of lists by default, set this to `OFF` to avoid this and
+            the lengths of lists by default, set this to `False` to avoid this and
             return "previews" of merged items instead of valid merged items
 
     Raises:

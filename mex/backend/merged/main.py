@@ -3,9 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query
 
-from mex.backend.merged.helpers import (
-    search_merged_items_in_graph,
-)
+from mex.backend.merged.helpers import search_merged_items_in_graph
 from mex.backend.merged.models import MergedItemSearch
 from mex.backend.types import MergedType
 from mex.common.types import Identifier
