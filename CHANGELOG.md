@@ -11,10 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- abort ingestion of further items after client disconnects
-- wrap neo4j errors during ingestion in ingestion errors
-- bumped cookiecutter template ed5deb
-
 ### Deprecated
 
 ### Removed
@@ -22,6 +18,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [0.37.0] - 2025-05-14
+
+### Changes
+
+- abort ingestion of further items after client disconnects
+- wrap neo4j errors during ingestion in ingestion errors
+- bumped cookiecutter template ed5deb
 
 ## [0.36.0] - 2025-05-12
 
