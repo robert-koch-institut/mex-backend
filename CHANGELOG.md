@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changes
 
 - abort ingestion of further items after client disconnects
+- wrap neo4j errors during ingestion in ingestion errors
 
 ### Deprecated
 
