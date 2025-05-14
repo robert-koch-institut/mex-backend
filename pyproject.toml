@@ -6,13 +6,13 @@ authors = [{ name = "MEx Team", email = "mex@rki.de" }]
 readme = { file = "README.md", content-type = "text/markdown" }
 license = { file = "LICENSE" }
 urls = { Repository = "https://github.com/robert-koch-institut/mex-backend" }
-requires-python = ">=3.11,<3.13"
+requires-python = ">=3.11,<3.12"
 dependencies = [
     "backoff>=2,<3",
     "black>=25,<26",
     "fastapi>=0.115,<1",
     "jinja2>=3,<4",
-    "mex-common @ git+https://github.com/robert-koch-institut/mex-common.git@0.59.2",
+    "mex-common @ git+https://github.com/robert-koch-institut/mex-common.git@0.60.0",
     "neo4j>=5,<6",
     "pydantic>=2,<3",
     "redis[hiredis]>=6,<7",
@@ -20,20 +20,18 @@ dependencies = [
     "uvicorn[standard]>=0.30,<1",
 ]
 optional-dependencies.dev = [
-    "httpx>=0.27,<1",
-    "ipdb>=0.13,<1",
-    "ldap3>=2,<3",
+    "httpx>=0.27",
+    "ipdb>=0.13",
     "mex-artificial @ git+https://github.com/robert-koch-institut/mex-artificial.git@0.4.1",
-    "mypy>=1,<2",
-    "pytest-cov>=6,<7",
-    "pytest-random-order>=1,<2",
-    "pytest>=8,<9",
-    "requests>=2,<3",
-    "ruff>=0.11,<1",
-    "sphinx>=8,<9",
-    "types-ldap3>=2,<3",
-    "types-pytz>=2024,<2025",
-    "types-requests>=2,<3",
+    "mypy>=1",
+    "pytest-cov>=6",
+    "pytest-random-order>=1",
+    "pytest>=8",
+    "requests>=2",
+    "ruff>=0.11",
+    "sphinx>=8",
+    "types-pytz>=2024",
+    "types-requests>=2",
 ]
 
 [project.scripts]
@@ -96,24 +94,19 @@ docstring-code-format = true
 
 [tool.ruff.lint]
 ignore = [
-    "AIR",     # Disable airflow specific rules (we are not using airflow)
-    "ANN",     # Disable all annotations checks (handled by mypy)
     "COM",     # Disable flake8-commas checks (let ruff format handle that)
     "CPY",     # Disable copyright notice checks (we have LICENSE files)
-    "D100",    # Allow missing module docstring (for brevity and speed)
-    "D104",    # Allow missing package docstring (for brevity and speed)
+    "D100",    # Allow missing module docstring (for brevity)
+    "D104",    # Allow missing package docstring (for brevity)
     "D203",    # Disallow blank line before class docstring (inverse of D211)
     "D213",    # Disallow multi-line docstring starting at second line (inverse of D212)
     "D406",    # Allow section name ending with newline (google style compat)
     "D407",    # Allow missing dashed underline after section (google style compat)
     "D413",    # Allow missing blank line after last section (google style compat)
-    "DJ",      # Disable django specific checks (we are not using django)
-    "FBT",     # Disable boolean type hint checks (for more flexibility)
     "FIX",     # Allow committing with open TODOs (don't punish committers)
     "ISC001",  # Disable checks for implicitly concatenated strings (formatter compat)
     "N805",    # Allow first argument of a method to be non-self (pydantic compat)
     "N815",    # Allow mixedCase variables in class scope (model compat)
-    "PTH123",  # Allow using builtin open method (simpler than pathlib)
     "RUF012",  # Allow mutable class attributes (pydantic compat)
     "SIM108",  # Allow explicit if-else instead of ternary (easier to read)
     "TD003",   # Allow TODOs without ticket link (don't punish TODO writers)
@@ -144,7 +137,6 @@ select = ["ALL"]
     "D103",     # Allow missing docstring in public function
     "D107",     # Allow missing docstring in `__init__`
     "E501",     # Allow longer lines with test data
-    "ISC",      # Allow implicitly concatenated strings
     "N807",     # Allow mocking `__init__`
     "PLR0915",  # Allow functions with many statements
     "PLR2004",  # Allow comparing with static values

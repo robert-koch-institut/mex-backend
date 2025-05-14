@@ -77,7 +77,7 @@ def search_merged_items_in_graph(
     had_primary_source: list[str] | None = None,
     skip: int = 0,
     limit: int = 100,
-    validate_cardinality: Literal[False] = False,
+    validate_cardinality: Literal[False] = False,  # noqa: FBT002
 ) -> PreviewItemSearch: ...
 
 
@@ -89,7 +89,7 @@ def search_merged_items_in_graph(
     had_primary_source: list[str] | None = None,
     skip: int = 0,
     limit: int = 100,
-    validate_cardinality: Literal[True] = True,
+    validate_cardinality: Literal[True] = True,  # noqa: FBT002
 ) -> MergedItemSearch: ...
 
 
@@ -100,7 +100,7 @@ def search_merged_items_in_graph(  # noqa: PLR0913
     had_primary_source: list[str] | None = None,
     skip: int = 0,
     limit: int = 100,
-    validate_cardinality: Literal[True, False] = True,
+    validate_cardinality: Literal[True, False] = True,  # noqa: FBT002
 ) -> PreviewItemSearch | MergedItemSearch:
     """Search for merged items.
 
@@ -139,6 +139,6 @@ def search_merged_items_in_graph(  # noqa: PLR0913
         for item in result["items"]
     ]
 
-    if validate_cardinality:
+    if validate_cardinality is True:
         return MergedItemSearch(items=items, total=total)
     return PreviewItemSearch(items=items, total=total)

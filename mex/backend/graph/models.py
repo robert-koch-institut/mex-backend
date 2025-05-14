@@ -21,7 +21,7 @@ class EdgeExporter(RecordExporter):
         `shortName {position: 0}`
     """
 
-    def transform(self, x: Any) -> Any:
+    def transform(self, x: Any) -> Any:  # noqa: ANN401
         """Transform a value, or collection of values."""
         if isinstance(x, Relationship):
             properties = ", ".join(f"{k}: {x.get(k)!r}" for k in sorted(x))
@@ -47,7 +47,7 @@ class Result:
             )
         )
 
-    def __getitem__(self, key: str) -> Any:
+    def __getitem__(self, key: str) -> Any:  # noqa: ANN401
         """Proxy a getitem instruction to the first record if exactly one exists."""
         return self.one()[key]
 

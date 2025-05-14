@@ -21,7 +21,7 @@ class InconsistentGraphError(BackendError):
 class IngestionError(BackendError):
     """Error for ingestion failures with underlying details."""
 
-    def __init__(self, *args: Any, errors: Sequence[ErrorDetails] = ()) -> None:
+    def __init__(self, *args: Any, errors: Sequence[ErrorDetails] = ()) -> None:  # noqa: ANN401
         """Construct a new ingestion failure with underlying details."""
         super().__init__(*args)
         self._errors = list(errors)

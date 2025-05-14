@@ -122,7 +122,7 @@ def transform_model_into_ingest_data(model: AnyExtractedModel) -> IngestData:
     )
 
 
-def clean_dict(obj: Any) -> Any:
+def clean_dict(obj: Any) -> Any:  # noqa: ANN401
     """Clean `None` and `[]` from dicts."""
     if isinstance(obj, dict):
         cleaned = {}
