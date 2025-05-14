@@ -11,8 +11,9 @@ from neo4j import (
     NotificationDisabledCategory,
     Session,
 )
-from neo4j.exceptions import DriverError
+from neo4j.exceptions import Neo4jError
 from pydantic import Field
+from pydantic_core import ErrorDetails
 
 from mex.backend.fields import SEARCHABLE_CLASSES, SEARCHABLE_FIELDS
 from mex.backend.graph.exceptions import InconsistentGraphError, IngestionError
@@ -159,7 +160,7 @@ class GraphConnector(BaseConnector):
     @staticmethod
     def _should_giveup_commit(error: Exception) -> bool:
         """When to give up on committing."""
-        return not cast("DriverError", error).is_retryable()
+        return not cast("Neo4jError", error).is_retryable()
 
     @staticmethod
     def _on_commit_backoff(event: BackoffDetails) -> None:
@@ -167,7 +168,7 @@ class GraphConnector(BaseConnector):
         self = cast("GraphConnector", event["args"][0])
         try:
             self.close()
-        except DriverError as error:
+        except Neo4jError as error:
             logger.error("error closing before reconnect %s", error)
         self.driver = self._init_driver()
         self._check_connectivity_and_authentication()
@@ -196,7 +197,7 @@ class GraphConnector(BaseConnector):
 
     @backoff.on_exception(
         backoff.fibo,
-        DriverError,
+        Neo4jError,
         giveup=_should_giveup_commit,
         on_backoff=_on_commit_backoff,
         on_giveup=_on_commit_giveup,
@@ -585,8 +586,19 @@ class GraphConnector(BaseConnector):
                         data_out = IngestData.model_validate(result)
                         error_details = validate_ingested_data(data_in, data_out)
                         if error_details:
-                            msg = f"could not merge {model.entityType}"
+                            msg = f"Could not merge {model.entityType}"
                             raise IngestionError(msg, errors=error_details)
+                    except Neo4jError as error:
+                        tx.rollback()
+                        msg = f"{type(error).__name__} caused by {model.entityType}"
+                        details = ErrorDetails(
+                            type=error.code or "unknown",
+                            msg=error.message or "unknown",
+                            loc=(),
+                            input=data_in,
+                            ctx={"meta": error.metadata},
+                        )
+                        raise IngestionError(msg, errors=[details]) from None
                     except:
                         tx.rollback()
                         raise
