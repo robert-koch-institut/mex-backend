@@ -2,6 +2,7 @@ from collections.abc import Callable, Iterator
 from functools import cache
 from typing import Any, cast
 
+from neo4j import NotificationSeverity
 from neo4j import Result as Neo4jResult
 from neo4j._data import RecordExporter
 from neo4j.graph import Relationship
@@ -10,6 +11,7 @@ from typing_extensions import TypedDict
 
 from mex.backend.graph.exceptions import MultipleResultsFoundError, NoResultFoundError
 from mex.backend.logging import LOGGING_LINE_LENGTH
+from mex.common.logging import logger
 
 GraphValueType = None | str | int | list[str] | list[int]
 
@@ -61,6 +63,17 @@ class Result:
         if len(representation) > LOGGING_LINE_LENGTH:
             representation = f"{representation[:40]}... ...{representation[-40:]}"
         return representation
+
+    def log_notifications(self) -> None:
+        """Log neo4j notifications."""
+        for notification in self._summary.summary_notifications:
+            severity = notification.severity_level
+            if severity == NotificationSeverity.WARNING:
+                logger.warning("%r", notification)
+            elif severity == NotificationSeverity.INFORMATION:
+                logger.info("%r", notification)
+            else:
+                logger.debug("%r", notification)
 
     def all(self) -> list[dict[str, Any]]:
         """Return all records as a list."""
@@ -128,3 +141,13 @@ class IngestData(BaseModel):
     def sort_link_rels(cls, v: list[GraphRel]) -> list[GraphRel]:
         """Sort the rels by edge label and position."""
         return sorted(v, key=lambda x: (x["edgeLabel"], x["edgeProps"]["position"]))
+
+    def metadata(self) -> dict[str, int | str]:
+        """Return log-able metadata."""
+        return {
+            "createRels": len(self.createRels),
+            "identifier": self.identifier,
+            "linkRels": len(self.linkRels),
+            "nodeLabels": "|".join(self.nodeLabels),
+            "props": len(self.nodeProps),
+        }

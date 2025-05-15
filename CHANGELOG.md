@@ -9,7 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- log neo4j notification summary
+
 ### Changes
+
+- use neo4j driver retry instead of backoff
 
 ### Deprecated
 
