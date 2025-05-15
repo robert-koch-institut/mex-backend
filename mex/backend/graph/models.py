@@ -128,3 +128,13 @@ class IngestData(BaseModel):
     def sort_link_rels(cls, v: list[GraphRel]) -> list[GraphRel]:
         """Sort the rels by edge label and position."""
         return sorted(v, key=lambda x: (x["edgeLabel"], x["edgeProps"]["position"]))
+
+    def metadata(self) -> dict[str, int | str]:
+        """Return log-able metadata."""
+        return {
+            "createRels": len(self.createRels),
+            "identifier": self.identifier,
+            "linkRels": len(self.linkRels),
+            "nodeLabels": "|".join(self.nodeLabels),
+            "props": len(self.nodeProps),
+        }

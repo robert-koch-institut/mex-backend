@@ -1,19 +1,15 @@
-import json
 from collections.abc import Generator, Sequence
-from string import Template
 from typing import Annotated, Any, Literal, cast
 
-import backoff
-from backoff.types import Details as BackoffDetails
 from neo4j import (
     Driver,
     GraphDatabase,
     NotificationDisabledCategory,
     Session,
+    Transaction,
 )
 from neo4j.exceptions import Neo4jError
 from pydantic import Field
-from pydantic_core import ErrorDetails
 
 from mex.backend.fields import SEARCHABLE_CLASSES, SEARCHABLE_FIELDS
 from mex.backend.graph.exceptions import InconsistentGraphError, IngestionError
@@ -21,6 +17,7 @@ from mex.backend.graph.models import IngestData, Result
 from mex.backend.graph.query import Query, QueryBuilder
 from mex.backend.graph.transform import (
     expand_references_in_search_result,
+    get_error_details_from_neo4j_error,
     transform_edges_into_expectations_by_edge_locator,
     transform_model_into_ingest_data,
     validate_ingested_data,
@@ -35,7 +32,6 @@ from mex.common.fields import (
     REFERENCE_FIELDS_BY_CLASS_NAME,
     TEXT_FIELDS_BY_CLASS_NAME,
 )
-from mex.common.logging import logger
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
@@ -102,13 +98,15 @@ class GraphConnector(BaseConnector):
                 # mute warnings about labels used in queries but missing in graph
                 NotificationDisabledCategory.UNRECOGNIZED,
             ],
+            telemetry_disabled=True,
+            max_connection_pool_size=settings.backend_api_parallelization,
+            max_transaction_retry_time=30.0,
         )
 
     def _check_connectivity_and_authentication(self) -> Result:
         """Check the connectivity and authentication to the graph."""
         query_builder = QueryBuilder.get()
-        # use `_do_commit` to avoid recursive retries
-        result = self._do_commit(query_builder.fetch_database_status())
+        result = self.commit(query_builder.fetch_database_status())
         if (status := result["currentStatus"]) != "online":
             msg = f"Database is {status}."
             raise MExError(msg) from None
@@ -157,55 +155,6 @@ class GraphConnector(BaseConnector):
         """Close the connector's underlying requests session."""
         self.driver.close()
 
-    @staticmethod
-    def _should_giveup_commit(error: Exception) -> bool:
-        """When to give up on committing."""
-        return not cast("Neo4jError", error).is_retryable()
-
-    @staticmethod
-    def _on_commit_backoff(event: BackoffDetails) -> None:
-        """Re-connect to the graph database."""
-        self = cast("GraphConnector", event["args"][0])
-        try:
-            self.close()
-        except Neo4jError as error:
-            logger.error("error closing before reconnect %s", error)
-        self.driver = self._init_driver()
-        self._check_connectivity_and_authentication()
-
-    @staticmethod
-    def _on_commit_giveup(event: BackoffDetails) -> None:
-        """Log the query when giving up on committing."""
-        query = cast("Query | str", event["args"][1])
-        kwargs = event["kwargs"]
-        settings = BackendSettings.get()
-        if settings.debug:
-            params = {k: json.dumps(v, ensure_ascii=False) for k, v in kwargs.items()}
-            message = f"\n{Template(str(query)).safe_substitute(params)}"
-        else:
-            message = f": {query!r}"
-        logger.error("error committing query%s", message)
-
-    def _do_commit(
-        self,
-        query: Query | str,
-        session: Session | None = None,
-        **parameters: Any,  # noqa: ANN401
-    ) -> Result:
-        """Send and commit a single graph transaction."""
-        if session:
-            return Result(session.run(str(query), parameters))
-        with self.driver.session() as closing_session:
-            return Result(closing_session.run(str(query), parameters))
-
-    @backoff.on_exception(
-        backoff.fibo,
-        Neo4jError,
-        giveup=_should_giveup_commit,
-        on_backoff=_on_commit_backoff,
-        on_giveup=_on_commit_giveup,
-        max_time=10,  # seconds
-    )
     def commit(
         self,
         query: Query | str,
@@ -213,7 +162,10 @@ class GraphConnector(BaseConnector):
         **parameters: Any,  # noqa: ANN401
     ) -> Result:
         """Send and commit a single graph transaction with retry configuration."""
-        return self._do_commit(query, session=session, **parameters)
+        if session:
+            return Result(session.run(str(query), parameters))
+        with self.driver.session() as closing_session:
+            return Result(closing_session.run(str(query), parameters))
 
     def _fetch_extracted_or_rule_items(  # noqa: PLR0913
         self,
@@ -574,6 +526,27 @@ class GraphConnector(BaseConnector):
 
         return result
 
+    def ingest_v2_tx(self, tx: Transaction, query: str, data_in: IngestData) -> None:
+        """Ingest a single item in a database transaction."""
+        try:
+            tx_result = tx.run(query, data=data_in.model_dump())
+            result = Result(tx_result).one()
+            data_out = IngestData.model_validate(result)
+            error_details = validate_ingested_data(data_in, data_out)
+            if error_details:
+                msg = f"Could not merge {data_in.nodeLabels}"
+                raise IngestionError(msg, errors=error_details)
+        except Neo4jError as error:
+            tx.rollback()
+            msg = f"{type(error).__name__} caused by {data_in.nodeLabels}"
+            error_details = get_error_details_from_neo4j_error(data_in, error)
+            raise IngestionError(msg, errors=error_details) from None
+        except:
+            tx.rollback()
+            raise
+        else:
+            tx.commit()
+
     def ingest_v2(
         self,
         models: Sequence[AnyExtractedModel | AnyRuleSetResponse],
@@ -585,31 +558,10 @@ class GraphConnector(BaseConnector):
                 if isinstance(model, AnyRuleSetResponse):
                     raise NotImplementedError(AnyRuleSetResponse)
                 data_in = transform_model_into_ingest_data(model)
-                with session.begin_transaction() as tx:
-                    try:
-                        tx_result = tx.run(query, data=data_in.model_dump())
-                        result = Result(tx_result).one()
-                        data_out = IngestData.model_validate(result)
-                        error_details = validate_ingested_data(data_in, data_out)
-                        if error_details:
-                            msg = f"Could not merge {model.entityType}"
-                            raise IngestionError(msg, errors=error_details)
-                    except Neo4jError as error:
-                        tx.rollback()
-                        msg = f"{type(error).__name__} caused by {model.entityType}"
-                        details = ErrorDetails(
-                            type=error.code or "unknown",
-                            msg=error.message or "unknown",
-                            loc=(),
-                            input=data_in,
-                            ctx={"meta": error.metadata},
-                        )
-                        raise IngestionError(msg, errors=[details]) from None
-                    except:
-                        tx.rollback()
-                        raise
-                    else:
-                        tx.commit()
+                with session.begin_transaction(
+                    timeout=10.0, metadata=data_in.metadata()
+                ) as tx:
+                    self.ingest_v2_tx(tx, query, data_in)
                 yield
 
     def ingest(

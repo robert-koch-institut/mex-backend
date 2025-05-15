@@ -1,6 +1,7 @@
 from itertools import groupby
 from typing import Any, TypedDict
 
+from neo4j.exceptions import Neo4jError
 from pydantic_core import ErrorDetails
 
 from mex.backend.graph.models import GraphRel, IngestData
@@ -155,3 +156,18 @@ def validate_ingested_data(
                 )
             )
     return error_details
+
+
+def get_error_details_from_neo4j_error(
+    data_in: IngestData, error: Neo4jError
+) -> list[ErrorDetails]:
+    """Convert ingest-data and a neo4j error into error details."""
+    return [
+        ErrorDetails(
+            type=error.code or "unknown",
+            msg=error.message or "unknown",
+            loc=(),
+            input=data_in,
+            ctx={"meta": error.metadata},
+        )
+    ]
