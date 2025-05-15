@@ -32,6 +32,7 @@ from mex.common.fields import (
     REFERENCE_FIELDS_BY_CLASS_NAME,
     TEXT_FIELDS_BY_CLASS_NAME,
 )
+from mex.common.logging import logger
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
@@ -115,7 +116,7 @@ class GraphConnector(BaseConnector):
     def _seed_constraints(self) -> list[Result]:
         """Ensure uniqueness constraints are enabled for all entity types."""
         query_builder = QueryBuilder.get()
-        return [
+        results = [
             self.commit(
                 query_builder.create_identifier_uniqueness_constraint(
                     node_label=class_name
@@ -125,6 +126,8 @@ class GraphConnector(BaseConnector):
                 set(EXTRACTED_MODEL_CLASSES_BY_NAME) | set(MERGED_MODEL_CLASSES_BY_NAME)
             )
         ]
+        logger.info("seeded identifier uniqueness constraints")
+        return results
 
     def _seed_indices(self) -> Result:
         """Ensure there is a full text search index for all searchable fields."""
@@ -136,7 +139,8 @@ class GraphConnector(BaseConnector):
         ):
             # only drop the index if the classes or fields have changed
             self.commit(query_builder.drop_full_text_search_index())
-        return self.commit(
+            logger.info("searchable fields changed: dropped indices")
+        result = self.commit(
             query_builder.create_full_text_search_index(
                 node_labels=SEARCHABLE_CLASSES,
                 search_fields=SEARCHABLE_FIELDS,
@@ -146,10 +150,13 @@ class GraphConnector(BaseConnector):
                 "fulltext.analyzer": "german",
             },
         )
+        logger.info("created full text search index")
+        return result
 
     def _seed_data(self) -> None:
         """Ensure the primary source `mex` is seeded and linked to itself."""
         self.ingest([cast("ExtractedPrimarySource", MEX_EXTRACTED_PRIMARY_SOURCE)])
+        logger.info("seeded mex primary source")
 
     def close(self) -> None:
         """Close the connector's underlying requests session."""
