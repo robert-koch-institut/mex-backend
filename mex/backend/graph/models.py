@@ -10,7 +10,8 @@ from pydantic import BaseModel, field_validator
 from typing_extensions import TypedDict
 
 from mex.backend.graph.exceptions import MultipleResultsFoundError, NoResultFoundError
-from mex.backend.logging import LOGGING_LINE_LENGTH, logger
+from mex.backend.logging import LOGGING_LINE_LENGTH
+from mex.common.logging import logger
 
 GraphValueType = None | str | int | list[str] | list[int]
 
