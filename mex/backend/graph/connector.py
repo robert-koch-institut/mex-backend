@@ -530,8 +530,9 @@ class GraphConnector(BaseConnector):
         """Ingest a single item in a database transaction."""
         try:
             tx_result = tx.run(query, data=data_in.model_dump())
-            result = Result(tx_result).one()
-            data_out = IngestData.model_validate(result)
+            result = Result(tx_result)
+            result.log_notifications()
+            data_out = IngestData.model_validate(result.one())
             error_details = validate_ingested_data(data_in, data_out)
             if error_details:
                 msg = f"Could not merge {data_in.nodeLabels}"
