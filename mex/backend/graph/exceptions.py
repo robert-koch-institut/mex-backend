@@ -21,11 +21,21 @@ class InconsistentGraphError(BackendError):
 class IngestionError(BackendError):
     """Error for ingestion failures with underlying details."""
 
-    def __init__(self, *args: Any, errors: Sequence[ErrorDetails] = ()) -> None:  # noqa: ANN401
+    def __init__(
+        self,
+        *args: Any,  # noqa: ANN401
+        errors: Sequence[ErrorDetails] = (),
+        retryable: bool = False,
+    ) -> None:
         """Construct a new ingestion failure with underlying details."""
         super().__init__(*args)
         self._errors = list(errors)
+        self._retryable = retryable
 
     def errors(self) -> list[ErrorDetails]:
         """Details about underlying errors."""
         return self._errors
+
+    def is_retryable(self) -> bool:
+        """Whether the error is retryable."""
+        return self._retryable
