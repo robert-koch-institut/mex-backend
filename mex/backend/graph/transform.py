@@ -1,9 +1,13 @@
 from itertools import groupby
-from typing import Any, TypedDict
+from typing import Any, TypedDict, cast
 
 from neo4j.exceptions import Neo4jError
 from pydantic_core import ErrorDetails
 
+from mex.backend.fields import (
+    REFERENCED_ENTITY_TYPES_BY_CLASS_NAME,
+    REFERENCED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME,
+)
 from mex.backend.graph.models import GraphRel, IngestData
 from mex.common.fields import (
     FINAL_FIELDS_BY_CLASS_NAME,
@@ -14,7 +18,7 @@ from mex.common.fields import (
 )
 from mex.common.models import AnyExtractedModel
 from mex.common.transform import ensure_prefix, to_key_and_values
-from mex.common.types import AnyPrimitiveType, Link, Text
+from mex.common.types import NESTED_MODEL_CLASSES_BY_NAME, AnyPrimitiveType, Link, Text
 
 
 class _SearchResultReference(TypedDict):
@@ -69,9 +73,11 @@ def transform_model_into_ingest_data(model: AnyExtractedModel) -> IngestData:
     link_fields = LINK_FIELDS_BY_CLASS_NAME[model.entityType]
     mutable_fields = MUTABLE_FIELDS_BY_CLASS_NAME[model.entityType]
     final_fields = FINAL_FIELDS_BY_CLASS_NAME[model.entityType]
-    ref_fields = sorted(
-        set(REFERENCE_FIELDS_BY_CLASS_NAME[model.entityType]) - {"stableTargetId"}
-    )
+    ref_fields_for_class = REFERENCE_FIELDS_BY_CLASS_NAME[model.entityType]
+    ref_fields = sorted(set(ref_fields_for_class) - {"stableTargetId"})
+    ref_field_types = REFERENCED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME[model.entityType]
+    ref_types_for_class = REFERENCED_ENTITY_TYPES_BY_CLASS_NAME[model.entityType]
+    all_ref_types = sorted(set(ref_types_for_class) | {merged_label})
 
     mutable_values = model.model_dump(include=set(mutable_fields))
     final_values = model.model_dump(include=set(final_fields))
@@ -105,7 +111,7 @@ def transform_model_into_ingest_data(model: AnyExtractedModel) -> IngestData:
                 GraphRel(
                     edgeLabel=field,
                     edgeProps={"position": position},
-                    nodeLabels=[],  # list(MERGED_MODEL_CLASSES_BY_NAME),
+                    nodeLabels=ref_field_types[field],
                     nodeProps={"identifier": identifier},
                 )
             )
@@ -118,8 +124,10 @@ def transform_model_into_ingest_data(model: AnyExtractedModel) -> IngestData:
         nodeProps=all_values,
         linkRels=link_rels,
         createRels=create_rels,
-        detachNodes=ref_fields,
-        deleteNodes=[*text_fields, *link_fields],
+        detachNodeEdges=ref_fields,
+        allReferencedLabels=all_ref_types,
+        deleteNodeEdges=[*text_fields, *link_fields],
+        allNestedLabels=sorted(NESTED_MODEL_CLASSES_BY_NAME),
     )
 
 
@@ -137,12 +145,23 @@ def clean_dict(obj: Any) -> Any:  # noqa: ANN401
     return obj
 
 
+def get_graph_rel_id(rel: GraphRel) -> tuple[str, int]:
+    """Returns a string uniquely identifying the GraphRel."""
+    return rel["edgeLabel"], cast("int", rel["edgeProps"]["position"])
+
+
 def validate_ingested_data(
     data_in: IngestData, data_out: IngestData
 ) -> list[ErrorDetails]:
     """Validate that the ingestion has been executed successfully."""
     error_details = []
-    for field in IngestData.model_fields:
+    for field in (
+        "stableTargetId",
+        "identifier",
+        "mergedLabels",
+        "nodeLabels",
+        "nodeProps",
+    ):
         value_in = clean_dict(getattr(data_in, field))
         value_out = clean_dict(getattr(data_out, field))
         if value_out != value_in:
@@ -155,6 +174,61 @@ def validate_ingested_data(
                     ctx={"expected": value_in},
                 )
             )
+    for rel_field in (
+        "linkRels",
+        "createRels",
+    ):
+        in_lookup = {
+            get_graph_rel_id(rel): cast("GraphRel", rel)
+            for rel in getattr(data_in, rel_field)
+        }
+        out_lookup = {
+            get_graph_rel_id(rel): cast("GraphRel", rel)
+            for rel in getattr(data_out, rel_field)
+        }
+        for rel_id, out_rel in out_lookup.items():
+            in_rel = in_lookup.get(rel_id)
+            if not in_rel:
+                error_details.append(
+                    ErrorDetails(
+                        type="transaction_failed",
+                        msg="ingestion would have created unexpected relation",
+                        loc=(rel_field, *rel_id),
+                        input=out_rel,
+                        ctx={"expected": None},
+                    )
+                )
+            elif not set(out_rel["nodeLabels"]) <= set(in_rel["nodeLabels"]):
+                error_details.append(
+                    ErrorDetails(
+                        type="transaction_failed",
+                        msg="referenced node contains unexpected labels",
+                        loc=(rel_field, *rel_id, "nodeLabels"),
+                        input=out_rel["nodeLabels"],
+                        ctx={"expected": in_rel["nodeLabels"]},
+                    )
+                )
+            elif out_rel["nodeProps"] != in_rel["nodeProps"]:
+                error_details.append(
+                    ErrorDetails(
+                        type="transaction_failed",
+                        msg="referenced node contains unexpected properties",
+                        loc=(rel_field, *rel_id, "nodeProps"),
+                        input=out_rel["nodeProps"],
+                        ctx={"expected": in_rel["nodeProps"]},
+                    )
+                )
+        for rel_id, in_rel in in_lookup.items():
+            if rel_id not in out_lookup:
+                error_details.append(
+                    ErrorDetails(
+                        type="transaction_failed",
+                        msg="ingestion failed to create expected relation",
+                        loc=(rel_field, *rel_id),
+                        input=None,
+                        ctx={"expected": in_rel},
+                    )
+                )
     return error_details
 
 

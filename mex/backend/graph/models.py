@@ -127,8 +127,10 @@ class IngestData(BaseModel):
     nodeProps: dict[str, GraphValueType]
     linkRels: list[GraphRel]
     createRels: list[GraphRel]
-    detachNodes: list[str] = []
-    deleteNodes: list[str] = []
+    detachNodeEdges: list[str] = []
+    allReferencedLabels: list[str] = []
+    deleteNodeEdges: list[str] = []
+    allNestedLabels: list[str] = []
 
     @field_validator("createRels", mode="before")
     @classmethod

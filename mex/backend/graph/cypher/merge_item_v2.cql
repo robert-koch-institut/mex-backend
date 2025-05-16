@@ -12,39 +12,39 @@ WITH main, merged, data
 
 <# create Text/Link nodes and connect them to extracted/rule item -#>
 CALL (main, data) {
-    UNWIND data.createRels AS rel
-    MERGE (main)-[newEdge:$(rel.edgeLabel) {position: rel.edgeProps.position}]->(target:$(rel.nodeLabels))
-    SET target += rel.nodeProps
-    RETURN collect(newEdge) as newCreateEdges
+    UNWIND data.createRels AS createRel
+    MERGE (main)-[newCreateEdge:$(createRel.edgeLabel) {position: createRel.edgeProps.position}]->(creationTarget:$(createRel.nodeLabels))
+    SET creationTarget += createRel.nodeProps
+    RETURN collect(newCreateEdge) as newCreateEdges
 }
 
 <# connect extracted/rule item to referenced merged items -#>
 CALL (main, data) {
-    UNWIND data.linkRels AS rel
-    MATCH (target:$(rel.nodeLabels) {identifier: rel.nodeProps.identifier})
-    MERGE (main)-[newEdge:$(rel.edgeLabel) {position: rel.edgeProps.position}]->(target)
-    RETURN collect(newEdge) as newLinkEdges
+    UNWIND data.linkRels AS linkRel
+    MATCH (linkTarget:$(linkRel.nodeLabels) {identifier: linkRel.nodeProps.identifier})
+    MERGE (main)-[newLinkEdge:$(linkRel.edgeLabel) {position: linkRel.edgeProps.position}]->(linkTarget)
+    RETURN collect(newLinkEdge) as newLinkEdges
 }
 
 <# delete referenced Text/Link nodes and their edges that are not in $data -#>
 CALL (main, newCreateEdges, data) {
-    OPTIONAL MATCH (main)-[gcEdge]->(gcNode)
-        WHERE TYPE(gcEdge) IN data.deleteNodes
+    OPTIONAL MATCH (main)-[gcEdge]->(gcNode:$(data.allNestedLabels))
+        WHERE TYPE(gcEdge) IN data.deleteNodeEdges
         AND NOT gcEdge IN newCreateEdges
     DETACH DELETE gcNode
 }
 
 <# delete edges to merged nodes that are not in $data -#>
 CALL (main, newLinkEdges, data) {
-    OPTIONAL MATCH (main)-[gcEdge]->()
-    WHERE TYPE(gcEdge) IN data.detachNodes
+    OPTIONAL MATCH (main)-[gcEdge]->(:$(data.allReferencedLabels))
+    WHERE TYPE(gcEdge) IN data.detachNodeEdges
     AND NOT gcEdge IN newLinkEdges
     DELETE gcEdge
 }
 
 <# get all relations to merged items that are not of relation type "stableTargetId" -#>
-CALL (main) {
-    MATCH (main)-[linkEdge]->(linkNode:<<merged_labels|join("|")>>)
+CALL (main, data) {
+    MATCH (main)-[linkEdge]->(linkNode:$(data.allReferencedLabels))
     WHERE type(linkEdge) <> "stableTargetId"
     ORDER BY type(linkEdge), linkEdge.position
     RETURN collect(
@@ -58,8 +58,8 @@ CALL (main) {
 }
 
 <# get all relations to nested items -#>
-CALL (main) {
-    MATCH (main)-[createEdge]->(createNode:<<nested_labels|join("|")>>)
+CALL (main, data) {
+    MATCH (main)-[createEdge]->(createNode:$(data.allNestedLabels))
     ORDER BY type(createEdge), createEdge.position
     RETURN collect(
         {
@@ -79,6 +79,4 @@ RETURN
     labels(main) AS nodeLabels,
     properties(main) AS nodeProps,
     linkRels AS linkRels,
-    createRels AS createRels,
-    data.deleteNodes as deleteNodes,
-    data.detachNodes as detachNodes;
+    createRels AS createRels;
