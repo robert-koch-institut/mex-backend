@@ -27,6 +27,10 @@ class BackendError(MExError):
             return self.__cause__.errors()
         return []
 
+    def is_retryable(self) -> bool:
+        """Whether the error is retryable."""
+        return False
+
 
 class DebuggingScope(BaseModel, extra="ignore"):
     """Scope for debugging info of error responses."""
@@ -66,7 +70,11 @@ def handle_detailed_error(request: Request, exc: Exception) -> Response:
                 scope=DebuggingScope.model_validate(request.scope),
             ),
         ).model_dump_json(),
-        status_code=status.HTTP_400_BAD_REQUEST,
+        status_code=(
+            status.HTTP_429_TOO_MANY_REQUESTS
+            if isinstance(exc, BackendError) and exc.is_retryable()
+            else status.HTTP_400_BAD_REQUEST
+        ),
         media_type="application/json",
     )
 

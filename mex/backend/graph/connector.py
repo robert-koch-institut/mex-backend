@@ -546,9 +546,11 @@ class GraphConnector(BaseConnector):
                 raise IngestionError(msg, errors=error_details)
         except Neo4jError as error:
             tx.rollback()
-            msg = f"{type(error).__name__} caused by {data_in.nodeLabels}"
-            error_details = get_error_details_from_neo4j_error(data_in, error)
-            raise IngestionError(msg, errors=error_details) from None
+            raise IngestionError(
+                f"{type(error).__name__} caused by {data_in.nodeLabels}",  # noqa: EM102
+                errors=get_error_details_from_neo4j_error(data_in, error),
+                retryable=error.is_retryable(),
+            ) from None
         except:
             tx.rollback()
             raise
