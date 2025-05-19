@@ -9,8 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- better logging for detailed and uncaught exception handling
-
 ### Changes
 
 ### Deprecated
@@ -20,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [0.37.3] - 2025-05-19
+
+### Added
+
+- better logging for detailed and uncaught exception handling
 
 ## [0.37.2] - 2025-05-19
 
