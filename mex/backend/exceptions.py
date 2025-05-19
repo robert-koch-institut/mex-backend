@@ -57,39 +57,47 @@ class ErrorResponse(BaseModel):
     debug: DebuggingInfo
 
 
+def _handle_exception(
+    exc: Exception, status_code: int, info: DebuggingInfo
+) -> Response:
+    error_response = ErrorResponse(message=str(exc).strip(" "), debug=info)
+    response_body = error_response.model_dump_json(indent=4)
+    logger.exception(
+        "%s - %s - \n%s",
+        status_code,
+        type(exc).__name__,
+        response_body,
+    )
+    return Response(
+        content=response_body,
+        status_code=status_code,
+        media_type="application/json",
+    )
+
+
 def handle_detailed_error(request: Request, exc: Exception) -> Response:
     """Handle detailed errors and provide debugging info."""
-    logger.exception("%s %s", type(exc), exc)
-    return Response(
-        content=ErrorResponse(
-            message=str(exc).strip(" "),
-            debug=DebuggingInfo(
-                errors=[
-                    jsonable_encoder(e) for e in cast("DetailedError", exc).errors()
-                ],
-                scope=DebuggingScope.model_validate(request.scope),
-            ),
-        ).model_dump_json(),
+    return _handle_exception(
+        exc,
         status_code=(
             status.HTTP_429_TOO_MANY_REQUESTS
             if isinstance(exc, BackendError) and exc.is_retryable()
             else status.HTTP_400_BAD_REQUEST
         ),
-        media_type="application/json",
+        info=DebuggingInfo(
+            errors=[jsonable_encoder(e) for e in cast("DetailedError", exc).errors()],
+            scope=DebuggingScope.model_validate(request.scope),
+        ),
     )
 
 
 def handle_uncaught_exception(request: Request, exc: Exception) -> Response:
     """Handle uncaught errors and provide debugging info."""
-    logger.exception("UncaughtError %s", exc)
-    return Response(
-        content=ErrorResponse(
-            message=str(exc).strip(" "),
-            debug=DebuggingInfo(
-                errors=[{"type": type(exc).__name__}],
-                scope=DebuggingScope.model_validate(request.scope),
-            ),
-        ).model_dump_json(),
+    return _handle_exception(
+        exc,
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        media_type="application/json",
+        info=DebuggingInfo(
+            errors=[{"type": type(exc).__name__}],
+            scope=DebuggingScope.model_validate(request.scope),
+        ),
     )
