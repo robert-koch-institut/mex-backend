@@ -2,6 +2,8 @@ from collections.abc import Generator, Sequence
 from typing import Annotated, Any, Literal, cast
 
 from neo4j import (
+    READ_ACCESS,
+    WRITE_ACCESS,
     Driver,
     GraphDatabase,
     NotificationDisabledCategory,
@@ -101,7 +103,7 @@ class GraphConnector(BaseConnector):
             ],
             telemetry_disabled=True,
             max_connection_pool_size=settings.backend_api_parallelization,
-            max_transaction_retry_time=30.0,
+            max_transaction_retry_time=settings.graph_session_timeout,
         )
 
     def _check_connectivity_and_authentication(self) -> Result:
@@ -165,13 +167,14 @@ class GraphConnector(BaseConnector):
     def commit(
         self,
         query: Query | str,
+        /,
         session: Session | None = None,
         **parameters: Any,  # noqa: ANN401
     ) -> Result:
         """Send and commit a single graph transaction with retry configuration."""
         if session:
             return Result(session.run(str(query), parameters))
-        with self.driver.session() as closing_session:
+        with self.driver.session(default_access_mode=READ_ACCESS) as closing_session:
             return Result(closing_session.run(str(query), parameters))
 
     def _fetch_extracted_or_rule_items(  # noqa: PLR0913
@@ -562,14 +565,16 @@ class GraphConnector(BaseConnector):
         models: Sequence[AnyExtractedModel | AnyRuleSetResponse],
     ) -> Generator[None, None, None]:
         """Ingest a list of models into the graph as nodes and connect all edges."""
+        settings = BackendSettings.get()
         query = str(QueryBuilder.get().merge_item_v2())
-        with self.driver.session() as session:
+        with self.driver.session(default_access_mode=WRITE_ACCESS) as session:
             for model in models:
                 if isinstance(model, AnyRuleSetResponse):
                     raise NotImplementedError(AnyRuleSetResponse)
                 data_in = transform_model_into_ingest_data(model)
                 with session.begin_transaction(
-                    timeout=10.0, metadata=data_in.metadata()
+                    timeout=settings.graph_tx_timeout,
+                    metadata=data_in.metadata(),
                 ) as tx:
                     self.ingest_v2_tx(tx, query, data_in)
                 yield
@@ -588,7 +593,7 @@ class GraphConnector(BaseConnector):
         Args:
             models: Sequence of extracted models
         """
-        with self.driver.session() as session:
+        with self.driver.session(default_access_mode=WRITE_ACCESS) as session:
             for model in models:
                 if isinstance(model, AnyRuleSetResponse):
                     for rule in (model.additive, model.subtractive, model.preventive):

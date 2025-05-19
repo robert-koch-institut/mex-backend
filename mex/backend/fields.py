@@ -1,5 +1,6 @@
 from itertools import chain
 
+from mex.backend.utils import contains_any_types
 from mex.common.fields import (
     ALL_MODEL_CLASSES_BY_NAME,
     EMAIL_FIELDS_BY_CLASS_NAME,
@@ -7,7 +8,7 @@ from mex.common.fields import (
     STRING_FIELDS_BY_CLASS_NAME,
 )
 from mex.common.types import MERGED_IDENTIFIER_CLASSES
-from mex.common.utils import contains_only_types, get_all_fields
+from mex.common.utils import get_all_fields
 
 # fields that should be indexed as searchable fields
 SEARCHABLE_FIELDS = sorted(
@@ -37,9 +38,10 @@ SEARCHABLE_CLASSES = sorted(
 REFERENCED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME = {
     class_name: {
         field_name: sorted(
+            # TODO(ND): move this into mex-common instead of relying on convention
             identifier_class.__name__.removesuffix("Identifier")
             for identifier_class in MERGED_IDENTIFIER_CLASSES
-            if contains_only_types(
+            if contains_any_types(
                 get_all_fields(ALL_MODEL_CLASSES_BY_NAME[class_name])[field_name],
                 identifier_class,
             )
@@ -52,5 +54,7 @@ REFERENCED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME = {
 # all referenced entity types grouped by class name
 REFERENCED_ENTITY_TYPES_BY_CLASS_NAME = {
     class_name: sorted(chain(*types_by_field.values()))
-    for class_name, types_by_field in REFERENCED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME.items()
+    for class_name, types_by_field in (
+        REFERENCED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME.items()
+    )
 }

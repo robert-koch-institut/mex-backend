@@ -49,7 +49,7 @@ CALL (main, data) {
     ORDER BY type(linkEdge), linkEdge.position
     RETURN collect(
         {
-            nodeLabels: [],
+            nodeLabels: labels(linkNode),
             nodeProps: properties(linkNode),
             edgeLabel: type(linkEdge),
             edgeProps: properties(linkEdge)
