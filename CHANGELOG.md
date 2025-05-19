@@ -11,8 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- BREAKING: return status code 429 for retryable ingestion errors
-
 ### Deprecated
 
 ### Removed
@@ -20,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [0.37.2] - 2025-05-19
+
+### Changes
+
+- BREAKING: return status code 429 for retryable ingestion errors
 
 ## [0.37.1] - 2025-05-15
 
