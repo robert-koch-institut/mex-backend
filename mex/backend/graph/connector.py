@@ -118,40 +118,49 @@ class GraphConnector(BaseConnector):
     def _seed_constraints(self) -> list[Result]:
         """Ensure uniqueness constraints are enabled for all entity types."""
         query_builder = QueryBuilder.get()
-        results = [
-            self.commit(
-                query_builder.create_identifier_uniqueness_constraint(
-                    node_label=class_name
+        with self.driver.session(default_access_mode=WRITE_ACCESS) as session:
+            results = [
+                self.commit(
+                    query_builder.create_identifier_uniqueness_constraint(
+                        node_label=class_name
+                    ),
+                    session=session,
                 )
-            )
-            for class_name in sorted(
-                set(EXTRACTED_MODEL_CLASSES_BY_NAME) | set(MERGED_MODEL_CLASSES_BY_NAME)
-            )
-        ]
+                for class_name in sorted(
+                    set(EXTRACTED_MODEL_CLASSES_BY_NAME)
+                    | set(MERGED_MODEL_CLASSES_BY_NAME)
+                )
+            ]
         logger.info("seeded identifier uniqueness constraints")
         return results
 
     def _seed_indices(self) -> Result:
         """Ensure there is a full text search index for all searchable fields."""
         query_builder = QueryBuilder.get()
-        result = self.commit(query_builder.fetch_full_text_search_index())
-        if (index := result.one_or_none()) and (
-            set(index["node_labels"]) != set(SEARCHABLE_CLASSES)
-            or set(index["search_fields"]) != set(SEARCHABLE_FIELDS)
-        ):
-            # only drop the index if the classes or fields have changed
-            self.commit(query_builder.drop_full_text_search_index())
-            logger.info("searchable fields changed: dropped indices")
-        result = self.commit(
-            query_builder.create_full_text_search_index(
-                node_labels=SEARCHABLE_CLASSES,
-                search_fields=SEARCHABLE_FIELDS,
-            ),
-            index_config={
-                "fulltext.eventually_consistent": True,
-                "fulltext.analyzer": "german",
-            },
-        )
+        with self.driver.session(default_access_mode=WRITE_ACCESS) as session:
+            result = self.commit(
+                query_builder.fetch_full_text_search_index(), session=session
+            )
+            if (index := result.one_or_none()) and (
+                set(index["node_labels"]) != set(SEARCHABLE_CLASSES)
+                or set(index["search_fields"]) != set(SEARCHABLE_FIELDS)
+            ):
+                # only drop the index if the classes or fields have changed
+                self.commit(
+                    query_builder.drop_full_text_search_index(), session=session
+                )
+                logger.info("searchable fields changed: dropped indices")
+            result = self.commit(
+                query_builder.create_full_text_search_index(
+                    node_labels=SEARCHABLE_CLASSES,
+                    search_fields=SEARCHABLE_FIELDS,
+                ),
+                session=session,
+                index_config={
+                    "fulltext.eventually_consistent": True,
+                    "fulltext.analyzer": "german",
+                },
+            )
         logger.info("created full text search index")
         return result
 
@@ -627,11 +636,14 @@ class GraphConnector(BaseConnector):
         """Flush the database (only in debug mode)."""
         settings = BackendSettings.get()
         if settings.debug is True:
-            self.driver.execute_query("MATCH (n) DETACH DELETE n;")
-            for row in self.driver.execute_query("SHOW ALL CONSTRAINTS;").records:
-                self.driver.execute_query(f"DROP CONSTRAINT {row['name']};")
-            for row in self.driver.execute_query("SHOW ALL INDEXES;").records:
-                self.driver.execute_query(f"DROP INDEX {row['name']};")
+            with self.driver.session(default_access_mode=WRITE_ACCESS) as session:
+                session.run("MATCH (n) DETACH DELETE n;")
+                constraints = session.run("SHOW ALL CONSTRAINTS;")
+                for row in constraints.to_eager_result().records:
+                    session.run(f"DROP CONSTRAINT {row['name']};")
+                indexes = session.run("SHOW ALL INDEXES;")
+                for row in indexes.to_eager_result().records:
+                    session.run(f"DROP INDEX {row['name']};")
         else:
             msg = "database flush was attempted outside of debug mode"
             raise MExError(msg)

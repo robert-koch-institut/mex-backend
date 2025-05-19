@@ -11,7 +11,7 @@ john_doe_response = {
     "affiliation": [],
     "email": [],
     "familyName": ["Doe"],
-    "fullName": [],
+    "fullName": ["Doe, John"],
     "givenName": ["John"],
     "isniId": [],
     "memberOf": [],

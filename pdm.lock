@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:bd800e5b11c3221211650693de68973262a7b1abbb5b873debf45813db7c0592"
+content_hash = "sha256:b707c5dc674f162fc08263369cc73610282b4e42c16404b45aa7a8830dd15905"
 
 [[metadata.targets]]
 requires_python = "==3.11.*"
@@ -606,28 +606,28 @@ files = [
 
 [[package]]
 name = "mex-artificial"
-version = "0.4.1"
+version = "0.4.2"
 requires_python = ">=3.11,<3.13"
 git = "https://github.com/robert-koch-institut/mex-artificial.git"
-ref = "0.4.1"
-revision = "2c96f37c5f6dd8caadb9c2b7107a199e0ebe58c7"
+ref = "0.4.2"
+revision = "846e5d35bf2283463a938e00b5282adbbd99152c"
 summary = "Create artificial data for the MEx project."
 groups = ["dev"]
 dependencies = [
-    "annotated-types<1,<=0.7",
+    "annotated-types<=0.7",
     "faker<38,>=37",
-    "mex-common @ git+https://github.com/robert-koch-institut/mex-common.git@0.59.2",
-    "pydantic<3,>=2",
-    "typer<1,>=0.13",
+    "mex-common @ git+https://github.com/robert-koch-institut/mex-common.git@0.61.1",
+    "pydantic>=2",
+    "typer>=0.13",
 ]
 
 [[package]]
 name = "mex-common"
-version = "0.60.0"
+version = "0.61.1"
 requires_python = ">=3.11,<3.12"
 git = "https://github.com/robert-koch-institut/mex-common.git"
-ref = "0.60.0"
-revision = "f727d157c2ea89dd0e5d0925531c235a789c0133"
+ref = "0.61.1"
+revision = "564e9d41c4be9fc9c7b9d36c9c49b1dbe61c319e"
 summary = "Common library for MEx python projects."
 groups = ["default", "dev"]
 dependencies = [
