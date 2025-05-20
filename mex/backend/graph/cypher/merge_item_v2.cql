@@ -1,65 +1,57 @@
 WITH $data AS data
 
 <# create merged node if not exist -#>
-MERGE (merged:$(data.mergedLabels) {identifier: data.stableTargetId})
+MERGE (merged:<<params.merged_label>> {identifier: data.stableTargetId})
 <# create extracted/rule node if not exists -#>
-MERGE (main:$(data.nodeLabels) {identifier: data.identifier})
+MERGE (main:<<params.node_label>> {identifier: data.identifier})
 <# connect extracted/rule node with merged node -#>
 MERGE (main)-[:stableTargetId {position: 0}]->(merged)
 SET main += data.nodeProps
 
-WITH main, merged, data
+WITH main, merged.identifier AS stableTargetId, data
 
+<% if params.has_create_rels -%>
 <# create Text/Link nodes and connect them to extracted/rule item -#>
 CALL (main, data) {
-    UNWIND data.createRels AS rel
-    MERGE (main)-[newEdge:$(rel.edgeLabel) {position: rel.edgeProps.position}]->(target:$(rel.nodeLabels))
-    SET target += rel.nodeProps
-    RETURN collect(newEdge) as newCreateEdges
+    UNWIND data.createRels AS createRel
+    MERGE (main)-[newCreateEdge:$(createRel.edgeLabel) {position: createRel.edgeProps.position}]->(creationTarget:$(createRel.nodeLabels))
+    SET creationTarget += createRel.nodeProps
+    RETURN collect(newCreateEdge) as newCreateEdges
 }
+<%- endif %>
 
+<% if params.has_link_rels -%>
 <# connect extracted/rule item to referenced merged items -#>
 CALL (main, data) {
-    UNWIND data.linkRels AS rel
-    MATCH (target:$(rel.nodeLabels) {identifier: rel.nodeProps.identifier})
-    MERGE (main)-[newEdge:$(rel.edgeLabel) {position: rel.edgeProps.position}]->(target)
-    RETURN collect(newEdge) as newLinkEdges
+    UNWIND data.linkRels AS linkRel
+    MATCH (linkTarget:<<params.all_referenced_labels|join("|")>> {identifier: linkRel.nodeProps.identifier})
+    MERGE (main)-[newLinkEdge:$(linkRel.edgeLabel) {position: linkRel.edgeProps.position}]->(linkTarget)
+    RETURN collect(newLinkEdge) as newLinkEdges
 }
+<%- endif %>
 
-<# delete referenced Text/Link nodes and their edges that are not in $data -#>
-CALL (main, newCreateEdges, data) {
-    OPTIONAL MATCH (main)-[gcEdge]->(gcNode)
-        WHERE TYPE(gcEdge) IN data.deleteNodes
-        AND NOT gcEdge IN newCreateEdges
+<% if params.has_create_rels -%>
+<# delete referenced Text/Link nodes and their edges that are not in newCreateEdges -#>
+CALL (main, newCreateEdges) {
+    OPTIONAL MATCH (main)-[gcEdge:<<params.delete_node_edges|join("|")>>]->(gcNode:<<params.all_nested_labels|join("|")>>)
+        WHERE NOT gcEdge IN newCreateEdges
     DETACH DELETE gcNode
 }
+<%- endif %>
 
-<# delete edges to merged nodes that are not in $data -#>
-CALL (main, newLinkEdges, data) {
-    OPTIONAL MATCH (main)-[gcEdge]->()
-    WHERE TYPE(gcEdge) IN data.detachNodes
-    AND NOT gcEdge IN newLinkEdges
+<% if params.has_link_rels -%>
+<# delete edges to merged nodes that are not in newLinkEdges -#>
+CALL (main, newLinkEdges) {
+    OPTIONAL MATCH (main)-[gcEdge:<<params.detach_node_edges|join("|")>>]->(:<<params.all_referenced_labels|join("|")>>)
+    WHERE NOT gcEdge IN newLinkEdges
     DELETE gcEdge
 }
+<%- endif %>
 
-<# get all relations to merged items that are not of relation type "stableTargetId" -#>
-CALL (main) {
-    MATCH (main)-[linkEdge]->(linkNode:<<merged_labels|join("|")>>)
-    WHERE type(linkEdge) <> "stableTargetId"
-    ORDER BY type(linkEdge), linkEdge.position
-    RETURN collect(
-        {
-            nodeLabels: [],
-            nodeProps: properties(linkNode),
-            edgeLabel: type(linkEdge),
-            edgeProps: properties(linkEdge)
-        }
-    ) AS linkRels
-}
-
+<% if params.has_create_rels -%>
 <# get all relations to nested items -#>
 CALL (main) {
-    MATCH (main)-[createEdge]->(createNode:<<nested_labels|join("|")>>)
+    MATCH (main)-[createEdge]->(createNode:<<params.all_nested_labels|join("|")>>)
     ORDER BY type(createEdge), createEdge.position
     RETURN collect(
         {
@@ -70,15 +62,34 @@ CALL (main) {
         }
     ) AS createRels
 }
+<%- endif %>
+
+<# get all relations to merged items that are not of relation type "stableTargetId" -#>
+<% if params.has_link_rels -%>
+CALL (main) {
+    MATCH (main)-[linkEdge]->(linkNode:<<params.all_referenced_labels|join("|")>>)
+    WHERE type(linkEdge) <> "stableTargetId"
+    ORDER BY type(linkEdge), linkEdge.position
+    RETURN collect(
+        {
+            nodeLabels: labels(linkNode),
+            nodeProps: properties(linkNode),
+            edgeLabel: type(linkEdge),
+            edgeProps: properties(linkEdge)
+        }
+    ) AS linkRels
+}
+<%- endif %>
 
 <# return current state for validation -#>
 RETURN
     main.identifier AS identifier,
-    merged.identifier AS stableTargetId,
-    labels(merged) AS mergedLabels,
-    labels(main) AS nodeLabels,
-    properties(main) AS nodeProps,
-    linkRels AS linkRels,
-    createRels AS createRels,
-    data.deleteNodes as deleteNodes,
-    data.detachNodes as detachNodes;
+    stableTargetId,
+    head(labels(main)) AS entityType,
+<%- if params.has_link_rels %>
+    linkRels,
+<%- endif %>
+<%- if params.has_create_rels %>
+    createRels,
+<%- endif %>
+    properties(main) AS nodeProps;

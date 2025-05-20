@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 from fastapi.testclient import TestClient
-from neo4j import Driver, Session, SummaryCounters, Transaction
+from neo4j import WRITE_ACCESS, Driver, Session, SummaryCounters, Transaction
 from pytest import MonkeyPatch
 from redis.client import Redis
 
@@ -357,6 +357,8 @@ def artificial_extracted_items() -> list[AnyExtractedModel]:
         seed=42,
         count=25,
         chattiness=16,
+        # this order is important as it represents the direction of graph relations
+        # TODO(ND): let's move that to mex-common and infer it programmatically
         stem_types=[
             "PrimarySource",
             "Organization",
@@ -379,18 +381,21 @@ def _match_organization_items(dummy_data: dict[str, AnyExtractedModel]) -> None:
     # TODO(ND): replace this crude item matching implementation (stopgap MX-1530)
     connector = GraphConnector.get()
     # remove the merged item for org2
-    connector.commit(
-        f"""\
-MATCH(n) WHERE n.identifier='{dummy_data["organization_2"].stableTargetId}'
-DETACH DELETE n;"""
-    )
-    # connect the extracted item for org2 with the merged item for org1
-    connector.commit(
-        f"""\
-MATCH(n :ExtractedOrganization) WHERE n.identifier = '{dummy_data["organization_2"].identifier}'
-MATCH(m :MergedOrganization) WHERE m.identifier = '{dummy_data["organization_1"].stableTargetId}'
-MERGE (n)-[:stableTargetId {{position:0}}]->(m);"""
-    )
+    with connector.driver.session(default_access_mode=WRITE_ACCESS) as session:
+        connector.commit(
+            f"""\
+    MATCH(n) WHERE n.identifier='{dummy_data["organization_2"].stableTargetId}'
+    DETACH DELETE n;""",
+            session=session,
+        )
+        # connect the extracted item for org2 with the merged item for org1
+        connector.commit(
+            f"""\
+    MATCH(n :ExtractedOrganization) WHERE n.identifier = '{dummy_data["organization_2"].identifier}'
+    MATCH(m :MergedOrganization) WHERE m.identifier = '{dummy_data["organization_1"].stableTargetId}'
+    MERGE (n)-[:stableTargetId {{position:0}}]->(m);""",
+            session=session,
+        )
     # clear the identity provider cache to refresh the `stableTargetId` property on org2
     provider = GraphIdentityProvider.get()
     provider._cache.flush()

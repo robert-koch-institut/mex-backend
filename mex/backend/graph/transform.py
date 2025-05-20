@@ -1,10 +1,17 @@
+from functools import cache
 from itertools import groupby
-from typing import Any, TypedDict
+from typing import Any, TypedDict, cast
 
 from neo4j.exceptions import Neo4jError
 from pydantic_core import ErrorDetails
 
-from mex.backend.graph.models import GraphRel, IngestData
+from mex.backend.fields import (
+    NESTED_ENTITY_TYPES_BY_CLASS_NAME,
+    REFERENCED_ENTITY_TYPES_BY_CLASS_NAME,
+    REFERENCED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME,
+)
+from mex.backend.graph.models import GraphRel, IngestData, IngestParams
+from mex.backend.graph.query import QueryBuilder
 from mex.common.fields import (
     FINAL_FIELDS_BY_CLASS_NAME,
     LINK_FIELDS_BY_CLASS_NAME,
@@ -12,7 +19,7 @@ from mex.common.fields import (
     REFERENCE_FIELDS_BY_CLASS_NAME,
     TEXT_FIELDS_BY_CLASS_NAME,
 )
-from mex.common.models import AnyExtractedModel
+from mex.common.models import EXTRACTED_MODEL_CLASSES_BY_NAME, AnyExtractedModel
 from mex.common.transform import ensure_prefix, to_key_and_values
 from mex.common.types import AnyPrimitiveType, Link, Text
 
@@ -61,17 +68,41 @@ def transform_edges_into_expectations_by_edge_locator(
     }
 
 
+@cache
+def get_ingest_query_for_entity_type(entity_type: str) -> str:
+    """Create a v2 ingest query for the given entity type."""
+    stem_type = EXTRACTED_MODEL_CLASSES_BY_NAME[entity_type].stemType
+    merged_label = ensure_prefix(stem_type, "Merged")
+    text_fields = TEXT_FIELDS_BY_CLASS_NAME[entity_type]
+    link_fields = LINK_FIELDS_BY_CLASS_NAME[entity_type]
+    nested_types_for_class = NESTED_ENTITY_TYPES_BY_CLASS_NAME[entity_type]
+    ref_fields_for_class = REFERENCE_FIELDS_BY_CLASS_NAME[entity_type]
+    ref_fields = sorted(set(ref_fields_for_class) - {"stableTargetId"})
+    ref_types_for_class = REFERENCED_ENTITY_TYPES_BY_CLASS_NAME[entity_type]
+    params = IngestParams(
+        merged_label=merged_label,
+        node_label=entity_type,
+        all_referenced_labels=ref_types_for_class,
+        all_nested_labels=nested_types_for_class,
+        detach_node_edges=ref_fields,
+        delete_node_edges=[*text_fields, *link_fields],
+        has_link_rels=bool(ref_types_for_class),
+        has_create_rels=bool(nested_types_for_class),
+    )
+    query_builder = QueryBuilder.get()
+    query = query_builder.merge_item_v2(params=params)
+    return str(query)
+
+
 def transform_model_into_ingest_data(model: AnyExtractedModel) -> IngestData:
     """Transform the given model into an ingestion instruction."""
-    merged_label = ensure_prefix(model.stemType, "Merged")
-
     text_fields = TEXT_FIELDS_BY_CLASS_NAME[model.entityType]
     link_fields = LINK_FIELDS_BY_CLASS_NAME[model.entityType]
     mutable_fields = MUTABLE_FIELDS_BY_CLASS_NAME[model.entityType]
     final_fields = FINAL_FIELDS_BY_CLASS_NAME[model.entityType]
-    ref_fields = sorted(
-        set(REFERENCE_FIELDS_BY_CLASS_NAME[model.entityType]) - {"stableTargetId"}
-    )
+    ref_fields_for_class = REFERENCE_FIELDS_BY_CLASS_NAME[model.entityType]
+    ref_fields = sorted(set(ref_fields_for_class) - {"stableTargetId"})
+    ref_field_types = REFERENCED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME[model.entityType]
 
     mutable_values = model.model_dump(include=set(mutable_fields))
     final_values = model.model_dump(include=set(final_fields))
@@ -105,7 +136,7 @@ def transform_model_into_ingest_data(model: AnyExtractedModel) -> IngestData:
                 GraphRel(
                     edgeLabel=field,
                     edgeProps={"position": position},
-                    nodeLabels=[],  # list(MERGED_MODEL_CLASSES_BY_NAME),
+                    nodeLabels=ref_field_types[field],
                     nodeProps={"identifier": identifier},
                 )
             )
@@ -113,13 +144,10 @@ def transform_model_into_ingest_data(model: AnyExtractedModel) -> IngestData:
     return IngestData(
         identifier=str(model.identifier),
         stableTargetId=str(model.stableTargetId),
-        mergedLabels=[merged_label],
-        nodeLabels=[model.entityType],
+        entityType=model.entityType,
         nodeProps=all_values,
         linkRels=link_rels,
         createRels=create_rels,
-        detachNodes=ref_fields,
-        deleteNodes=[*text_fields, *link_fields],
     )
 
 
@@ -137,12 +165,17 @@ def clean_dict(obj: Any) -> Any:  # noqa: ANN401
     return obj
 
 
+def get_graph_rel_id(rel: GraphRel) -> tuple[str, int]:
+    """Returns a string uniquely identifying the GraphRel."""
+    return rel["edgeLabel"], cast("int", rel["edgeProps"]["position"])
+
+
 def validate_ingested_data(
     data_in: IngestData, data_out: IngestData
 ) -> list[ErrorDetails]:
     """Validate that the ingestion has been executed successfully."""
     error_details = []
-    for field in IngestData.model_fields:
+    for field in ("stableTargetId", "identifier", "entityType", "nodeProps"):
         value_in = clean_dict(getattr(data_in, field))
         value_out = clean_dict(getattr(data_out, field))
         if value_out != value_in:
@@ -155,6 +188,59 @@ def validate_ingested_data(
                     ctx={"expected": value_in},
                 )
             )
+    for rel_field in ("linkRels", "createRels"):
+        in_lookup = {
+            get_graph_rel_id(rel): cast("GraphRel", rel)
+            for rel in getattr(data_in, rel_field)
+        }
+        out_lookup = {
+            get_graph_rel_id(rel): cast("GraphRel", rel)
+            for rel in getattr(data_out, rel_field)
+        }
+        for rel_id, out_rel in out_lookup.items():
+            in_rel = in_lookup.get(rel_id)
+            if not in_rel:
+                error_details.append(
+                    ErrorDetails(
+                        type="transaction_failed",
+                        msg="ingestion would have created unexpected relation",
+                        loc=(rel_field, *rel_id),
+                        input=out_rel,
+                        ctx={"expected": None},
+                    )
+                )
+                continue
+            if not set(out_rel["nodeLabels"]) <= set(in_rel["nodeLabels"]):
+                error_details.append(
+                    ErrorDetails(
+                        type="transaction_failed",
+                        msg="referenced node has unexpected labels",
+                        loc=(rel_field, *rel_id, "nodeLabels"),
+                        input=out_rel["nodeLabels"],
+                        ctx={"expected": in_rel["nodeLabels"]},
+                    )
+                )
+            if clean_dict(out_rel["nodeProps"]) != clean_dict(in_rel["nodeProps"]):
+                error_details.append(
+                    ErrorDetails(
+                        type="transaction_failed",
+                        msg="referenced node has unexpected properties",
+                        loc=(rel_field, *rel_id, "nodeProps"),
+                        input=out_rel["nodeProps"],
+                        ctx={"expected": in_rel["nodeProps"]},
+                    )
+                )
+        for rel_id, in_rel in in_lookup.items():
+            if rel_id not in out_lookup:
+                error_details.append(
+                    ErrorDetails(
+                        type="transaction_failed",
+                        msg="ingestion failed to create expected relation",
+                        loc=(rel_field, *rel_id),
+                        input=None,
+                        ctx={"expected": in_rel},
+                    )
+                )
     return error_details
 
 

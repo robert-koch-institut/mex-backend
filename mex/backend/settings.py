@@ -46,6 +46,22 @@ class BackendSettings(BaseSettings):
         description="Password for authenticating with the graph database.",
         validation_alias="MEX_GRAPH_PASSWORD",
     )
+    graph_tx_timeout: int | float = Field(
+        15.0,
+        description=(
+            "The graph transaction timeout in seconds. "
+            "A 0 duration will make the transaction execute indefinitely. "
+            "None will use the default timeout configured on the server."
+        ),
+        validation_alias="MEX_GRAPH_TX_TIMEOUT",
+    )
+    graph_session_timeout: int | float = Field(
+        45.0,
+        description=(
+            "Maximum time transactions are allowed to retry via tx functions."
+        ),
+        validation_alias="MEX_GRAPH_SESSION_TIMEOUT",
+    )
     backend_api_key_database: APIKeyDatabase = Field(
         APIKeyDatabase(),
         description="Database of API keys.",
