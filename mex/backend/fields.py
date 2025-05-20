@@ -3,11 +3,12 @@ from itertools import chain
 from mex.backend.utils import contains_any_types
 from mex.common.fields import (
     ALL_MODEL_CLASSES_BY_NAME,
+    ALL_TYPES_BY_FIELDS_BY_CLASS_NAMES,
     EMAIL_FIELDS_BY_CLASS_NAME,
     REFERENCE_FIELDS_BY_CLASS_NAME,
     STRING_FIELDS_BY_CLASS_NAME,
 )
-from mex.common.types import MERGED_IDENTIFIER_CLASSES
+from mex.common.types import MERGED_IDENTIFIER_CLASSES, NESTED_MODEL_CLASSES_BY_NAME
 from mex.common.utils import get_all_fields
 
 # fields that should be indexed as searchable fields
@@ -34,11 +35,31 @@ SEARCHABLE_CLASSES = sorted(
     }
 )
 
+# allowed nested types grouped by fields
+NESTED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME = {
+    class_name: {
+        field_name: sorted(
+            nested_name
+            for nested_name, nested_class in NESTED_MODEL_CLASSES_BY_NAME.items()
+            if nested_class in field_types
+        )
+        for field_name, field_types in types_by_fields.items()
+    }
+    for class_name, types_by_fields in ALL_TYPES_BY_FIELDS_BY_CLASS_NAMES.items()
+}
+
+# all nested types grouped by class name
+NESTED_ENTITY_TYPES_BY_CLASS_NAME = {
+    class_name: sorted(set(chain(*types_by_field.values())))
+    for class_name, types_by_field in (
+        NESTED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME.items()
+    )
+}
+
 # allowed entity types grouped for reference fields
 REFERENCED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME = {
     class_name: {
         field_name: sorted(
-            # TODO(ND): move this into mex-common instead of relying on convention
             identifier_class.__name__.removesuffix("Identifier")
             for identifier_class in MERGED_IDENTIFIER_CLASSES
             if contains_any_types(
@@ -53,7 +74,7 @@ REFERENCED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME = {
 
 # all referenced entity types grouped by class name
 REFERENCED_ENTITY_TYPES_BY_CLASS_NAME = {
-    class_name: sorted(chain(*types_by_field.values()))
+    class_name: sorted(set(chain(*types_by_field.values())))
     for class_name, types_by_field in (
         REFERENCED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME.items()
     )

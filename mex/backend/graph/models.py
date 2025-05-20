@@ -122,15 +122,10 @@ class IngestData(BaseModel):
 
     stableTargetId: str
     identifier: str
-    mergedLabels: list[str]
-    nodeLabels: list[str]
+    entityType: str
     nodeProps: dict[str, GraphValueType]
-    linkRels: list[GraphRel]
-    createRels: list[GraphRel]
-    detachNodeEdges: list[str] = []
-    allReferencedLabels: list[str] = []
-    deleteNodeEdges: list[str] = []
-    allNestedLabels: list[str] = []
+    linkRels: list[GraphRel] = []
+    createRels: list[GraphRel] = []
 
     @field_validator("createRels", mode="before")
     @classmethod
@@ -150,6 +145,18 @@ class IngestData(BaseModel):
             "createRels": len(self.createRels),
             "identifier": self.identifier,
             "linkRels": len(self.linkRels),
-            "nodeLabels": "|".join(self.nodeLabels),
             "props": len(self.nodeProps),
         }
+
+
+class IngestParams(BaseModel):
+    """Type definition for query parameters."""
+
+    merged_label: str
+    node_label: str
+    all_referenced_labels: list[str]
+    all_nested_labels: list[str]
+    detach_node_edges: list[str]
+    delete_node_edges: list[str]
+    has_link_rels: bool
+    has_create_rels: bool
