@@ -9,13 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- add settings for `graph_tx_timeout` and `graph_session_timeout`
-
 ### Changes
-
-- explicitly configure read/write access level per query type
-- narrow-down labels of link and create nodes to speed up ingest query
-- improve `validate_ingested_data` with clearer error details
 
 ### Deprecated
 
@@ -24,6 +18,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [0.37.4] - 2025-05-20
+
+### Added
+
+- add settings for `graph_tx_timeout` and `graph_session_timeout`
+
+### Changes
+
+- explicitly configure read/write access level per query type
+- narrow-down labels of link and create nodes to speed up ingest query
+- improve `validate_ingested_data` with clearer error details
 
 ## [0.37.3] - 2025-05-19
 
