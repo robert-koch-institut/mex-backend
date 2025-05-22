@@ -1,10 +1,16 @@
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from fastapi.testclient import TestClient
 from starlette import status
 
-from mex.common.models import ExtractedOrganizationalUnit
+from mex.backend.rules.helpers import update_and_get_rule_set
+from mex.common.models import (
+    AnyExtractedModel,
+    ExtractedOrganizationalUnit,
+    OrganizationalUnitRuleSetRequest,
+    SubtractiveOrganizationalUnit,
+)
 from tests.conftest import MockedGraph
 
 
@@ -296,3 +302,44 @@ def test_search_merged_items(
     response = client_with_api_key_read_permission.get(f"/v0/merged-item{query_string}")
     assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == expected
+
+
+@pytest.mark.integration
+def test_search_merged_items_skip_on_validation_error(
+    client_with_api_key_read_permission: TestClient,
+    load_dummy_data: dict[str, AnyExtractedModel],
+) -> None:
+    response = client_with_api_key_read_permission.get(
+        "/v0/merged-item?entityType=MergedOrganizationalUnit"
+    )
+    assert response.status_code == status.HTTP_200_OK, response.text
+    assert len(response.json()["items"]) == 2
+
+    # remove the name from org unit 2 to make it invalid
+    organizational_unit_2 = cast(
+        "ExtractedOrganizationalUnit", load_dummy_data["organizational_unit_2"]
+    )
+    update_and_get_rule_set(
+        stable_target_id=organizational_unit_2.stableTargetId,
+        rule_set=OrganizationalUnitRuleSetRequest(
+            subtractive=SubtractiveOrganizationalUnit(name=organizational_unit_2.name)
+        ),
+    )
+    response = client_with_api_key_read_permission.get(
+        "/v0/merged-item?entityType=MergedOrganizationalUnit"
+    )
+    assert response.status_code == status.HTTP_200_OK, response.text
+    # expect org unit 2 to be filtered out (only unit 1 remains)
+    assert response.json()["items"] == [
+        {
+            "parentUnit": None,
+            "name": [{"value": "Unit 1", "language": "en"}],
+            "alternativeName": [],
+            "email": [],
+            "shortName": [],
+            "unitOf": ["bFQoRhcVH5DHUv"],
+            "website": [],
+            "$type": "MergedOrganizationalUnit",
+            "identifier": "bFQoRhcVH5DHUx",
+        }
+    ]
