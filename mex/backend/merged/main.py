@@ -4,8 +4,8 @@ from typing import Annotated
 from fastapi import APIRouter, Query
 
 from mex.backend.merged.helpers import search_merged_items_in_graph
-from mex.backend.merged.models import MergedItemSearch
-from mex.backend.types import MergedType
+from mex.backend.types import MergedType, Validation
+from mex.common.models import AnyMergedModel, PaginatedItemsContainer
 from mex.common.types import Identifier
 
 router = APIRouter()
@@ -19,7 +19,7 @@ def search_merged_items(  # noqa: PLR0913
     hadPrimarySource: Annotated[Sequence[Identifier] | None, Query()] = None,
     skip: Annotated[int, Query(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
-) -> MergedItemSearch:
+) -> PaginatedItemsContainer[AnyMergedModel]:
     """Search for merged items by query text or by type and identifier."""
     return search_merged_items_in_graph(
         q,
@@ -28,5 +28,5 @@ def search_merged_items(  # noqa: PLR0913
         [str(s) for s in hadPrimarySource] if hadPrimarySource else None,
         skip,
         limit,
-        validate_cardinality=True,
+        Validation.IGNORE,
     )

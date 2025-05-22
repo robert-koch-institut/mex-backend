@@ -43,6 +43,14 @@ class APIUserDatabase(BaseModel):
     write: dict[str, APIUserPassword] = {}
 
 
+class Validation(Enum):
+    """Defines possible validation strategies."""
+
+    STRICT = "strict"
+    LENIENT = "lenient"
+    IGNORE = "ignore"
+
+
 class DynamicStrEnum(EnumMeta):
     """Metaclass to dynamically populate an enumeration from a list of strings."""
 

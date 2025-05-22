@@ -1,8 +1,11 @@
-from typing import Any, Literal, overload
+from typing import Any, Literal, cast, overload
+
+from pydantic import ValidationError
 
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.merged.models import MergedItemSearch, PreviewItemSearch
 from mex.backend.rules.helpers import transform_raw_rules_to_rule_set_response
+from mex.backend.types import Validation
+from mex.common.exceptions import MergingError
 from mex.common.merged.main import create_merged_item
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
@@ -10,6 +13,7 @@ from mex.common.models import (
     AnyMergedModel,
     AnyPreviewModel,
     ExtractedModelTypeAdapter,
+    PaginatedItemsContainer,
 )
 from mex.common.types import Identifier
 
@@ -17,28 +21,36 @@ from mex.common.types import Identifier
 @overload
 def merge_search_result_item(
     item: dict[str, Any],
-    validate_cardinality: Literal[False],
+    validation: Literal[Validation.LENIENT],
 ) -> AnyPreviewModel: ...
 
 
 @overload
 def merge_search_result_item(
     item: dict[str, Any],
-    validate_cardinality: Literal[True],
+    validation: Literal[Validation.STRICT],
 ) -> AnyMergedModel: ...
+
+
+@overload
+def merge_search_result_item(
+    item: dict[str, Any],
+    validation: Literal[Validation.IGNORE],
+) -> AnyMergedModel | None: ...
 
 
 def merge_search_result_item(
     item: dict[str, Any],
-    validate_cardinality: Literal[True, False],
-) -> AnyPreviewModel | AnyMergedModel:
+    validation: Literal[Validation.STRICT, Validation.LENIENT, Validation.IGNORE],
+) -> AnyPreviewModel | AnyMergedModel | None:
     """Merge a single search result into a merged item.
 
     Args:
         item: Raw merged search result item from the graph response
-        validate_cardinality: Merged items validate the existence of required fields and
-            the lengths of lists by default, set this to `False` to avoid this and
-            return a "preview" of a merged item instead of a valid merged item
+        validation: Merged items validate the existence of required fields and
+            the lengths of lists by default, set this to `LENIENT` to avoid this and
+            return a "preview" of a merged item instead of a valid merged item,
+            or set this to `IGNORE` to return None in case of validation errors.
 
     Raises:
         MergingError: When the given items cannot be merged
@@ -60,25 +72,19 @@ def merge_search_result_item(
         rule_set = transform_raw_rules_to_rule_set_response(raw_rules)
     else:
         rule_set = None
-
-    return create_merged_item(
-        identifier=Identifier(item["identifier"]),
-        extracted_items=extracted_items,
-        rule_set=rule_set,
-        validate_cardinality=validate_cardinality,
-    )
-
-
-@overload
-def search_merged_items_in_graph(
-    query_string: str | None = None,
-    identifier: str | None = None,
-    entity_type: list[str] | None = None,
-    had_primary_source: list[str] | None = None,
-    skip: int = 0,
-    limit: int = 100,
-    validate_cardinality: Literal[False] = False,  # noqa: FBT002
-) -> PreviewItemSearch: ...
+    try:
+        return create_merged_item(
+            identifier=Identifier(item["identifier"]),
+            extracted_items=extracted_items,
+            rule_set=rule_set,
+            validate_cardinality=cast(
+                "Literal[True, False]", validation != Validation.LENIENT
+            ),
+        )
+    except (MergingError, ValidationError):
+        if validation == Validation.STRICT:
+            raise
+    return None
 
 
 @overload
@@ -89,8 +95,32 @@ def search_merged_items_in_graph(
     had_primary_source: list[str] | None = None,
     skip: int = 0,
     limit: int = 100,
-    validate_cardinality: Literal[True] = True,  # noqa: FBT002
-) -> MergedItemSearch: ...
+    validation: Literal[Validation.LENIENT] = Validation.LENIENT,
+) -> PaginatedItemsContainer[AnyPreviewModel]: ...
+
+
+@overload
+def search_merged_items_in_graph(
+    query_string: str | None = None,
+    identifier: str | None = None,
+    entity_type: list[str] | None = None,
+    had_primary_source: list[str] | None = None,
+    skip: int = 0,
+    limit: int = 100,
+    validation: Literal[Validation.STRICT] = Validation.STRICT,
+) -> PaginatedItemsContainer[AnyMergedModel]: ...
+
+
+@overload
+def search_merged_items_in_graph(
+    query_string: str | None = None,
+    identifier: str | None = None,
+    entity_type: list[str] | None = None,
+    had_primary_source: list[str] | None = None,
+    skip: int = 0,
+    limit: int = 100,
+    validation: Literal[Validation.IGNORE] = Validation.IGNORE,
+) -> PaginatedItemsContainer[AnyMergedModel]: ...
 
 
 def search_merged_items_in_graph(  # noqa: PLR0913
@@ -100,8 +130,10 @@ def search_merged_items_in_graph(  # noqa: PLR0913
     had_primary_source: list[str] | None = None,
     skip: int = 0,
     limit: int = 100,
-    validate_cardinality: Literal[True, False] = True,  # noqa: FBT002
-) -> PreviewItemSearch | MergedItemSearch:
+    validation: Literal[
+        Validation.STRICT, Validation.LENIENT, Validation.IGNORE
+    ] = Validation.STRICT,
+) -> PaginatedItemsContainer[AnyPreviewModel] | PaginatedItemsContainer[AnyMergedModel]:
     """Search for merged items.
 
     Args:
@@ -111,9 +143,10 @@ def search_merged_items_in_graph(  # noqa: PLR0913
         had_primary_source: optional merged primary source identifier filter
         skip: How many items to skip for pagination
         limit: How many items to return at most
-        validate_cardinality: Merged items validate the existence of required fields and
-            the lengths of lists by default, set this to `False` to avoid this and
-            return "previews" of merged items instead of valid merged items
+        validation: Merged items validate the existence of required fields and
+            the lengths of lists by default, set this to `LENIENT` to avoid this and
+            return a "preview" of a merged item instead of a valid merged item,
+            or set this to `IGNORE` to return None in case of validation errors.
 
     Raises:
         MergingError: When the given items cannot be merged
@@ -130,15 +163,12 @@ def search_merged_items_in_graph(  # noqa: PLR0913
         skip=skip,
         limit=limit,
     )
-    total: int = result["total"]
+    total = int(result["total"])
     items = [
-        merge_search_result_item(
-            item,
-            validate_cardinality=validate_cardinality,
-        )
+        merged_model
         for item in result["items"]
+        if (merged_model := merge_search_result_item(item, validation))
     ]
-
-    if validate_cardinality is True:
-        return MergedItemSearch(items=items, total=total)
-    return PreviewItemSearch(items=items, total=total)
+    if validation == Validation.LENIENT:
+        return PaginatedItemsContainer[AnyPreviewModel](items=items, total=total)
+    return PaginatedItemsContainer[AnyMergedModel](items=items, total=total)

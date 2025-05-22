@@ -1,8 +1,9 @@
 from fastapi import APIRouter
 
-from mex.backend.identity.models import IdentityAssignRequest, IdentityFetchResponse
+from mex.backend.identity.models import IdentityAssignRequest
 from mex.backend.identity.provider import GraphIdentityProvider
 from mex.common.identity.models import Identity
+from mex.common.models import PaginatedItemsContainer
 from mex.common.types import Identifier
 
 router = APIRouter()
@@ -23,7 +24,7 @@ def fetch_identity(
     hadPrimarySource: Identifier | None = None,
     identifierInPrimarySource: str | None = None,
     stableTargetId: Identifier | None = None,
-) -> IdentityFetchResponse:
+) -> PaginatedItemsContainer[Identity]:
     """Find an Identity instance from the database if it can be found.
 
     Either provide `stableTargetId` or `hadPrimarySource`
@@ -35,4 +36,4 @@ def fetch_identity(
         identifier_in_primary_source=identifierInPrimarySource,
         stable_target_id=stableTargetId,
     )
-    return IdentityFetchResponse(items=identities, total=len(identities))
+    return PaginatedItemsContainer[Identity](items=identities, total=len(identities))
