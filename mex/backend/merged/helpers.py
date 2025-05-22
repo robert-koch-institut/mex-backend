@@ -1,8 +1,11 @@
-from typing import Any, Literal, overload
+from typing import Any, Literal, cast, overload
+
+from pydantic import ValidationError
 
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.merged.models import MergedItemSearch, PreviewItemSearch
 from mex.backend.rules.helpers import transform_raw_rules_to_rule_set_response
+from mex.backend.types import Validation
 from mex.common.merged.main import create_merged_item
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
@@ -17,21 +20,30 @@ from mex.common.types import Identifier
 @overload
 def merge_search_result_item(
     item: dict[str, Any],
-    validate_cardinality: Literal[False],
+    validate_cardinality: Literal[Validation.LENIENT],
 ) -> AnyPreviewModel: ...
 
 
 @overload
 def merge_search_result_item(
     item: dict[str, Any],
-    validate_cardinality: Literal[True],
+    validate_cardinality: Literal[Validation.STRICT],
 ) -> AnyMergedModel: ...
+
+
+@overload
+def merge_search_result_item(
+    item: dict[str, Any],
+    validate_cardinality: Literal[Validation.IGNORE],
+) -> AnyMergedModel | None: ...
 
 
 def merge_search_result_item(
     item: dict[str, Any],
-    validate_cardinality: Literal[True, False],
-) -> AnyPreviewModel | AnyMergedModel:
+    validate_cardinality: Literal[
+        Validation.STRICT, Validation.LENIENT, Validation.IGNORE
+    ],
+) -> AnyPreviewModel | AnyMergedModel | None:
     """Merge a single search result into a merged item.
 
     Args:
@@ -60,13 +72,21 @@ def merge_search_result_item(
         rule_set = transform_raw_rules_to_rule_set_response(raw_rules)
     else:
         rule_set = None
-
-    return create_merged_item(
-        identifier=Identifier(item["identifier"]),
-        extracted_items=extracted_items,
-        rule_set=rule_set,
-        validate_cardinality=validate_cardinality,
+    # TODO(ND): also use this enum in mex-common
+    validation = cast(
+        "Literal[True, False]", validate_cardinality != Validation.LENIENT
     )
+    try:
+        return create_merged_item(
+            identifier=Identifier(item["identifier"]),
+            extracted_items=extracted_items,
+            rule_set=rule_set,
+            validate_cardinality=validation,
+        )
+    except ValidationError:
+        if validate_cardinality == Validation.STRICT:
+            raise
+    return None
 
 
 @overload
@@ -77,7 +97,7 @@ def search_merged_items_in_graph(
     had_primary_source: list[str] | None = None,
     skip: int = 0,
     limit: int = 100,
-    validate_cardinality: Literal[False] = False,  # noqa: FBT002
+    validate_cardinality: Literal[Validation.LENIENT] = Validation.LENIENT,
 ) -> PreviewItemSearch: ...
 
 
@@ -89,7 +109,19 @@ def search_merged_items_in_graph(
     had_primary_source: list[str] | None = None,
     skip: int = 0,
     limit: int = 100,
-    validate_cardinality: Literal[True] = True,  # noqa: FBT002
+    validate_cardinality: Literal[Validation.STRICT] = Validation.STRICT,
+) -> MergedItemSearch: ...
+
+
+@overload
+def search_merged_items_in_graph(
+    query_string: str | None = None,
+    identifier: str | None = None,
+    entity_type: list[str] | None = None,
+    had_primary_source: list[str] | None = None,
+    skip: int = 0,
+    limit: int = 100,
+    validate_cardinality: Literal[Validation.IGNORE] = Validation.IGNORE,
 ) -> MergedItemSearch: ...
 
 
@@ -100,7 +132,9 @@ def search_merged_items_in_graph(  # noqa: PLR0913
     had_primary_source: list[str] | None = None,
     skip: int = 0,
     limit: int = 100,
-    validate_cardinality: Literal[True, False] = True,  # noqa: FBT002
+    validate_cardinality: Literal[
+        Validation.STRICT, Validation.LENIENT, Validation.IGNORE
+    ] = Validation.STRICT,
 ) -> PreviewItemSearch | MergedItemSearch:
     """Search for merged items.
 
@@ -138,7 +172,8 @@ def search_merged_items_in_graph(  # noqa: PLR0913
         )
         for item in result["items"]
     ]
-
-    if validate_cardinality is True:
-        return MergedItemSearch(items=items, total=total)
-    return PreviewItemSearch(items=items, total=total)
+    if validate_cardinality == Validation.LENIENT:
+        return PreviewItemSearch(items=items, total=total)
+    if validate_cardinality == Validation.IGNORE:
+        raise NotImplementedError
+    return MergedItemSearch(items=items, total=total)

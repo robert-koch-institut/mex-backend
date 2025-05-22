@@ -8,7 +8,7 @@ from mex.backend.merged.helpers import (
     search_merged_items_in_graph,
 )
 from mex.backend.merged.models import PreviewItemSearch
-from mex.backend.types import MergedType
+from mex.backend.types import MergedType, Validation
 from mex.common.merged.main import create_merged_item
 from mex.common.models import AnyMergedModel, AnyRuleSetRequest
 from mex.common.transform import ensure_prefix
@@ -60,5 +60,5 @@ def preview_items(  # noqa: PLR0913
         [str(s) for s in hadPrimarySource] if hadPrimarySource else None,
         skip,
         limit,
-        validate_cardinality=False,
+        Validation.LENIENT,
     )
