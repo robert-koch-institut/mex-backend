@@ -4,13 +4,15 @@ from typing import Annotated
 from fastapi import APIRouter, Query
 
 from mex.backend.extracted.helpers import get_extracted_items_from_graph
-from mex.backend.merged.helpers import (
-    search_merged_items_in_graph,
-)
-from mex.backend.merged.models import PreviewItemSearch
+from mex.backend.merged.helpers import search_merged_items_in_graph
 from mex.backend.types import MergedType, Validation
 from mex.common.merged.main import create_merged_item
-from mex.common.models import AnyMergedModel, AnyRuleSetRequest
+from mex.common.models import (
+    AnyMergedModel,
+    AnyPreviewModel,
+    AnyRuleSetRequest,
+    PaginatedItemsContainer,
+)
 from mex.common.transform import ensure_prefix
 from mex.common.types import Identifier
 
@@ -47,7 +49,7 @@ def preview_items(  # noqa: PLR0913
     hadPrimarySource: Annotated[Sequence[Identifier] | None, Query()] = None,
     skip: Annotated[int, Query(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
-) -> PreviewItemSearch:
+) -> PaginatedItemsContainer[AnyPreviewModel]:
     """Search for merged item previews by query text or by type and identifier.
 
     In contrast to `/merged-item`, this endpoint does not validate the existence

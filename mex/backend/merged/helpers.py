@@ -3,7 +3,6 @@ from typing import Any, Literal, cast, overload
 from pydantic import ValidationError
 
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.merged.models import MergedItemSearch, PreviewItemSearch
 from mex.backend.rules.helpers import transform_raw_rules_to_rule_set_response
 from mex.backend.types import Validation
 from mex.common.exceptions import MergingError
@@ -14,6 +13,7 @@ from mex.common.models import (
     AnyMergedModel,
     AnyPreviewModel,
     ExtractedModelTypeAdapter,
+    PaginatedItemsContainer,
 )
 from mex.common.types import Identifier
 
@@ -96,7 +96,7 @@ def search_merged_items_in_graph(
     skip: int = 0,
     limit: int = 100,
     validation: Literal[Validation.LENIENT] = Validation.LENIENT,
-) -> PreviewItemSearch: ...
+) -> PaginatedItemsContainer[AnyPreviewModel]: ...
 
 
 @overload
@@ -108,7 +108,7 @@ def search_merged_items_in_graph(
     skip: int = 0,
     limit: int = 100,
     validation: Literal[Validation.STRICT] = Validation.STRICT,
-) -> MergedItemSearch: ...
+) -> PaginatedItemsContainer[AnyMergedModel]: ...
 
 
 @overload
@@ -120,7 +120,7 @@ def search_merged_items_in_graph(
     skip: int = 0,
     limit: int = 100,
     validation: Literal[Validation.IGNORE] = Validation.IGNORE,
-) -> MergedItemSearch: ...
+) -> PaginatedItemsContainer[AnyMergedModel]: ...
 
 
 def search_merged_items_in_graph(  # noqa: PLR0913
@@ -133,7 +133,7 @@ def search_merged_items_in_graph(  # noqa: PLR0913
     validation: Literal[
         Validation.STRICT, Validation.LENIENT, Validation.IGNORE
     ] = Validation.STRICT,
-) -> PreviewItemSearch | MergedItemSearch:
+) -> PaginatedItemsContainer[AnyPreviewModel] | PaginatedItemsContainer[AnyMergedModel]:
     """Search for merged items.
 
     Args:
@@ -163,10 +163,10 @@ def search_merged_items_in_graph(  # noqa: PLR0913
         skip=skip,
         limit=limit,
     )
-    total: int = result["total"]
+    total = int(result["total"])
     items = [merge_search_result_item(item, validation) for item in result["items"]]
     if validation == Validation.LENIENT:
-        return PreviewItemSearch(items=items, total=total)
+        return PaginatedItemsContainer[AnyPreviewModel](items=items, total=total)
     if validation == Validation.IGNORE:
         raise NotImplementedError
-    return MergedItemSearch(items=items, total=total)
+    return PaginatedItemsContainer[AnyMergedModel](items=items, total=total)
