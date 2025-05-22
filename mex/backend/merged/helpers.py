@@ -164,9 +164,11 @@ def search_merged_items_in_graph(  # noqa: PLR0913
         limit=limit,
     )
     total = int(result["total"])
-    items = [merge_search_result_item(item, validation) for item in result["items"]]
+    items = [
+        merged_model
+        for item in result["items"]
+        if (merged_model := merge_search_result_item(item, validation))
+    ]
     if validation == Validation.LENIENT:
         return PaginatedItemsContainer[AnyPreviewModel](items=items, total=total)
-    if validation == Validation.IGNORE:
-        raise NotImplementedError
     return PaginatedItemsContainer[AnyMergedModel](items=items, total=total)
