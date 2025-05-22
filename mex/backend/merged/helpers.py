@@ -6,6 +6,7 @@ from mex.backend.graph.connector import GraphConnector
 from mex.backend.merged.models import MergedItemSearch, PreviewItemSearch
 from mex.backend.rules.helpers import transform_raw_rules_to_rule_set_response
 from mex.backend.types import Validation
+from mex.common.exceptions import MergingError
 from mex.common.merged.main import create_merged_item
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
@@ -80,7 +81,7 @@ def merge_search_result_item(
                 "Literal[True, False]", validation != Validation.LENIENT
             ),
         )
-    except ValidationError:
+    except (MergingError, ValidationError):
         if validation == Validation.STRICT:
             raise
     return None
