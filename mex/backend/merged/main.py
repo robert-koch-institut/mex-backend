@@ -28,5 +28,5 @@ def search_merged_items(  # noqa: PLR0913
         [str(s) for s in hadPrimarySource] if hadPrimarySource else None,
         skip,
         limit,
-        validate_cardinality=Validation.STRICT,
+        Validation.STRICT,
     )
