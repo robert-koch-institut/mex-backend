@@ -77,7 +77,7 @@ def merge_search_result_item(
             identifier=Identifier(item["identifier"]),
             extracted_items=extracted_items,
             rule_set=rule_set,
-            validate_cardinality=cast(
+            validate_cardinality=cast(  # type: ignore[redundant-cast]
                 "Literal[True, False]", validation != Validation.LENIENT
             ),
         )
