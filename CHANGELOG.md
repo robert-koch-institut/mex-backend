@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- use mex-common and mex-artificial from pypi
+
 ### Deprecated
 
 ### Removed
@@ -20,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 ## [0.38.0] - 2025-05-22
+
+### Changes
+
+- BREAKING: merge item search skips invalid items
 
 ## [0.37.4] - 2025-05-20
 

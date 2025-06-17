@@ -74,7 +74,7 @@ def test_search_organization_in_wikidata_mocked(
                 ],
                 "stableTargetId": "ga6xh6pgMwgq7DC7r6Wjqg",
                 "viafId": [],
-                "wikidataId": ["https://www.wikidata.org/entity/Q679041"],
+                "wikidataId": ["http://www.wikidata.org/entity/Q679041"],
             }
         ],
         "total": 1,
