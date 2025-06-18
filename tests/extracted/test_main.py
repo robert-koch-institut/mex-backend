@@ -5,7 +5,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
 from starlette import status
 
-from mex.common.models import ExtractedOrganizationalUnit
+from mex.common.models import AnyExtractedModel, ExtractedOrganizationalUnit
 from tests.conftest import MockedGraph
 
 
@@ -201,3 +201,26 @@ def test_search_extracted_items(
     )
     assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == expected
+
+
+@pytest.mark.integration
+def test_get_extracted_item(
+    client_with_api_key_read_permission: TestClient,
+    load_dummy_data: dict[str, AnyExtractedModel],
+) -> None:
+    organization_1 = load_dummy_data["organization_1"]
+    response = client_with_api_key_read_permission.get(
+        f"/v0/extracted-item/{organization_1.identifier}"
+    )
+    assert response.status_code == status.HTTP_200_OK, response.text
+    assert response.json() == organization_1.model_dump()
+
+
+@pytest.mark.integration
+def test_get_extracted_item_not_found(
+    client_with_api_key_read_permission: TestClient,
+) -> None:
+    response = client_with_api_key_read_permission.get(
+        "/v0/extracted-item/notARealIdentifier"
+    )
+    assert response.status_code == status.HTTP_404_NOT_FOUND

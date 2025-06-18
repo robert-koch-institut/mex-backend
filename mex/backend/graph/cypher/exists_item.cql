@@ -1,7 +1,7 @@
 <# Validate whether an item with the given identifier and entity type exists.
 
 Args:
-    node_labels: Allowed labels of the to-be-checked merged item
+    node_labels: Allowed labels of the to-be-checked item
 
 Returns:
     Boolean representing the existence of the requested item.

@@ -39,13 +39,13 @@ def search_extracted_items_in_graph(  # noqa: PLR0913
     """
     connector = GraphConnector.get()
     graph_result = connector.fetch_extracted_items(
-        query_string,
-        None,
-        stable_target_id,
-        entity_type,
-        had_primary_source,
-        skip,
-        limit,
+        query_string=query_string,
+        identifier=None,
+        stable_target_id=stable_target_id,
+        entity_type=entity_type,
+        had_primary_source=had_primary_source,
+        skip=skip,
+        limit=limit,
     )
     search_result = graph_result.one()
     try:
@@ -94,6 +94,6 @@ def get_extracted_item_from_graph(identifier: Identifier) -> AnyExtractedModel:
     )
     result = graph_result.one()
     if not int(result["total"]):
-        msg = "Merged item was not found."
+        msg = "Extracted item was not found."
         raise BackendError(msg) from None
     return ExtractedModelTypeAdapter.validate_python(result)
