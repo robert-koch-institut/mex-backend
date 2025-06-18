@@ -1,4 +1,4 @@
-<# Validate whether a merged item with the given identifier and type exists.
+<# Validate whether an item with the given identifier and entity type exists.
 
 Args:
     node_labels: Allowed labels of the to-be-checked merged item

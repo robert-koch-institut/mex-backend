@@ -1201,7 +1201,7 @@ fetch_identities(
 
 
 @pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
-def test_mocked_graph_exists_merged_item(
+def test_mocked_graph_exists_item(
     mocked_graph: MockedGraph,
     monkeypatch: MonkeyPatch,
 ) -> None:
@@ -1213,24 +1213,14 @@ def test_mocked_graph_exists_merged_item(
     mocked_graph.return_value = [{"exists": True}]
 
     graph = GraphConnector.get()
-    graph.exists_merged_item(
-        stable_target_id=Identifier.generate(99),
-        stem_types=["Foo", "Bar"],
+    graph.exists_item(
+        identifier=Identifier.generate(99),
+        entity_type="MergedFoo",
     )
 
     assert mocked_graph.call_args_list[-1].args == (
         """\
-exists_merged_item(node_labels=["MergedFoo", "MergedBar"])""",
-        {"identifier": Identifier.generate(99)},
-    )
-
-    graph.exists_merged_item(
-        stable_target_id=Identifier.generate(99),
-    )
-
-    assert mocked_graph.call_args_list[-1].args == (
-        """\
-exists_merged_item(node_labels=["MergedFoo", "MergedBar", "MergedBatz"])""",
+exists_item(node_labels=["MergedFoo"])""",
         {"identifier": Identifier.generate(99)},
     )
 
@@ -1254,14 +1244,14 @@ exists_merged_item(node_labels=["MergedFoo", "MergedBar", "MergedBatz"])""",
 )
 @pytest.mark.usefixtures("load_dummy_data")
 @pytest.mark.integration
-def test_graph_exists_merged_item(
+def test_graph_exists_item(
     stable_target_id: Identifier,
     stem_types: list[str] | None,
     exists: bool,  # noqa: FBT001
 ) -> None:
     graph = GraphConnector.get()
 
-    assert graph.exists_merged_item(stable_target_id, stem_types) == exists
+    assert graph.exists_item(stable_target_id, stem_types) == exists
 
 
 @pytest.mark.usefixtures("mocked_query_class", "mocked_redis")

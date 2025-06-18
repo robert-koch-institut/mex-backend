@@ -6,8 +6,8 @@ from mex.common.models import BaseModel
 from mex.common.types import AnyExtractedIdentifier, AnyMergedIdentifier
 
 
-class MergeRequest(BaseModel):
-    """Request body for merging two items."""
+class MatchRequest(BaseModel):
+    """Request body for matching two items."""
 
     identifier: Annotated[
         AnyExtractedIdentifier,

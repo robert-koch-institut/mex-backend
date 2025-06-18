@@ -29,6 +29,7 @@ from mex.backend.settings import BackendSettings
 from mex.common.connector import BaseConnector
 from mex.common.exceptions import MExError
 from mex.common.fields import (
+    ALL_MODEL_CLASSES_BY_NAME,
     FINAL_FIELDS_BY_CLASS_NAME,
     LINK_FIELDS_BY_CLASS_NAME,
     MUTABLE_FIELDS_BY_CLASS_NAME,
@@ -190,6 +191,7 @@ class GraphConnector(BaseConnector):
     def _fetch_extracted_or_rule_items(  # noqa: PLR0913
         self,
         query_string: str | None,
+        identifier: str | None,
         stable_target_id: str | None,
         entity_type: Sequence[str],
         had_primary_source: Sequence[str] | None,
@@ -200,6 +202,7 @@ class GraphConnector(BaseConnector):
 
         Args:
             query_string: Optional full text search query term
+            identifier: Optional identifier filter
             stable_target_id: Optional stable target ID filter
             entity_type: List of allowed entity types
             had_primary_source: Optional merged primary source identifier filter
@@ -212,6 +215,7 @@ class GraphConnector(BaseConnector):
         query_builder = QueryBuilder.get()
         query = query_builder.fetch_extracted_or_rule_items(
             filter_by_query_string=bool(query_string),
+            filter_by_identifier=bool(identifier),
             filter_by_stable_target_id=bool(stable_target_id),
             filter_by_reference_to_merged_item=bool(had_primary_source),
             reference_field_name="hadPrimarySource",
@@ -219,6 +223,7 @@ class GraphConnector(BaseConnector):
         result = self.commit(
             query,
             query_string=query_string,
+            identifier=identifier,
             stable_target_id=stable_target_id,
             labels=entity_type,
             referenced_identifiers=had_primary_source,
@@ -233,6 +238,7 @@ class GraphConnector(BaseConnector):
     def fetch_extracted_items(  # noqa: PLR0913
         self,
         query_string: str | None,
+        identifier: str | None,
         stable_target_id: str | None,
         entity_type: Sequence[str] | None,
         had_primary_source: Sequence[str] | None,
@@ -243,6 +249,7 @@ class GraphConnector(BaseConnector):
 
         Args:
             query_string: Optional full text search query term
+            identifier: Optional identifier filter
             stable_target_id: Optional stable target ID filter
             entity_type: Optional entity type filter
             had_primary_source: Optional merged primary source identifier filter
@@ -254,6 +261,7 @@ class GraphConnector(BaseConnector):
         """
         return self._fetch_extracted_or_rule_items(
             query_string,
+            identifier,
             stable_target_id,
             entity_type or list(EXTRACTED_MODEL_CLASSES_BY_NAME),
             had_primary_source,
@@ -264,6 +272,7 @@ class GraphConnector(BaseConnector):
     def fetch_rule_items(  # noqa: PLR0913
         self,
         query_string: str | None,
+        identifier: str | None,
         stable_target_id: str | None,
         entity_type: Sequence[str] | None,
         had_primary_source: Sequence[str] | None,
@@ -274,6 +283,7 @@ class GraphConnector(BaseConnector):
 
         Args:
             query_string: Optional full text search query term
+            identifier: Optional identifier filter
             stable_target_id: Optional stable target ID filter
             entity_type: Optional entity type filter
             had_primary_source: Optional merged primary source identifier filter
@@ -285,6 +295,7 @@ class GraphConnector(BaseConnector):
         """
         return self._fetch_extracted_or_rule_items(
             query_string,
+            identifier,
             stable_target_id,
             entity_type or list(RULE_MODEL_CLASSES_BY_NAME),
             had_primary_source,
@@ -372,25 +383,30 @@ class GraphConnector(BaseConnector):
             limit=limit,
         )
 
-    def exists_merged_item(
-        self, stable_target_id: Identifier, stem_types: list[str] | None = None
+    def exists_item(
+        self,
+        identifier: Identifier,
+        entity_type: str,
     ) -> bool:
-        """Validate whether a merged item with the given identifier and type exists.
+        """Validate whether an item with the given identifier and entity type exists.
 
         Args:
-            stable_target_id: Identifier of the to-be-checked merged item
-            stem_types: Allowed stem types of the to-be-checked merged item
+            identifier: Identifier of the to-be-checked item
+            entity_type: Entity type of the to-be-checked item
 
         Returns:
             Boolean representing the existence of the requested item
         """
-        if stem_types:
-            merged_types = [ensure_prefix(t, "Merged") for t in stem_types]
-        else:
-            merged_types = list(MERGED_MODEL_CLASSES_BY_NAME)
+        if entity_type not in ALL_MODEL_CLASSES_BY_NAME:
+            return False
         query_builder = QueryBuilder.get()
-        query = query_builder.exists_merged_item(node_labels=merged_types)
-        result = self.commit(query, identifier=stable_target_id)
+        query = query_builder.exists_item(
+            node_labels=[entity_type],
+        )
+        result = self.commit(
+            query,
+            identifier=identifier,
+        )
         return bool(result["exists"])
 
     def _merge_item(
@@ -639,6 +655,24 @@ class GraphConnector(BaseConnector):
                         model.stableTargetId,
                         identifier=model.identifier,
                     )
+
+    def match_items(
+        self,
+        extracted_item_identifier: str,
+        extracted_item_entity_type: str,
+        merged_item_identifier: str,
+        merged_item_entity_type: str,
+    ) -> Result:
+        """Assign an extracted item to a new merged item."""
+        query_builder = QueryBuilder.get()
+        query = query_builder.match_items()
+        return self.commit(
+            query,
+            extracted_item_identifier=extracted_item_identifier,
+            extracted_item_entity_type=extracted_item_entity_type,
+            merged_item_identifier=merged_item_identifier,
+            merged_item_entity_type=merged_item_entity_type,
+        )
 
     def flush(self) -> None:
         """Flush the database (only in debug mode)."""

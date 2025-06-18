@@ -79,12 +79,13 @@ def create_and_get_rule_set(
         rule_set.preventive.entityType,
     ]
     graph_result = connector.fetch_rule_items(
-        None,
-        stable_target_id,
-        rule_types,
-        None,
-        0,
-        3,
+        query_string=None,
+        identifier=None,
+        stable_target_id=stable_target_id,
+        entity_type=rule_types,
+        had_primary_source=None,
+        skip=0,
+        limit=3,
     )
     return transform_raw_rules_to_rule_set_response(graph_result.one()["items"])
 
@@ -95,12 +96,13 @@ def get_rule_set_from_graph(
     """Read a rule set from the graph."""
     connector = GraphConnector.get()
     graph_result = connector.fetch_rule_items(
-        None,
-        stable_target_id,
-        None,
-        None,
-        0,
-        3,
+        query_string=None,
+        identifier=None,
+        stable_target_id=stable_target_id,
+        entity_type=None,
+        had_primary_source=None,
+        skip=0,
+        limit=3,
     )
     if raw_rules := graph_result.one()["items"]:
         return transform_raw_rules_to_rule_set_response(raw_rules)
@@ -113,9 +115,9 @@ def update_and_get_rule_set(
 ) -> AnyRuleSetResponse:
     """Merge a rule set into the graph and read it back."""
     connector = GraphConnector.get()
-    if not connector.exists_merged_item(
+    if not connector.exists_item(
         stable_target_id,
-        [rule_set.stemType],
+        rule_set.stemType,
     ):
         msg = "no merged item found for given identifier and type"
         raise NoResultFoundError(msg)
