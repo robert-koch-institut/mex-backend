@@ -3,6 +3,7 @@ from typing import Any, Literal, cast, overload
 from pydantic import ValidationError
 
 from mex.backend.graph.connector import GraphConnector
+from mex.backend.graph.exceptions import InconsistentGraphError, NoResultFoundError
 from mex.backend.rules.helpers import transform_raw_rules_to_rule_set_response
 from mex.backend.types import Validation
 from mex.common.exceptions import MergingError
@@ -172,3 +173,23 @@ def search_merged_items_in_graph(  # noqa: PLR0913
     if validation == Validation.LENIENT:
         return PaginatedItemsContainer[AnyPreviewModel](items=items, total=total)
     return PaginatedItemsContainer[AnyMergedModel](items=items, total=total)
+
+
+def get_merged_item_from_graph(identifier: Identifier) -> AnyMergedModel:
+    """Fetch and return the merged item for the given `identifier`."""
+    connector = GraphConnector.get()
+    result = connector.fetch_merged_items(
+        query_string=None,
+        identifier=identifier,
+        entity_type=None,
+        had_primary_source=None,
+        skip=0,
+        limit=1,
+    )
+    if result["total"] == 0:
+        msg = "Merged item was not found."
+        raise NoResultFoundError(msg) from None
+    if result["total"] != 1:
+        msg = "Found multiple merged items."
+        raise InconsistentGraphError(msg)
+    return merge_search_result_item(result["items"][0], Validation.STRICT)

@@ -9,7 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- add endpoints to get a single merged or single extracted item by id
+
 ### Changes
+
+- rename `GraphConnector.exists_merged_item` to `exists_item`
 
 ### Deprecated
 

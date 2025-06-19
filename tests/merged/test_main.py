@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 from starlette import status
 
 from mex.backend.rules.helpers import update_and_get_rule_set
+from mex.common.merged.main import create_merged_item
 from mex.common.models import (
     AnyExtractedModel,
     ExtractedOrganizationalUnit,
@@ -343,3 +344,33 @@ def test_search_merged_items_skip_on_validation_error(
             "identifier": "bFQoRhcVH5DHUx",
         }
     ]
+
+
+@pytest.mark.integration
+def test_get_merged_item(
+    client_with_api_key_read_permission: TestClient,
+    load_dummy_data: dict[str, AnyExtractedModel],
+) -> None:
+    extracted_organization_1 = load_dummy_data["organization_1"]
+    extracted_organization_2 = load_dummy_data["organization_2"]
+    merged_organization = create_merged_item(
+        extracted_organization_1.stableTargetId,
+        [extracted_organization_2, extracted_organization_1],
+        rule_set=None,
+        validate_cardinality=True,
+    )
+    response = client_with_api_key_read_permission.get(
+        f"/v0/merged-item/{merged_organization.identifier}"
+    )
+    assert response.status_code == status.HTTP_200_OK, response.text
+    assert response.json() == merged_organization.model_dump(by_alias=True, mode="json")
+
+
+@pytest.mark.integration
+def test_get_merged_item_not_found(
+    client_with_api_key_read_permission: TestClient,
+) -> None:
+    response = client_with_api_key_read_permission.get(
+        "/v0/merged-item/notARealIdentifier"
+    )
+    assert response.status_code == status.HTTP_404_NOT_FOUND, response.text

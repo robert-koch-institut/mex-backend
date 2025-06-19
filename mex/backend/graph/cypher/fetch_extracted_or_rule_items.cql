@@ -8,6 +8,7 @@ Globals:
 
 Args:
     filter_by_query_string: Whether the final query should accept a full text query string
+    filter_by_identifier: Whether the final query should filter by identifiers
     filter_by_stable_target_id: Whether the final query should filter by stableTargetIds
     filter_by_reference_to_merged_item: Whether to filter for merged items that have a relation to a specific merged item
     reference_field_name: name of the relationship to use for filtering by reference
@@ -39,6 +40,9 @@ CALL () {
     <%- endif %>
     WHERE
         ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
+        <%- if filter_by_identifier %>
+        AND extracted_or_rule_node.identifier = $identifier
+        <%- endif %>
         <%- if filter_by_stable_target_id %>
         AND merged_node.identifier = $stable_target_id
         <%- endif %>
