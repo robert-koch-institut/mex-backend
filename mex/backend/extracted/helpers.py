@@ -96,4 +96,7 @@ def get_extracted_item_from_graph(identifier: Identifier) -> AnyExtractedModel:
     if result.total == 0:
         msg = "Extracted item was not found."
         raise NoResultFoundError(msg) from None
+    if result.total != 1:
+        msg = "Found multiple extracted items."
+        raise InconsistentGraphError(msg)
     return result.items[0]

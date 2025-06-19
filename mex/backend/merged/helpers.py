@@ -2,8 +2,8 @@ from typing import Any, Literal, cast, overload
 
 from pydantic import ValidationError
 
-from mex.backend.exceptions import BackendError
 from mex.backend.graph.connector import GraphConnector
+from mex.backend.graph.exceptions import InconsistentGraphError, NoResultFoundError
 from mex.backend.rules.helpers import transform_raw_rules_to_rule_set_response
 from mex.backend.types import Validation
 from mex.common.exceptions import MergingError
@@ -186,12 +186,10 @@ def get_merged_item_from_graph(identifier: Identifier) -> AnyMergedModel:
         skip=0,
         limit=1,
     )
-    items = [
-        merged_model
-        for item in result["items"]
-        if (merged_model := merge_search_result_item(item, Validation.STRICT))
-    ]
-    if not int(result["total"]):
+    if result["total"] == 0:
         msg = "Merged item was not found."
-        raise BackendError(msg) from None
-    return items[0]
+        raise NoResultFoundError(msg) from None
+    if result["total"] != 1:
+        msg = "Found multiple merged items."
+        raise InconsistentGraphError(msg)
+    return merge_search_result_item(result["items"][0], Validation.STRICT)

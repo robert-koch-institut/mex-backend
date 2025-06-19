@@ -2,7 +2,10 @@ from collections.abc import Sequence
 from typing import Annotated
 
 from fastapi import APIRouter, Query
+from fastapi.exceptions import HTTPException
+from starlette import status
 
+from mex.backend.graph.exceptions import NoResultFoundError
 from mex.backend.merged.helpers import (
     get_merged_item_from_graph,
     search_merged_items_in_graph,
@@ -38,4 +41,7 @@ def search_merged_items(  # noqa: PLR0913
 @router.get("/merged-item/{identifier}", tags=["editor"])
 def get_merged_item(identifier: Identifier) -> AnyMergedModel:
     """Return one merged item for the given `identifier`."""
-    return get_merged_item_from_graph(identifier)
+    try:
+        return get_merged_item_from_graph(identifier)
+    except NoResultFoundError as error:
+        raise HTTPException(status.HTTP_404_NOT_FOUND) from error
