@@ -73,13 +73,11 @@ YIELD currentStatus;"""
 
 @pytest.mark.parametrize(
     (
-        "filter_by_query_string",
-        "filter_by_stable_target_id",
+        "enable_filters",
         "expected",
     ),
     [
         (
-            True,
             True,
             r"""CALL () {
     OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
@@ -92,9 +90,12 @@ YIELD currentStatus;"""
         RETURN extracted_or_rule_node, merged_node
     }
     WITH DISTINCT extracted_or_rule_node, merged_node
+    MATCH (extracted_or_rule_node)-[:hadPrimarySource]->(referenced_merged_node_to_filter_by)
     WHERE
         ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
+        AND extracted_or_rule_node.identifier = $identifier
         AND merged_node.identifier = $stable_target_id
+        AND referenced_merged_node_to_filter_by.identifier IN $referenced_identifiers
     RETURN COUNT(extracted_or_rule_node) AS total
 }
 CALL () {
@@ -108,9 +109,12 @@ CALL () {
         RETURN extracted_or_rule_node, merged_node
     }
     WITH DISTINCT extracted_or_rule_node, merged_node
+    MATCH (extracted_or_rule_node)-[:hadPrimarySource]->(referenced_merged_node_to_filter_by)
     WHERE
         ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
+        AND extracted_or_rule_node.identifier = $identifier
         AND merged_node.identifier = $stable_target_id
+        AND referenced_merged_node_to_filter_by.identifier IN $referenced_identifiers
     ORDER BY extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
     SKIP $skip
     LIMIT $limit
@@ -132,7 +136,6 @@ CALL () {
 RETURN items, total;""",
         ),
         (
-            False,
             False,
             r"""CALL () {
     OPTIONAL MATCH (extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
@@ -169,15 +172,15 @@ RETURN items, total;""",
 )
 def test_fetch_extracted_or_rule_items(
     query_builder: QueryBuilder,
-    filter_by_query_string: bool,  # noqa: FBT001
-    filter_by_stable_target_id: bool,  # noqa: FBT001
+    enable_filters: bool,  # noqa: FBT001
     expected: str,
 ) -> None:
     query = query_builder.fetch_extracted_or_rule_items(
-        filter_by_query_string=filter_by_query_string,
-        filter_by_identifier=False,
-        filter_by_stable_target_id=filter_by_stable_target_id,
-        filter_by_reference_to_merged_item=False,
+        filter_by_query_string=enable_filters,
+        filter_by_identifier=enable_filters,
+        filter_by_stable_target_id=enable_filters,
+        filter_by_reference_to_merged_item=enable_filters,
+        reference_field_name="hadPrimarySource",
     )
     assert str(query) == expected
 

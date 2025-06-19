@@ -4,10 +4,7 @@ from pydantic_core import ValidationError
 
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import InconsistentGraphError, NoResultFoundError
-from mex.common.models import (
-    AnyExtractedModel,
-    PaginatedItemsContainer,
-)
+from mex.common.models import AnyExtractedModel, PaginatedItemsContainer
 from mex.common.types import Identifier
 
 
