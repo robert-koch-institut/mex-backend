@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- update neo4j docker tag to v2025.05
+
 ### Deprecated
 
 ### Removed
