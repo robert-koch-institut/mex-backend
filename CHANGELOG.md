@@ -24,6 +24,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [0.39.1] - 2025-06-19
+
+### Changes
+
+- update neo4j docker tag to v2025.05
+
 ## [0.39.0] - 2025-06-17
 
 ### Changes
