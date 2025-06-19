@@ -656,24 +656,6 @@ class GraphConnector(BaseConnector):
                         identifier=model.identifier,
                     )
 
-    def match_items(
-        self,
-        extracted_item_identifier: str,
-        extracted_item_entity_type: str,
-        merged_item_identifier: str,
-        merged_item_entity_type: str,
-    ) -> Result:
-        """Assign an extracted item to a new merged item."""
-        query_builder = QueryBuilder.get()
-        query = query_builder.match_items()
-        return self.commit(
-            query,
-            extracted_item_identifier=extracted_item_identifier,
-            extracted_item_entity_type=extracted_item_entity_type,
-            merged_item_identifier=merged_item_identifier,
-            merged_item_entity_type=merged_item_entity_type,
-        )
-
     def flush(self) -> None:
         """Flush the database (only in debug mode)."""
         settings = BackendSettings.get()
