@@ -3,7 +3,10 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query
 
-from mex.backend.merged.helpers import search_merged_items_in_graph
+from mex.backend.merged.helpers import (
+    get_merged_item_from_graph,
+    search_merged_items_in_graph,
+)
 from mex.backend.types import MergedType, Validation
 from mex.common.models import AnyMergedModel, PaginatedItemsContainer
 from mex.common.types import Identifier
@@ -30,3 +33,9 @@ def search_merged_items(  # noqa: PLR0913
         limit,
         Validation.IGNORE,
     )
+
+
+@router.get("/merged-item/{identifier}", tags=["editor"])
+def get_merged_item(identifier: Identifier) -> AnyMergedModel:
+    """Return one merged item for the given `identifier`."""
+    return get_merged_item_from_graph(identifier)
