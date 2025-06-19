@@ -223,4 +223,4 @@ def test_get_extracted_item_not_found(
     response = client_with_api_key_read_permission.get(
         "/v0/extracted-item/notARealIdentifier"
     )
-    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.status_code == status.HTTP_404_NOT_FOUND, response.text

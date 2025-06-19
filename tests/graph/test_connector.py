@@ -445,9 +445,9 @@ def test_fetch_extracted_items(
     expected: dict[str, Any],
 ) -> None:
     graph = GraphConnector.get()
-
     result = graph.fetch_extracted_items(
         query_string=query_string,
+        identifier=None,
         stable_target_id=stable_target_id,
         entity_type=entity_type,
         had_primary_source=None,
@@ -477,12 +477,13 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
     ]
     graph = GraphConnector.get()
     result = graph.fetch_rule_items(
-        "my-query",
-        Identifier.generate(99),
-        ["AdditiveFoo", "SubtractiveBar", "PreventiveBatz"],
-        None,
-        10,
-        100,
+        query_string="my-query",
+        identifier=None,
+        stable_target_id=Identifier.generate(99),
+        entity_type=["AdditiveFoo", "SubtractiveBar", "PreventiveBatz"],
+        had_primary_source=None,
+        skip=10,
+        limit=100,
     )
 
     assert mocked_graph.call_args_list[-1].args == (
@@ -579,7 +580,15 @@ def test_fetch_rule_items(
 ) -> None:
     graph = GraphConnector.get()
 
-    result = graph.fetch_rule_items(query_string, stable_target_id, None, None, 0, 1)
+    result = graph.fetch_rule_items(
+        query_string=query_string,
+        identifier=None,
+        stable_target_id=stable_target_id,
+        entity_type=None,
+        had_primary_source=None,
+        skip=0,
+        limit=1,
+    )
 
     assert result.one() == expected
 
@@ -588,7 +597,15 @@ def test_fetch_rule_items(
 def test_fetch_rule_items_empty() -> None:
     graph = GraphConnector.get()
 
-    result = graph.fetch_rule_items(None, "thisIdDoesNotExist", None, None, 0, 1)
+    result = graph.fetch_rule_items(
+        query_string=None,
+        identifier=None,
+        stable_target_id="thisIdDoesNotExist",
+        entity_type=None,
+        had_primary_source=None,
+        skip=0,
+        limit=1,
+    )
 
     assert result.one() == {"items": [], "total": 0}
 
@@ -1226,18 +1243,14 @@ exists_item(node_labels=["MergedFoo"])""",
 
 
 @pytest.mark.parametrize(
-    ("stable_target_id", "stem_types", "exists"),
+    ("stable_target_id", "entity_type", "exists"),
     [
-        ("bFQoRhcVH5DHUB", None, True),
-        ("bFQoRhcVH5DHUB", ["ContactPoint"], True),
-        ("bFQoRhcVH5DHUB", ["Person", "ContactPoint", "OrganizationalUnit"], True),
-        ("bFQoRhcVH5DHUB", ["Activity"], False),
-        ("thisIdDoesNotExist", ["Activity"], False),
+        ("bFQoRhcVH5DHUB", "MergedContactPoint", True),
+        ("bFQoRhcVH5DHUB", "MergedActivity", False),
+        ("thisIdDoesNotExist", "MergedActivity", False),
     ],
     ids=[
-        "found without type filter",
         "found with type filter",
-        "found with multi-type filter",
         "missed due to filter",
         "missed due to identifier",
     ],
@@ -1246,12 +1259,12 @@ exists_item(node_labels=["MergedFoo"])""",
 @pytest.mark.integration
 def test_graph_exists_item(
     stable_target_id: Identifier,
-    stem_types: list[str] | None,
+    entity_type: str,
     exists: bool,  # noqa: FBT001
 ) -> None:
     graph = GraphConnector.get()
 
-    assert graph.exists_item(stable_target_id, stem_types) == exists
+    assert graph.exists_item(stable_target_id, entity_type) == exists
 
 
 @pytest.mark.usefixtures("mocked_query_class", "mocked_redis")

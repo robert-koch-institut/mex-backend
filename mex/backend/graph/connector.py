@@ -260,13 +260,13 @@ class GraphConnector(BaseConnector):
             Graph result instance
         """
         return self._fetch_extracted_or_rule_items(
-            query_string,
-            identifier,
-            stable_target_id,
-            entity_type or list(EXTRACTED_MODEL_CLASSES_BY_NAME),
-            had_primary_source,
-            skip,
-            limit,
+            query_string=query_string,
+            identifier=identifier,
+            stable_target_id=stable_target_id,
+            entity_type=entity_type or list(EXTRACTED_MODEL_CLASSES_BY_NAME),
+            had_primary_source=had_primary_source,
+            skip=skip,
+            limit=limit,
         )
 
     def fetch_rule_items(  # noqa: PLR0913
@@ -294,13 +294,13 @@ class GraphConnector(BaseConnector):
             Graph result instance
         """
         return self._fetch_extracted_or_rule_items(
-            query_string,
-            identifier,
-            stable_target_id,
-            entity_type or list(RULE_MODEL_CLASSES_BY_NAME),
-            had_primary_source,
-            skip,
-            limit,
+            query_string=query_string,
+            identifier=identifier,
+            stable_target_id=stable_target_id,
+            entity_type=entity_type or list(RULE_MODEL_CLASSES_BY_NAME),
+            had_primary_source=had_primary_source,
+            skip=skip,
+            limit=limit,
         )
 
     def fetch_merged_items(  # noqa: PLR0913

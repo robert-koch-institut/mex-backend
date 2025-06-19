@@ -12,7 +12,7 @@ from mex.common.models import (
     AnyRuleSetRequest,
     AnyRuleSetResponse,
 )
-from mex.common.transform import ensure_postfix
+from mex.common.transform import ensure_postfix, ensure_prefix
 from mex.common.types import Identifier
 
 MODEL_CLASS_LOOKUP_BY_FIELD_NAME: Final[dict[str, Mapping[str, type[AnyRuleModel]]]] = {
@@ -116,8 +116,7 @@ def update_and_get_rule_set(
     """Merge a rule set into the graph and read it back."""
     connector = GraphConnector.get()
     if not connector.exists_item(
-        stable_target_id,
-        rule_set.stemType,
+        stable_target_id, ensure_prefix(rule_set.stemType, "Merged")
     ):
         msg = "no merged item found for given identifier and type"
         raise NoResultFoundError(msg)

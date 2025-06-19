@@ -7,7 +7,6 @@ from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import InconsistentGraphError
 from mex.common.models import (
     AnyExtractedModel,
-    ExtractedModelTypeAdapter,
     PaginatedItemsContainer,
 )
 from mex.common.types import Identifier
@@ -85,15 +84,20 @@ def get_extracted_item_from_graph(identifier: Identifier) -> AnyExtractedModel:
     connector = GraphConnector.get()
     graph_result = connector.fetch_extracted_items(
         query_string=None,
-        identifier=identifier,
+        identifier=str(identifier),
         stable_target_id=None,
         entity_type=None,
         had_primary_source=None,
         skip=0,
         limit=1,
     )
-    result = graph_result.one()
-    if not int(result["total"]):
+    try:
+        result = PaginatedItemsContainer[AnyExtractedModel].model_validate(
+            graph_result.one()
+        )
+    except ValidationError as error:
+        raise InconsistentGraphError from error
+    if result.total == 0:
         msg = "Extracted item was not found."
         raise BackendError(msg) from None
-    return ExtractedModelTypeAdapter.validate_python(result)
+    return result.items[0]
