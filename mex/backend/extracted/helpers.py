@@ -2,9 +2,8 @@ from collections.abc import Sequence
 
 from pydantic_core import ValidationError
 
-from mex.backend.exceptions import BackendError
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.graph.exceptions import InconsistentGraphError
+from mex.backend.graph.exceptions import InconsistentGraphError, NoResultFoundError
 from mex.common.models import (
     AnyExtractedModel,
     PaginatedItemsContainer,
@@ -99,5 +98,5 @@ def get_extracted_item_from_graph(identifier: Identifier) -> AnyExtractedModel:
         raise InconsistentGraphError from error
     if result.total == 0:
         msg = "Extracted item was not found."
-        raise BackendError(msg) from None
+        raise NoResultFoundError(msg) from None
     return result.items[0]

@@ -213,7 +213,7 @@ def test_get_extracted_item(
         f"/v0/extracted-item/{organization_1.identifier}"
     )
     assert response.status_code == status.HTTP_200_OK, response.text
-    assert response.json() == organization_1.model_dump()
+    assert response.json() == organization_1.model_dump(by_alias=True)
 
 
 @pytest.mark.integration

@@ -198,6 +198,7 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
     graph = GraphConnector.get()
     result = graph.fetch_extracted_items(
         query_string="my-query",
+        identifier=None,
         stable_target_id=Identifier.generate(99),
         entity_type=["ExtractedFoo", "ExtractedBar", "ExtractedBatz"],
         had_primary_source=None,
@@ -209,6 +210,7 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
         """\
 fetch_extracted_or_rule_items(
     filter_by_query_string=True,
+    filter_by_identifier=False,
     filter_by_stable_target_id=True,
     filter_by_reference_to_merged_item=False,
     reference_field_name="hadPrimarySource",
@@ -223,6 +225,7 @@ fetch_extracted_or_rule_items(
             "query_string": "my-query",
             "referenced_identifiers": None,
             "skip": 10,
+            "identifier": None,
             "stable_target_id": "bFQoRhcVH5DHV1",
         },
     )
@@ -490,6 +493,7 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
         """\
 fetch_extracted_or_rule_items(
     filter_by_query_string=True,
+    filter_by_identifier=False,
     filter_by_stable_target_id=True,
     filter_by_reference_to_merged_item=False,
     reference_field_name="hadPrimarySource",
@@ -504,6 +508,7 @@ fetch_extracted_or_rule_items(
             "query_string": "my-query",
             "referenced_identifiers": None,
             "skip": 10,
+            "identifier": None,
             "stable_target_id": "bFQoRhcVH5DHV1",
         },
     )
@@ -1224,7 +1229,7 @@ def test_mocked_graph_exists_item(
 ) -> None:
     monkeypatch.setattr(
         connector_module,
-        "MERGED_MODEL_CLASSES_BY_NAME",
+        "ALL_MODEL_CLASSES_BY_NAME",
         {"MergedFoo": Mock(), "MergedBar": Mock(), "MergedBatz": Mock()},
     )
     mocked_graph.return_value = [{"exists": True}]
