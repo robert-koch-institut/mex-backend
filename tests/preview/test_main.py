@@ -11,6 +11,7 @@ from starlette import status
         (
             "bFQoRhcVH5DHUH",
             {
+                "$type": "ActivityRuleSetRequest",
                 "additive": {
                     "$type": "AdditiveActivity",
                     "end": ["2025"],
@@ -45,6 +46,7 @@ from starlette import status
         (
             "bFQoRhcVH5DHUH",
             {
+                "$type": "ActivityRuleSetRequest",
                 "subtractive": {
                     "$type": "SubtractiveActivity",
                     "start": ["2014"],
@@ -75,6 +77,7 @@ from starlette import status
         (
             "bFQoRhcVH5DHUH",
             {
+                "$type": "ActivityRuleSetRequest",
                 "preventive": {
                     "$type": "PreventiveActivity",
                     "theme": ["bFQoRhcVH5DHUr"],
@@ -104,6 +107,7 @@ from starlette import status
         (
             "unknownStableTargetId",
             {
+                "$type": "ContactPointRuleSetRequest",
                 "additive": {
                     "$type": "AdditiveContactPoint",
                     "email": ["test@test.local"],

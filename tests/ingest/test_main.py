@@ -7,9 +7,7 @@ from starlette import status
 
 from mex.backend.graph.connector import GraphConnector
 from mex.common.models import (
-    EXTRACTED_MODEL_CLASSES,
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-    RULE_SET_RESPONSE_CLASSES,
     AnyExtractedModel,
     ExtractedContactPoint,
 )
@@ -334,31 +332,21 @@ def test_ingest(
 def test_ingest_malformed(
     client_with_api_key_write_permission: TestClient,
 ) -> None:
-    expected_response = []
-    exp_err = {
-        "ctx": {"error": {}},
-        "input": "FAIL!",
-        "loc": ["body", "items", 0, "function-wrap[fix_listyness()]"],
-        "msg": "Assertion failed, Input should be a valid dictionary, "
-        "validating other types is not supported for models with "
-        "computed fields.",
-        "type": "assertion_error",
-    }
-    expected_response += [exp_err] * len(EXTRACTED_MODEL_CLASSES)
-    exp_err = {
-        "input": "FAIL!",
-        "loc": ["body", "items", 0, "function-wrap[fix_listyness()]"],
-        "msg": "Input should be a valid dictionary or object to extract fields from",
-        "type": "model_attributes_type",
-    }
-    expected_response += [exp_err] * len(RULE_SET_RESPONSE_CLASSES)
-
     response = client_with_api_key_write_permission.post(
         "/v0/ingest",
         json={"items": ["FAIL!"]},
     )
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY, response.text
-    assert response.json() == {"detail": expected_response}
+    assert response.json() == {
+        "detail": [
+            {
+                "type": "model_attributes_type",
+                "loc": ["body", "items", 0],
+                "msg": "Input should be a valid dictionary or object to extract fields from",
+                "input": "FAIL!",
+            }
+        ]
+    }
 
 
 @pytest.mark.integration
