@@ -3,7 +3,7 @@ from typing import Any, cast
 from unittest.mock import Mock
 
 import pytest
-from black import DEFAULT_LINE_LENGTH
+from black.const import DEFAULT_LINE_LENGTH
 from pytest import MonkeyPatch
 
 from mex.backend.graph import connector as connector_module
@@ -54,7 +54,7 @@ def test_mocked_graph_seed_constraints(mocked_graph: MockedGraph) -> None:
     graph._seed_constraints()
 
     assert mocked_graph.call_args_list[-1].args == (
-        'create_identifier_uniqueness_constraint(node_label="MergedVariableGroup")',
+        "create_uniqueness_constraints()",
         {},
     )
 

@@ -48,10 +48,8 @@ OPTIONS {indexConfig: $index_config};"""
     )
 
 
-def test_create_identifier_uniqueness_constraint(query_builder: QueryBuilder) -> None:
-    query = query_builder.create_identifier_uniqueness_constraint(
-        node_label="BlueBerryPie"
-    )
+def test_create_uniqueness_constraints(query_builder: QueryBuilder) -> None:
+    query = query_builder.create_uniqueness_constraints()
     assert (
         str(query)
         == """\
