@@ -116,16 +116,22 @@ class GraphConnector(BaseConnector):
             raise MExError(msg) from None
         return result
 
-    def _seed_constraints(self) -> Result:
-        """Ensure uniqueness constraints are enabled for all entity types."""
+    def _seed_constraints(self) -> None:
+        """Ensure property constraints are created for all entity types."""
         query_builder = QueryBuilder.get()
         with self.driver.session(default_access_mode=WRITE_ACCESS) as session:
-            result = self.commit(
-                query_builder.create_uniqueness_constraints(),
-                session=session,
-            )
-        logger.info("seeded identifier uniqueness constraints")
-        return result
+            for label in EXTRACTED_MODEL_CLASSES_BY_NAME | MERGED_MODEL_CLASSES_BY_NAME:
+                self.commit(
+                    query_builder.create_identifier_constraint(node_label=label),
+                    session=session,
+                )
+            logger.info("seeded identifier constraints")
+            for label in EXTRACTED_MODEL_CLASSES_BY_NAME:
+                self.commit(
+                    query_builder.create_provenance_constraint(node_label=label),
+                    session=session,
+                )
+            logger.info("seeded provenance constraints")
 
     def _seed_indices(self) -> Result:
         """Ensure there is a full text search index for all searchable fields."""

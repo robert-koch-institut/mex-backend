@@ -48,14 +48,25 @@ OPTIONS {indexConfig: $index_config};"""
     )
 
 
-def test_create_uniqueness_constraints(query_builder: QueryBuilder) -> None:
-    query = query_builder.create_uniqueness_constraints()
+def test_create_identifier_constraint(query_builder: QueryBuilder) -> None:
+    query = query_builder.create_identifier_constraint(node_label="BlueBerryPie")
     assert (
         str(query)
         == """\
 CREATE CONSTRAINT blue_berry_pie_identifier_uniqueness IF NOT EXISTS
 FOR (n:BlueBerryPie)
 REQUIRE n.identifier IS UNIQUE;"""
+    )
+
+
+def test_create_provenance_constraint(query_builder: QueryBuilder) -> None:
+    query = query_builder.create_provenance_constraint(node_label="BlueBerryPie")
+    assert (
+        str(query)
+        == """\
+CREATE CONSTRAINT blue_berry_pie_provenance_uniqueness IF NOT EXISTS
+FOR (n:BlueBerryPie)
+REQUIRE (n.hadPrimarySource, n.identifierInPrimarySource) IS UNIQUE;"""
     )
 
 
