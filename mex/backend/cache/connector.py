@@ -53,7 +53,9 @@ class CacheConnector(BaseConnector):
         """Create a new cache connector instance."""
         settings = BackendSettings.get()
         if settings.redis_url:
-            self._cache: CacheProto = Redis.from_url(settings.redis_url)
+            self._cache: CacheProto = Redis.from_url(
+                settings.redis_url.get_secret_value()
+            )
         else:
             self._cache = LocalCache()
 
