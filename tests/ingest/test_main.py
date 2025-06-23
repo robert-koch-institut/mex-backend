@@ -8,14 +8,16 @@ from starlette import status
 from mex.backend.graph.connector import GraphConnector
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES,
+    MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     RULE_SET_RESPONSE_CLASSES,
     AnyExtractedModel,
+    ExtractedContactPoint,
 )
 from tests.conftest import get_graph
 
 
 @pytest.mark.integration
-def test_bulk_insert_empty(client_with_api_key_write_permission: TestClient) -> None:
+def test_ingest_empty(client_with_api_key_write_permission: TestClient) -> None:
     response = client_with_api_key_write_permission.post(
         "/v0/ingest", json={"items": []}
     )
@@ -24,7 +26,7 @@ def test_bulk_insert_empty(client_with_api_key_write_permission: TestClient) -> 
 
 
 @pytest.mark.integration
-def test_bulk_insert(
+def test_ingest(
     client_with_api_key_write_permission: TestClient,
     dummy_data: dict[str, AnyExtractedModel],
 ) -> None:
@@ -33,7 +35,7 @@ def test_bulk_insert(
         "/v0/ingest", json={"items": list(dummy_data.values())}
     )
 
-    # assert the response are the artificial data items
+    # assert the request was accepted
     assert response.status_code == status.HTTP_204_NO_CONTENT, response.text
 
     # verify the nodes have actually been stored in the database
@@ -329,7 +331,7 @@ def test_bulk_insert(
     ]
 
 
-def test_bulk_insert_malformed(
+def test_ingest_malformed(
     client_with_api_key_write_permission: TestClient,
 ) -> None:
     expected_response = []
@@ -359,8 +361,66 @@ def test_bulk_insert_malformed(
     assert response.json() == {"detail": expected_response}
 
 
+@pytest.mark.integration
+def test_ingest_constraint_violation(
+    client_with_api_key_write_permission: TestClient,
+) -> None:
+    # given a simple item saved successfully to the backend
+    contact_point = ExtractedContactPoint(
+        email="101@test.tld",
+        identifierInPrimarySource="test-101",
+        hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    )
+    raw_item = contact_point.model_dump(mode="json")
+    response = client_with_api_key_write_permission.post(
+        "/v0/ingest", json={"items": [raw_item]}
+    )
+    assert response.status_code == status.HTTP_204_NO_CONTENT, response.text
+    response = client_with_api_key_write_permission.get(
+        "/v0/extracted-item", params={"entityType": contact_point.entityType}
+    )
+    assert response.json() == {
+        "items": [
+            {
+                "hadPrimarySource": "00000000000000",
+                "identifierInPrimarySource": "test-101",
+                "email": ["101@test.tld"],
+                "$type": "ExtractedContactPoint",
+                "identifier": "bFQoRhcVH5DHUq",
+                "stableTargetId": "bFQoRhcVH5DHUr",
+            }
+        ],
+        "total": 1,
+    }
+
+    # when trying to post the same item with a different id
+    raw_item["identifier"] = "thisIdIsNotTheOldId"
+    response = client_with_api_key_write_permission.post(
+        "/v0/ingest", json={"items": [raw_item]}
+    )
+
+    # then we expect the backend to reject the request
+    assert response.status_code == status.HTTP_400_BAD_REQUEST, response.text
+    response = client_with_api_key_write_permission.get(
+        "/v0/extracted-item", params={"entityType": contact_point.entityType}
+    )
+    assert response.json() == {
+        "items": [
+            {
+                "hadPrimarySource": "00000000000000",
+                "identifierInPrimarySource": "test-101",
+                "email": ["101@test.tld"],
+                "$type": "ExtractedContactPoint",
+                "identifier": "bFQoRhcVH5DHUq",
+                "stableTargetId": "bFQoRhcVH5DHUr",
+            }
+        ],
+        "total": 1,
+    }
+
+
 @pytest.mark.usefixtures("mocked_graph", "mocked_redis")
-def test_bulk_insert_mocked(
+def test_ingest_mocked(
     client_with_api_key_write_permission: TestClient,
     dummy_data: dict[str, AnyExtractedModel],
     monkeypatch: MonkeyPatch,
