@@ -400,7 +400,10 @@ def test_ingest_constraint_violation(
     )
 
     # then we expect the backend to reject the request
-    assert response.status_code == status.HTTP_400_BAD_REQUEST, response.text
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY, response.text
+    assert "Cannot set computed fields to custom values!" in response.text
+
+    # and expect the database to still contain the first version
     response = client_with_api_key_write_permission.get(
         "/v0/extracted-item", params={"entityType": contact_point.entityType}
     )
