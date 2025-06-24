@@ -20,7 +20,7 @@ router = APIRouter()
 @router.get("/merged-item", tags=["editor"])
 def search_merged_items(  # noqa: PLR0913
     q: Annotated[str, Query(max_length=100)] = "",
-    identifier: Identifier | None = None,
+    identifier: Annotated[Identifier | None, Query()] = None,
     entityType: Annotated[Sequence[MergedType], Query(max_length=len(MergedType))] = [],
     hadPrimarySource: Annotated[Sequence[Identifier] | None, Query()] = None,
     skip: Annotated[int, Query(ge=0, le=10e10)] = 0,

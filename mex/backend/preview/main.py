@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from typing import Annotated
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Body, Path, Query
 
 from mex.backend.extracted.helpers import get_extracted_items_from_graph
 from mex.backend.merged.helpers import search_merged_items_in_graph
@@ -21,8 +21,8 @@ router = APIRouter()
 
 @router.post("/preview-item/{stableTargetId}", tags=["editor"])
 def preview_item(
-    stableTargetId: Identifier,
-    ruleSet: AnyRuleSetRequest,
+    stableTargetId: Annotated[Identifier, Path()],
+    ruleSet: Annotated[AnyRuleSetRequest, Body(discriminator="entityType")],
 ) -> AnyMergedModel:
     """Preview the merging result when the given rule would be applied."""
     # TODO(ND): Convert this endpoint to return previews instead of merged items.
@@ -44,7 +44,7 @@ def preview_item(
 @router.get("/preview-item", tags=["editor"])
 def preview_items(  # noqa: PLR0913
     q: Annotated[str, Query(max_length=100)] = "",
-    identifier: Identifier | None = None,
+    identifier: Annotated[Identifier | None, Query()] = None,
     entityType: Annotated[Sequence[MergedType], Query(max_length=len(MergedType))] = [],
     hadPrimarySource: Annotated[Sequence[Identifier] | None, Query()] = None,
     skip: Annotated[int, Query(ge=0, le=10e10)] = 0,

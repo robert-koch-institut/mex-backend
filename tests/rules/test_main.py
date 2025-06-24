@@ -11,6 +11,7 @@ def test_create_rule_set(client_with_api_key_write_permission: TestClient) -> No
     response = client_with_api_key_write_permission.post(
         "/v0/rule-set",
         json={
+            "$type": "ActivityRuleSetRequest",
             "additive": {
                 "$type": "AdditiveActivity",
                 "start": ["2025"],
@@ -241,6 +242,7 @@ def test_update_rule_set_not_found(
     response = client_with_api_key_write_permission.put(
         "/v0/rule-set/thisIdDoesNotExist",
         json={
+            "$type": "OrganizationalUnitRuleSetRequest",
             "additive": {"$type": "AdditiveOrganizationalUnit"},
             "preventive": {"$type": "PreventiveOrganizationalUnit"},
             "subtractive": {"$type": "SubtractiveOrganizationalUnit"},
@@ -257,6 +259,7 @@ def test_update_rule_set(
     response = client_with_api_key_write_permission.put(
         f"/v0/rule-set/{load_dummy_rule_set.stableTargetId}",
         json={
+            "$type": "OrganizationalUnitRuleSetRequest",
             "additive": {
                 "$type": "AdditiveOrganizationalUnit",
                 "name": [{"value": "A new unit name", "language": "en"}],

@@ -1,15 +1,9 @@
 from unittest.mock import MagicMock, Mock
 
 import pytest
-from neo4j import (
-    Record as Neo4jRecord,
-)
-from neo4j import (
-    Result as Neo4jResult,
-)
-from neo4j import (
-    ResultSummary as Neo4jResultSummary,
-)
+from neo4j import Record as Neo4jRecord
+from neo4j import Result as Neo4jResult
+from neo4j import ResultSummary as Neo4jResultSummary
 
 from mex.backend.graph.exceptions import MultipleResultsFoundError, NoResultFoundError
 from mex.backend.graph.models import Result
