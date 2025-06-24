@@ -9,8 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- BREAKING: add uniqueness constraint on provenance fields for extracted items
+
 ### Changes
 
+- explicitly specify the location (Body, Path, Query) for all endpoint parameters
 - make redis_url a secret string
 
 ### Deprecated

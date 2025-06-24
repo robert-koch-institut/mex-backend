@@ -3,7 +3,7 @@ from typing import Any, cast
 from unittest.mock import Mock
 
 import pytest
-from black import DEFAULT_LINE_LENGTH
+from black.const import DEFAULT_LINE_LENGTH
 from pytest import MonkeyPatch
 
 from mex.backend.graph import connector as connector_module
@@ -13,6 +13,8 @@ from mex.backend.graph.query import Query
 from mex.backend.settings import BackendSettings
 from mex.common.exceptions import MExError
 from mex.common.models import (
+    EXTRACTED_MODEL_CLASSES_BY_NAME,
+    MERGED_MODEL_CLASSES_BY_NAME,
     MEX_PRIMARY_SOURCE_IDENTIFIER,
     MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -53,8 +55,24 @@ def test_mocked_graph_seed_constraints(mocked_graph: MockedGraph) -> None:
     graph = GraphConnector.get()
     graph._seed_constraints()
 
+    assert len(
+        [
+            c
+            for c in mocked_graph.call_args_list
+            if c.args[0].startswith("create_identifier_constraint")
+        ]
+    ) == len(EXTRACTED_MODEL_CLASSES_BY_NAME) + len(MERGED_MODEL_CLASSES_BY_NAME)
+
+    assert len(
+        [
+            c
+            for c in mocked_graph.call_args_list
+            if c.args[0].startswith("create_provenance_constraint")
+        ]
+    ) == len(EXTRACTED_MODEL_CLASSES_BY_NAME)
+
     assert mocked_graph.call_args_list[-1].args == (
-        'create_identifier_uniqueness_constraint(node_label="MergedVariableGroup")',
+        'create_provenance_constraint(node_label="ExtractedVariableGroup")',
         {},
     )
 
