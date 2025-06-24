@@ -3,13 +3,14 @@ from collections.abc import Sequence
 from pydantic_core import ValidationError
 
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.graph.exceptions import InconsistentGraphError
+from mex.backend.graph.exceptions import InconsistentGraphError, NoResultFoundError
 from mex.common.models import AnyExtractedModel, PaginatedItemsContainer
+from mex.common.types import Identifier
 
 
 def search_extracted_items_in_graph(  # noqa: PLR0913
     query_string: str | None = None,
-    stable_target_id: str | None = None,
+    stable_target_id: Identifier | None = None,
     entity_type: Sequence[str] | None = None,
     had_primary_source: Sequence[str] | None = None,
     skip: int = 0,
@@ -33,12 +34,13 @@ def search_extracted_items_in_graph(  # noqa: PLR0913
     """
     connector = GraphConnector.get()
     graph_result = connector.fetch_extracted_items(
-        query_string,
-        stable_target_id,
-        entity_type,
-        had_primary_source,
-        skip,
-        limit,
+        query_string=query_string,
+        identifier=None,
+        stable_target_id=stable_target_id,
+        entity_type=entity_type,
+        had_primary_source=had_primary_source,
+        skip=skip,
+        limit=limit,
     )
     search_result = graph_result.one()
     try:
@@ -48,7 +50,7 @@ def search_extracted_items_in_graph(  # noqa: PLR0913
 
 
 def get_extracted_items_from_graph(
-    stable_target_id: str | None = None,
+    stable_target_id: Identifier | None = None,
     entity_type: Sequence[str] | None = None,
     limit: int = 100,
 ) -> list[AnyExtractedModel]:
@@ -71,3 +73,30 @@ def get_extracted_items_from_graph(
         limit=limit,
     )
     return search_response.items
+
+
+def get_extracted_item_from_graph(identifier: Identifier) -> AnyExtractedModel:
+    """Fetch and return the extracted item for the given `identifier`."""
+    connector = GraphConnector.get()
+    graph_result = connector.fetch_extracted_items(
+        query_string=None,
+        identifier=str(identifier),
+        stable_target_id=None,
+        entity_type=None,
+        had_primary_source=None,
+        skip=0,
+        limit=1,
+    )
+    try:
+        result = PaginatedItemsContainer[AnyExtractedModel].model_validate(
+            graph_result.one()
+        )
+    except ValidationError as error:
+        raise InconsistentGraphError from error
+    if result.total == 0:
+        msg = "Extracted item was not found."
+        raise NoResultFoundError(msg) from None
+    if result.total != 1:
+        msg = "Found multiple extracted items."
+        raise InconsistentGraphError(msg)
+    return result.items[0]

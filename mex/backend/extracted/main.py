@@ -2,8 +2,14 @@ from collections.abc import Sequence
 from typing import Annotated
 
 from fastapi import APIRouter, Query
+from fastapi.exceptions import HTTPException
+from starlette import status
 
-from mex.backend.extracted.helpers import search_extracted_items_in_graph
+from mex.backend.extracted.helpers import (
+    get_extracted_item_from_graph,
+    search_extracted_items_in_graph,
+)
+from mex.backend.graph.exceptions import NoResultFoundError
 from mex.backend.types import ExtractedType
 from mex.common.models import AnyExtractedModel, PaginatedItemsContainer
 from mex.common.types import Identifier
@@ -31,3 +37,12 @@ def search_extracted_items(  # noqa: PLR0913
         skip,
         limit,
     )
+
+
+@router.get("/extracted-item/{identifier}", tags=["editor"])
+def get_extracted_item(identifier: Identifier) -> AnyExtractedModel:
+    """Return one extracted item for the given `identifier`."""
+    try:
+        return get_extracted_item_from_graph(identifier)
+    except NoResultFoundError as error:
+        raise HTTPException(status.HTTP_404_NOT_FOUND) from error
