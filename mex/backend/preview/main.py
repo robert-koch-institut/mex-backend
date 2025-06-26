@@ -62,7 +62,7 @@ def preview_items(  # noqa: PLR0913
     """
     if hadPrimarySource:
         referencedIdentifiers = hadPrimarySource  # noqa: N806
-        referenceFieldName = ReferenceFieldName["hadPrimarySource"]  # noqa: N806
+        referenceFieldName = ReferenceFieldName("hadPrimarySource")  # noqa: N806
 
     if bool(referencedIdentifiers) != bool(referenceFieldName):
         msg = "must provide referencedIdentifiers AND referenceFieldName or neither."

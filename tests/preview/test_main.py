@@ -145,6 +145,275 @@ def test_preview(
     assert cleaned_response == expected
 
 
+@pytest.mark.parametrize(
+    ("query_string", "expected"),
+    [
+        (
+            "?limit=1",
+            {
+                "items": [
+                    {
+                        "$type": "PreviewPrimarySource",
+                        "alternativeTitle": [],
+                        "contact": [],
+                        "description": [],
+                        "documentation": [],
+                        "identifier": "00000000000000",
+                        "locatedAt": [],
+                        "title": [],
+                        "unitInCharge": [],
+                        "version": None,
+                    }
+                ],
+                "total": 9,
+            },
+        ),
+        (
+            "?limit=1&skip=8",
+            {
+                "items": [
+                    {
+                        "email": ["info@contact-point.one"],
+                        "$type": "PreviewContactPoint",
+                        "identifier": "bFQoRhcVH5DHUz",
+                    }
+                ],
+                "total": 9,
+            },
+        ),
+        (
+            "?entityType=MergedContactPoint",
+            {
+                "items": [
+                    {
+                        "$type": "PreviewContactPoint",
+                        "email": ["help@contact-point.two"],
+                        "identifier": "bFQoRhcVH5DHUB",
+                    },
+                    {
+                        "$type": "PreviewContactPoint",
+                        "email": ["info@contact-point.one"],
+                        "identifier": "bFQoRhcVH5DHUz",
+                    },
+                ],
+                "total": 2,
+            },
+        ),
+        (
+            "?q=cool",
+            {
+                "items": [
+                    {
+                        "$type": "PreviewPrimarySource",
+                        "alternativeTitle": [],
+                        "contact": [],
+                        "description": [],
+                        "documentation": [],
+                        "identifier": "bFQoRhcVH5DHUt",
+                        "locatedAt": [],
+                        "title": [],
+                        "unitInCharge": [],
+                        "version": "Cool Version v2.13",
+                    }
+                ],
+                "total": 1,
+            },
+        ),
+        (
+            "?identifier=bFQoRhcVH5DHUx",
+            {
+                "items": [
+                    {
+                        "$type": "PreviewOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "identifier": "bFQoRhcVH5DHUx",
+                        "name": [{"language": "en", "value": "Unit 1"}],
+                        "parentUnit": None,
+                        "shortName": [],
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [],
+                    },
+                ],
+                "total": 1,
+            },
+        ),
+        (
+            "?identifier=bFQoRhcVH5DHUF",
+            {
+                "items": [
+                    {
+                        "$type": "PreviewOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "identifier": "bFQoRhcVH5DHUF",
+                        "name": [
+                            {"language": "en", "value": "Unit 1.6"},
+                            {"language": "en", "value": "Unit 1.7"},
+                        ],
+                        "parentUnit": "bFQoRhcVH5DHUx",
+                        "shortName": [],
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [
+                            {
+                                "language": None,
+                                "title": "Unit Homepage",
+                                "url": "https://unit-1-7",
+                            }
+                        ],
+                    }
+                ],
+                "total": 1,
+            },
+        ),
+        (
+            "?hadPrimarySource=bFQoRhcVH5DHUt",
+            {
+                "items": [
+                    {
+                        "$type": "PreviewOrganization",
+                        "alternativeName": [],
+                        "geprisId": [],
+                        "gndId": [],
+                        "identifier": "bFQoRhcVH5DHUv",
+                        "isniId": [],
+                        "officialName": [
+                            {"language": "de", "value": "RKI"},
+                            {"language": "en", "value": "Robert Koch Institute"},
+                            {
+                                "language": "de",
+                                "value": "Robert Koch Institut ist the best",
+                            },
+                        ],
+                        "rorId": [],
+                        "shortName": [],
+                        "viafId": [],
+                        "wikidataId": [],
+                    },
+                    {
+                        "$type": "PreviewOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "identifier": "bFQoRhcVH5DHUF",
+                        "name": [
+                            {"language": "en", "value": "Unit 1.6"},
+                            {"language": "en", "value": "Unit 1.7"},
+                        ],
+                        "parentUnit": "bFQoRhcVH5DHUx",
+                        "shortName": [],
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [
+                            {
+                                "language": None,
+                                "title": "Unit Homepage",
+                                "url": "https://unit-1-7",
+                            }
+                        ],
+                    },
+                    {
+                        "$type": "PreviewOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "identifier": "bFQoRhcVH5DHUx",
+                        "name": [{"language": "en", "value": "Unit 1"}],
+                        "parentUnit": None,
+                        "shortName": [],
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [],
+                    },
+                ],
+                "total": 3,
+            },
+        ),
+        (
+            "?referencedIdentifiers=bFQoRhcVH5DHUt&referenceFieldName=hadPrimarySource",
+            {
+                "items": [
+                    {
+                        "$type": "PreviewOrganization",
+                        "alternativeName": [],
+                        "geprisId": [],
+                        "gndId": [],
+                        "identifier": "bFQoRhcVH5DHUv",
+                        "isniId": [],
+                        "officialName": [
+                            {"language": "de", "value": "RKI"},
+                            {"language": "en", "value": "Robert Koch Institute"},
+                            {
+                                "language": "de",
+                                "value": "Robert Koch Institut ist the best",
+                            },
+                        ],
+                        "rorId": [],
+                        "shortName": [],
+                        "viafId": [],
+                        "wikidataId": [],
+                    },
+                    {
+                        "$type": "PreviewOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "identifier": "bFQoRhcVH5DHUF",
+                        "name": [
+                            {"language": "en", "value": "Unit 1.6"},
+                            {"language": "en", "value": "Unit 1.7"},
+                        ],
+                        "parentUnit": "bFQoRhcVH5DHUx",
+                        "shortName": [],
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [
+                            {
+                                "language": None,
+                                "title": "Unit Homepage",
+                                "url": "https://unit-1-7",
+                            }
+                        ],
+                    },
+                    {
+                        "$type": "PreviewOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "identifier": "bFQoRhcVH5DHUx",
+                        "name": [{"language": "en", "value": "Unit 1"}],
+                        "parentUnit": None,
+                        "shortName": [],
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [],
+                    },
+                ],
+                "total": 3,
+            },
+        ),
+        ("?identifier=thisIdDoesNotExist", {"items": [], "total": 0}),
+        ("?q=queryNotFound", {"items": [], "total": 0}),
+    ],
+    ids=[
+        "limit 1",
+        "skip 1",
+        "entity type contact points",
+        "full text search",
+        "identifier filter",
+        "identifier filter with composite result",
+        "had primary source filter",
+        "generic id filter",
+        "identifier not found",
+        "full text not found",
+    ],
+)
+@pytest.mark.usefixtures("load_dummy_data", "load_dummy_rule_set")
+@pytest.mark.integration
+def test_search_preview_items(
+    client_with_api_key_read_permission: TestClient,
+    query_string: str,
+    expected: dict[str, Any],
+) -> None:
+    response = client_with_api_key_read_permission.get(
+        f"/v0/preview-item{query_string}"
+    )
+    assert response.status_code == status.HTTP_200_OK, response.text
+    assert response.json() == expected
+
+
 @pytest.mark.integration
 def test_search_preview_items_in_graph_bad_request(
     client_with_api_key_read_permission: TestClient,
