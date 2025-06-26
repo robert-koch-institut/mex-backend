@@ -267,7 +267,7 @@ def test_preview(
             },
         ),
         (
-            "?hadPrimarySource=bFQoRhcVH5DHUt",
+            "?hadPrimarySource=bFQoRhcVH5DHUt",  # deprecated
             {
                 "items": [
                     {

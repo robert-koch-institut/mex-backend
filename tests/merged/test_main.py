@@ -220,7 +220,7 @@ def test_search_merged_items_mocked(
             },
         ),
         (
-            "?hadPrimarySource=bFQoRhcVH5DHUt",
+            "?hadPrimarySource=bFQoRhcVH5DHUt",  # deprecated
             {
                 "items": [
                     {

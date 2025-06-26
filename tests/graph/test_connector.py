@@ -219,7 +219,8 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
         identifier=None,
         stable_target_id=Identifier.generate(99),
         entity_type=["ExtractedFoo", "ExtractedBar", "ExtractedBatz"],
-        had_primary_source=None,
+        referenced_identifiers=None,
+        reference_field_name=None,
         skip=10,
         limit=100,
     )
@@ -231,7 +232,7 @@ fetch_extracted_or_rule_items(
     filter_by_identifier=False,
     filter_by_stable_target_id=True,
     filter_by_reference_to_merged_item=False,
-    reference_field_name="hadPrimarySource",
+    reference_field_name=None,
 )""",
         {
             "labels": [
@@ -471,7 +472,8 @@ def test_fetch_extracted_items(
         identifier=None,
         stable_target_id=stable_target_id,
         entity_type=entity_type,
-        had_primary_source=None,
+        referenced_identifiers=None,
+        reference_field_name=None,
         skip=0,
         limit=limit,
     )
@@ -502,7 +504,8 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
         identifier=None,
         stable_target_id=Identifier.generate(99),
         entity_type=["AdditiveFoo", "SubtractiveBar", "PreventiveBatz"],
-        had_primary_source=None,
+        referenced_identifiers=None,
+        reference_field_name=None,
         skip=10,
         limit=100,
     )
@@ -514,7 +517,7 @@ fetch_extracted_or_rule_items(
     filter_by_identifier=False,
     filter_by_stable_target_id=True,
     filter_by_reference_to_merged_item=False,
-    reference_field_name="hadPrimarySource",
+    reference_field_name=None,
 )""",
         {
             "labels": [
@@ -608,7 +611,8 @@ def test_fetch_rule_items(
         identifier=None,
         stable_target_id=stable_target_id,
         entity_type=None,
-        had_primary_source=None,
+        referenced_identifiers=None,
+        reference_field_name=None,
         skip=0,
         limit=1,
     )
@@ -625,7 +629,8 @@ def test_fetch_rule_items_empty() -> None:
         identifier=None,
         stable_target_id="thisIdDoesNotExist",
         entity_type=None,
-        had_primary_source=None,
+        referenced_identifiers=None,
+        reference_field_name=None,
         skip=0,
         limit=1,
     )
