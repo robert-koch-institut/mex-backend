@@ -143,3 +143,17 @@ def test_preview(
     assert response.status_code == status.HTTP_200_OK, response.text
     cleaned_response = {k: v for k, v in response.json().items() if v}
     assert cleaned_response == expected
+
+
+@pytest.mark.integration
+def test_search_preview_items_in_graph_bad_request(
+    client_with_api_key_read_permission: TestClient,
+) -> None:
+    response = client_with_api_key_read_permission.get(
+        "/v0/preview-item?referenceFieldName=hadPrimarySource"
+    )
+    assert response.status_code == status.HTTP_400_BAD_REQUEST, response.text
+    assert (
+        "must provide referencedIdentifiers AND referenceFieldName or neither."
+        in response.text
+    )

@@ -1,11 +1,12 @@
 from collections.abc import Sequence
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Path, Query
+from fastapi import APIRouter, Body, HTTPException, Path, Query
+from starlette import status
 
 from mex.backend.extracted.helpers import get_extracted_items_from_graph
 from mex.backend.merged.helpers import search_merged_items_in_graph
-from mex.backend.types import MergedType, Validation
+from mex.backend.types import MergedType, ReferenceFieldName, Validation
 from mex.common.merged.main import create_merged_item
 from mex.common.models import (
     AnyMergedModel,
@@ -46,7 +47,11 @@ def preview_items(  # noqa: PLR0913
     q: Annotated[str, Query(max_length=100)] = "",
     identifier: Annotated[Identifier | None, Query()] = None,
     entityType: Annotated[Sequence[MergedType], Query(max_length=len(MergedType))] = [],
-    hadPrimarySource: Annotated[Sequence[Identifier] | None, Query()] = None,
+    hadPrimarySource: Annotated[
+        Sequence[Identifier] | None, Query(deprecated=True)
+    ] = None,
+    referencedIdentifiers: Annotated[Sequence[Identifier] | None, Query()] = None,
+    referenceFieldName: Annotated[ReferenceFieldName | None, Query()] = None,
     skip: Annotated[int, Query(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> PaginatedItemsContainer[AnyPreviewModel]:
@@ -55,11 +60,19 @@ def preview_items(  # noqa: PLR0913
     In contrast to `/merged-item`, this endpoint does not validate the existence
     of required fields or the length restrictions of lists.
     """
+    if hadPrimarySource:
+        referencedIdentifiers = hadPrimarySource  # noqa: N806
+        referenceFieldName = ReferenceFieldName["hadPrimarySource"]  # noqa: N806
+
+    if bool(referencedIdentifiers) != bool(referenceFieldName):
+        msg = "must provide referencedIdentifiers AND referenceFieldName or neither."
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, msg)
     return search_merged_items_in_graph(
         q,
         identifier,
         [str(t.value) for t in entityType or MergedType],
-        [str(s) for s in hadPrimarySource] if hadPrimarySource else None,
+        [str(s) for s in referencedIdentifiers] if referencedIdentifiers else None,
+        str(referenceFieldName.value) if referenceFieldName else None,
         skip,
         limit,
         Validation.LENIENT,

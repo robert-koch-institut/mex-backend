@@ -93,7 +93,8 @@ def search_merged_items_in_graph(
     query_string: str | None = None,
     identifier: str | None = None,
     entity_type: list[str] | None = None,
-    had_primary_source: list[str] | None = None,
+    referenced_identifiers: list[str] | None = None,
+    reference_field_name: str | None = None,
     skip: int = 0,
     limit: int = 100,
     validation: Literal[Validation.LENIENT] = Validation.LENIENT,
@@ -105,7 +106,8 @@ def search_merged_items_in_graph(
     query_string: str | None = None,
     identifier: str | None = None,
     entity_type: list[str] | None = None,
-    had_primary_source: list[str] | None = None,
+    referenced_identifiers: list[str] | None = None,
+    reference_field_name: str | None = None,
     skip: int = 0,
     limit: int = 100,
     validation: Literal[Validation.STRICT] = Validation.STRICT,
@@ -117,7 +119,8 @@ def search_merged_items_in_graph(
     query_string: str | None = None,
     identifier: str | None = None,
     entity_type: list[str] | None = None,
-    had_primary_source: list[str] | None = None,
+    referenced_identifiers: list[str] | None = None,
+    reference_field_name: str | None = None,
     skip: int = 0,
     limit: int = 100,
     validation: Literal[Validation.IGNORE] = Validation.IGNORE,
@@ -128,7 +131,8 @@ def search_merged_items_in_graph(  # noqa: PLR0913
     query_string: str | None = None,
     identifier: str | None = None,
     entity_type: list[str] | None = None,
-    had_primary_source: list[str] | None = None,
+    referenced_identifiers: list[str] | None = None,
+    reference_field_name: str | None = None,
     skip: int = 0,
     limit: int = 100,
     validation: Literal[
@@ -141,7 +145,8 @@ def search_merged_items_in_graph(  # noqa: PLR0913
         query_string: Full text search query term
         identifier: Optional merged item identifier filter
         entity_type: Optional entity type filter
-        had_primary_source: optional merged primary source identifier filter
+        referenced_identifiers: Optional merged item identifiers filter
+        reference_field_name: Optional field name to filter for
         skip: How many items to skip for pagination
         limit: How many items to return at most
         validation: Merged items validate the existence of required fields and
@@ -160,7 +165,8 @@ def search_merged_items_in_graph(  # noqa: PLR0913
         query_string=query_string,
         identifier=identifier,
         entity_type=entity_type,
-        had_primary_source=had_primary_source,
+        referenced_identifiers=referenced_identifiers,
+        reference_field_name=reference_field_name,
         skip=skip,
         limit=limit,
     )
@@ -182,7 +188,8 @@ def get_merged_item_from_graph(identifier: Identifier) -> AnyMergedModel:
         query_string=None,
         identifier=identifier,
         entity_type=None,
-        had_primary_source=None,
+        referenced_identifiers=None,
+        reference_field_name=None,
         skip=0,
         limit=1,
     )

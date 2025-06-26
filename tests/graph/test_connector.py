@@ -679,7 +679,8 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
         query_string="my-query",
         identifier=Identifier.generate(99),
         entity_type=["MergedFoo", "MergedBar", "MergedBatz"],
-        had_primary_source=[Identifier.generate(100)],
+        referenced_identifiers=[Identifier.generate(100)],
+        reference_field_name="hadPrimarySource",
         skip=10,
         limit=100,
     )
@@ -733,14 +734,15 @@ fetch_merged_items(
         "query_string",
         "identifier",
         "entity_type",
-        "had_primary_source",
+        "referenced_identifiers",
+        "reference_field_name",
         "limit",
         "expected",
     ),
     [
-        (None, "thisIdDoesNotExist", None, None, 10, {"items": [], "total": 0}),
         (
-            "this_search_term_is_not_findable",
+            None,
+            "thisIdDoesNotExist",
             None,
             None,
             None,
@@ -748,6 +750,16 @@ fetch_merged_items(
             {"items": [], "total": 0},
         ),
         (
+            "this_search_term_is_not_findable",
+            None,
+            None,
+            None,
+            None,
+            10,
+            {"items": [], "total": 0},
+        ),
+        (
+            None,
             None,
             None,
             None,
@@ -776,6 +788,7 @@ fetch_merged_items(
             None,
             None,
             ["MergedOrganization"],
+            None,
             None,
             1,
             {
@@ -835,6 +848,7 @@ fetch_merged_items(
             None,
             None,
             ["bFQoRhcVH5DHUt"],
+            "hadPrimarySource",
             1,
             {
                 "items": [
@@ -886,6 +900,7 @@ fetch_merged_items(
             None,
             None,
             ["bFQoRhcVH5DHUt"],
+            "hadPrimarySource",
             1,
             {
                 "items": [
@@ -939,6 +954,7 @@ fetch_merged_items(
             None,
             None,
             None,
+            None,
             10,
             {
                 "items": [
@@ -962,6 +978,7 @@ fetch_merged_items(
         ),
         (
             "contact point",
+            None,
             None,
             None,
             None,
@@ -1002,6 +1019,7 @@ fetch_merged_items(
         ),
         (
             "RKI",
+            None,
             None,
             None,
             None,
@@ -1060,6 +1078,7 @@ fetch_merged_items(
         ),
         (
             "Homepage",
+            None,
             None,
             None,
             None,
@@ -1164,7 +1183,8 @@ def test_fetch_merged_items(  # noqa: PLR0913
     query_string: str | None,
     identifier: str | None,
     entity_type: list[str] | None,
-    had_primary_source: list[str] | None,
+    referenced_identifiers: list[str] | None,
+    reference_field_name: str | None,
     limit: int,
     expected: dict[str, Any],
 ) -> None:
@@ -1174,7 +1194,8 @@ def test_fetch_merged_items(  # noqa: PLR0913
         query_string=query_string,
         identifier=identifier,
         entity_type=entity_type,
-        had_primary_source=had_primary_source,
+        referenced_identifiers=referenced_identifiers,
+        reference_field_name=reference_field_name,
         skip=0,
         limit=limit,
     )

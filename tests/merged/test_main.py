@@ -347,6 +347,20 @@ def test_search_merged_items_skip_on_validation_error(
 
 
 @pytest.mark.integration
+def test_search_merged_items_in_graph_bad_request(
+    client_with_api_key_read_permission: TestClient,
+) -> None:
+    response = client_with_api_key_read_permission.get(
+        "/v0/merged-item?referenceFieldName=hadPrimarySource"
+    )
+    assert response.status_code == status.HTTP_400_BAD_REQUEST, response.text
+    assert (
+        "must provide referencedIdentifiers AND referenceFieldName or neither."
+        in response.text
+    )
+
+
+@pytest.mark.integration
 def test_get_merged_item(
     client_with_api_key_read_permission: TestClient,
     load_dummy_data: dict[str, AnyExtractedModel],
