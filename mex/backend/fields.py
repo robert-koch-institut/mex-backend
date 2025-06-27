@@ -1,4 +1,6 @@
+from collections.abc import Mapping
 from itertools import chain
+from typing import Final
 
 from mex.backend.utils import contains_any_types
 from mex.common.fields import (
@@ -7,6 +9,12 @@ from mex.common.fields import (
     EMAIL_FIELDS_BY_CLASS_NAME,
     REFERENCE_FIELDS_BY_CLASS_NAME,
     STRING_FIELDS_BY_CLASS_NAME,
+)
+from mex.common.models import (
+    ADDITIVE_MODEL_CLASSES_BY_NAME,
+    PREVENTIVE_MODEL_CLASSES_BY_NAME,
+    SUBTRACTIVE_MODEL_CLASSES_BY_NAME,
+    AnyRuleModel,
 )
 from mex.common.types import MERGED_IDENTIFIER_CLASSES, NESTED_MODEL_CLASSES_BY_NAME
 from mex.common.utils import get_all_fields
@@ -80,9 +88,46 @@ REFERENCED_ENTITY_TYPES_BY_CLASS_NAME = {
     )
 }
 
+# tuples of referenced type, referencing field, referencing type
+REFERENCED_FIELD_REFERENCING_TUPLES = [
+    (identifier_class.removesuffix("Identifier"), field_name, class_name)
+    for class_name, types_by_field in (
+        REFERENCED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME.items()
+    )
+    for field_name, identifier_classes in types_by_field.items()
+    for identifier_class in identifier_classes
+]
+
+# inbound reference fields by class name
+INBOUND_REFERENCE_FIELDS_BY_CLASS_NAME = {
+    target_class: {
+        field_name: [
+            source_class
+            for t_class, f_name, source_class in REFERENCED_FIELD_REFERENCING_TUPLES
+            if t_class == target_class and f_name == field_name
+        ]
+        for field_name in {
+            f_name
+            for t_class, f_name, _ in REFERENCED_FIELD_REFERENCING_TUPLES
+            if t_class == target_class
+        }
+    }
+    for target_class in {
+        t_class for t_class, _, _ in REFERENCED_FIELD_REFERENCING_TUPLES
+    }
+}
+
+
 # unique set of all fields from any class that contain references
 ALL_REFERENCE_FIELD_NAMES = {
     field_name
     for class_name in REFERENCED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME.values()
     for field_name in class_name
+}
+
+# rule class lookups grouped by the field names of a rule-set
+RULE_CLASS_LOOKUP_BY_FIELD_NAME: Final[dict[str, Mapping[str, type[AnyRuleModel]]]] = {
+    "additive": ADDITIVE_MODEL_CLASSES_BY_NAME,
+    "subtractive": SUBTRACTIVE_MODEL_CLASSES_BY_NAME,
+    "preventive": PREVENTIVE_MODEL_CLASSES_BY_NAME,
 }
