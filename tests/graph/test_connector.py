@@ -220,7 +220,7 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
         stable_target_id=Identifier.generate(99),
         entity_type=["ExtractedFoo", "ExtractedBar", "ExtractedBatz"],
         referenced_identifiers=None,
-        reference_field_name=None,
+        reference_field=None,
         skip=10,
         limit=100,
     )
@@ -231,8 +231,8 @@ fetch_extracted_or_rule_items(
     filter_by_query_string=True,
     filter_by_identifier=False,
     filter_by_stable_target_id=True,
-    filter_by_reference_to_merged_item=False,
-    reference_field_name=None,
+    filter_by_referenced_identifiers=False,
+    reference_field=None,
 )""",
         {
             "labels": [
@@ -473,7 +473,7 @@ def test_fetch_extracted_items(
         stable_target_id=stable_target_id,
         entity_type=entity_type,
         referenced_identifiers=None,
-        reference_field_name=None,
+        reference_field=None,
         skip=0,
         limit=limit,
     )
@@ -505,7 +505,7 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
         stable_target_id=Identifier.generate(99),
         entity_type=["AdditiveFoo", "SubtractiveBar", "PreventiveBatz"],
         referenced_identifiers=None,
-        reference_field_name=None,
+        reference_field=None,
         skip=10,
         limit=100,
     )
@@ -516,8 +516,8 @@ fetch_extracted_or_rule_items(
     filter_by_query_string=True,
     filter_by_identifier=False,
     filter_by_stable_target_id=True,
-    filter_by_reference_to_merged_item=False,
-    reference_field_name=None,
+    filter_by_referenced_identifiers=False,
+    reference_field=None,
 )""",
         {
             "labels": [
@@ -612,7 +612,7 @@ def test_fetch_rule_items(
         stable_target_id=stable_target_id,
         entity_type=None,
         referenced_identifiers=None,
-        reference_field_name=None,
+        reference_field=None,
         skip=0,
         limit=1,
     )
@@ -630,7 +630,7 @@ def test_fetch_rule_items_empty() -> None:
         stable_target_id="thisIdDoesNotExist",
         entity_type=None,
         referenced_identifiers=None,
-        reference_field_name=None,
+        reference_field=None,
         skip=0,
         limit=1,
     )
@@ -685,7 +685,7 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
         identifier=Identifier.generate(99),
         entity_type=["MergedFoo", "MergedBar", "MergedBatz"],
         referenced_identifiers=[Identifier.generate(100)],
-        reference_field_name="hadPrimarySource",
+        reference_field="hadPrimarySource",
         skip=10,
         limit=100,
     )
@@ -695,8 +695,8 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
 fetch_merged_items(
     filter_by_query_string=True,
     filter_by_identifier=True,
-    filter_by_reference_to_merged_item=True,
-    reference_field_name="hadPrimarySource",
+    filter_by_referenced_identifiers=True,
+    reference_field="hadPrimarySource",
 )""",
         {
             "labels": [
@@ -734,13 +734,28 @@ fetch_merged_items(
     }
 
 
+@pytest.mark.usefixtures("mocked_query_class", "mocked_redis", "mocked_graph")
+def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
+    graph = GraphConnector.get()
+    with pytest.raises(ValueError, match="Invalid field name"):
+        graph.fetch_merged_items(
+            query_string="ok-query",
+            identifier=Identifier.generate(99),
+            entity_type=["MergedFoo"],
+            referenced_identifiers=[Identifier.generate(100)],
+            reference_field="Robert'); DROP TABLE Students;--",
+            skip=10,
+            limit=10,
+        )
+
+
 @pytest.mark.parametrize(
     (
         "query_string",
         "identifier",
         "entity_type",
         "referenced_identifiers",
-        "reference_field_name",
+        "reference_field",
         "limit",
         "expected",
     ),
@@ -1189,7 +1204,7 @@ def test_fetch_merged_items(  # noqa: PLR0913
     identifier: str | None,
     entity_type: list[str] | None,
     referenced_identifiers: list[str] | None,
-    reference_field_name: str | None,
+    reference_field: str | None,
     limit: int,
     expected: dict[str, Any],
 ) -> None:
@@ -1200,7 +1215,7 @@ def test_fetch_merged_items(  # noqa: PLR0913
         identifier=identifier,
         entity_type=entity_type,
         referenced_identifiers=referenced_identifiers,
-        reference_field_name=reference_field_name,
+        reference_field=reference_field,
         skip=0,
         limit=limit,
     )

@@ -20,7 +20,7 @@ def extracted_organizational_units() -> list[ExtractedOrganizationalUnit]:
     unit_container = search_extracted_items_in_graph(
         entity_type=["ExtractedOrganizationalUnit"],
         referenced_identifiers=[organigram_primary_source.stableTargetId],
-        reference_field_name="hadPrimarySource",
+        reference_field="hadPrimarySource",
         limit=len(organigram_units),
     )
     if unit_container.total >= len(organigram_units):

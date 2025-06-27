@@ -25,28 +25,29 @@ def search_merged_items(  # noqa: PLR0913
     hadPrimarySource: Annotated[
         Sequence[Identifier] | None, Query(deprecated=True)
     ] = None,
-    referencedIdentifiers: Annotated[Sequence[Identifier] | None, Query()] = None,
-    referenceFieldName: Annotated[ReferenceFieldName | None, Query()] = None,
+    referencedIdentifier: Annotated[Sequence[Identifier] | None, Query()] = None,
+    referenceField: Annotated[ReferenceFieldName | None, Query()] = None,
     skip: Annotated[int, Query(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> PaginatedItemsContainer[AnyMergedModel]:
     """Search for merged items by query text or by type and identifier."""
     if hadPrimarySource:
-        referencedIdentifiers = hadPrimarySource  # noqa: N806
-        referenceFieldName = ReferenceFieldName("hadPrimarySource")  # noqa: N806
-
-    if bool(referencedIdentifiers) != bool(referenceFieldName):
-        msg = "must provide referencedIdentifiers AND referenceFieldName or neither."
+        referencedIdentifier = hadPrimarySource  # noqa: N806
+        referenceField = ReferenceFieldName("hadPrimarySource")  # noqa: N806
+    if bool(referencedIdentifier) != bool(referenceField):
+        msg = "Must provide referencedIdentifier AND referenceField or neither."
         raise HTTPException(status.HTTP_400_BAD_REQUEST, msg)
     return search_merged_items_in_graph(
-        q,
-        identifier,
-        [str(t.value) for t in entityType or MergedType],
-        [str(s) for s in referencedIdentifiers] if referencedIdentifiers else None,
-        str(referenceFieldName.value) if referenceFieldName else None,
-        skip,
-        limit,
-        Validation.IGNORE,
+        query_string=q,
+        identifier=identifier,
+        entity_type=[str(t.value) for t in entityType or MergedType],
+        referenced_identifiers=[str(s) for s in referencedIdentifier]
+        if referencedIdentifier
+        else None,
+        reference_field=str(referenceField.value) if referenceField else None,
+        skip=skip,
+        limit=limit,
+        validation=Validation.IGNORE,
     )
 
 

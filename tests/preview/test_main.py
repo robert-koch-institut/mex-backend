@@ -326,7 +326,7 @@ def test_preview(
             },
         ),
         (
-            "?referencedIdentifiers=bFQoRhcVH5DHUt&referenceFieldName=hadPrimarySource",
+            "?referencedIdentifier=bFQoRhcVH5DHUt&referenceField=hadPrimarySource",
             {
                 "items": [
                     {
@@ -419,10 +419,10 @@ def test_search_preview_items_in_graph_bad_request(
     client_with_api_key_read_permission: TestClient,
 ) -> None:
     response = client_with_api_key_read_permission.get(
-        "/v0/preview-item?referenceFieldName=hadPrimarySource"
+        "/v0/preview-item?referenceField=hadPrimarySource"
     )
     assert response.status_code == status.HTTP_400_BAD_REQUEST, response.text
     assert (
-        "must provide referencedIdentifiers AND referenceFieldName or neither."
+        "Must provide referencedIdentifier AND referenceField or neither."
         in response.text
     )
