@@ -692,12 +692,13 @@ class GraphConnector(BaseConnector):
                 },
             ) as tx:
                 try:
-                    query = query_builder.update_stable_target_id()
                     tx.run(
-                        str(query),
+                        str(query_builder.update_stable_target_id()),
                         extracted_item_identifier=update_extracted_item.identifier,
                         merged_item_identifier=new_stable_target_id,
                     )
+                    # TODO(ND): update the rule_sets, if given
+                    # TODO(ND): delete the merged model, if given
                 except:
                     tx.rollback()
                     raise
