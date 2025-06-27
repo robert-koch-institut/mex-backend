@@ -337,7 +337,7 @@ class GraphConnector(BaseConnector):
         Returns:
             Graph result instance
         """
-        if reference_field not in ALL_REFERENCE_FIELD_NAMES:
+        if reference_field and reference_field not in ALL_REFERENCE_FIELD_NAMES:
             msg = "Invalid field name."
             raise ValueError(msg)
         query_builder = QueryBuilder.get()

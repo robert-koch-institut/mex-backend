@@ -10,8 +10,8 @@ Args:
     filter_by_query_string: Whether the final query should accept a full text query string
     filter_by_identifier: Whether the final query should filter by identifiers
     filter_by_stable_target_id: Whether the final query should filter by stableTargetIds
-    filter_by_referenced_identifiers: Whether to filter for merged items that have a relation to a specific merged item
-    reference_field: name of the relationship to use for filtering by reference
+    filter_by_referenced_identifiers: Whether to filter for references to items with specific identifiers
+    reference_field: Name of the relationship holding referenced identifiers to use for filtering
 
 Returns:
     total: Count of all items found by this query
