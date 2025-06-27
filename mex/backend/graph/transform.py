@@ -70,7 +70,22 @@ def transform_edges_into_expectations_by_edge_locator(
 
 @cache
 def get_ingest_query_for_entity_type(entity_type: str) -> str:
-    """Create a v2 ingest query for the given entity type."""
+    """Create an ingest query for the given entity type.
+
+    Generates a complex Cypher query template for ingesting extracted models
+    into the graph database. The query handles creation of nodes, nested
+    objects (Text, Link), and reference relationships. Results are cached
+    for performance.
+
+    Args:
+        entity_type: The entity type name (e.g., "ExtractedPerson", "ExtractedActivity")
+
+    Raises:
+        KeyError: If the entity type is not found in the model classes
+
+    Returns:
+        Cypher query string template for ingesting this entity type
+    """
     stem_type = EXTRACTED_MODEL_CLASSES_BY_NAME[entity_type].stemType
     merged_label = ensure_prefix(stem_type, "Merged")
     text_fields = TEXT_FIELDS_BY_CLASS_NAME[entity_type]
@@ -95,7 +110,18 @@ def get_ingest_query_for_entity_type(entity_type: str) -> str:
 
 
 def transform_model_into_ingest_data(model: AnyExtractedModel) -> IngestData:
-    """Transform the given model into an ingestion instruction."""
+    """Transform the given model into an ingestion instruction.
+
+    Converts an extracted model into structured data ready for database
+    ingestion. Handles field categorization (mutable vs final), reference
+    field processing, and nested object preparation.
+
+    Args:
+        model: The extracted model to transform for ingestion
+
+    Returns:
+        IngestData object containing query parameters and metadata
+    """
     text_fields = TEXT_FIELDS_BY_CLASS_NAME[model.entityType]
     link_fields = LINK_FIELDS_BY_CLASS_NAME[model.entityType]
     mutable_fields = MUTABLE_FIELDS_BY_CLASS_NAME[model.entityType]
