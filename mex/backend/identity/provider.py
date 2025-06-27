@@ -17,7 +17,18 @@ class GraphIdentityProvider(BaseProvider):
         had_primary_source: MergedPrimarySourceIdentifier,
         identifier_in_primary_source: str,
     ) -> Identity:
-        """Return a cached or a newly assigned Identity."""
+        """Return a cached or a newly assigned Identity.
+
+        Retrieves an existing identity from cache or database, or creates a new one
+        if no matching identity exists. Caches the result for future lookups.
+
+        Args:
+            had_primary_source: The identifier of the primary source the item belongs to
+            identifier_in_primary_source: The identifier within the primary source
+
+        Returns:
+            Identity object with provenance metadata
+        """
         # newline is a safe delimiter because it is explicitly forbidden in both fields
         cache_key = f"{had_primary_source}\n{identifier_in_primary_source}"
         if cache_value := self._cache.get_value(cache_key):

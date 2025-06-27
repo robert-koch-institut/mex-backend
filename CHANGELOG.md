@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changes
 
 - rename `GraphConnector.exists_merged_item` to `exists_item`
+- improve a batch of doc-strings with args, raises and return sections
 
 ### Deprecated
 
