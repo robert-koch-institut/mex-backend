@@ -10,7 +10,7 @@ from mex.backend.extracted.helpers import (
     search_extracted_items_in_graph,
 )
 from mex.backend.graph.exceptions import NoResultFoundError
-from mex.backend.types import ExtractedType
+from mex.backend.types import ExtractedType, ReferenceFieldName
 from mex.common.models import AnyExtractedModel, PaginatedItemsContainer
 from mex.common.types import Identifier
 
@@ -24,18 +24,31 @@ def search_extracted_items(  # noqa: PLR0913
     entityType: Annotated[
         Sequence[ExtractedType], Query(max_length=len(ExtractedType))
     ] = [],
-    hadPrimarySource: Annotated[Sequence[Identifier] | None, Query()] = None,
+    hadPrimarySource: Annotated[
+        Sequence[Identifier] | None, Query(deprecated=True)
+    ] = None,
+    referencedIdentifier: Annotated[Sequence[Identifier] | None, Query()] = None,
+    referenceField: Annotated[ReferenceFieldName | None, Query()] = None,
     skip: Annotated[int, Query(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> PaginatedItemsContainer[AnyExtractedModel]:
     """Search for extracted items by query text or by type and id."""
+    if hadPrimarySource:
+        referencedIdentifier = hadPrimarySource  # noqa: N806
+        referenceField = ReferenceFieldName("hadPrimarySource")  # noqa: N806
+    if bool(referencedIdentifier) != bool(referenceField):
+        msg = "Must provide referencedIdentifier AND referenceField or neither."
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, msg)
     return search_extracted_items_in_graph(
-        q,
-        stableTargetId,
-        [str(t.value) for t in entityType or ExtractedType],
-        hadPrimarySource,
-        skip,
-        limit,
+        query_string=q,
+        stable_target_id=stableTargetId,
+        entity_type=[str(t.value) for t in entityType or ExtractedType],
+        referenced_identifiers=[str(s) for s in referencedIdentifier]
+        if referencedIdentifier
+        else None,
+        reference_field=str(referenceField.value) if referenceField else None,
+        skip=skip,
+        limit=limit,
     )
 
 

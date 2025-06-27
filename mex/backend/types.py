@@ -2,6 +2,9 @@ from enum import Enum, EnumMeta, _EnumDict
 
 from pydantic import SecretStr
 
+from mex.backend.fields import (
+    ALL_REFERENCE_FIELD_NAMES,
+)
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
@@ -73,3 +76,9 @@ class MergedType(Enum, metaclass=DynamicStrEnum):
     """Enumeration of possible types for merged items."""
 
     __names__ = list(MERGED_MODEL_CLASSES_BY_NAME)
+
+
+class ReferenceFieldName(Enum, metaclass=DynamicStrEnum):
+    """Enumeration of possible field names that contain references."""
+
+    __names__ = sorted(ALL_REFERENCE_FIELD_NAMES)

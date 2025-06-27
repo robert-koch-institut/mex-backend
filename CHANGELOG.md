@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - add endpoints to get a single merged or single extracted item by id
+- add generic id filter to extracted, merge and preview endpoints
 
 ### Changes
 
@@ -17,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - improve a batch of doc-strings with args, raises and return sections
 
 ### Deprecated
+
+- deprecate hadPrimarySource for extracted, merge and preview endpoints
 
 ### Removed
 
