@@ -79,3 +79,10 @@ REFERENCED_ENTITY_TYPES_BY_CLASS_NAME = {
         REFERENCED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME.items()
     )
 }
+
+# unique set of all fields from any class that contain references
+ALL_REFERENCE_FIELD_NAMES = {
+    field_name
+    for class_name in REFERENCED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME.values()
+    for field_name in class_name
+}
