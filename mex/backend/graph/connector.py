@@ -13,7 +13,11 @@ from neo4j import (
 from neo4j.exceptions import Neo4jError
 from pydantic import Field
 
-from mex.backend.fields import SEARCHABLE_CLASSES, SEARCHABLE_FIELDS
+from mex.backend.fields import (
+    ALL_REFERENCE_FIELD_NAMES,
+    SEARCHABLE_CLASSES,
+    SEARCHABLE_FIELDS,
+)
 from mex.backend.graph.exceptions import InconsistentGraphError, IngestionError
 from mex.backend.graph.models import IngestData, Result
 from mex.backend.graph.query import Query, QueryBuilder
@@ -192,7 +196,8 @@ class GraphConnector(BaseConnector):
         identifier: str | None,
         stable_target_id: str | None,
         entity_type: Sequence[str],
-        had_primary_source: Sequence[str] | None,
+        referenced_identifiers: Sequence[str] | None,
+        reference_field: str | None,
         skip: int,
         limit: int,
     ) -> Result:
@@ -203,7 +208,8 @@ class GraphConnector(BaseConnector):
             identifier: Optional identifier filter
             stable_target_id: Optional stable target ID filter
             entity_type: List of allowed entity types
-            had_primary_source: Optional merged primary source identifier filter
+            referenced_identifiers: Optional merged item identifiers filter
+            reference_field: Optional field name to filter for
             skip: How many items to skip for pagination
             limit: How many items to return at most
 
@@ -215,8 +221,8 @@ class GraphConnector(BaseConnector):
             filter_by_query_string=bool(query_string),
             filter_by_identifier=bool(identifier),
             filter_by_stable_target_id=bool(stable_target_id),
-            filter_by_reference_to_merged_item=bool(had_primary_source),
-            reference_field_name="hadPrimarySource",
+            filter_by_referenced_identifiers=bool(referenced_identifiers),
+            reference_field=reference_field,
         )
         result = self.commit(
             query,
@@ -224,7 +230,7 @@ class GraphConnector(BaseConnector):
             identifier=identifier,
             stable_target_id=stable_target_id,
             labels=entity_type,
-            referenced_identifiers=had_primary_source,
+            referenced_identifiers=referenced_identifiers,
             skip=skip,
             limit=limit,
         )
@@ -239,7 +245,8 @@ class GraphConnector(BaseConnector):
         identifier: str | None,
         stable_target_id: str | None,
         entity_type: Sequence[str] | None,
-        had_primary_source: Sequence[str] | None,
+        referenced_identifiers: Sequence[str] | None,
+        reference_field: str | None,
         skip: int,
         limit: int,
     ) -> Result:
@@ -250,7 +257,8 @@ class GraphConnector(BaseConnector):
             identifier: Optional identifier filter
             stable_target_id: Optional stable target ID filter
             entity_type: Optional entity type filter
-            had_primary_source: Optional merged primary source identifier filter
+            referenced_identifiers: Optional merged item identifiers filter
+            reference_field: Optional field name to filter for
             skip: How many items to skip for pagination
             limit: How many items to return at most
 
@@ -262,7 +270,8 @@ class GraphConnector(BaseConnector):
             identifier=identifier,
             stable_target_id=stable_target_id,
             entity_type=entity_type or list(EXTRACTED_MODEL_CLASSES_BY_NAME),
-            had_primary_source=had_primary_source,
+            referenced_identifiers=referenced_identifiers,
+            reference_field=reference_field,
             skip=skip,
             limit=limit,
         )
@@ -273,7 +282,8 @@ class GraphConnector(BaseConnector):
         identifier: str | None,
         stable_target_id: str | None,
         entity_type: Sequence[str] | None,
-        had_primary_source: Sequence[str] | None,
+        referenced_identifiers: Sequence[str] | None,
+        reference_field: str | None,
         skip: int,
         limit: int,
     ) -> Result:
@@ -284,7 +294,8 @@ class GraphConnector(BaseConnector):
             identifier: Optional identifier filter
             stable_target_id: Optional stable target ID filter
             entity_type: Optional entity type filter
-            had_primary_source: Optional merged primary source identifier filter
+            referenced_identifiers: Optional merged item identifiers filter
+            reference_field: Optional field name to filter for
             skip: How many items to skip for pagination
             limit: How many items to return at most
 
@@ -296,7 +307,8 @@ class GraphConnector(BaseConnector):
             identifier=identifier,
             stable_target_id=stable_target_id,
             entity_type=entity_type or list(RULE_MODEL_CLASSES_BY_NAME),
-            had_primary_source=had_primary_source,
+            referenced_identifiers=referenced_identifiers,
+            reference_field=reference_field,
             skip=skip,
             limit=limit,
         )
@@ -306,7 +318,8 @@ class GraphConnector(BaseConnector):
         query_string: str | None,
         identifier: str | None,
         entity_type: Sequence[str] | None,
-        had_primary_source: Sequence[str] | None,
+        referenced_identifiers: Sequence[str] | None,
+        reference_field: str | None,
         skip: int,
         limit: int,
     ) -> Result:
@@ -316,26 +329,30 @@ class GraphConnector(BaseConnector):
             query_string: Optional full text search query term
             identifier: Optional merged item identifier filter
             entity_type: Optional merged entity type filter
-            had_primary_source: Optional merged primary source identifier filter
+            referenced_identifiers: Optional merged item identifiers filter
+            reference_field: Optional field name to filter for
             skip: How many items to skip for pagination
             limit: How many items to return at most
 
         Returns:
             Graph result instance
         """
+        if reference_field and reference_field not in ALL_REFERENCE_FIELD_NAMES:
+            msg = "Invalid field name."
+            raise ValueError(msg)
         query_builder = QueryBuilder.get()
         query = query_builder.fetch_merged_items(
             filter_by_query_string=bool(query_string),
             filter_by_identifier=bool(identifier),
-            filter_by_reference_to_merged_item=bool(had_primary_source),
-            reference_field_name="hadPrimarySource",
+            filter_by_referenced_identifiers=bool(referenced_identifiers),
+            reference_field=reference_field,
         )
         result = self.commit(
             query,
             query_string=query_string,
             identifier=identifier,
             labels=entity_type or list(MERGED_MODEL_CLASSES_BY_NAME),
-            referenced_identifiers=had_primary_source,
+            referenced_identifiers=referenced_identifiers,
             skip=skip,
             limit=limit,
         )
