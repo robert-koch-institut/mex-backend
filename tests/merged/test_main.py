@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 from starlette import status
 
 from mex.backend.rules.helpers import update_and_get_rule_set
+from mex.common.merged.main import create_merged_item
 from mex.common.models import (
     AnyExtractedModel,
     ExtractedOrganizationalUnit,
@@ -219,7 +220,66 @@ def test_search_merged_items_mocked(
             },
         ),
         (
-            "?hadPrimarySource=bFQoRhcVH5DHUt",
+            "?hadPrimarySource=bFQoRhcVH5DHUt",  # deprecated
+            {
+                "items": [
+                    {
+                        "$type": "MergedOrganization",
+                        "alternativeName": [],
+                        "geprisId": [],
+                        "gndId": [],
+                        "identifier": "bFQoRhcVH5DHUv",
+                        "isniId": [],
+                        "officialName": [
+                            {"language": "de", "value": "RKI"},
+                            {"language": "en", "value": "Robert Koch Institute"},
+                            {
+                                "language": "de",
+                                "value": "Robert Koch Institut ist the best",
+                            },
+                        ],
+                        "rorId": [],
+                        "shortName": [],
+                        "viafId": [],
+                        "wikidataId": [],
+                    },
+                    {
+                        "$type": "MergedOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "identifier": "bFQoRhcVH5DHUF",
+                        "name": [
+                            {"language": "en", "value": "Unit 1.6"},
+                            {"language": "en", "value": "Unit 1.7"},
+                        ],
+                        "parentUnit": "bFQoRhcVH5DHUx",
+                        "shortName": [],
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [
+                            {
+                                "language": None,
+                                "title": "Unit Homepage",
+                                "url": "https://unit-1-7",
+                            }
+                        ],
+                    },
+                    {
+                        "$type": "MergedOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "identifier": "bFQoRhcVH5DHUx",
+                        "name": [{"language": "en", "value": "Unit 1"}],
+                        "parentUnit": None,
+                        "shortName": [],
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [],
+                    },
+                ],
+                "total": 3,
+            },
+        ),
+        (
+            "?referencedIdentifier=bFQoRhcVH5DHUt&referenceField=hadPrimarySource",
             {
                 "items": [
                     {
@@ -288,6 +348,7 @@ def test_search_merged_items_mocked(
         "identifier filter",
         "identifier filter with composite result",
         "had primary source filter",
+        "generic id filter",
         "identifier not found",
         "full text not found",
     ],
@@ -343,3 +404,47 @@ def test_search_merged_items_skip_on_validation_error(
             "identifier": "bFQoRhcVH5DHUx",
         }
     ]
+
+
+@pytest.mark.integration
+def test_search_merged_items_in_graph_bad_request(
+    client_with_api_key_read_permission: TestClient,
+) -> None:
+    response = client_with_api_key_read_permission.get(
+        "/v0/merged-item?referenceField=hadPrimarySource"
+    )
+    assert response.status_code == status.HTTP_400_BAD_REQUEST, response.text
+    assert (
+        "Must provide referencedIdentifier AND referenceField or neither."
+        in response.text
+    )
+
+
+@pytest.mark.integration
+def test_get_merged_item(
+    client_with_api_key_read_permission: TestClient,
+    load_dummy_data: dict[str, AnyExtractedModel],
+) -> None:
+    extracted_organization_1 = load_dummy_data["organization_1"]
+    extracted_organization_2 = load_dummy_data["organization_2"]
+    merged_organization = create_merged_item(
+        extracted_organization_1.stableTargetId,
+        [extracted_organization_2, extracted_organization_1],
+        rule_set=None,
+        validate_cardinality=True,
+    )
+    response = client_with_api_key_read_permission.get(
+        f"/v0/merged-item/{merged_organization.identifier}"
+    )
+    assert response.status_code == status.HTTP_200_OK, response.text
+    assert response.json() == merged_organization.model_dump(by_alias=True, mode="json")
+
+
+@pytest.mark.integration
+def test_get_merged_item_not_found(
+    client_with_api_key_read_permission: TestClient,
+) -> None:
+    response = client_with_api_key_read_permission.get(
+        "/v0/merged-item/notARealIdentifier"
+    )
+    assert response.status_code == status.HTTP_404_NOT_FOUND, response.text

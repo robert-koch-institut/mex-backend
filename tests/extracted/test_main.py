@@ -204,6 +204,20 @@ def test_search_extracted_items(
 
 
 @pytest.mark.integration
+def test_search_extracted_items_in_graph_bad_request(
+    client_with_api_key_read_permission: TestClient,
+) -> None:
+    response = client_with_api_key_read_permission.get(
+        "/v0/extracted-item?referenceField=hadPrimarySource"
+    )
+    assert response.status_code == status.HTTP_400_BAD_REQUEST, response.text
+    assert (
+        "Must provide referencedIdentifier AND referenceField or neither."
+        in response.text
+    )
+
+
+@pytest.mark.integration
 def test_get_extracted_item(
     client_with_api_key_read_permission: TestClient,
     load_dummy_data: dict[str, AnyExtractedModel],

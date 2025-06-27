@@ -18,12 +18,10 @@ def extracted_organizational_units() -> list[ExtractedOrganizationalUnit]:
     organigram_primary_source = extracted_primary_source_organigram()
 
     unit_container = search_extracted_items_in_graph(
-        None,
-        None,
-        ["ExtractedOrganizationalUnit"],
-        [organigram_primary_source.stableTargetId],
-        0,
-        len(organigram_units),
+        entity_type=["ExtractedOrganizationalUnit"],
+        referenced_identifiers=[organigram_primary_source.stableTargetId],
+        reference_field="hadPrimarySource",
+        limit=len(organigram_units),
     )
     if unit_container.total >= len(organigram_units):
         return cast("list[ExtractedOrganizationalUnit]", unit_container.items)

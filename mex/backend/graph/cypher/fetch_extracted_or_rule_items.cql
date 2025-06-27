@@ -10,8 +10,8 @@ Args:
     filter_by_query_string: Whether the final query should accept a full text query string
     filter_by_identifier: Whether the final query should filter by identifiers
     filter_by_stable_target_id: Whether the final query should filter by stableTargetIds
-    filter_by_reference_to_merged_item: Whether to filter for merged items that have a relation to a specific merged item
-    reference_field_name: name of the relationship to use for filtering by reference
+    filter_by_referenced_identifiers: Whether to filter for references to items with specific identifiers
+    reference_field: Name of the relationship holding referenced identifiers to use for filtering
 
 Returns:
     total: Count of all items found by this query
@@ -35,8 +35,8 @@ CALL () {
 <%- else %>
     OPTIONAL MATCH (extracted_or_rule_node:<<extracted_or_rule_labels|join("|")>>)-[:stableTargetId]->(merged_node:<<merged_labels|join("|")>>)
 <%- endif %>
-    <%- if filter_by_reference_to_merged_item %>
-    MATCH (extracted_or_rule_node)-[:<<reference_field_name>>]->(referenced_merged_node_to_filter_by)
+    <%- if filter_by_referenced_identifiers %>
+    MATCH (extracted_or_rule_node)-[:<<reference_field>>]->(referenced_node_to_filter_by)
     <%- endif %>
     WHERE
         ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
@@ -46,8 +46,8 @@ CALL () {
         <%- if filter_by_stable_target_id %>
         AND merged_node.identifier = $stable_target_id
         <%- endif %>
-        <%- if filter_by_reference_to_merged_item %>
-        AND referenced_merged_node_to_filter_by.identifier IN $referenced_identifiers
+        <%- if filter_by_referenced_identifiers %>
+        AND referenced_node_to_filter_by.identifier IN $referenced_identifiers
         <%- endif %>
 <%- endblock %>
     RETURN COUNT(extracted_or_rule_node) AS total

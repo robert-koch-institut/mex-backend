@@ -7,15 +7,15 @@ from starlette import status
 
 from mex.backend.graph.connector import GraphConnector
 from mex.common.models import (
-    EXTRACTED_MODEL_CLASSES,
-    RULE_SET_RESPONSE_CLASSES,
+    MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     AnyExtractedModel,
+    ExtractedContactPoint,
 )
 from tests.conftest import get_graph
 
 
 @pytest.mark.integration
-def test_bulk_insert_empty(client_with_api_key_write_permission: TestClient) -> None:
+def test_ingest_empty(client_with_api_key_write_permission: TestClient) -> None:
     response = client_with_api_key_write_permission.post(
         "/v0/ingest", json={"items": []}
     )
@@ -24,7 +24,7 @@ def test_bulk_insert_empty(client_with_api_key_write_permission: TestClient) -> 
 
 
 @pytest.mark.integration
-def test_bulk_insert(
+def test_ingest(
     client_with_api_key_write_permission: TestClient,
     dummy_data: dict[str, AnyExtractedModel],
 ) -> None:
@@ -33,7 +33,7 @@ def test_bulk_insert(
         "/v0/ingest", json={"items": list(dummy_data.values())}
     )
 
-    # assert the response are the artificial data items
+    # assert the request was accepted
     assert response.status_code == status.HTTP_204_NO_CONTENT, response.text
 
     # verify the nodes have actually been stored in the database
@@ -329,38 +329,89 @@ def test_bulk_insert(
     ]
 
 
-def test_bulk_insert_malformed(
+def test_ingest_malformed(
     client_with_api_key_write_permission: TestClient,
 ) -> None:
-    expected_response = []
-    exp_err = {
-        "ctx": {"error": {}},
-        "input": "FAIL!",
-        "loc": ["body", "items", 0, "function-wrap[fix_listyness()]"],
-        "msg": "Assertion failed, Input should be a valid dictionary, "
-        "validating other types is not supported for models with "
-        "computed fields.",
-        "type": "assertion_error",
-    }
-    expected_response += [exp_err] * len(EXTRACTED_MODEL_CLASSES)
-    exp_err = {
-        "input": "FAIL!",
-        "loc": ["body", "items", 0, "function-wrap[fix_listyness()]"],
-        "msg": "Input should be a valid dictionary or object to extract fields from",
-        "type": "model_attributes_type",
-    }
-    expected_response += [exp_err] * len(RULE_SET_RESPONSE_CLASSES)
-
     response = client_with_api_key_write_permission.post(
         "/v0/ingest",
         json={"items": ["FAIL!"]},
     )
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY, response.text
-    assert response.json() == {"detail": expected_response}
+    assert response.json() == {
+        "detail": [
+            {
+                "type": "model_attributes_type",
+                "loc": ["body", "items", 0],
+                "msg": "Input should be a valid dictionary or object to extract fields from",
+                "input": "FAIL!",
+            }
+        ]
+    }
+
+
+@pytest.mark.integration
+def test_ingest_constraint_violation(
+    client_with_api_key_write_permission: TestClient,
+) -> None:
+    # given a simple item saved successfully to the backend
+    contact_point = ExtractedContactPoint(
+        email="101@test.tld",
+        identifierInPrimarySource="test-101",
+        hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    )
+    raw_item = contact_point.model_dump(mode="json")
+    response = client_with_api_key_write_permission.post(
+        "/v0/ingest", json={"items": [raw_item]}
+    )
+    assert response.status_code == status.HTTP_204_NO_CONTENT, response.text
+    response = client_with_api_key_write_permission.get(
+        "/v0/extracted-item", params={"entityType": contact_point.entityType}
+    )
+    assert response.json() == {
+        "items": [
+            {
+                "hadPrimarySource": "00000000000000",
+                "identifierInPrimarySource": "test-101",
+                "email": ["101@test.tld"],
+                "$type": "ExtractedContactPoint",
+                "identifier": "bFQoRhcVH5DHUq",
+                "stableTargetId": "bFQoRhcVH5DHUr",
+            }
+        ],
+        "total": 1,
+    }
+
+    # when trying to post the same item with a different id
+    raw_item["identifier"] = "thisIdIsNotTheOldId"
+    response = client_with_api_key_write_permission.post(
+        "/v0/ingest", json={"items": [raw_item]}
+    )
+
+    # then we expect the backend to reject the request
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY, response.text
+    assert "Cannot set computed fields to custom values!" in response.text
+
+    # and expect the database to still contain the first version
+    response = client_with_api_key_write_permission.get(
+        "/v0/extracted-item", params={"entityType": contact_point.entityType}
+    )
+    assert response.json() == {
+        "items": [
+            {
+                "hadPrimarySource": "00000000000000",
+                "identifierInPrimarySource": "test-101",
+                "email": ["101@test.tld"],
+                "$type": "ExtractedContactPoint",
+                "identifier": "bFQoRhcVH5DHUq",
+                "stableTargetId": "bFQoRhcVH5DHUr",
+            }
+        ],
+        "total": 1,
+    }
 
 
 @pytest.mark.usefixtures("mocked_graph", "mocked_redis")
-def test_bulk_insert_mocked(
+def test_ingest_mocked(
     client_with_api_key_write_permission: TestClient,
     dummy_data: dict[str, AnyExtractedModel],
     monkeypatch: MonkeyPatch,

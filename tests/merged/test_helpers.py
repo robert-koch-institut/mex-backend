@@ -2,9 +2,14 @@ from typing import Any
 
 import pytest
 
+from mex.backend.exceptions import BackendError
 from mex.backend.merged.helpers import (
+    get_merged_item_from_graph,
     search_merged_items_in_graph,
 )
+from mex.common.merged.main import create_merged_item
+from mex.common.models import AnyExtractedModel
+from mex.common.types import Identifier
 from tests.conftest import MockedGraph
 
 
@@ -230,3 +235,25 @@ def test_search_merged_items_in_graph_mocked(
             raise AssertionError(expected) from error
     else:
         assert merged_result.model_dump(exclude_defaults=True) == expected
+
+
+@pytest.mark.integration
+def test_get_merged_item_from_graph(
+    load_dummy_data: dict[str, AnyExtractedModel],
+) -> None:
+    organization_1 = load_dummy_data["organization_1"]
+    organization_2 = load_dummy_data["organization_2"]
+    fetched = get_merged_item_from_graph(organization_1.stableTargetId)
+    expected = create_merged_item(
+        organization_1.stableTargetId,
+        [organization_2, organization_1],
+        rule_set=None,
+        validate_cardinality=True,
+    )
+    assert fetched.model_dump() == expected.model_dump()
+
+
+@pytest.mark.integration
+def test_get_merged_item_from_graph_not_found() -> None:
+    with pytest.raises(BackendError, match="Merged item was not found"):
+        get_merged_item_from_graph(Identifier("notARealIdentifier"))
