@@ -49,6 +49,7 @@ from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     RULE_MODEL_CLASSES_BY_NAME,
     AnyExtractedModel,
+    AnyMergedModel,
     AnyRuleModel,
     AnyRuleSetResponse,
     BasePrimarySource,
@@ -56,6 +57,7 @@ from mex.common.models import (
 )
 from mex.common.transform import ensure_prefix, to_key_and_values
 from mex.common.types import (
+    AnyMergedIdentifier,
     AnyPrimitiveType,
     ExtractedPrimarySourceIdentifier,
     Identifier,
@@ -679,6 +681,38 @@ class GraphConnector(BaseConnector):
                         model.stableTargetId,
                         identifier=model.identifier,
                     )
+
+    def match_item(
+        self,
+        update_extracted_item: AnyExtractedModel,
+        new_stable_target_id: AnyMergedIdentifier,
+        update_rule_sets: list[AnyRuleSetResponse] | None,  # noqa: ARG002
+        delete_merged_item: AnyMergedModel | None,  # noqa: ARG002
+    ) -> None:
+        """Match an extracted item to a new stableTargetId and clean up afterwards."""
+        settings = BackendSettings.get()
+        query_builder = QueryBuilder.get()
+        with self.driver.session(default_access_mode=WRITE_ACCESS) as session:  # noqa: SIM117
+            with session.begin_transaction(
+                timeout=settings.graph_tx_timeout,
+                metadata={
+                    "extracted": str(update_extracted_item.identifier),
+                    "merged": str(new_stable_target_id),
+                },
+            ) as tx:
+                try:
+                    tx.run(
+                        str(query_builder.update_stable_target_id()),
+                        extracted_item_identifier=update_extracted_item.identifier,
+                        merged_item_identifier=new_stable_target_id,
+                    )
+                    # TODO(ND): update the rule_sets, if given
+                    # TODO(ND): delete the merged model, if given
+                except:
+                    tx.rollback()
+                    raise
+                else:
+                    tx.commit()
 
     def flush(self) -> None:
         """Flush the database by deleting all nodes, constraints and indexes.

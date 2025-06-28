@@ -2,9 +2,7 @@ from enum import Enum, EnumMeta, _EnumDict
 
 from pydantic import SecretStr
 
-from mex.backend.fields import (
-    ALL_REFERENCE_FIELD_NAMES,
-)
+from mex.backend.fields import ALL_REFERENCE_FIELD_NAMES
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
