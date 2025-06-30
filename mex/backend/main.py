@@ -97,7 +97,12 @@ app.add_middleware(
 
 @entrypoint(BackendSettings)
 def main() -> None:  # pragma: no cover
-    """Start the backend server process."""
+    """Start the backend server process.
+
+    Initializes and runs the FastAPI application using uvicorn server.
+    Loads configuration from BackendSettings and starts the HTTP server
+    on the configured host and port.
+    """
     settings = BackendSettings.get()
     uvicorn.run(
         "mex.backend.main:app",

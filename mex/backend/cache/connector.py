@@ -60,13 +60,25 @@ class CacheConnector(BaseConnector):
             self._cache = LocalCache()
 
     def get_value(self, key: str) -> dict[str, Any] | None:
-        """Return the value for the given key."""
+        """Retrieve and deserialize a value from the cache.
+
+        Args:
+            key: Cache key to retrieve the value for
+
+        Returns:
+            Dictionary if key exists, None otherwise
+        """
         if value := self._cache.get(key):
             return cast("dict[str, Any]", json.loads(value))
         return None
 
     def set_value(self, key: str, model: BaseModel) -> None:
-        """Return the value for the given key."""
+        """Store a Pydantic model in the cache as JSON under the given key.
+
+        Args:
+            key: Cache key to store the value under
+            model: Pydantic model to serialize and cache
+        """
         self._cache.set(key, json.dumps(model, cls=MExEncoder))
 
     def metrics(self) -> dict[str, int]:
@@ -74,7 +86,10 @@ class CacheConnector(BaseConnector):
         return {k: v for k, v in self._cache.info().items() if isinstance(v, int)}
 
     def flush(self) -> None:
-        """Flush the cache (only in debug mode)."""
+        """Flush the cache by clearing all stored data.
+
+        This operation only executes when debug mode is enabled in settings.
+        """
         settings = BackendSettings.get()
         if settings.debug is True:
             self._cache.flushdb()

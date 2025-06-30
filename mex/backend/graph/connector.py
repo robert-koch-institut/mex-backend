@@ -186,7 +186,16 @@ class GraphConnector(BaseConnector):
         session: Session | None = None,
         **parameters: Any,  # noqa: ANN401
     ) -> Result:
-        """Send and commit a single graph transaction with retry configuration."""
+        """Send and commit a single graph transaction with retry configuration.
+
+        Args:
+            query: The query string or Query object to execute
+            session: Optional existing Neo4j session to use, creates new one if None
+            **parameters: Query parameters to substitute in the Cypher query
+
+        Returns:
+            Result object containing query execution results and metadata
+        """
         if session:
             return Result(session.run(str(query), parameters))
         with self.driver.session(default_access_mode=READ_ACCESS) as closing_session:
@@ -706,7 +715,12 @@ class GraphConnector(BaseConnector):
                     tx.commit()
 
     def flush(self) -> None:
-        """Flush the database (only in debug mode)."""
+        """Flush the database by deleting all nodes, constraints and indexes.
+
+        This operation only executes when debug mode is enabled in settings.
+        Completely wipes the Neo4j database including all data, constraints,
+        and indexes. Used for testing and development cleanup.
+        """
         settings = BackendSettings.get()
         if settings.debug is True:
             with self.driver.session(default_access_mode=WRITE_ACCESS) as session:
