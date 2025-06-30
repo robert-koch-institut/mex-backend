@@ -120,7 +120,7 @@ def update_and_get_rule_set(
     return create_and_get_rule_set(rule_set, stable_target_id)
 
 
-def merge_rule(
+def merge_rules(
     source_rule: AnyAdditiveModel | AnyPreventiveModel | AnySubtractiveModel,
     target_rule: AnyAdditiveModel | AnyPreventiveModel | AnySubtractiveModel,
     value_filter: Callable[[AnyPrimitiveType], bool] = bool,
@@ -151,9 +151,9 @@ def merge_rule_sets(
         target_rule_set: The rule set to merge into
         primary_source_identifiers: List of primary source identifiers for filtering
     """
-    merge_rule(source_rule_set.additive, target_rule_set.additive)
-    merge_rule(source_rule_set.subtractive, target_rule_set.subtractive)
-    merge_rule(
+    merge_rules(source_rule_set.additive, target_rule_set.additive)
+    merge_rules(source_rule_set.subtractive, target_rule_set.subtractive)
+    merge_rules(
         source_rule_set.preventive,
         target_rule_set.preventive,
         lambda identifier: identifier in primary_source_identifiers,
@@ -174,10 +174,3 @@ def remove_primary_source_from_rule(
         value_list = getattr(rule, field)
         while primary_source_identifier in value_list:
             value_list.remove(primary_source_identifier)
-
-
-def update_stable_target_id() -> None:
-    """Update stable target ID for items in the graph database.
-
-    TODO (ND): Implement stable target ID update logic.
-    """
