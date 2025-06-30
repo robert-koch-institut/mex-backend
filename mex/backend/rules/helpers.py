@@ -4,6 +4,7 @@ from typing import Any
 from mex.backend.fields import RULE_CLASS_LOOKUP_BY_FIELD_NAME
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import InconsistentGraphError, NoResultFoundError
+from mex.common.fields import MERGEABLE_FIELDS_BY_CLASS_NAME
 from mex.common.models import (
     RULE_SET_RESPONSE_CLASSES_BY_NAME,
     AnyAdditiveModel,
@@ -133,6 +134,8 @@ def merge_rules(
         value_filter: Function to filter which values to merge
     """
     for field in source_rule.model_fields:
+        if field not in MERGEABLE_FIELDS_BY_CLASS_NAME[source_rule.entityType]:
+            continue
         target_list = getattr(target_rule, field)
         for value in getattr(source_rule, field):
             if value_filter(value):

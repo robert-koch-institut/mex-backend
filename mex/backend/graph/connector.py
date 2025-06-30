@@ -708,11 +708,14 @@ class GraphConnector(BaseConnector):
                         merged_item_identifier=new_stable_target_id,
                     )
                     if update_rule_sets:
-                        raise NotImplementedError
+                        msg = "cannot match extracted item with rule-set yet"
+                        raise NotImplementedError(msg)
                     if delete_merged_item:
-                        raise NotImplementedError
+                        msg = "cannot match extracted item without siblings yet"
+                        raise NotImplementedError(msg)
                     if old_inbound_references:
-                        raise NotImplementedError
+                        msg = "cannot merge item with inbound references yet"
+                        raise NotImplementedError(msg)
                 except:
                     tx.rollback()
                     raise
