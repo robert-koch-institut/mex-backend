@@ -6,6 +6,7 @@ import pytest
 from mex.backend.rules.helpers import (
     merge_rule_sets,
     merge_rules,
+    remove_primary_source_from_rule,
     transform_raw_rules_to_rule_set_response,
 )
 from mex.common.models import (
@@ -373,3 +374,97 @@ def test_merge_rule_sets(
         target_rule_set.model_dump(exclude_defaults=True, mode="json")
         == expected_target
     )
+
+
+@pytest.mark.parametrize(
+    ("rule", "primary_source_identifier", "expected_result"),
+    [
+        # Remove identifier from single field
+        (
+            PreventivePerson(
+                givenName=[
+                    MergedPrimarySourceIdentifier.generate(seed=42),
+                    MergedPrimarySourceIdentifier.generate(seed=99),
+                ]
+            ),
+            MergedPrimarySourceIdentifier.generate(seed=42),
+            {"givenName": ["bFQoRhcVH5DHV1"]},
+        ),
+        # Remove identifier from multiple fields
+        (
+            PreventivePerson(
+                givenName=[
+                    MergedPrimarySourceIdentifier.generate(seed=42),
+                    MergedPrimarySourceIdentifier.generate(seed=99),
+                ],
+                familyName=[
+                    MergedPrimarySourceIdentifier.generate(seed=42),
+                    MergedPrimarySourceIdentifier.generate(seed=77),
+                ],
+                email=[MergedPrimarySourceIdentifier.generate(seed=55)],
+            ),
+            MergedPrimarySourceIdentifier.generate(seed=42),
+            {
+                "givenName": ["bFQoRhcVH5DHV1"],
+                "familyName": ["bFQoRhcVH5DHVF"],
+                "email": ["bFQoRhcVH5DHVj"],
+            },
+        ),
+        # Remove identifier that appears multiple times in same field
+        (
+            PreventivePerson(
+                givenName=[
+                    MergedPrimarySourceIdentifier.generate(seed=42),
+                    MergedPrimarySourceIdentifier.generate(seed=99),
+                    MergedPrimarySourceIdentifier.generate(seed=42),
+                ]
+            ),
+            MergedPrimarySourceIdentifier.generate(seed=42),
+            {"givenName": ["bFQoRhcVH5DHV1"]},
+        ),
+        # Remove identifier that doesn't exist
+        (
+            PreventivePerson(
+                givenName=[MergedPrimarySourceIdentifier.generate(seed=99)],
+                familyName=[MergedPrimarySourceIdentifier.generate(seed=77)],
+            ),
+            MergedPrimarySourceIdentifier.generate(seed=42),
+            {
+                "givenName": ["bFQoRhcVH5DHV1"],
+                "familyName": ["bFQoRhcVH5DHVF"],
+            },
+        ),
+        # Remove from empty rule
+        (
+            PreventivePerson(),
+            MergedPrimarySourceIdentifier.generate(seed=42),
+            {},
+        ),
+        # Remove all identifiers from field (field becomes empty)
+        (
+            PreventivePerson(
+                givenName=[MergedPrimarySourceIdentifier.generate(seed=42)],
+                familyName=[MergedPrimarySourceIdentifier.generate(seed=99)],
+            ),
+            MergedPrimarySourceIdentifier.generate(seed=42),
+            {"familyName": ["bFQoRhcVH5DHV1"]},
+        ),
+    ],
+    ids=[
+        "remove_from_single_field",
+        "remove_from_multiple_fields",
+        "remove_multiple_occurrences",
+        "remove_nonexistent_identifier",
+        "remove_from_empty_rule",
+        "remove_all_from_field",
+    ],
+)
+def test_remove_primary_source_from_rule(
+    rule: AnyPreventiveModel,
+    primary_source_identifier: MergedPrimarySourceIdentifier,
+    expected_result: dict[str, Any],
+) -> None:
+    """Test remove_primary_source_from_rule with various scenarios."""
+    remove_primary_source_from_rule(rule, primary_source_identifier)
+
+    assert rule.model_dump(exclude_defaults=True, mode="json") == expected_result
