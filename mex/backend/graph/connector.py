@@ -686,8 +686,9 @@ class GraphConnector(BaseConnector):
         self,
         update_extracted_item: AnyExtractedModel,
         new_stable_target_id: AnyMergedIdentifier,
-        update_rule_sets: list[AnyRuleSetResponse] | None,  # noqa: ARG002
-        delete_merged_item: AnyMergedModel | None,  # noqa: ARG002
+        update_rule_sets: list[AnyRuleSetResponse] | None,
+        delete_merged_item: AnyMergedModel | None,
+        old_inbound_references: list[AnyExtractedModel],
     ) -> None:
         """Match an extracted item to a new stableTargetId and clean up afterwards."""
         settings = BackendSettings.get()
@@ -706,8 +707,12 @@ class GraphConnector(BaseConnector):
                         extracted_item_identifier=update_extracted_item.identifier,
                         merged_item_identifier=new_stable_target_id,
                     )
-                    # TODO(ND): update the rule_sets, if given
-                    # TODO(ND): delete the merged model, if given
+                    if update_rule_sets:
+                        raise NotImplementedError
+                    if delete_merged_item:
+                        raise NotImplementedError
+                    if old_inbound_references:
+                        raise NotImplementedError
                 except:
                     tx.rollback()
                     raise

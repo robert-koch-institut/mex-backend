@@ -110,13 +110,11 @@ def match_item_in_graph(
     else:
         update_rule_sets = [old_rule_set, new_rule_set]
         delete_merged_item = merged_item
-
-    # TODO(ND): update the old_inbound_references to point to the new item
-
     connector = GraphConnector.get()
     connector.match_item(
         update_extracted_item=extracted_item,
         new_stable_target_id=merged_item.identifier,
         update_rule_sets=update_rule_sets,
         delete_merged_item=delete_merged_item,
+        old_inbound_references=old_inbound_references,
     )
