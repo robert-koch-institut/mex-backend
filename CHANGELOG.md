@@ -12,7 +12,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add tests for local and redis cache connectors
 - add endpoints to get a single merged or single extracted item by id
 - add generic id filter to extracted, merge and preview endpoints
-- add (incomplete) item matching endpoint along with helper functions
 
 ### Changes
 
