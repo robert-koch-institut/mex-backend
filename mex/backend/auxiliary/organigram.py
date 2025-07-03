@@ -30,5 +30,5 @@ def extracted_organizational_units() -> list[ExtractedOrganizationalUnit]:
         organigram_units, organigram_primary_source
     )
     connector = GraphConnector.get()
-    connector.ingest(extracted_units)
+    connector.ingest_models(extracted_units)
     return extracted_units

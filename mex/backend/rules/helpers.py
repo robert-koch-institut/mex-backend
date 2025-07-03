@@ -1,58 +1,13 @@
-from collections.abc import Mapping
-from typing import Any, Final
-
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.graph.exceptions import InconsistentGraphError, NoResultFoundError
+from mex.backend.graph.exceptions import NoResultFoundError
+from mex.backend.rules.transform import transform_raw_rules_to_rule_set_response
 from mex.common.models import (
-    ADDITIVE_MODEL_CLASSES_BY_NAME,
-    PREVENTIVE_MODEL_CLASSES_BY_NAME,
     RULE_SET_RESPONSE_CLASSES_BY_NAME,
-    SUBTRACTIVE_MODEL_CLASSES_BY_NAME,
-    AnyRuleModel,
     AnyRuleSetRequest,
     AnyRuleSetResponse,
 )
 from mex.common.transform import ensure_postfix, ensure_prefix
 from mex.common.types import Identifier
-
-MODEL_CLASS_LOOKUP_BY_FIELD_NAME: Final[dict[str, Mapping[str, type[AnyRuleModel]]]] = {
-    "additive": ADDITIVE_MODEL_CLASSES_BY_NAME,
-    "subtractive": SUBTRACTIVE_MODEL_CLASSES_BY_NAME,
-    "preventive": PREVENTIVE_MODEL_CLASSES_BY_NAME,
-}
-
-
-def transform_raw_rules_to_rule_set_response(
-    raw_rules: list[dict[str, Any]],
-) -> AnyRuleSetResponse:
-    """Transform a set of plain rules into a rule set response."""
-    stem_types: list[str] = []
-    stable_target_ids: list[str] = []
-    response: dict[str, Any] = {}
-    model: type[AnyRuleModel] | None
-
-    if (num_raw_rules := len(raw_rules)) != len(MODEL_CLASS_LOOKUP_BY_FIELD_NAME):
-        msg = f"inconsistent number of rules found: {num_raw_rules}"
-        raise InconsistentGraphError(msg)
-
-    for rule in raw_rules:
-        for field_name, model_class_lookup in MODEL_CLASS_LOOKUP_BY_FIELD_NAME.items():
-            if model := model_class_lookup.get(str(rule.get("entityType"))):
-                response[field_name] = rule
-                stem_types.append(model.stemType)
-                stable_target_ids.extend(rule.pop("stableTargetId", []))
-
-    if len(set(stem_types)) != 1:
-        msg = "inconsistent rule item stem types"
-        raise InconsistentGraphError(msg)
-    if len(set(stable_target_ids)) != 1:
-        msg = f"inconsistent rule item stableTargetIds: {', '.join(stable_target_ids)}"
-        raise InconsistentGraphError(msg)
-
-    response["stableTargetId"] = stable_target_ids[0]
-    response_class_name = ensure_postfix(stem_types[0], "RuleSetResponse")
-    response_class = RULE_SET_RESPONSE_CLASSES_BY_NAME[response_class_name]
-    return response_class.model_validate(response)
 
 
 def create_and_get_rule_set(
@@ -72,7 +27,7 @@ def create_and_get_rule_set(
         subtractive=rule_set.subtractive,
         stableTargetId=stable_target_id,
     )
-    connector.ingest([rule_set_response])
+    connector.ingest_rule_set(rule_set_response)
     rule_types = [
         rule_set.additive.entityType,
         rule_set.subtractive.entityType,

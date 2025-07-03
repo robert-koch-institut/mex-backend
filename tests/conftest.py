@@ -407,7 +407,7 @@ def load_dummy_data(
 ) -> dict[str, AnyExtractedModel]:
     """Ingest dummy data into the graph."""
     connector = GraphConnector.get()
-    connector.ingest(list(dummy_data.values()))
+    connector.ingest_models(list(dummy_data.values()))
     _match_organization_items(dummy_data)
     return dummy_data
 
@@ -417,7 +417,7 @@ def load_artificial_extracted_items(
     artificial_extracted_items: list[AnyExtractedModel],
 ) -> list[AnyExtractedModel]:
     """Ingest artificial data into the graph."""
-    GraphConnector.get().ingest(artificial_extracted_items)
+    GraphConnector.get().ingest_models(artificial_extracted_items)
     return artificial_extracted_items
 
 
@@ -453,14 +453,6 @@ def load_dummy_rule_set(
     organizational_unit_rule_set_request: OrganizationalUnitRuleSetRequest,
     load_dummy_data: dict[str, AnyExtractedModel],
 ) -> OrganizationalUnitRuleSetResponse:
-    connector = GraphConnector.get()
-    connector.ingest(
-        [
-            load_dummy_data["primary_source_2"],
-            load_dummy_data["organizational_unit_1"],
-            load_dummy_data["organizational_unit_2"],
-        ]
-    )
     return cast(
         "OrganizationalUnitRuleSetResponse",
         create_and_get_rule_set(
