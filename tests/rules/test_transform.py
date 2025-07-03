@@ -3,7 +3,7 @@ from typing import Any
 
 import pytest
 
-from mex.backend.rules.helpers import (
+from mex.backend.rules.transform import (
     merge_rule_sets,
     merge_rules,
     remove_primary_source_from_rule,

@@ -30,7 +30,7 @@ def _fetch_or_insert_primary_source(name: str) -> ExtractedPrimarySource:
     if not extracted_primary_source:
         raise NoResultFoundError(name)
     connector = GraphConnector.get()
-    connector.ingest([extracted_primary_source])
+    connector.ingest_models([extracted_primary_source])
     logger.info("ingested primary source %s", name)
     return extracted_primary_source
 

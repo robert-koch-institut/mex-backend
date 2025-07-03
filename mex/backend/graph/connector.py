@@ -7,7 +7,6 @@ from neo4j import (
     Driver,
     GraphDatabase,
     NotificationDisabledCategory,
-    Session,
     Transaction,
 )
 from neo4j.exceptions import Neo4jError
@@ -53,6 +52,7 @@ from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     RULE_MODEL_CLASSES_BY_NAME,
     AnyExtractedModel,
+    AnyMergedModel,
     AnyRuleModel,
     AnyRuleSetResponse,
     BasePrimarySource,
@@ -128,53 +128,55 @@ class GraphConnector(BaseConnector):
     def _seed_constraints(self) -> None:
         """Ensure property constraints are created for all entity types."""
         query_builder = QueryBuilder.get()
-        with self.driver.session(default_access_mode=WRITE_ACCESS) as session:
-            for label in EXTRACTED_MODEL_CLASSES_BY_NAME | MERGED_MODEL_CLASSES_BY_NAME:
-                self.commit(
-                    query_builder.create_identifier_constraint(node_label=label),
-                    session=session,
-                )
-            logger.info("seeded identifier constraints")
-            for label in EXTRACTED_MODEL_CLASSES_BY_NAME:
-                self.commit(
-                    query_builder.create_provenance_constraint(node_label=label),
-                    session=session,
-                )
+        for label in EXTRACTED_MODEL_CLASSES_BY_NAME | MERGED_MODEL_CLASSES_BY_NAME:
+            self.commit(
+                query_builder.create_identifier_constraint(node_label=label),
+                access_mode=WRITE_ACCESS,
+            )
+        logger.info("seeded identifier constraints")
+        for label in EXTRACTED_MODEL_CLASSES_BY_NAME:
+            self.commit(
+                query_builder.create_provenance_constraint(node_label=label),
+                access_mode=WRITE_ACCESS,
+            )
             logger.info("seeded provenance constraints")
 
     def _seed_indices(self) -> Result:
         """Ensure there is a full text search index for all searchable fields."""
         query_builder = QueryBuilder.get()
-        with self.driver.session(default_access_mode=WRITE_ACCESS) as session:
-            result = self.commit(
-                query_builder.fetch_full_text_search_index(), session=session
+        result = self.commit(
+            query_builder.fetch_full_text_search_index(),
+            access_mode=WRITE_ACCESS,
+        )
+        if (index := result.one_or_none()) and (
+            set(index["node_labels"]) != set(SEARCHABLE_CLASSES)
+            or set(index["search_fields"]) != set(SEARCHABLE_FIELDS)
+        ):
+            # only drop the index if the classes or fields have changed
+            self.commit(
+                query_builder.drop_full_text_search_index(),
+                access_mode=WRITE_ACCESS,
             )
-            if (index := result.one_or_none()) and (
-                set(index["node_labels"]) != set(SEARCHABLE_CLASSES)
-                or set(index["search_fields"]) != set(SEARCHABLE_FIELDS)
-            ):
-                # only drop the index if the classes or fields have changed
-                self.commit(
-                    query_builder.drop_full_text_search_index(), session=session
-                )
-                logger.info("searchable fields changed: dropped indices")
-            result = self.commit(
-                query_builder.create_full_text_search_index(
-                    node_labels=SEARCHABLE_CLASSES,
-                    search_fields=SEARCHABLE_FIELDS,
-                ),
-                session=session,
-                index_config={
-                    "fulltext.eventually_consistent": True,
-                    "fulltext.analyzer": "german",
-                },
-            )
+            logger.info("searchable fields changed: dropped indices")
+        result = self.commit(
+            query_builder.create_full_text_search_index(
+                node_labels=SEARCHABLE_CLASSES,
+                search_fields=SEARCHABLE_FIELDS,
+            ),
+            access_mode=WRITE_ACCESS,
+            index_config={
+                "fulltext.eventually_consistent": True,
+                "fulltext.analyzer": "german",
+            },
+        )
         logger.info("created full text search index")
         return result
 
     def _seed_data(self) -> None:
         """Ensure the primary source `mex` is seeded and linked to itself."""
-        self.ingest([cast("ExtractedPrimarySource", MEX_EXTRACTED_PRIMARY_SOURCE)])
+        self.ingest_models(
+            [cast("ExtractedPrimarySource", MEX_EXTRACTED_PRIMARY_SOURCE)]
+        )
         logger.info("seeded mex primary source")
 
     def close(self) -> None:
@@ -185,23 +187,21 @@ class GraphConnector(BaseConnector):
         self,
         query: Query | str,
         /,
-        session: Session | None = None,
+        access_mode: str = READ_ACCESS,
         **parameters: Any,  # noqa: ANN401
     ) -> Result:
         """Send and commit a single graph transaction with retry configuration.
 
         Args:
             query: The query string or Query object to execute
-            session: Optional existing Neo4j session to use, creates new one if None
+            access_mode: Whether to run the query with read or write access
             **parameters: Query parameters to substitute in the Cypher query
 
         Returns:
             Result object containing query execution results and metadata
         """
-        if session:
+        with self.driver.session(default_access_mode=access_mode) as session:
             return Result(session.run(str(query), parameters))
-        with self.driver.session(default_access_mode=READ_ACCESS) as closing_session:
-            return Result(closing_session.run(str(query), parameters))
 
     def _fetch_extracted_or_rule_items(  # noqa: PLR0913
         self,
@@ -439,7 +439,7 @@ class GraphConnector(BaseConnector):
 
     def _merge_item(
         self,
-        session: Session,
+        tx: Transaction,
         model: AnyExtractedModel | AnyRuleModel,
         stable_target_id: Identifier,
         **constraints: AnyPrimitiveType,
@@ -457,10 +457,8 @@ class GraphConnector(BaseConnector):
 
         Args:
             model: Model to merge into the graph as a node
-            session: Active Neo4j driver Session
+            tx: Active Neo4j transaction
             stable_target_id: Identifier the connected merged item should have
-            constraints: Mapping of field names and values to use as constraints
-                         when finding potential items to update
 
         Returns:
             Graph result instance
@@ -502,22 +500,18 @@ class GraphConnector(BaseConnector):
 
         return self.commit(
             query,
-            session=session,
             stable_target_id=stable_target_id,
             on_match=mutable_values,
             on_create=all_values,
             nested_values=nested_values,
             nested_positions=nested_positions,
-            **constraints,
         )
 
     def _merge_edges(
         self,
-        session: Session,
+        tx: Transaction,
         model: AnyExtractedModel | AnyRuleModel,
         stable_target_id: Identifier,
-        extra_refs: dict[str, Any] | None = None,
-        **constraints: AnyPrimitiveType,
     ) -> Result:
         """Merge edges into the graph for all relations originating from one model.
 
@@ -528,12 +522,9 @@ class GraphConnector(BaseConnector):
         the order for example of `contact` persons referenced on an activity.
 
         Args:
+            tx: Active Neo4j transaction
             model: Model to ensure all edges are created in the graph
-            session: Active Neo4j driver Session
             stable_target_id: Identifier of the connected merged item
-            extra_refs: Optional extra references to inject into the merge
-            constraints: Mapping of field names and values to use as constraints
-                         when finding the current item
 
         Returns:
             Graph result instance
@@ -542,7 +533,7 @@ class GraphConnector(BaseConnector):
 
         ref_fields = REFERENCE_FIELDS_BY_CLASS_NAME[model.entityType]
         ref_values = model.model_dump(include=set(ref_fields))
-        ref_values.update(extra_refs or {})
+        ref_values.update({"stableTargetId": stable_target_id})
 
         ref_labels: list[str] = []
         ref_identifiers: list[str] = []
@@ -556,22 +547,20 @@ class GraphConnector(BaseConnector):
 
         query = query_builder.merge_edges(
             current_label=model.entityType,
-            current_constraints=sorted(constraints),
+            current_constraints=[],  # deprecated
             merged_label=ensure_prefix(model.stemType, "Merged"),
             ref_labels=ref_labels,
         )
         result = self.commit(
             query,
-            session=session,
             stable_target_id=stable_target_id,
             ref_identifiers=ref_identifiers,
             ref_positions=ref_positions,
-            **constraints,
         )
 
         expectations_by_locator = transform_edges_into_expectations_by_edge_locator(
             start_node_type=model.entityType,
-            start_node_constraints=constraints,
+            start_node_constraints={},  # deprecated
             ref_labels=ref_labels,
             ref_identifiers=ref_identifiers,
             ref_positions=ref_positions,
@@ -590,7 +579,7 @@ class GraphConnector(BaseConnector):
 
         return result
 
-    def ingest_v2_tx(self, tx: Transaction, data_in: IngestData) -> None:
+    def _ingest_model_tx(self, tx: Transaction, data_in: IngestData) -> None:
         """Ingest a single item in a database transaction."""
         query = get_ingest_query_for_entity_type(data_in.entityType)
         try:
@@ -622,72 +611,52 @@ class GraphConnector(BaseConnector):
         else:
             tx.commit()
 
-    def ingest_v2(
+    def ingest_models(
         self,
-        models: Sequence[AnyExtractedModel | AnyRuleSetResponse],
+        models: Sequence[AnyExtractedModel],
     ) -> Generator[None, None, None]:
-        """Ingest a list of models into the graph as nodes and connect all edges."""
+        """Ingest a list of extracted models into the graph."""
         settings = BackendSettings.get()
         with self.driver.session(default_access_mode=WRITE_ACCESS) as session:
             for model in models:
-                if isinstance(model, AnyRuleSetResponse):
-                    raise NotImplementedError(AnyRuleSetResponse)
                 data_in = transform_model_into_ingest_data(model)
                 with session.begin_transaction(
                     timeout=settings.graph_tx_timeout,
                     metadata=data_in.metadata(),
                 ) as tx:
-                    self.ingest_v2_tx(tx, data_in)
+                    self._ingest_model_tx(tx, data_in)
                 yield
 
-    def ingest(
+    def _ingest_rule_set_tx(
         self,
-        models: Sequence[AnyExtractedModel | AnyRuleSetResponse],
+        tx: Transaction,
+        rule_set: AnyRuleSetResponse,
     ) -> None:
-        """Ingest a list of models into the graph as nodes and connect all edges.
+        """Ingest a single rule set into the graph."""
+        for rule in (rule_set.additive, rule_set.subtractive, rule_set.preventive):
+            self._merge_item(tx, rule, rule_set.stableTargetId)
+            self._merge_edges(tx, rule, rule_set.stableTargetId)
 
-        This is a two-step process: first all extracted and merged items are created
-        along with their nested objects (like Text and Link); then all edges that
-        represent references (like hadPrimarySource, parentUnit, etc.) are added to
-        the graph in a second step.
-
-        Args:
-            models: Sequence of extracted models
-        """
-        with self.driver.session(default_access_mode=WRITE_ACCESS) as session:
-            for model in models:
-                if isinstance(model, AnyRuleSetResponse):
-                    for rule in (model.additive, model.subtractive, model.preventive):
-                        self._merge_item(session, rule, model.stableTargetId)
-                else:
-                    self._merge_item(
-                        session,
-                        model,
-                        model.stableTargetId,
-                        identifier=model.identifier,
-                    )
-
-            for model in models:
-                if isinstance(model, AnyRuleSetResponse):
-                    for rule in (model.additive, model.subtractive, model.preventive):
-                        self._merge_edges(
-                            session,
-                            rule,
-                            model.stableTargetId,
-                            extra_refs={"stableTargetId": model.stableTargetId},
-                        )
-                else:
-                    self._merge_edges(
-                        session,
-                        model,
-                        model.stableTargetId,
-                        identifier=model.identifier,
-                    )
+    def ingest_rule_set(
+        self,
+        rule_set: AnyRuleSetResponse,
+    ) -> None:
+        """Ingest a single rule set into the graph."""
+        # TODO(ND): switch rule ingestion over to ingest v2 logic
+        settings = BackendSettings.get()
+        with self.driver.session(default_access_mode=WRITE_ACCESS) as session:  # noqa: SIM117
+            with session.begin_transaction(
+                timeout=settings.graph_tx_timeout,
+                metadata={"stable_target_id": rule_set.stableTargetId},
+            ) as tx:
+                self._ingest_rule_set_tx(tx, rule_set)
 
     def match_item(
         self,
-        extracted_identifier: str,
-        merged_identifier: str,
+        extracted_item: AnyExtractedModel,
+        merged_item: AnyMergedModel,
+        old_rule_set: AnyRuleSetResponse,
+        new_rule_set: AnyRuleSetResponse,
     ) -> None:
         """Match an extracted item to another merged item and clean up afterwards."""
         settings = BackendSettings.get()
@@ -696,21 +665,45 @@ class GraphConnector(BaseConnector):
             with session.begin_transaction(
                 timeout=settings.graph_tx_timeout,
                 metadata={
-                    "extracted_identifier": extracted_identifier,
-                    "merged_identifier": merged_identifier,
+                    "extracted_identifier": extracted_item.identifier,
+                    "old_merged_identifier": extracted_item.stableTargetId,
+                    "new_merged_identifier": merged_item.identifier,
                 },
             ) as tx:
                 try:
                     preconditions = Result(
                         tx.run(
                             str(query_builder.check_match_preconditions()),
-                            extracted_identifier=extracted_identifier,
-                            merged_identifier=merged_identifier,
+                            extracted_identifier=str(extracted_item.identifier),
+                            merged_identifier=(extracted_item.stableTargetId),
                             blocked_types=["ExtractedPerson"],
                         )
                     )
                     if not all(preconditions.one().values()):
                         raise MatchingError(preconditions)
+                    tx.run(
+                        str(query_builder.update_stable_target_id()),
+                        extracted_identifier=str(extracted_item.identifier),
+                        merged_identifier=(extracted_item.stableTargetId),
+                    )
+                    self._ingest_rule_set_tx(tx, old_rule_set)
+                    self._ingest_rule_set_tx(tx, new_rule_set)
+                    is_merged_item_orphaned = Result(
+                        tx.run(
+                            str(query_builder.is_merged_item_orphaned()),
+                            identifier=(extracted_item.stableTargetId),
+                        )
+                    )
+                    if is_merged_item_orphaned["is_orphaned"] is True:
+                        tx.run(
+                            str(query_builder.update_all_references()),
+                            old_identifier=str(extracted_item.stableTargetId),
+                            new_identifier=(merged_item.identifier),
+                        )
+                        tx.run(
+                            str(query_builder.deleted_orphaned_merged_item()),
+                            identifier=(extracted_item.stableTargetId),
+                        )
                 except:
                     tx.rollback()
                     raise

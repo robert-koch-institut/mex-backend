@@ -5,9 +5,9 @@ Globals:
     merged_labels: List of all merged item labels
 
 Args:
-    extracted_item_identifier: Identifier of the extracted item to update
-    merged_item_identifier: Identifier of the merged item to link to
+    extracted_identifier: Identifier of the extracted item to update
+    merged_identifier: Identifier of the merged item to link to
 -#>
-MATCH (extracted_node:<<extracted_labels|join("|")>> {identifier: $extracted_item_identifier})-[old_edge:stableTargetId]->(:<<merged_labels|join("|")>>)
-MERGE (extracted_node)-[:stableTargetId {position: 0}]->(:<<merged_labels|join("|")>> {identifier: $merged_item_identifier})
+MATCH (extracted_node:<<extracted_labels|join("|")>> {identifier: $extracted_identifier})-[old_edge:stableTargetId]->(:<<merged_labels|join("|")>>)
+MERGE (extracted_node)-[:stableTargetId {position: 0}]->(:<<merged_labels|join("|")>> {identifier: $merged_identifier})
 DELETE old_edge;
