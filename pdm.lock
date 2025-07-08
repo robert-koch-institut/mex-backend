@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:5f7cf4ce205acd086e353208192424984f9c5022463414ceabf25539a024732b"
+content_hash = "sha256:e4999e3942dfd95e0de68cd65834536dc06fa3f9c142e45894093e52c608a5c3"
 
 [[metadata.targets]]
 requires_python = "==3.11.*"
@@ -625,7 +625,7 @@ files = [
 
 [[package]]
 name = "mex-common"
-version = "0.62.1"
+version = "0.62.2"
 requires_python = "<3.12,>=3.11"
 summary = "Common library for MEx python projects."
 groups = ["default", "dev"]
@@ -644,8 +644,8 @@ dependencies = [
     "requests<3,>=2",
 ]
 files = [
-    {file = "mex_common-0.62.1-py3-none-any.whl", hash = "sha256:c35d719114581892e429d586f162bd36e0bcdd4bfb0175dc20305fd2c37451d8"},
-    {file = "mex_common-0.62.1.tar.gz", hash = "sha256:2a8f6b33f1e40865a151748d73a3e3036da7bccf4e3c53ee9a15b263a8873cbd"},
+    {file = "mex_common-0.62.2-py3-none-any.whl", hash = "sha256:e55cad886e878df872a6a58a4cae12f8d80d69507013aaea838e860a8ca8f184"},
+    {file = "mex_common-0.62.2.tar.gz", hash = "sha256:a5e6004e7bb770cde8486e1dc0be262beec3508ec0911b9f74bb1bb58517d526"},
 ]
 
 [[package]]
