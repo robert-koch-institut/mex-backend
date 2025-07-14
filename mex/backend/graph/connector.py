@@ -20,7 +20,6 @@ from mex.backend.fields import (
 from mex.backend.graph.exceptions import (
     InconsistentGraphError,
     IngestionError,
-    MatchingError,
 )
 from mex.backend.graph.models import IngestData, Result
 from mex.backend.graph.query import Query, QueryBuilder
@@ -52,7 +51,6 @@ from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     RULE_MODEL_CLASSES_BY_NAME,
     AnyExtractedModel,
-    AnyMergedModel,
     AnyRuleModel,
     AnyRuleSetResponse,
     BasePrimarySource,
@@ -442,8 +440,7 @@ class GraphConnector(BaseConnector):
         tx: Transaction,
         model: AnyExtractedModel | AnyRuleModel,
         stable_target_id: Identifier,
-        **constraints: AnyPrimitiveType,
-    ) -> Result:
+    ) -> None:
         """Upsert an extracted or rule model including merged item and nested objects.
 
         The given model is created or updated with all its inline properties.
@@ -456,12 +453,9 @@ class GraphConnector(BaseConnector):
         extracted item is linked to it via an edge with the label `stableTargetId`.
 
         Args:
-            model: Model to merge into the graph as a node
             tx: Active Neo4j transaction
+            model: Model to merge into the graph as a node
             stable_target_id: Identifier the connected merged item should have
-
-        Returns:
-            Graph result instance
         """
         query_builder = QueryBuilder.get()
 
@@ -492,19 +486,21 @@ class GraphConnector(BaseConnector):
 
         query = query_builder.merge_item(
             current_label=model.entityType,
-            current_constraints=sorted(constraints),
+            current_constraints=[],  # deprecated
             merged_label=ensure_prefix(model.stemType, "Merged"),
             nested_edge_labels=nested_edge_labels,
             nested_node_labels=nested_node_labels,
         )
 
-        return self.commit(
-            query,
-            stable_target_id=stable_target_id,
-            on_match=mutable_values,
-            on_create=all_values,
-            nested_values=nested_values,
-            nested_positions=nested_positions,
+        tx.run(
+            str(query),
+            parameters={
+                "stable_target_id": stable_target_id,
+                "on_match": mutable_values,
+                "on_create": all_values,
+                "nested_values": nested_values,
+                "nested_positions": nested_positions,
+            },
         )
 
     def _merge_edges(
@@ -512,7 +508,7 @@ class GraphConnector(BaseConnector):
         tx: Transaction,
         model: AnyExtractedModel | AnyRuleModel,
         stable_target_id: Identifier,
-    ) -> Result:
+    ) -> None:
         """Merge edges into the graph for all relations originating from one model.
 
         All fields containing references will be iterated over. When the referenced node
@@ -525,9 +521,6 @@ class GraphConnector(BaseConnector):
             tx: Active Neo4j transaction
             model: Model to ensure all edges are created in the graph
             stable_target_id: Identifier of the connected merged item
-
-        Returns:
-            Graph result instance
         """
         query_builder = QueryBuilder.get()
 
@@ -551,11 +544,15 @@ class GraphConnector(BaseConnector):
             merged_label=ensure_prefix(model.stemType, "Merged"),
             ref_labels=ref_labels,
         )
-        result = self.commit(
-            query,
-            stable_target_id=stable_target_id,
-            ref_identifiers=ref_identifiers,
-            ref_positions=ref_positions,
+        result = Result(
+            tx.run(
+                str(query),
+                parameters={
+                    "stable_target_id": stable_target_id,
+                    "ref_identifiers": ref_identifiers,
+                    "ref_positions": ref_positions,
+                },
+            )
         )
 
         expectations_by_locator = transform_edges_into_expectations_by_edge_locator(
@@ -576,8 +573,6 @@ class GraphConnector(BaseConnector):
             surplus = ", ".join(unexpected_edges)
             msg = f"merged {len(unexpected_edges)} edges more than expected: {surplus}"
             raise RuntimeError(msg)
-
-        return result
 
     def _ingest_model_tx(self, tx: Transaction, data_in: IngestData) -> None:
         """Ingest a single item in a database transaction."""
@@ -650,65 +645,6 @@ class GraphConnector(BaseConnector):
                 metadata={"stable_target_id": rule_set.stableTargetId},
             ) as tx:
                 self._ingest_rule_set_tx(tx, rule_set)
-
-    def match_item(
-        self,
-        extracted_item: AnyExtractedModel,
-        merged_item: AnyMergedModel,
-        old_rule_set: AnyRuleSetResponse,
-        new_rule_set: AnyRuleSetResponse,
-    ) -> None:
-        """Match an extracted item to another merged item and clean up afterwards."""
-        settings = BackendSettings.get()
-        query_builder = QueryBuilder.get()
-        with self.driver.session(default_access_mode=WRITE_ACCESS) as session:  # noqa: SIM117
-            with session.begin_transaction(
-                timeout=settings.graph_tx_timeout,
-                metadata={
-                    "extracted_identifier": extracted_item.identifier,
-                    "old_merged_identifier": extracted_item.stableTargetId,
-                    "new_merged_identifier": merged_item.identifier,
-                },
-            ) as tx:
-                try:
-                    preconditions = Result(
-                        tx.run(
-                            str(query_builder.check_match_preconditions()),
-                            extracted_identifier=str(extracted_item.identifier),
-                            merged_identifier=(extracted_item.stableTargetId),
-                            blocked_types=["ExtractedPerson"],
-                        )
-                    )
-                    if not all(preconditions.one().values()):
-                        raise MatchingError(preconditions)
-                    tx.run(
-                        str(query_builder.update_stable_target_id()),
-                        extracted_identifier=str(extracted_item.identifier),
-                        merged_identifier=(extracted_item.stableTargetId),
-                    )
-                    self._ingest_rule_set_tx(tx, old_rule_set)
-                    self._ingest_rule_set_tx(tx, new_rule_set)
-                    is_merged_item_orphaned = Result(
-                        tx.run(
-                            str(query_builder.is_merged_item_orphaned()),
-                            identifier=(extracted_item.stableTargetId),
-                        )
-                    )
-                    if is_merged_item_orphaned["is_orphaned"] is True:
-                        tx.run(
-                            str(query_builder.update_all_references()),
-                            old_identifier=str(extracted_item.stableTargetId),
-                            new_identifier=(merged_item.identifier),
-                        )
-                        tx.run(
-                            str(query_builder.deleted_orphaned_merged_item()),
-                            identifier=(extracted_item.stableTargetId),
-                        )
-                except:
-                    tx.rollback()
-                    raise
-                else:
-                    tx.commit()
 
     def flush(self) -> None:
         """Flush the database by deleting all nodes, constraints and indexes.

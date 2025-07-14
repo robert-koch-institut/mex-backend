@@ -6,7 +6,7 @@ from starlette import status
 
 from mex.backend.graph.connector import GraphConnector
 from mex.common.logging import logger
-from mex.common.models import AnyExtractedModel, AnyRuleSetResponse
+from mex.common.models import AnyExtractedModel
 
 router = APIRouter()
 
@@ -15,16 +15,11 @@ router = APIRouter()
 async def ingest_items(
     request: Request,
     items: Annotated[
-        list[
-            Annotated[
-                AnyExtractedModel | AnyRuleSetResponse,
-                Field(discriminator="entityType"),
-            ]
-        ],
+        list[Annotated[AnyExtractedModel, Field(discriminator="entityType")]],
         Body(embed=True),
     ],
 ) -> None:
-    """Ingest a batch of extracted items or rule-sets."""
+    """Ingest a batch of extracted items."""
     connector = GraphConnector.get()
     for i, _ in enumerate(connector.ingest_models(items), start=1):
         if await request.is_disconnected():

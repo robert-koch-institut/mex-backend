@@ -18,10 +18,6 @@ class InconsistentGraphError(BackendError):
     """Exception raised for inconsistencies found in the graph database."""
 
 
-class MatchingError(BackendError):
-    """Exception raised for errors during the matching process."""
-
-
 class IngestionError(BackendError):
     """Error for ingestion failures with underlying details."""
 
