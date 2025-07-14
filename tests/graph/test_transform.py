@@ -74,12 +74,11 @@ def test_expand_references_in_search_result() -> None:
 def test_transform_edges_into_expectations_by_edge_locator() -> None:
     expectations = transform_edges_into_expectations_by_edge_locator(
         "NodeLabel",
-        {"strConstraint": "node", "intConstraint": 42},
         ["edgeLabelFoo", "edgeLabelBar"],
         ["fooID", "barID"],
         [0, 73],
     )
     assert expectations == {
-        "edgeLabelFoo {position: 0}": '(:NodeLabel {strConstraint: "node", intConstraint: "42"})-[:edgeLabelFoo {position: 0}]->({identifier: "fooID"})',
-        "edgeLabelBar {position: 73}": '(:NodeLabel {strConstraint: "node", intConstraint: "42"})-[:edgeLabelBar {position: 73}]->({identifier: "barID"})',
+        "edgeLabelFoo {position: 0}": '(:NodeLabel)-[:edgeLabelFoo {position: 0}]->({identifier: "fooID"})',
+        "edgeLabelBar {position: 73}": '(:NodeLabel)-[:edgeLabelBar {position: 73}]->({identifier: "barID"})',
     }

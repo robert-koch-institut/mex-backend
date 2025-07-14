@@ -129,7 +129,7 @@ class MockedGraph:
             to_eager_result=MagicMock(
                 return_value=(
                     [Mock(items=v.items) for v in value],
-                    Mock(counters=SummaryCounters({})),
+                    Mock(counters=SummaryCounters({}), summary_notifications=[]),
                     None,
                 ),
             ),
@@ -146,7 +146,7 @@ class MockedGraph:
                 to_eager_result=MagicMock(
                     return_value=(
                         [Mock(items=v.items) for v in value],
-                        Mock(counters=SummaryCounters({})),
+                        Mock(counters=SummaryCounters({}), summary_notifications=[]),
                         None,
                     ),
                 ),
@@ -165,10 +165,11 @@ def mocked_graph(monkeypatch: MonkeyPatch) -> MockedGraph:
     run = MagicMock(spec=Session.run)
     tx = MagicMock(spec=Transaction, run=run)
     tx.__enter__ = MagicMock(spec=Transaction.__enter__, return_value=tx)
-    session = MagicMock(spec=Session, run=run, begin_transaction=tx)
+    begin_transaction = MagicMock(spec=Session.begin_transaction, return_value=tx)
+    session = MagicMock(spec=Session, run=run, begin_transaction=begin_transaction)
     session.__enter__ = MagicMock(spec=Session.__enter__, return_value=session)
-    get_session = MagicMock(spec=Driver.session, return_value=session)
-    driver = Mock(spec=Driver, session=get_session)
+    begin_session = MagicMock(spec=Driver.session, return_value=session)
+    driver = Mock(spec=Driver, session=begin_session)
     monkeypatch.setattr(
         GraphConnector, "__init__", lambda self: setattr(self, "driver", driver)
     )

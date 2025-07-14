@@ -1,7 +1,7 @@
 import re
 from collections import deque
 from typing import Any, cast
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 
 import pytest
 from black.const import DEFAULT_LINE_LENGTH
@@ -16,15 +16,17 @@ from mex.common.exceptions import MExError
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
-    MEX_PRIMARY_SOURCE_IDENTIFIER,
-    MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
-    MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     AnyExtractedModel,
     ExtractedOrganization,
     ExtractedOrganizationalUnit,
     OrganizationalUnitRuleSetResponse,
 )
-from mex.common.types import Identifier, Text, TextLanguage
+from mex.common.types import (
+    Identifier,
+    MergedOrganizationalUnitIdentifier,
+    Text,
+    TextLanguage,
+)
 from tests.conftest import MockedGraph, get_graph
 
 
@@ -140,51 +142,75 @@ create_full_text_search_index(
 @pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
 def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
     mocked_graph.return_value = [
-        {"edges": ["hadPrimarySource {position: 0}", "stableTargetId {position: 0}"]}
+        {
+            "identifier": "00000000000001",
+            "stableTargetId": "00000000000000",
+            "entityType": "ExtractedPrimarySource",
+            "linkRels": [
+                {
+                    "nodeProps": {"identifier": "00000000000000"},
+                    "edgeLabel": "hadPrimarySource",
+                    "edgeProps": {"position": 0},
+                    "nodeLabels": ["MergedPrimarySource"],
+                }
+            ],
+            "createRels": [],
+            "nodeProps": {
+                "identifierInPrimarySource": "mex",
+                "identifier": "00000000000001",
+            },
+        }
     ]
     graph = GraphConnector.get()
     graph._seed_data()
 
-    assert mocked_graph.call_args_list[-2].args == (
-        """\
-merge_item(
-    current_label="ExtractedPrimarySource",
-    merged_label="MergedPrimarySource",
-    nested_edge_labels=[],
-    nested_node_labels=[],
+    assert len(mocked_graph.call_args_list) == 1
+    assert mocked_graph.call_args_list[0].args == (
+        """merge_item_v2(
+    params=IngestParams(
+        merged_label="MergedPrimarySource",
+        node_label="ExtractedPrimarySource",
+        all_referenced_labels=[
+            "MergedContactPoint",
+            "MergedOrganizationalUnit",
+            "MergedPerson",
+            "MergedPrimarySource",
+        ],
+        all_nested_labels=["Link", "Text"],
+        detach_node_edges=["contact", "hadPrimarySource", "unitInCharge"],
+        delete_node_edges=[
+            "alternativeTitle",
+            "description",
+            "title",
+            "documentation",
+            "locatedAt",
+        ],
+        has_link_rels=True,
+        has_create_rels=True,
+    )
 )""",
-        {
-            "identifier": MEX_PRIMARY_SOURCE_IDENTIFIER,
-            "stable_target_id": MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-            "on_match": {"version": None},
-            "on_create": {
+    )
+    assert mocked_graph.call_args_list[0].kwargs == {
+        "data": {
+            "stableTargetId": "00000000000000",
+            "identifier": "00000000000001",
+            "entityType": "ExtractedPrimarySource",
+            "nodeProps": {
                 "version": None,
-                "identifier": MEX_PRIMARY_SOURCE_IDENTIFIER,
-                "identifierInPrimarySource": (
-                    MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE
-                ),
+                "identifier": "00000000000001",
+                "identifierInPrimarySource": "mex",
             },
-            "nested_positions": [],
-            "nested_values": [],
-        },
-    )
-    assert mocked_graph.call_args_list[-1].args == (
-        """\
-merge_edges(
-    current_label="ExtractedPrimarySource",
-    merged_label="MergedPrimarySource",
-    ref_labels=["hadPrimarySource", "stableTargetId"],
-)""",
-        {
-            "identifier": MEX_PRIMARY_SOURCE_IDENTIFIER,
-            "ref_identifiers": [
-                MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-                MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+            "linkRels": [
+                {
+                    "nodeLabels": ["MergedPrimarySource"],
+                    "nodeProps": {"identifier": "00000000000000"},
+                    "edgeLabel": "hadPrimarySource",
+                    "edgeProps": {"position": 0},
+                }
             ],
-            "ref_positions": [0, 0],
-            "stable_target_id": MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+            "createRels": [],
         },
-    )
+    }
 
 
 @pytest.mark.usefixtures("mocked_redis")
@@ -1353,9 +1379,8 @@ merge_item(
     nested_node_labels=["Text"],
 )""",
         {
-            "identifier": extracted_organizational_unit.identifier,
             "nested_positions": [0],
-            "nested_values": [{"language": "en", "value": "Unit 1"}],
+            "nested_values": [{"language": TextLanguage.EN, "value": "Unit 1"}],
             "on_create": {
                 "email": [],
                 "identifier": extracted_organizational_unit.identifier,
@@ -1401,7 +1426,6 @@ merge_edges(
     ref_labels=["hadPrimarySource", "unitOf", "stableTargetId"],
 )""",
         {
-            "identifier": extracted_organizational_unit.identifier,
             "ref_identifiers": [
                 extracted_organizational_unit.hadPrimarySource,
                 extracted_organizational_unit.unitOf[0],
@@ -1508,50 +1532,129 @@ def test_mocked_graph_ingests_rule_set(
 ) -> None:
     mocked_graph.side_effect = [
         [{"current": {}, "$comment": "additive item"}],
-        [{"current": {}, "$comment": "subtractive item"}],
-        [{"current": {}, "$comment": "preventive item"}],
         [
             {
                 "edges": ["parentUnit {position: 0}", "stableTargetId {position: 0}"],
                 "$comment": "additive edges",
             }
         ],
+        [{"current": {}, "$comment": "subtractive item"}],
         [{"edges": ["stableTargetId {position: 0}"], "$comment": "subtractive edges"}],
+        [{"current": {}, "$comment": "preventive item"}],
         [{"edges": ["stableTargetId {position: 0}"], "$comment": "preventive edges"}],
     ]
     graph = GraphConnector.get()
     graph.ingest_rule_set(organizational_unit_rule_set_response)
 
-    assert len(mocked_graph.call_args_list) == 6
-    assert mocked_graph.call_args_list[2].args == (
-        """\
-merge_item(
+    assert mocked_graph.call_args_list == [
+        call(
+            """merge_item(
+    current_label="AdditiveOrganizationalUnit",
+    merged_label="MergedOrganizationalUnit",
+    nested_edge_labels=["name", "website"],
+    nested_node_labels=["Text", "Link"],
+)""",
+            {
+                "stable_target_id": MergedOrganizationalUnitIdentifier(
+                    "bFQoRhcVH5DHU6"
+                ),
+                "on_match": {"email": []},
+                "on_create": {"email": []},
+                "nested_values": [
+                    {"value": "Unit 1.7", "language": TextLanguage.EN},
+                    {
+                        "language": None,
+                        "title": "Unit Homepage",
+                        "url": "https://unit-1-7",
+                    },
+                ],
+                "nested_positions": [0, 0],
+            },
+        ),
+        call(
+            """merge_edges(
+    current_label="AdditiveOrganizationalUnit",
+    merged_label="MergedOrganizationalUnit",
+    ref_labels=["parentUnit", "stableTargetId"],
+)""",
+            {
+                "stable_target_id": MergedOrganizationalUnitIdentifier(
+                    "bFQoRhcVH5DHU6"
+                ),
+                "ref_identifiers": [
+                    "cWWm02l1c6cucKjIhkFqY4",
+                    MergedOrganizationalUnitIdentifier("bFQoRhcVH5DHU6"),
+                ],
+                "ref_positions": [0, 0],
+            },
+        ),
+        call(
+            """merge_item(
+    current_label="SubtractiveOrganizationalUnit",
+    merged_label="MergedOrganizationalUnit",
+    nested_edge_labels=[],
+    nested_node_labels=[],
+)""",
+            {
+                "stable_target_id": MergedOrganizationalUnitIdentifier(
+                    "bFQoRhcVH5DHU6"
+                ),
+                "on_match": {"email": []},
+                "on_create": {"email": []},
+                "nested_values": [],
+                "nested_positions": [],
+            },
+        ),
+        call(
+            """merge_edges(
+    current_label="SubtractiveOrganizationalUnit",
+    merged_label="MergedOrganizationalUnit",
+    ref_labels=["stableTargetId"],
+)""",
+            {
+                "stable_target_id": MergedOrganizationalUnitIdentifier(
+                    "bFQoRhcVH5DHU6"
+                ),
+                "ref_identifiers": [
+                    MergedOrganizationalUnitIdentifier("bFQoRhcVH5DHU6")
+                ],
+                "ref_positions": [0],
+            },
+        ),
+        call(
+            """merge_item(
     current_label="PreventiveOrganizationalUnit",
     merged_label="MergedOrganizationalUnit",
     nested_edge_labels=[],
     nested_node_labels=[],
 )""",
-        {
-            "stable_target_id": "bFQoRhcVH5DHU6",
-            "on_match": {},
-            "on_create": {},
-            "nested_values": [],
-            "nested_positions": [],
-        },
-    )
-    assert mocked_graph.call_args_list[5].args == (
-        """\
-merge_edges(
+            {
+                "stable_target_id": MergedOrganizationalUnitIdentifier(
+                    "bFQoRhcVH5DHU6"
+                ),
+                "on_match": {},
+                "on_create": {},
+                "nested_values": [],
+                "nested_positions": [],
+            },
+        ),
+        call(
+            """merge_edges(
     current_label="PreventiveOrganizationalUnit",
     merged_label="MergedOrganizationalUnit",
     ref_labels=["stableTargetId"],
 )""",
-        {
-            "stable_target_id": "bFQoRhcVH5DHU6",
-            "ref_identifiers": ["bFQoRhcVH5DHU6"],
-            "ref_positions": [0],
-        },
-    )
+            {
+                "stable_target_id": MergedOrganizationalUnitIdentifier(
+                    "bFQoRhcVH5DHU6"
+                ),
+                "ref_identifiers": [
+                    MergedOrganizationalUnitIdentifier("bFQoRhcVH5DHU6")
+                ],
+                "ref_positions": [0],
+            },
+        ),
+    ]
 
 
 @pytest.mark.usefixtures("mocked_redis")
@@ -1559,121 +1662,387 @@ def test_mocked_graph_ingests_extracted_models(
     mocked_graph: MockedGraph,
     dummy_data: dict[str, AnyExtractedModel],
 ) -> None:
-    # the `$comment` keys are just for easier debugging
     mocked_graph.side_effect = [
-        [{"current": {}, "$comment": "mock response for PrimarySource ps-1 item"}],
-        [{"current": {}, "$comment": "mock response for PrimarySource ps-2 item"}],
-        [{"current": {}, "$comment": "mock response for ContactPoint cp-1 item"}],
-        [{"current": {}, "$comment": "mock response for ContactPoint cp-2 item"}],
-        [{"current": {}, "$comment": "mock response for Organization rki item"}],
         [
             {
-                "current": {},
-                "$comment": "mock response for Organization robert-koch-institute item",
-            }
-        ],
-        [{"current": {}, "$comment": "mock response for OrganizationalUnit ou-1 item"}],
-        [
-            {
-                "current": {},
-                "$comment": "mock response for OrganizationalUnit ou-1.6 item",
-            }
-        ],
-        [{"current": {}, "$comment": "mock response for Activity a-1 item"}],
-        [
-            {
-                "edges": [
-                    "hadPrimarySource {position: 0}",
-                    "stableTargetId {position: 0}",
+                "identifier": str(dummy_data["primary_source_1"].identifier),
+                "stableTargetId": str(dummy_data["primary_source_1"].stableTargetId),
+                "entityType": "ExtractedPrimarySource",
+                "linkRels": [
+                    {
+                        "nodeProps": {"identifier": "00000000000000"},
+                        "edgeLabel": "hadPrimarySource",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["MergedPrimarySource"],
+                    }
                 ],
-                "$comment": "mock response for PrimarySource ps-1 edges",
-            },
-        ],
-        [
-            {
-                "edges": [
-                    "hadPrimarySource {position: 0}",
-                    "stableTargetId {position: 0}",
-                ],
-                "$comment": "mock response for PrimarySource ps-2 edges",
-            },
-        ],
-        [
-            {
-                "edges": [
-                    "hadPrimarySource {position: 0}",
-                    "stableTargetId {position: 0}",
-                ],
-                "$comment": "mock response for ContactPoint cp-1 edges",
-            },
-        ],
-        [
-            {
-                "edges": [
-                    "hadPrimarySource {position: 0}",
-                    "stableTargetId {position: 0}",
-                ],
-                "$comment": "mock response for ContactPoint cp-2 edges",
-            },
-        ],
-        [
-            {
-                "edges": [
-                    "hadPrimarySource {position: 0}",
-                    "stableTargetId {position: 0}",
-                ],
-                "$comment": "mock response for Organization rki edges",
+                "createRels": [],
+                "nodeProps": {
+                    "identifierInPrimarySource": "ps-1",
+                    "identifier": str(dummy_data["primary_source_1"].identifier),
+                },
             }
         ],
         [
             {
-                "edges": [
-                    "hadPrimarySource {position: 0}",
-                    "stableTargetId {position: 0}",
+                "identifier": str(dummy_data["primary_source_2"].identifier),
+                "stableTargetId": str(dummy_data["primary_source_2"].stableTargetId),
+                "entityType": "ExtractedPrimarySource",
+                "linkRels": [
+                    {
+                        "nodeProps": {"identifier": "00000000000000"},
+                        "edgeLabel": "hadPrimarySource",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["MergedPrimarySource"],
+                    }
                 ],
-                "$comment": "mock response for Organization robert-koch-institute edges",
+                "createRels": [],
+                "nodeProps": {
+                    "identifierInPrimarySource": "ps-2",
+                    "identifier": str(dummy_data["primary_source_2"].identifier),
+                    "version": "Cool Version v2.13",
+                },
             }
         ],
         [
             {
-                "edges": [
-                    "hadPrimarySource {position: 0}",
-                    "unitOf {position: 0}",
-                    "stableTargetId {position: 0}",
+                "identifier": str(dummy_data["contact_point_1"].identifier),
+                "stableTargetId": str(dummy_data["contact_point_1"].stableTargetId),
+                "entityType": "ExtractedContactPoint",
+                "linkRels": [
+                    {
+                        "nodeProps": {
+                            "identifier": str(
+                                dummy_data["primary_source_1"].stableTargetId
+                            )
+                        },
+                        "edgeLabel": "hadPrimarySource",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["MergedPrimarySource"],
+                    }
                 ],
-                "$comment": "mock response for OrganizationalUnit ou-1 edges",
+                "nodeProps": {
+                    "identifierInPrimarySource": "cp-1",
+                    "email": ["info@contact-point.one"],
+                    "identifier": str(dummy_data["contact_point_1"].identifier),
+                },
             }
         ],
         [
             {
-                "edges": [
-                    "hadPrimarySource {position: 0}",
-                    "parentUnit {position: 0}",
-                    "unitOf {position: 0}",
-                    "stableTargetId {position: 0}",
+                "identifier": str(dummy_data["contact_point_2"].identifier),
+                "stableTargetId": str(dummy_data["contact_point_2"].stableTargetId),
+                "entityType": "ExtractedContactPoint",
+                "linkRels": [
+                    {
+                        "nodeProps": {
+                            "identifier": str(
+                                dummy_data["primary_source_1"].stableTargetId
+                            )
+                        },
+                        "edgeLabel": "hadPrimarySource",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["MergedPrimarySource"],
+                    }
                 ],
-                "$comment": "mock response for OrganizationalUnit ou-1.6 edges",
+                "nodeProps": {
+                    "identifierInPrimarySource": "cp-2",
+                    "email": ["help@contact-point.two"],
+                    "identifier": str(dummy_data["contact_point_2"].identifier),
+                },
             }
         ],
         [
             {
-                "edges": [
-                    "hadPrimarySource {position: 0}",
-                    "contact {position: 0}",
-                    "contact {position: 1}",
-                    "contact {position: 2}",
-                    "responsibleUnit {position: 0}",
-                    "stableTargetId {position: 0}",
+                "identifier": str(dummy_data["organization_1"].identifier),
+                "stableTargetId": str(dummy_data["organization_1"].stableTargetId),
+                "entityType": "ExtractedOrganization",
+                "linkRels": [
+                    {
+                        "nodeProps": {
+                            "identifier": str(
+                                dummy_data["primary_source_1"].stableTargetId
+                            )
+                        },
+                        "edgeLabel": "hadPrimarySource",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["MergedPrimarySource"],
+                    }
                 ],
-                "$comment": "mock response for Activity a-1 edges",
-            },
+                "createRels": [
+                    {
+                        "nodeProps": {"value": "RKI", "language": "de"},
+                        "edgeLabel": "officialName",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["Text"],
+                    },
+                    {
+                        "nodeProps": {
+                            "value": "Robert Koch Institut ist the best",
+                            "language": "de",
+                        },
+                        "edgeLabel": "officialName",
+                        "edgeProps": {"position": 1},
+                        "nodeLabels": ["Text"],
+                    },
+                ],
+                "nodeProps": {
+                    "rorId": [],
+                    "identifierInPrimarySource": "rki",
+                    "gndId": [],
+                    "wikidataId": [],
+                    "geprisId": [],
+                    "viafId": [],
+                    "isniId": [],
+                    "identifier": str(dummy_data["organization_1"].identifier),
+                },
+            }
+        ],
+        [
+            {
+                "identifier": str(dummy_data["organization_2"].identifier),
+                "stableTargetId": str(dummy_data["organization_2"].stableTargetId),
+                "entityType": "ExtractedOrganization",
+                "linkRels": [
+                    {
+                        "nodeProps": {
+                            "identifier": str(
+                                dummy_data["primary_source_2"].stableTargetId
+                            )
+                        },
+                        "edgeLabel": "hadPrimarySource",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["MergedPrimarySource"],
+                    }
+                ],
+                "createRels": [
+                    {
+                        "nodeProps": {"value": "RKI", "language": "de"},
+                        "edgeLabel": "officialName",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["Text"],
+                    },
+                    {
+                        "nodeProps": {
+                            "value": "Robert Koch Institute",
+                            "language": "en",
+                        },
+                        "edgeLabel": "officialName",
+                        "edgeProps": {"position": 1},
+                        "nodeLabels": ["Text"],
+                    },
+                ],
+                "nodeProps": {
+                    "rorId": [],
+                    "identifierInPrimarySource": "robert-koch-institute",
+                    "gndId": [],
+                    "wikidataId": [],
+                    "geprisId": [],
+                    "viafId": [],
+                    "isniId": [],
+                    "identifier": str(dummy_data["organization_2"].identifier),
+                },
+            }
+        ],
+        [
+            {
+                "identifier": str(dummy_data["organizational_unit_1"].identifier),
+                "stableTargetId": str(
+                    dummy_data["organizational_unit_1"].stableTargetId
+                ),
+                "entityType": "ExtractedOrganizationalUnit",
+                "linkRels": [
+                    {
+                        "nodeProps": {
+                            "identifier": str(
+                                dummy_data["primary_source_2"].stableTargetId
+                            )
+                        },
+                        "edgeLabel": "hadPrimarySource",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["MergedPrimarySource"],
+                    },
+                    {
+                        "nodeProps": {
+                            "identifier": str(
+                                dummy_data["organization_1"].stableTargetId
+                            )
+                        },
+                        "edgeLabel": "unitOf",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["MergedOrganization"],
+                    },
+                ],
+                "createRels": [
+                    {
+                        "nodeProps": {"value": "Unit 1", "language": "en"},
+                        "edgeLabel": "name",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["Text"],
+                    }
+                ],
+                "nodeProps": {
+                    "identifierInPrimarySource": "ou-1",
+                    "email": [],
+                    "identifier": str(dummy_data["organizational_unit_1"].identifier),
+                },
+            }
+        ],
+        [
+            {
+                "identifier": str(dummy_data["organizational_unit_2"].identifier),
+                "stableTargetId": str(
+                    dummy_data["organizational_unit_2"].stableTargetId
+                ),
+                "entityType": "ExtractedOrganizationalUnit",
+                "linkRels": [
+                    {
+                        "nodeProps": {
+                            "identifier": str(
+                                dummy_data["primary_source_2"].stableTargetId
+                            )
+                        },
+                        "edgeLabel": "hadPrimarySource",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["MergedPrimarySource"],
+                    },
+                    {
+                        "nodeProps": {
+                            "identifier": str(
+                                dummy_data["organizational_unit_1"].stableTargetId
+                            )
+                        },
+                        "edgeLabel": "parentUnit",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["MergedOrganizationalUnit"],
+                    },
+                    {
+                        "nodeProps": {
+                            "identifier": str(
+                                dummy_data["organization_1"].stableTargetId
+                            )
+                        },
+                        "edgeLabel": "unitOf",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["MergedOrganization"],
+                    },
+                ],
+                "createRels": [
+                    {
+                        "nodeProps": {"value": "Unit 1.6", "language": "en"},
+                        "edgeLabel": "name",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["Text"],
+                    }
+                ],
+                "nodeProps": {
+                    "identifierInPrimarySource": "ou-1.6",
+                    "email": [],
+                    "identifier": str(dummy_data["organizational_unit_2"].identifier),
+                },
+            }
+        ],
+        [
+            {
+                "identifier": str(dummy_data["activity_1"].identifier),
+                "stableTargetId": str(dummy_data["activity_1"].stableTargetId),
+                "entityType": "ExtractedActivity",
+                "linkRels": [
+                    {
+                        "nodeProps": {
+                            "identifier": str(
+                                dummy_data["contact_point_1"].stableTargetId
+                            )
+                        },
+                        "edgeLabel": "contact",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["MergedContactPoint"],
+                    },
+                    {
+                        "nodeProps": {
+                            "identifier": str(
+                                dummy_data["contact_point_2"].stableTargetId
+                            )
+                        },
+                        "edgeLabel": "contact",
+                        "edgeProps": {"position": 1},
+                        "nodeLabels": ["MergedContactPoint"],
+                    },
+                    {
+                        "nodeProps": {
+                            "identifier": str(
+                                dummy_data["organizational_unit_1"].stableTargetId
+                            )
+                        },
+                        "edgeLabel": "contact",
+                        "edgeProps": {"position": 2},
+                        "nodeLabels": ["MergedOrganizationalUnit"],
+                    },
+                    {
+                        "nodeProps": {
+                            "identifier": str(
+                                dummy_data["primary_source_1"].stableTargetId
+                            )
+                        },
+                        "edgeLabel": "hadPrimarySource",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["MergedPrimarySource"],
+                    },
+                    {
+                        "nodeProps": {
+                            "identifier": str(
+                                dummy_data["organizational_unit_1"].stableTargetId
+                            )
+                        },
+                        "edgeLabel": "responsibleUnit",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["MergedOrganizationalUnit"],
+                    },
+                ],
+                "createRels": [
+                    {
+                        "nodeProps": {"value": "An active activity.", "language": "en"},
+                        "edgeLabel": "abstract",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["Text"],
+                    },
+                    {
+                        "nodeProps": {"value": "Une activité active."},
+                        "edgeLabel": "abstract",
+                        "edgeProps": {"position": 1},
+                        "nodeLabels": ["Text"],
+                    },
+                    {
+                        "nodeProps": {"value": "Aktivität 1", "language": "de"},
+                        "edgeLabel": "title",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["Text"],
+                    },
+                    {
+                        "nodeProps": {
+                            "title": "Activity Homepage",
+                            "url": "https://activity-1",
+                        },
+                        "edgeLabel": "website",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["Link"],
+                    },
+                ],
+                "nodeProps": {
+                    "fundingProgram": [],
+                    "identifierInPrimarySource": "a-1",
+                    "start": ["2014-08-24"],
+                    "theme": ["https://mex.rki.de/item/theme-11"],
+                    "activityType": [],
+                    "identifier": str(dummy_data["activity_1"].identifier),
+                    "end": [],
+                },
+            }
         ],
     ]
-
     graph = GraphConnector.get()
     deque(graph.ingest_extracted_items(dummy_data.values()))
-
-    assert len(mocked_graph.call_args_list) == 18
+    assert len(mocked_graph.call_args_list) == len(dummy_data)
 
 
 @pytest.mark.integration

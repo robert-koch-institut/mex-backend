@@ -26,7 +26,7 @@ from mex.common.fields import (
 )
 from mex.common.models import EXTRACTED_MODEL_CLASSES_BY_NAME, AnyExtractedModel
 from mex.common.transform import ensure_prefix, to_key_and_values
-from mex.common.types import AnyPrimitiveType, Link, Text
+from mex.common.types import Link, Text
 
 
 class _SearchResultReference(TypedDict):
@@ -54,18 +54,14 @@ def expand_references_in_search_result(
 
 def transform_edges_into_expectations_by_edge_locator(
     start_node_type: str,
-    start_node_constraints: dict[str, AnyPrimitiveType],
     ref_labels: list[str],
     ref_identifiers: list[str],
     ref_positions: list[int],
 ) -> dict[str, str]:
     """Generate a all expected edges and render a CYPHER-style merge statement."""
-    start_node = ", ".join(f'{k}: "{v!s}"' for k, v in start_node_constraints.items())
     return {
         (edge_locator := f"{label} {{position: {position}}}"): (
-            f"(:{start_node_type} {{{start_node}}})"
-            f"-[:{edge_locator}]->"
-            f'({{identifier: "{identifier}"}})'
+            f'(:{start_node_type})-[:{edge_locator}]->({{identifier: "{identifier}"}})'
         )
         for label, position, identifier in zip(
             ref_labels, ref_positions, ref_identifiers, strict=True

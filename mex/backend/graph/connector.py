@@ -526,7 +526,6 @@ class GraphConnector(BaseConnector):
 
         expectations_by_locator = transform_edges_into_expectations_by_edge_locator(
             start_node_type=model.entityType,
-            start_node_constraints={},  # deprecated
             ref_labels=ref_labels,
             ref_identifiers=ref_identifiers,
             ref_positions=ref_positions,
