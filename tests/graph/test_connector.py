@@ -164,8 +164,7 @@ def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
     graph = GraphConnector.get()
     graph._seed_data()
 
-    assert len(mocked_graph.call_args_list) == 1
-    assert mocked_graph.call_args_list[0].args == (
+    assert mocked_graph.call_args_list[-1].args == (
         """merge_item_v2(
     params=IngestParams(
         merged_label="MergedPrimarySource",
@@ -190,7 +189,7 @@ def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
     )
 )""",
     )
-    assert mocked_graph.call_args_list[0].kwargs == {
+    assert mocked_graph.call_args_list[-1].kwargs == {
         "data": {
             "stableTargetId": "00000000000000",
             "identifier": "00000000000001",

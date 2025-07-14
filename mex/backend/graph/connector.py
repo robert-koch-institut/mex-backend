@@ -23,7 +23,6 @@ from mex.backend.graph.query import Query, QueryBuilder
 from mex.backend.graph.transform import (
     expand_references_in_search_result,
     get_error_details_from_neo4j_error,
-    get_ingest_query_for_entity_type,
     transform_edges_into_expectations_by_edge_locator,
     transform_model_into_ingest_data,
     validate_ingested_data,
@@ -544,7 +543,8 @@ class GraphConnector(BaseConnector):
 
     def _ingest_model_tx(self, tx: Transaction, data_in: IngestData) -> None:
         """Ingest a single item in a database transaction."""
-        query = get_ingest_query_for_entity_type(data_in.entityType)
+        query_builder = QueryBuilder.get()
+        query = query_builder.get_ingest_query_for_entity_type(data_in.entityType)
         try:
             tx_result = tx.run(query, data=data_in.model_dump())
             result = Result(tx_result)
