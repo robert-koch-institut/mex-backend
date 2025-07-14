@@ -1,4 +1,5 @@
 import re
+from collections import deque
 from typing import Any, cast
 from unittest.mock import Mock
 
@@ -8,7 +9,7 @@ from pytest import MonkeyPatch
 
 from mex.backend.graph import connector as connector_module
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.graph.exceptions import InconsistentGraphError
+from mex.backend.graph.exceptions import InconsistentGraphError, IngestionError
 from mex.backend.graph.query import Query
 from mex.backend.settings import BackendSettings
 from mex.common.exceptions import MExError
@@ -1459,13 +1460,12 @@ def test_graph_merge_edges_fails_inconsistent(
     )
 
     with pytest.raises(
-        InconsistentGraphError,
-        match=re.escape("""InconsistentGraphError: failed to merge 2 edges: \
-(:ExtractedOrganizationalUnit {identifier: "bFQoRhcVH5DHUK"})-[:hadPrimarySource {position: 0}]->({identifier: "whatPrimarySource"}), \
-(:ExtractedOrganizationalUnit {identifier: "bFQoRhcVH5DHUK"})-[:unitOf {position: 1}]->({identifier: "whatOrganizationalUnit"})\
-"""),
+        IngestionError,
+        match=re.escape(
+            """IngestionError: Could not merge ExtractedOrganizationalUnit(stableTargetId='bFQoRhcVH5DHUL', ...)"""
+        ),
     ):
-        graph.ingest_extracted_items([consistent_org, inconsistent_unit])
+        deque(graph.ingest_extracted_items([consistent_org, inconsistent_unit]))
 
 
 @pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
