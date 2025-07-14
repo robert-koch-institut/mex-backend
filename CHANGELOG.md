@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changes
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [0.41.1] - 2025-07-08
+
+### Fixed
+
+- fix ldap connection resetting
+
+## [0.41.0] - 2025-07-07
+
+### Added
+
 - add tests for local and redis cache connectors
 - add endpoints to get a single merged or single extracted item by id
 - add generic id filter to extracted, merge and preview endpoints
@@ -22,11 +42,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - deprecate hadPrimarySource for extracted, merge and preview endpoints
 
-### Removed
-
 ### Fixed
 
-### Security
+- fix: ldap endpoint returns 500 if first search is more than an hour ago
 
 ## [0.40.0] - 2025-06-24
 

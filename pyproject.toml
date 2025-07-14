@@ -1,6 +1,6 @@
 [project]
 name = "mex-backend"
-version = "0.40.0"
+version = "0.41.1"
 description = "Backend server for the RKI metadata exchange."
 authors = [{ name = "MEx Team", email = "mex@rki.de" }]
 readme = { file = "README.md", content-type = "text/markdown" }
@@ -12,7 +12,7 @@ dependencies = [
     "black>=25",
     "fastapi>=0.115",
     "jinja2>=3",
-    "mex-common==0.62.0",
+    "mex-common>=0.62.2,<0.63",
     "neo4j>=5",
     "pydantic>=2",
     "redis[hiredis]>=6",
@@ -22,7 +22,7 @@ dependencies = [
 optional-dependencies.dev = [
     "httpx>=0.27",
     "ipdb>=0.13",
-    "mex-artificial>=0.5.0",
+    "mex-artificial>=0.5.1,<0.6",
     "mypy>=1",
     "pytest-cov>=6",
     "pytest-random-order>=1",
@@ -156,5 +156,5 @@ known-first-party = ["mex", "tests"]
 convention = "google"
 
 [build-system]
-requires = ["pdm-backend==2.4.4"]
+requires = ["pdm-backend==2.4.5"]
 build-backend = "pdm.backend"
