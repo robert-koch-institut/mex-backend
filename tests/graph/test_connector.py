@@ -1472,7 +1472,7 @@ def test_graph_merge_edges_fails_inconsistent(
 (:ExtractedOrganizationalUnit {identifier: "bFQoRhcVH5DHUK"})-[:unitOf {position: 1}]->({identifier: "whatOrganizationalUnit"})\
 """),
     ):
-        graph.ingest([consistent_org, inconsistent_unit])
+        graph.ingest_rule_set([consistent_org, inconsistent_unit])
 
 
 @pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
@@ -1528,7 +1528,7 @@ def test_mocked_graph_ingests_rule_set(
         [{"edges": ["stableTargetId {position: 0}"], "$comment": "preventive edges"}],
     ]
     graph = GraphConnector.get()
-    graph.ingest([organizational_unit_rule_set_response])
+    graph.ingest_rule_set([organizational_unit_rule_set_response])
 
     assert len(mocked_graph.call_args_list) == 6
     assert mocked_graph.call_args_list[2].args == (
@@ -1682,7 +1682,7 @@ def test_mocked_graph_ingests_extracted_models(
 
     dummy_items = list(dummy_data.values())
     graph = GraphConnector.get()
-    graph.ingest(dummy_items)
+    graph.ingest_rule_set(dummy_items)
 
     assert len(mocked_graph.call_args_list) == 18
 

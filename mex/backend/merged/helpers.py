@@ -4,7 +4,7 @@ from pydantic import ValidationError
 
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import InconsistentGraphError, NoResultFoundError
-from mex.backend.rules.helpers import transform_raw_rules_to_rule_set_response
+from mex.backend.rules.transform import transform_raw_rules_to_rule_set_response
 from mex.backend.types import Validation
 from mex.common.exceptions import MergingError
 from mex.common.merged.main import create_merged_item
