@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING, cast
+
 import pytest
 from fastapi.testclient import TestClient
 from neo4j import GraphDatabase
@@ -5,6 +7,9 @@ from starlette import status
 
 from mex.backend.main import app
 from mex.backend.settings import BackendSettings
+
+if TYPE_CHECKING:  # pragma: no cover
+    from starlette.routing import Route
 
 
 def test_all_endpoints_require_authorization(client: TestClient) -> None:
@@ -16,8 +21,8 @@ def test_all_endpoints_require_authorization(client: TestClient) -> None:
         "/v0/_system/check",
         "/v0/_system/metrics",
     ]
-    for route in app.routes:
-        if route.path not in excluded_routes:
+    for route in cast("list[Route]", app.routes):
+        if route.methods and route.path not in excluded_routes:
             for method in route.methods:
                 client_method = getattr(client, method.lower())
                 assert (

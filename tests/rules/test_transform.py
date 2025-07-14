@@ -2,7 +2,7 @@ from typing import Any
 
 import pytest
 
-from mex.backend.rules.helpers import transform_raw_rules_to_rule_set_response
+from mex.backend.rules.transform import transform_raw_rules_to_rule_set_response
 from mex.common.types import TextLanguage
 
 

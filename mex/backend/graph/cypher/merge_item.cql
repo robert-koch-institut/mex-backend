@@ -14,8 +14,6 @@ Args:
                   e.g. MergedPerson
     current_label: Label of the current extracted or rule item,
                    e.g. ExtractedPerson or AdditiveVariable
-    current_constraints: List of fields that will render as constraints for merging
-                         the current item
     nested_edge_labels: Ordered list of field names that contain nested objects
                         e.g. homepage, alternativeName, methodDescription
     nested_node_labels: Ordered list of class names for the `nested_edge_labels`,
@@ -28,7 +26,7 @@ Returns:
     pruned: Number of nested objects that were removed by this statement
 -#>
 MERGE (merged:<<merged_label>> {identifier: $stable_target_id})
-MERGE (current:<<current_label>> {<<current_constraints|render_constraints>>})-[:stableTargetId {position: 0}]->(merged)
+MERGE (current:<<current_label>>)-[:stableTargetId {position: 0}]->(merged)
 ON CREATE SET current = $on_create
 ON MATCH SET current += $on_match
 <%- for edge_label in nested_edge_labels -%>

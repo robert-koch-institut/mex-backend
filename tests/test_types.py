@@ -40,7 +40,7 @@ def test_dynamic_str_enum() -> None:
     class Dummy(Enum, metaclass=DynamicStrEnum):
         __names__ = ["foo", "Bar", "LoremIpsum"]
 
-    assert {d.name: d.value for d in Dummy} == {
+    assert {d.name: str(d.value) for d in Dummy} == {
         "FOO": "foo",
         "BAR": "Bar",
         "LOREM_IPSUM": "LoremIpsum",
