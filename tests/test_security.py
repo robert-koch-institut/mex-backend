@@ -23,7 +23,7 @@ user_wrong_pw = HTTPBasicCredentials(
 
 
 def test_has_write_access_with_api_key() -> None:
-    assert has_write_access("write_key") is None
+    has_write_access("write_key")
     with pytest.raises(HTTPException) as error:
         has_write_access(None)
     assert "Missing authentication" in error.value.detail
@@ -44,7 +44,7 @@ def test_has_write_access_fails_if_key_and_credentials() -> None:
 
 
 def test_has_write_access_with_basic_auth() -> None:
-    assert has_write_access(credentials=write_credentials) is None
+    has_write_access(credentials=write_credentials)
     with pytest.raises(HTTPException) as error:
         has_write_access(credentials=None)
     assert "Missing authentication" in error.value.detail
@@ -63,8 +63,8 @@ def test_has_write_access_with_basic_auth() -> None:
 
 
 def test_has_read_access_with_api_key() -> None:
-    assert has_read_access("write_key") is None
-    assert has_read_access("read_key") is None
+    has_read_access("write_key")
+    has_read_access("read_key")
 
     with pytest.raises(HTTPException) as error:
         has_read_access("moop")
@@ -82,8 +82,8 @@ def test_has_read_access_fails_if_key_and_credentials() -> None:
 
 
 def test_has_read_access_with_basic_auth() -> None:
-    assert has_read_access(credentials=write_credentials) is None
-    assert has_read_access(credentials=read_credentials) is None
+    has_read_access(credentials=write_credentials)
+    has_read_access(credentials=read_credentials)
 
     with pytest.raises(HTTPException) as error:
         has_read_access(credentials=user_wrong_pw)

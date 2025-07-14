@@ -1,5 +1,6 @@
 import json
 from base64 import b64encode
+from collections import deque
 from functools import partial
 from itertools import count
 from typing import Any, cast
@@ -381,21 +382,20 @@ def _match_organization_items(dummy_data: dict[str, AnyExtractedModel]) -> None:
     # TODO(ND): replace this crude item matching implementation (stopgap MX-1530)
     connector = GraphConnector.get()
     # remove the merged item for org2
-    with connector.driver.session(default_access_mode=WRITE_ACCESS) as session:
-        connector.commit(
-            f"""\
+    connector.commit(
+        f"""\
     MATCH(n) WHERE n.identifier='{dummy_data["organization_2"].stableTargetId}'
     DETACH DELETE n;""",
-            session=session,
-        )
-        # connect the extracted item for org2 with the merged item for org1
-        connector.commit(
-            f"""\
+        access_mode=WRITE_ACCESS,
+    )
+    # connect the extracted item for org2 with the merged item for org1
+    connector.commit(
+        f"""\
     MATCH(n :ExtractedOrganization) WHERE n.identifier = '{dummy_data["organization_2"].identifier}'
     MATCH(m :MergedOrganization) WHERE m.identifier = '{dummy_data["organization_1"].stableTargetId}'
     MERGE (n)-[:stableTargetId {{position:0}}]->(m);""",
-            session=session,
-        )
+        access_mode=WRITE_ACCESS,
+    )
     # clear the identity provider cache to refresh the `stableTargetId` property on org2
     provider = GraphIdentityProvider.get()
     provider._cache.flush()
@@ -407,7 +407,7 @@ def load_dummy_data(
 ) -> dict[str, AnyExtractedModel]:
     """Ingest dummy data into the graph."""
     connector = GraphConnector.get()
-    connector.ingest_models(list(dummy_data.values()))
+    deque(connector.ingest_extracted_items(dummy_data.values()))
     _match_organization_items(dummy_data)
     return dummy_data
 
@@ -417,7 +417,8 @@ def load_artificial_extracted_items(
     artificial_extracted_items: list[AnyExtractedModel],
 ) -> list[AnyExtractedModel]:
     """Ingest artificial data into the graph."""
-    GraphConnector.get().ingest_models(artificial_extracted_items)
+    connector = GraphConnector.get()
+    deque(connector.ingest_extracted_items(artificial_extracted_items))
     return artificial_extracted_items
 
 

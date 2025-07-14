@@ -415,7 +415,7 @@ def test_fetch_identities(
         (
             ["personInCharge", "meetingScheduledBy", "agendaSignedOff"],
             """\
-MATCH (source:ExtractedThat {identifier: $identifier})-[:stableTargetId]->({identifier: $stable_target_id})
+MATCH (source:ExtractedThat)-[:stableTargetId]->({identifier: $stable_target_id})
 CALL (source) {
     WITH source
     MATCH (target_0 {identifier: $ref_identifiers[0]})
@@ -444,7 +444,7 @@ RETURN merged, pruned, edges;""",
         (
             [],
             """\
-MATCH (source:ExtractedThat {identifier: $identifier})-[:stableTargetId]->({identifier: $stable_target_id})
+MATCH (source:ExtractedThat)-[:stableTargetId]->({identifier: $stable_target_id})
 CALL (source) {
     RETURN null AS edge
 }
@@ -465,7 +465,6 @@ def test_merge_edges(
 ) -> None:
     query = query_builder.merge_edges(
         current_label="ExtractedThat",
-        current_constraints=["identifier"],
         ref_labels=ref_labels,
     )
     assert str(query) == expected
@@ -479,7 +478,7 @@ def test_merge_edges(
             ["Text", "Link", "Location"],
             """\
 MERGE (merged:MergedThat {identifier: $stable_target_id})
-MERGE (current:ExtractedThat {identifier: $identifier})-[:stableTargetId {position: 0}]->(merged)
+MERGE (current:ExtractedThat)-[:stableTargetId {position: 0}]->(merged)
 ON CREATE SET current = $on_create
 ON MATCH SET current += $on_match
 MERGE (current)-[edge_0:description {position: $nested_positions[0]}]->(value_0:Text)
@@ -507,7 +506,7 @@ RETURN current, edges, values, pruned;""",
             [],
             """\
 MERGE (merged:MergedThat {identifier: $stable_target_id})
-MERGE (current:ExtractedThat {identifier: $identifier})-[:stableTargetId {position: 0}]->(merged)
+MERGE (current:ExtractedThat)-[:stableTargetId {position: 0}]->(merged)
 ON CREATE SET current = $on_create
 ON MATCH SET current += $on_match
 WITH current,
@@ -532,7 +531,6 @@ def test_merge_item(
 ) -> None:
     query = query_builder.merge_item(
         current_label="ExtractedThat",
-        current_constraints=["identifier"],
         merged_label="MergedThat",
         nested_edge_labels=nested_edge_labels,
         nested_node_labels=nested_node_labels,

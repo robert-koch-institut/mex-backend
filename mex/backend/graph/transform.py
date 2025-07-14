@@ -10,7 +10,12 @@ from mex.backend.fields import (
     REFERENCED_ENTITY_TYPES_BY_CLASS_NAME,
     REFERENCED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME,
 )
-from mex.backend.graph.models import GraphRel, IngestData, IngestParams
+from mex.backend.graph.models import (
+    GraphRel,
+    IngestData,
+    IngestParams,
+    MExPrimarySource,
+)
 from mex.backend.graph.query import QueryBuilder
 from mex.common.fields import (
     FINAL_FIELDS_BY_CLASS_NAME,
@@ -109,7 +114,9 @@ def get_ingest_query_for_entity_type(entity_type: str) -> str:
     return str(query)
 
 
-def transform_model_into_ingest_data(model: AnyExtractedModel) -> IngestData:
+def transform_model_into_ingest_data(
+    model: AnyExtractedModel | MExPrimarySource,
+) -> IngestData:
     """Transform the given model into an ingestion instruction.
 
     Converts an extracted model into structured data ready for database

@@ -1,3 +1,4 @@
+from collections import deque
 from typing import cast
 
 from mex.backend.extracted.helpers import search_extracted_items_in_graph
@@ -30,7 +31,7 @@ def _fetch_or_insert_primary_source(name: str) -> ExtractedPrimarySource:
     if not extracted_primary_source:
         raise NoResultFoundError(name)
     connector = GraphConnector.get()
-    connector.ingest_models([extracted_primary_source])
+    deque(connector.ingest_extracted_items([extracted_primary_source]))
     logger.info("ingested primary source %s", name)
     return extracted_primary_source
 

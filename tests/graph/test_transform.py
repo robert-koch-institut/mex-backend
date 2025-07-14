@@ -1,4 +1,5 @@
 from mex.backend.graph.transform import (
+    _SearchResultReference,
     expand_references_in_search_result,
     transform_edges_into_expectations_by_edge_locator,
 )
@@ -6,32 +7,52 @@ from mex.backend.graph.transform import (
 
 def test_expand_references_in_search_result() -> None:
     refs = [
-        {"label": "responsibleUnit", "position": 0, "value": "bFQoRhcVH5DHUz"},
-        {"label": "contact", "position": 2, "value": "bFQoRhcVH5DHUz"},
-        {"label": "contact", "position": 0, "value": "bFQoRhcVH5DHUv"},
-        {"label": "contact", "position": 1, "value": "bFQoRhcVH5DHUx"},
-        {"label": "hadPrimarySource", "position": 0, "value": "bFQoRhcVH5DHUr"},
-        {"label": "stableTargetId", "position": 0, "value": "bFQoRhcVH5DHUB"},
-        {
-            "label": "website",
-            "position": 0,
-            "value": {"title": "Activity Homepage", "url": "https://activity-1"},
-        },
-        {
-            "label": "abstract",
-            "position": 1,
-            "value": {"value": "Une activité active."},
-        },
-        {
-            "label": "title",
-            "position": 0,
-            "value": {"language": "de", "value": "Aktivität 1"},
-        },
-        {
-            "label": "abstract",
-            "position": 0,
-            "value": {"language": "en", "value": "An active activity."},
-        },
+        _SearchResultReference(
+            {"label": "responsibleUnit", "position": 0, "value": "bFQoRhcVH5DHUz"}
+        ),
+        _SearchResultReference(
+            {"label": "contact", "position": 2, "value": "bFQoRhcVH5DHUz"}
+        ),
+        _SearchResultReference(
+            {"label": "contact", "position": 0, "value": "bFQoRhcVH5DHUv"}
+        ),
+        _SearchResultReference(
+            {"label": "contact", "position": 1, "value": "bFQoRhcVH5DHUx"}
+        ),
+        _SearchResultReference(
+            {"label": "hadPrimarySource", "position": 0, "value": "bFQoRhcVH5DHUr"}
+        ),
+        _SearchResultReference(
+            {"label": "stableTargetId", "position": 0, "value": "bFQoRhcVH5DHUB"}
+        ),
+        _SearchResultReference(
+            {
+                "label": "website",
+                "position": 0,
+                "value": {"title": "Activity Homepage", "url": "https://activity-1"},
+            }
+        ),
+        _SearchResultReference(
+            {
+                "label": "abstract",
+                "position": 1,
+                "value": {"value": "Une activité active."},
+            }
+        ),
+        _SearchResultReference(
+            {
+                "label": "title",
+                "position": 0,
+                "value": {"language": "de", "value": "Aktivität 1"},
+            }
+        ),
+        _SearchResultReference(
+            {
+                "label": "abstract",
+                "position": 0,
+                "value": {"language": "en", "value": "An active activity."},
+            }
+        ),
     ]
 
     expanded = expand_references_in_search_result(refs)

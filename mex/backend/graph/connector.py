@@ -1,5 +1,6 @@
-from collections.abc import Generator, Sequence
-from typing import Annotated, Any, Literal, cast
+from collections import deque
+from collections.abc import Generator, Iterable, Sequence
+from typing import Any
 
 from neo4j import (
     READ_ACCESS,
@@ -10,18 +11,14 @@ from neo4j import (
     Transaction,
 )
 from neo4j.exceptions import Neo4jError
-from pydantic import Field
 
 from mex.backend.fields import (
     ALL_REFERENCE_FIELD_NAMES,
     SEARCHABLE_CLASSES,
     SEARCHABLE_FIELDS,
 )
-from mex.backend.graph.exceptions import (
-    InconsistentGraphError,
-    IngestionError,
-)
-from mex.backend.graph.models import IngestData, Result
+from mex.backend.graph.exceptions import InconsistentGraphError, IngestionError
+from mex.backend.graph.models import IngestData, MExPrimarySource, Result
 from mex.backend.graph.query import Query, QueryBuilder
 from mex.backend.graph.transform import (
     expand_references_in_search_result,
@@ -46,42 +43,18 @@ from mex.common.logging import logger
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
-    MEX_PRIMARY_SOURCE_IDENTIFIER,
-    MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
-    MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     RULE_MODEL_CLASSES_BY_NAME,
     AnyExtractedModel,
     AnyRuleModel,
     AnyRuleSetResponse,
-    BasePrimarySource,
-    ExtractedPrimarySource,
 )
 from mex.common.transform import ensure_prefix, to_key_and_values
 from mex.common.types import (
     AnyPrimitiveType,
-    ExtractedPrimarySourceIdentifier,
     Identifier,
     Link,
-    MergedPrimarySourceIdentifier,
     Text,
 )
-
-
-class MExPrimarySource(BasePrimarySource):
-    """An automatically extracted metadata set describing a primary source."""
-
-    entityType: Annotated[
-        Literal["ExtractedPrimarySource"], Field(alias="$type", frozen=True)
-    ] = "ExtractedPrimarySource"
-    hadPrimarySource: MergedPrimarySourceIdentifier = (
-        MEX_PRIMARY_SOURCE_STABLE_TARGET_ID
-    )
-    identifier: ExtractedPrimarySourceIdentifier = MEX_PRIMARY_SOURCE_IDENTIFIER
-    identifierInPrimarySource: str = MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE
-    stableTargetId: MergedPrimarySourceIdentifier = MEX_PRIMARY_SOURCE_STABLE_TARGET_ID
-
-
-MEX_EXTRACTED_PRIMARY_SOURCE = MExPrimarySource()
 
 
 class GraphConnector(BaseConnector):
@@ -137,7 +110,7 @@ class GraphConnector(BaseConnector):
                 query_builder.create_provenance_constraint(node_label=label),
                 access_mode=WRITE_ACCESS,
             )
-            logger.info("seeded provenance constraints")
+        logger.info("seeded provenance constraints")
 
     def _seed_indices(self) -> Result:
         """Ensure there is a full text search index for all searchable fields."""
@@ -172,9 +145,7 @@ class GraphConnector(BaseConnector):
 
     def _seed_data(self) -> None:
         """Ensure the primary source `mex` is seeded and linked to itself."""
-        self.ingest_models(
-            [cast("ExtractedPrimarySource", MEX_EXTRACTED_PRIMARY_SOURCE)]
-        )
+        deque(self.ingest_extracted_items([MExPrimarySource()]))
         logger.info("seeded mex primary source")
 
     def close(self) -> None:
@@ -486,7 +457,6 @@ class GraphConnector(BaseConnector):
 
         query = query_builder.merge_item(
             current_label=model.entityType,
-            current_constraints=[],  # deprecated
             merged_label=ensure_prefix(model.stemType, "Merged"),
             nested_edge_labels=nested_edge_labels,
             nested_node_labels=nested_node_labels,
@@ -540,7 +510,6 @@ class GraphConnector(BaseConnector):
 
         query = query_builder.merge_edges(
             current_label=model.entityType,
-            current_constraints=[],  # deprecated
             merged_label=ensure_prefix(model.stemType, "Merged"),
             ref_labels=ref_labels,
         )
@@ -606,9 +575,9 @@ class GraphConnector(BaseConnector):
         else:
             tx.commit()
 
-    def ingest_models(
+    def ingest_extracted_items(
         self,
-        models: Sequence[AnyExtractedModel],
+        models: Iterable[AnyExtractedModel | MExPrimarySource],
     ) -> Generator[None, None, None]:
         """Ingest a list of extracted models into the graph."""
         settings = BackendSettings.get()

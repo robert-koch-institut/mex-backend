@@ -148,7 +148,6 @@ def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
         """\
 merge_item(
     current_label="ExtractedPrimarySource",
-    current_constraints=["identifier"],
     merged_label="MergedPrimarySource",
     nested_edge_labels=[],
     nested_node_labels=[],
@@ -172,7 +171,6 @@ merge_item(
         """\
 merge_edges(
     current_label="ExtractedPrimarySource",
-    current_constraints=["identifier"],
     merged_label="MergedPrimarySource",
     ref_labels=["hadPrimarySource", "stableTargetId"],
 )""",
@@ -1343,14 +1341,12 @@ def test_mocked_graph_merge_item(
             session,
             extracted_organizational_unit,
             extracted_organizational_unit.stableTargetId,
-            identifier=extracted_organizational_unit.identifier,
         )
 
     assert mocked_graph.call_args_list[-1].args == (
         """\
 merge_item(
     current_label="ExtractedOrganizationalUnit",
-    current_constraints=["identifier"],
     merged_label="MergedOrganizationalUnit",
     nested_edge_labels=["name"],
     nested_node_labels=["Text"],
@@ -1394,14 +1390,12 @@ def test_mocked_graph_merge_edges(
             session,
             extracted_organizational_unit,
             extracted_organizational_unit.stableTargetId,
-            identifier=extracted_organizational_unit.identifier,
         )
 
     assert mocked_graph.call_args_list[-1].args == (
         """\
 merge_edges(
     current_label="ExtractedOrganizationalUnit",
-    current_constraints=["identifier"],
     merged_label="MergedOrganizationalUnit",
     ref_labels=["hadPrimarySource", "unitOf", "stableTargetId"],
 )""",
@@ -1439,7 +1433,6 @@ def test_mocked_graph_merge_edges_fails_inconsistent(
                 session,
                 extracted_organizational_unit,
                 extracted_organizational_unit.stableTargetId,
-                identifier=extracted_organizational_unit.identifier,
             )
 
 
@@ -1472,7 +1465,7 @@ def test_graph_merge_edges_fails_inconsistent(
 (:ExtractedOrganizationalUnit {identifier: "bFQoRhcVH5DHUK"})-[:unitOf {position: 1}]->({identifier: "whatOrganizationalUnit"})\
 """),
     ):
-        graph.ingest_rule_set([consistent_org, inconsistent_unit])
+        graph.ingest_extracted_items([consistent_org, inconsistent_unit])
 
 
 @pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
@@ -1505,7 +1498,6 @@ def test_mocked_graph_merge_edges_fails_unexpected(
                 session,
                 extracted_organizational_unit,
                 extracted_organizational_unit.stableTargetId,
-                identifier=extracted_organizational_unit.identifier,
             )
 
 
@@ -1528,14 +1520,13 @@ def test_mocked_graph_ingests_rule_set(
         [{"edges": ["stableTargetId {position: 0}"], "$comment": "preventive edges"}],
     ]
     graph = GraphConnector.get()
-    graph.ingest_rule_set([organizational_unit_rule_set_response])
+    graph.ingest_rule_set(organizational_unit_rule_set_response)
 
     assert len(mocked_graph.call_args_list) == 6
     assert mocked_graph.call_args_list[2].args == (
         """\
 merge_item(
     current_label="PreventiveOrganizationalUnit",
-    current_constraints=[],
     merged_label="MergedOrganizationalUnit",
     nested_edge_labels=[],
     nested_node_labels=[],
@@ -1552,7 +1543,6 @@ merge_item(
         """\
 merge_edges(
     current_label="PreventiveOrganizationalUnit",
-    current_constraints=[],
     merged_label="MergedOrganizationalUnit",
     ref_labels=["stableTargetId"],
 )""",
@@ -1680,9 +1670,8 @@ def test_mocked_graph_ingests_extracted_models(
         ],
     ]
 
-    dummy_items = list(dummy_data.values())
     graph = GraphConnector.get()
-    graph.ingest_rule_set(dummy_items)
+    graph.ingest_extracted_items(dummy_data.values())
 
     assert len(mocked_graph.call_args_list) == 18
 
