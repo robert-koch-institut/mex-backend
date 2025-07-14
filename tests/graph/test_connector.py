@@ -1425,8 +1425,8 @@ def test_mocked_graph_merge_edges_fails_inconsistent(
     with pytest.raises(  # noqa: SIM117
         InconsistentGraphError,
         match=re.escape("""InconsistentGraphError: failed to merge 2 edges: \
-(:ExtractedOrganizationalUnit {identifier: "gIyDlXYbq0JwItPRU0NcFN"})-[:hadPrimarySource {position: 0}]->({identifier: "bbTqJnQc3TA8dBJmLMBimb"}), \
-(:ExtractedOrganizationalUnit {identifier: "gIyDlXYbq0JwItPRU0NcFN"})-[:unitOf {position: 0}]->({identifier: "gGsD37g2jyzxedMSHozDZa"})\
+(:ExtractedOrganizationalUnit)-[:hadPrimarySource {position: 0}]->({identifier: "bbTqJnQc3TA8dBJmLMBimb"}), \
+(:ExtractedOrganizationalUnit)-[:unitOf {position: 0}]->({identifier: "gGsD37g2jyzxedMSHozDZa"})\
 """),
     ):
         with mocked_graph.session as session:
@@ -1671,7 +1671,7 @@ def test_mocked_graph_ingests_extracted_models(
     ]
 
     graph = GraphConnector.get()
-    graph.ingest_extracted_items(dummy_data.values())
+    deque(graph.ingest_extracted_items(dummy_data.values()))
 
     assert len(mocked_graph.call_args_list) == 18
 

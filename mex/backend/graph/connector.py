@@ -464,7 +464,7 @@ class GraphConnector(BaseConnector):
 
         tx.run(
             str(query),
-            parameters={
+            {
                 "stable_target_id": stable_target_id,
                 "on_match": mutable_values,
                 "on_create": all_values,
@@ -516,7 +516,7 @@ class GraphConnector(BaseConnector):
         result = Result(
             tx.run(
                 str(query),
-                parameters={
+                {
                     "stable_target_id": stable_target_id,
                     "ref_identifiers": ref_identifiers,
                     "ref_positions": ref_positions,
