@@ -149,7 +149,7 @@ class QueryBuilder(BaseConnector):
             has_create_rels=bool(nested_types_for_class),
         )
         query_builder = QueryBuilder.get()
-        query = query_builder.merge_item_v2(params=params)
+        query = query_builder.merge_extracted_item(params=params)
         return str(query)
 
     def close(self) -> None:

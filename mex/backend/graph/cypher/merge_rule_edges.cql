@@ -1,6 +1,6 @@
-<# Merge all edges from a single item to all connected merged items.
+<# Merge all edges from a single rule item to all connected merged items.
 
-The current item can either be an extracted item or a rule.
+The current item can either be any additive, subtractive or preventive rule item.
 This statement also prunes all edges originating from the current item that are not
 part of the references to be merged during this operation.
 

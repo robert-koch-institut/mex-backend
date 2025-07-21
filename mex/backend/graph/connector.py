@@ -48,12 +48,7 @@ from mex.common.models import (
     AnyRuleSetResponse,
 )
 from mex.common.transform import ensure_prefix, to_key_and_values
-from mex.common.types import (
-    AnyPrimitiveType,
-    Identifier,
-    Link,
-    Text,
-)
+from mex.common.types import AnyPrimitiveType, Identifier, Link, Text
 
 
 class GraphConnector(BaseConnector):
@@ -405,13 +400,13 @@ class GraphConnector(BaseConnector):
         )
         return bool(result["exists"])
 
-    def _merge_item(
+    def _merge_rule_item(
         self,
         tx: Transaction,
-        model: AnyExtractedModel | AnyRuleModel,
+        model: AnyRuleModel,
         stable_target_id: Identifier,
     ) -> None:
-        """Upsert an extracted or rule model including merged item and nested objects.
+        """Upsert a rule item including merged item and nested objects.
 
         The given model is created or updated with all its inline properties.
         All nested properties (like Text or Link) are created as their own nodes
@@ -454,7 +449,7 @@ class GraphConnector(BaseConnector):
                     nested_positions.append(position)
                     nested_values.append(raw_value)
 
-        query = query_builder.merge_item(
+        query = query_builder.merge_rule_item(
             current_label=model.entityType,
             merged_label=ensure_prefix(model.stemType, "Merged"),
             nested_edge_labels=nested_edge_labels,
@@ -472,13 +467,13 @@ class GraphConnector(BaseConnector):
             },
         )
 
-    def _merge_edges(
+    def _merge_rule_edges(
         self,
         tx: Transaction,
-        model: AnyExtractedModel | AnyRuleModel,
+        model: AnyRuleModel,
         stable_target_id: Identifier,
     ) -> None:
-        """Merge edges into the graph for all relations originating from one model.
+        """Merge edges into the graph for all relations originating from one rule model.
 
         All fields containing references will be iterated over. When the referenced node
         is found and no such relation exists yet, it will be created.
@@ -507,7 +502,7 @@ class GraphConnector(BaseConnector):
                 ref_positions.append(position)
                 ref_labels.append(field)
 
-        query = query_builder.merge_edges(
+        query = query_builder.merge_rule_edges(
             current_label=model.entityType,
             merged_label=ensure_prefix(model.stemType, "Merged"),
             ref_labels=ref_labels,
@@ -597,8 +592,8 @@ class GraphConnector(BaseConnector):
     ) -> None:
         """Ingest a single rule set into the graph."""
         for rule in (rule_set.additive, rule_set.subtractive, rule_set.preventive):
-            self._merge_item(tx, rule, rule_set.stableTargetId)
-            self._merge_edges(tx, rule, rule_set.stableTargetId)
+            self._merge_rule_item(tx, rule, rule_set.stableTargetId)
+            self._merge_rule_edges(tx, rule, rule_set.stableTargetId)
 
     def ingest_rule_set(
         self,

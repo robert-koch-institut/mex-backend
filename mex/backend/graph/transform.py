@@ -4,14 +4,8 @@ from typing import Any, TypedDict, cast
 from neo4j.exceptions import Neo4jError
 from pydantic_core import ErrorDetails
 
-from mex.backend.fields import (
-    REFERENCED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME,
-)
-from mex.backend.graph.models import (
-    GraphRel,
-    IngestData,
-    MExPrimarySource,
-)
+from mex.backend.fields import REFERENCED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME
+from mex.backend.graph.models import GraphRel, IngestData, MExPrimarySource
 from mex.common.fields import (
     FINAL_FIELDS_BY_CLASS_NAME,
     LINK_FIELDS_BY_CLASS_NAME,

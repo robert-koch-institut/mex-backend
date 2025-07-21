@@ -460,10 +460,10 @@ RETURN merged, pruned, edges;""",
     ],
     ids=["has-ref-labels", "no-ref-labels"],
 )
-def test_merge_edges(
+def test_merge_rule_edges(
     query_builder: QueryBuilder, ref_labels: list[str], expected: str
 ) -> None:
-    query = query_builder.merge_edges(
+    query = query_builder.merge_rule_edges(
         current_label="ExtractedThat",
         ref_labels=ref_labels,
     )
@@ -523,13 +523,13 @@ RETURN current, edges, values, pruned;""",
     ],
     ids=["has-nested-labels", "no-nested-labels"],
 )
-def test_merge_item(
+def test_merge_rule_item(
     query_builder: QueryBuilder,
     nested_edge_labels: list[str],
     nested_node_labels: list[str],
     expected: str,
 ) -> None:
-    query = query_builder.merge_item(
+    query = query_builder.merge_rule_item(
         current_label="ExtractedThat",
         merged_label="MergedThat",
         nested_edge_labels=nested_edge_labels,

@@ -1,6 +1,6 @@
 import re
 from collections import deque
-from typing import Any, cast
+from typing import Any
 from unittest.mock import Mock, call
 
 import pytest
@@ -165,7 +165,7 @@ def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
     graph._seed_data()
 
     assert mocked_graph.call_args_list[-1].args == (
-        """merge_item_v2(
+        """merge_extracted_item(
     params=IngestParams(
         merged_label="MergedPrimarySource",
         node_label="ExtractedPrimarySource",
@@ -1356,113 +1356,99 @@ def test_graph_exists_item(
 
 
 @pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
-def test_mocked_graph_merge_item(
+def test_mocked_graph_merge_rule_item(
     mocked_graph: MockedGraph,
-    dummy_data: dict[str, AnyExtractedModel],
+    organizational_unit_rule_set_response: OrganizationalUnitRuleSetResponse,
 ) -> None:
-    extracted_organizational_unit = dummy_data["organizational_unit_1"]
     graph = GraphConnector.get()
     with mocked_graph.session as session:
-        graph._merge_item(
+        graph._merge_rule_item(
             session,
-            extracted_organizational_unit,
-            extracted_organizational_unit.stableTargetId,
+            organizational_unit_rule_set_response.additive,
+            Identifier("orgUnitStableTargetId"),
         )
 
     assert mocked_graph.call_args_list[-1].args == (
-        """\
-merge_item(
-    current_label="ExtractedOrganizationalUnit",
+        """merge_rule_item(
+    current_label="AdditiveOrganizationalUnit",
     merged_label="MergedOrganizationalUnit",
-    nested_edge_labels=["name"],
-    nested_node_labels=["Text"],
+    nested_edge_labels=["name", "website"],
+    nested_node_labels=["Text", "Link"],
 )""",
         {
-            "nested_positions": [0],
-            "nested_values": [{"language": TextLanguage.EN, "value": "Unit 1"}],
-            "on_create": {
-                "email": [],
-                "identifier": extracted_organizational_unit.identifier,
-                "identifierInPrimarySource": "ou-1",
-            },
+            "stable_target_id": Identifier("orgUnitStableTargetId"),
             "on_match": {"email": []},
-            "stable_target_id": extracted_organizational_unit.stableTargetId,
+            "on_create": {"email": []},
+            "nested_values": [
+                {"value": "Unit 1.7", "language": TextLanguage.EN},
+                {"language": None, "title": "Unit Homepage", "url": "https://unit-1-7"},
+            ],
+            "nested_positions": [0, 0],
         },
     )
 
 
 @pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
-def test_mocked_graph_merge_edges(
+def test_mocked_graph_merge_rule_edges(
     mocked_graph: MockedGraph,
-    dummy_data: dict[str, AnyExtractedModel],
+    organizational_unit_rule_set_response: OrganizationalUnitRuleSetResponse,
 ) -> None:
     mocked_graph.return_value = [
-        {
-            "edges": [
-                "hadPrimarySource {position: 0}",
-                "unitOf {position: 0}",
-                "stableTargetId {position: 0}",
-            ]
-        },
+        {"edges": ["parentUnit {position: 0}", "stableTargetId {position: 0}"]},
     ]
     graph = GraphConnector.get()
-
-    extracted_organizational_unit = cast(
-        "ExtractedOrganizationalUnit", dummy_data["organizational_unit_1"]
-    )
     with mocked_graph.session as session:
-        graph._merge_edges(
+        graph._merge_rule_edges(
             session,
-            extracted_organizational_unit,
-            extracted_organizational_unit.stableTargetId,
+            organizational_unit_rule_set_response.additive,
+            Identifier("orgUnitStableTargetId"),
         )
 
     assert mocked_graph.call_args_list[-1].args == (
         """\
-merge_edges(
-    current_label="ExtractedOrganizationalUnit",
+merge_rule_edges(
+    current_label="AdditiveOrganizationalUnit",
     merged_label="MergedOrganizationalUnit",
-    ref_labels=["hadPrimarySource", "unitOf", "stableTargetId"],
+    ref_labels=["parentUnit", "stableTargetId"],
 )""",
         {
+            "stable_target_id": Identifier("orgUnitStableTargetId"),
             "ref_identifiers": [
-                extracted_organizational_unit.hadPrimarySource,
-                extracted_organizational_unit.unitOf[0],
-                extracted_organizational_unit.stableTargetId,
+                "cWWm02l1c6cucKjIhkFqY4",
+                Identifier("orgUnitStableTargetId"),
             ],
-            "ref_positions": [0, 0, 0],
-            "stable_target_id": extracted_organizational_unit.stableTargetId,
+            "ref_positions": [0, 0],
         },
     )
 
 
 @pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
-def test_mocked_graph_merge_edges_fails_inconsistent(
+def test_mocked_graph_merge_rule_edges_fails_inconsistent(
     mocked_graph: MockedGraph,
-    dummy_data: dict[str, AnyExtractedModel],
+    organizational_unit_rule_set_response: OrganizationalUnitRuleSetResponse,
 ) -> None:
     mocked_graph.return_value = [{"edges": ["stableTargetId {position: 0}"]}]
     graph = GraphConnector.get()
-    extracted_organizational_unit = dummy_data["organizational_unit_1"]
 
     with pytest.raises(  # noqa: SIM117
         InconsistentGraphError,
-        match=re.escape("""InconsistentGraphError: failed to merge 2 edges: \
-(:ExtractedOrganizationalUnit)-[:hadPrimarySource {position: 0}]->({identifier: "bbTqJnQc3TA8dBJmLMBimb"}), \
-(:ExtractedOrganizationalUnit)-[:unitOf {position: 0}]->({identifier: "gGsD37g2jyzxedMSHozDZa"})\
-"""),
+        match=re.escape(
+            "InconsistentGraphError: failed to merge 1 edges: "
+            "(:AdditiveOrganizationalUnit)-[:parentUnit {position: 0}]->"
+            '({identifier: "cWWm02l1c6cucKjIhkFqY4"})'
+        ),
     ):
         with mocked_graph.session as session:
-            graph._merge_edges(
+            graph._merge_rule_edges(
                 session,
-                extracted_organizational_unit,
-                extracted_organizational_unit.stableTargetId,
+                organizational_unit_rule_set_response.additive,
+                Identifier("orgUnitStableTargetId"),
             )
 
 
 @pytest.mark.integration
 @pytest.mark.usefixtures("load_dummy_data")
-def test_graph_merge_edges_fails_inconsistent(
+def test_graph_merge_rule_edges_fails_inconsistent(
     load_dummy_data: dict[str, AnyExtractedModel],
 ) -> None:
     graph = GraphConnector.get()
@@ -1485,30 +1471,28 @@ def test_graph_merge_edges_fails_inconsistent(
     with pytest.raises(
         IngestionError,
         match=re.escape(
-            """IngestionError: Could not merge ExtractedOrganizationalUnit(stableTargetId='bFQoRhcVH5DHUL', ...)"""
+            "IngestionError: Could not merge "
+            "ExtractedOrganizationalUnit(stableTargetId='bFQoRhcVH5DHUL', ...)"
         ),
     ):
         deque(graph.ingest_extracted_items([consistent_org, inconsistent_unit]))
 
 
 @pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
-def test_mocked_graph_merge_edges_fails_unexpected(
+def test_mocked_graph_merge_rule_edges_fails_unexpected(
     mocked_graph: MockedGraph,
-    dummy_data: dict[str, AnyExtractedModel],
+    organizational_unit_rule_set_response: OrganizationalUnitRuleSetResponse,
 ) -> None:
     mocked_graph.return_value = [
         {
             "edges": [
                 "stableTargetId {position: 0}",
-                "unitOf {position: 0}",
-                "stableTargetId {position: 0}",
-                "hadPrimarySource {position: 0}",
+                "parentUnit {position: 0}",
                 "newEdgeWhoDis {position: 0}",
             ]
-        },
+        }
     ]
     graph = GraphConnector.get()
-    extracted_organizational_unit = dummy_data["organizational_unit_1"]
 
     with pytest.raises(  # noqa: SIM117
         RuntimeError,
@@ -1517,10 +1501,10 @@ def test_mocked_graph_merge_edges_fails_unexpected(
         ),
     ):
         with mocked_graph.session as session:
-            graph._merge_edges(
+            graph._merge_rule_edges(
                 session,
-                extracted_organizational_unit,
-                extracted_organizational_unit.stableTargetId,
+                organizational_unit_rule_set_response.additive,
+                Identifier("orgUnitStableTargetId"),
             )
 
 
@@ -1547,7 +1531,7 @@ def test_mocked_graph_ingests_rule_set(
 
     assert mocked_graph.call_args_list == [
         call(
-            """merge_item(
+            """merge_rule_item(
     current_label="AdditiveOrganizationalUnit",
     merged_label="MergedOrganizationalUnit",
     nested_edge_labels=["name", "website"],
@@ -1571,7 +1555,7 @@ def test_mocked_graph_ingests_rule_set(
             },
         ),
         call(
-            """merge_edges(
+            """merge_rule_edges(
     current_label="AdditiveOrganizationalUnit",
     merged_label="MergedOrganizationalUnit",
     ref_labels=["parentUnit", "stableTargetId"],
@@ -1588,7 +1572,7 @@ def test_mocked_graph_ingests_rule_set(
             },
         ),
         call(
-            """merge_item(
+            """merge_rule_item(
     current_label="SubtractiveOrganizationalUnit",
     merged_label="MergedOrganizationalUnit",
     nested_edge_labels=[],
@@ -1605,7 +1589,7 @@ def test_mocked_graph_ingests_rule_set(
             },
         ),
         call(
-            """merge_edges(
+            """merge_rule_edges(
     current_label="SubtractiveOrganizationalUnit",
     merged_label="MergedOrganizationalUnit",
     ref_labels=["stableTargetId"],
@@ -1621,7 +1605,7 @@ def test_mocked_graph_ingests_rule_set(
             },
         ),
         call(
-            """merge_item(
+            """merge_rule_item(
     current_label="PreventiveOrganizationalUnit",
     merged_label="MergedOrganizationalUnit",
     nested_edge_labels=[],
@@ -1638,7 +1622,7 @@ def test_mocked_graph_ingests_rule_set(
             },
         ),
         call(
-            """merge_edges(
+            """merge_rule_edges(
     current_label="PreventiveOrganizationalUnit",
     merged_label="MergedOrganizationalUnit",
     ref_labels=["stableTargetId"],
