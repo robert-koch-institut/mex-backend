@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:e4999e3942dfd95e0de68cd65834536dc06fa3f9c142e45894093e52c608a5c3"
+content_hash = "sha256:4d835f49916251705e0f053c170b581b89ff0f22ed56d0ddbd787d92cccc178b"
 
 [[metadata.targets]]
 requires_python = "==3.11.*"
@@ -607,25 +607,25 @@ files = [
 
 [[package]]
 name = "mex-artificial"
-version = "0.5.1"
+version = "0.5.2"
 requires_python = "<3.13,>=3.11"
 summary = "Create artificial data for the MEx project."
 groups = ["dev"]
 dependencies = [
     "annotated-types<=0.7",
     "faker<38,>=37",
-    "mex-common<0.63,>=0.62.1",
+    "mex-common<0.64,>=0.63",
     "pydantic>=2",
     "typer>=0.13",
 ]
 files = [
-    {file = "mex_artificial-0.5.1-py3-none-any.whl", hash = "sha256:8e1703458f51d9c6c679fbb98e7a99775e9c1f80f9421373e43e35c4cd30aeb2"},
-    {file = "mex_artificial-0.5.1.tar.gz", hash = "sha256:f09bf72969edb354901e1d858adb214ed2782919c836aa6f43dbe081111866f7"},
+    {file = "mex_artificial-0.5.2-py3-none-any.whl", hash = "sha256:97b7f8896c48919b890304ecf12d3ac1211e7bf2b0f509d22fa76f27587d4a6f"},
+    {file = "mex_artificial-0.5.2.tar.gz", hash = "sha256:65e62d0c815043e2b49dcd29cc0533fb7a3017d52e899dd12629a6205f99fabe"},
 ]
 
 [[package]]
 name = "mex-common"
-version = "0.62.2"
+version = "0.63.0"
 requires_python = "<3.12,>=3.11"
 summary = "Common library for MEx python projects."
 groups = ["default", "dev"]
@@ -644,8 +644,8 @@ dependencies = [
     "requests<3,>=2",
 ]
 files = [
-    {file = "mex_common-0.62.2-py3-none-any.whl", hash = "sha256:e55cad886e878df872a6a58a4cae12f8d80d69507013aaea838e860a8ca8f184"},
-    {file = "mex_common-0.62.2.tar.gz", hash = "sha256:a5e6004e7bb770cde8486e1dc0be262beec3508ec0911b9f74bb1bb58517d526"},
+    {file = "mex_common-0.63.0-py3-none-any.whl", hash = "sha256:1fefb1b62eace93587cfc0d3b20249afaa4cc692362a29a60600f6cd7557c2f6"},
+    {file = "mex_common-0.63.0.tar.gz", hash = "sha256:b3aa98651f754adf9ab146697d00b88381d7114a6d998e661365e41d7b18d4da"},
 ]
 
 [[package]]

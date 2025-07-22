@@ -1,10 +1,9 @@
 from collections import deque
 from typing import cast
 
-from mex.backend.extracted.helpers import search_extracted_items_in_graph
+from mex.backend.auxiliary.utils import fetch_extracted_item_by_source_identifiers
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import NoResultFoundError
-from mex.common.identity import get_provider
 from mex.common.logging import logger
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -15,25 +14,19 @@ from mex.common.primary_source.helpers import get_extracted_primary_source_by_na
 
 def _fetch_or_insert_primary_source(name: str) -> ExtractedPrimarySource:
     """Fetch and return or load, ingest and return a primary source by name."""
-    provider = get_provider()
-    identities = provider.fetch(
+    extracted_item = fetch_extracted_item_by_source_identifiers(
         had_primary_source=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
         identifier_in_primary_source=name,
     )
-    if identities:
-        primary_source_container = search_extracted_items_in_graph(
-            stable_target_id=identities[0].stableTargetId
-        )
-        if primary_sources := primary_source_container.items:
-            return cast("list[ExtractedPrimarySource]", primary_sources)[0]
-
-    extracted_primary_source = get_extracted_primary_source_by_name(name)
-    if not extracted_primary_source:
+    if extracted_item:
+        return cast("ExtractedPrimarySource", extracted_item)
+    extracted_item = get_extracted_primary_source_by_name(name)
+    if not extracted_item:
         raise NoResultFoundError(name)
     connector = GraphConnector.get()
-    deque(connector.ingest_extracted_items([extracted_primary_source]))
+    deque(connector.ingest_extracted_items([extracted_item]))
     logger.info("ingested primary source %s", name)
-    return extracted_primary_source
+    return extracted_item
 
 
 def extracted_primary_source_ldap() -> ExtractedPrimarySource:

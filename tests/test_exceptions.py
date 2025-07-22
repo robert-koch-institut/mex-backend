@@ -54,7 +54,7 @@ def test_handle_uncaught_exception(
     request = Mock(scope=MOCK_REQUEST_SCOPE)
     response = handle_uncaught_exception(request, exception)
     assert response.status_code == status_code, response.body
-    assert json.loads(response.body) == expected  # type: ignore[arg-type]
+    assert json.loads(bytes(response.body)) == expected
 
 
 class DummyModel(BaseModel):
@@ -126,4 +126,4 @@ def test_handle_detailed_error(exception: Exception, expected: dict[str, Any]) -
     request = Mock(scope=MOCK_REQUEST_SCOPE)
     response = handle_detailed_error(request, exception)
     assert response.status_code == status.HTTP_400_BAD_REQUEST, response.body
-    assert json.loads(response.body) == expected  # type: ignore[arg-type]
+    assert json.loads(bytes(response.body)) == expected
