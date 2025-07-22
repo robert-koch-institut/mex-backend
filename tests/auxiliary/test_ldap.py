@@ -36,7 +36,7 @@ def count_results(search_string: str, persons: list[dict[str, Any]]) -> int:
         "Non-existent string",
     ],
 )
-@pytest.mark.usefixtures("mocked_ldap")
+@pytest.mark.usefixtures("mocked_ldap", "mocked_wikidata")
 def test_search_persons_in_ldap_mocked(
     client_with_api_key_read_permission: TestClient,
     search_string: str,

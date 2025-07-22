@@ -1,3 +1,5 @@
+import pytest
+
 from mex.backend.auxiliary.organigram import extracted_organizational_units
 from mex.backend.extracted.helpers import search_extracted_items_in_graph
 from mex.common.models import ExtractedOrganizationalUnit
@@ -5,6 +7,7 @@ from mex.common.types import Text, TextLanguage
 from tests.conftest import get_graph
 
 
+@pytest.mark.usefixtures("mocked_wikidata")
 def test_extracted_organizational_unit() -> None:
     expected_result = [
         ExtractedOrganizationalUnit(
@@ -20,6 +23,7 @@ def test_extracted_organizational_unit() -> None:
                 Text(value="C1 Unterabteilung", language=TextLanguage.DE),
             ],
             shortName=[Text(value="C1", language=TextLanguage.DE)],
+            unitOf=["ga6xh6pgMwgq7DC7r6Wjqg"],
             identifier="dHpMfrmbV1PQBkaShNv7kp",
             stableTargetId="6rqNvZSApUHlz8GkkVP48",
         ),
@@ -36,6 +40,7 @@ def test_extracted_organizational_unit() -> None:
             ],
             email=["pu@example.com", "PARENT@example.com"],
             shortName=[Text(value="PRNT", language=TextLanguage.DE)],
+            unitOf=["ga6xh6pgMwgq7DC7r6Wjqg"],
             identifier="hB7EDcR0F24d0JbfwvJ2ub",
             stableTargetId="hIiJpZXVppHvoyeP0QtAoS",
         ),
@@ -49,6 +54,7 @@ def test_extracted_organizational_unit() -> None:
             alternativeName=[Text(value="FG99", language=TextLanguage.DE)],
             email=["fg@example.com"],
             shortName=[Text(value="FG 99", language=TextLanguage.DE)],
+            unitOf=["ga6xh6pgMwgq7DC7r6Wjqg"],
             identifier="hCwNEsnCvG9kFf9qDVHxSM",
             stableTargetId="cjna2jitPngp6yIV63cdi9",
         ),

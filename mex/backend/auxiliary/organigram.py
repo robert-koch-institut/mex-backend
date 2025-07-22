@@ -1,8 +1,7 @@
 from typing import cast
 
-from mex.backend.auxiliary.primary_source import (
-    extracted_primary_source_organigram,
-)
+from mex.backend.auxiliary.primary_source import extracted_primary_source_organigram
+from mex.backend.auxiliary.wikidata import extracted_organization_rki
 from mex.backend.extracted.helpers import search_extracted_items_in_graph
 from mex.backend.graph.connector import GraphConnector
 from mex.common.models import ExtractedOrganizationalUnit
@@ -27,7 +26,9 @@ def extracted_organizational_units() -> list[ExtractedOrganizationalUnit]:
         return cast("list[ExtractedOrganizationalUnit]", unit_container.items)
 
     extracted_units = transform_organigram_units_to_organizational_units(
-        organigram_units, organigram_primary_source
+        organigram_units,
+        organigram_primary_source,
+        extracted_organization_rki(),
     )
     connector = GraphConnector.get()
     connector.ingest(extracted_units)
