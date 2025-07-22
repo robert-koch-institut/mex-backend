@@ -400,7 +400,56 @@ class GraphConnector(BaseConnector):
         )
         return bool(result["exists"])
 
-    def _merge_rule_item(
+    def _ingest_extracted_item_tx(self, tx: Transaction, data_in: IngestData) -> None:
+        """Ingest a single item in a database transaction."""
+        query_builder = QueryBuilder.get()
+        query = query_builder.get_ingest_query_for_entity_type(data_in.entityType)
+        try:
+            tx_result = tx.run(query, data=data_in.model_dump())
+            result = Result(tx_result)
+            result.log_notifications()
+            data_out = IngestData.model_validate(result.one())
+            error_details = validate_ingested_data(data_in, data_out)
+            if error_details:
+                msg = (
+                    f"Could not merge {data_in.entityType}"
+                    f"(stableTargetId='{data_in.stableTargetId}', ...)"
+                )
+                raise IngestionError(msg, errors=error_details, retryable=False)
+        except Neo4jError as error:
+            tx.rollback()
+            msg = (
+                f"{type(error).__name__} caused by {data_in.entityType}"
+                f"(stableTargetId='{data_in.stableTargetId}', ...)"
+            )
+            raise IngestionError(
+                msg,
+                errors=get_error_details_from_neo4j_error(data_in, error),
+                retryable=error.is_retryable(),
+            ) from None
+        except:
+            tx.rollback()
+            raise
+        else:
+            tx.commit()
+
+    def ingest_extracted_items(
+        self,
+        models: Iterable[AnyExtractedModel | MExPrimarySource],
+    ) -> Generator[None, None, None]:
+        """Ingest a list of extracted models into the graph."""
+        settings = BackendSettings.get()
+        with self.driver.session(default_access_mode=WRITE_ACCESS) as session:
+            for model in models:
+                data_in = transform_model_into_ingest_data(model)
+                with session.begin_transaction(
+                    timeout=settings.graph_tx_timeout,
+                    metadata=data_in.metadata(),
+                ) as tx:
+                    self._ingest_extracted_item_tx(tx, data_in)
+                yield
+
+    def _merge_rule_item(  # deprecated, to be removed in MX-1957
         self,
         tx: Transaction,
         model: AnyRuleModel,
@@ -467,7 +516,7 @@ class GraphConnector(BaseConnector):
             },
         )
 
-    def _merge_rule_edges(
+    def _merge_rule_edges(  # deprecated, to be removed in MX-1957
         self,
         tx: Transaction,
         model: AnyRuleModel,
@@ -536,56 +585,7 @@ class GraphConnector(BaseConnector):
             msg = f"merged {len(unexpected_edges)} edges more than expected: {surplus}"
             raise RuntimeError(msg)
 
-    def _ingest_model_tx(self, tx: Transaction, data_in: IngestData) -> None:
-        """Ingest a single item in a database transaction."""
-        query_builder = QueryBuilder.get()
-        query = query_builder.get_ingest_query_for_entity_type(data_in.entityType)
-        try:
-            tx_result = tx.run(query, data=data_in.model_dump())
-            result = Result(tx_result)
-            result.log_notifications()
-            data_out = IngestData.model_validate(result.one())
-            error_details = validate_ingested_data(data_in, data_out)
-            if error_details:
-                msg = (
-                    f"Could not merge {data_in.entityType}"
-                    f"(stableTargetId='{data_in.stableTargetId}', ...)"
-                )
-                raise IngestionError(msg, errors=error_details, retryable=False)
-        except Neo4jError as error:
-            tx.rollback()
-            msg = (
-                f"{type(error).__name__} caused by {data_in.entityType}"
-                f"(stableTargetId='{data_in.stableTargetId}', ...)"
-            )
-            raise IngestionError(
-                msg,
-                errors=get_error_details_from_neo4j_error(data_in, error),
-                retryable=error.is_retryable(),
-            ) from None
-        except:
-            tx.rollback()
-            raise
-        else:
-            tx.commit()
-
-    def ingest_extracted_items(
-        self,
-        models: Iterable[AnyExtractedModel | MExPrimarySource],
-    ) -> Generator[None, None, None]:
-        """Ingest a list of extracted models into the graph."""
-        settings = BackendSettings.get()
-        with self.driver.session(default_access_mode=WRITE_ACCESS) as session:
-            for model in models:
-                data_in = transform_model_into_ingest_data(model)
-                with session.begin_transaction(
-                    timeout=settings.graph_tx_timeout,
-                    metadata=data_in.metadata(),
-                ) as tx:
-                    self._ingest_model_tx(tx, data_in)
-                yield
-
-    def _ingest_rule_set_tx(
+    def _ingest_rule_set_tx(  # deprecated, to be removed in MX-1957
         self,
         tx: Transaction,
         rule_set: AnyRuleSetResponse,
@@ -595,12 +595,11 @@ class GraphConnector(BaseConnector):
             self._merge_rule_item(tx, rule, rule_set.stableTargetId)
             self._merge_rule_edges(tx, rule, rule_set.stableTargetId)
 
-    def ingest_rule_set(
+    def ingest_rule_set(  # deprecated, to be removed in MX-1957
         self,
         rule_set: AnyRuleSetResponse,
     ) -> None:
         """Ingest a single rule set into the graph."""
-        # TODO(ND): switch rule ingestion over to ingest v2 logic
         settings = BackendSettings.get()
         with self.driver.session(default_access_mode=WRITE_ACCESS) as session:  # noqa: SIM117
             with session.begin_transaction(
