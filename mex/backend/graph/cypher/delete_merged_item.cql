@@ -3,7 +3,7 @@
 Args:
     identifier: Identifier of the merged item to be deleted
 
-Globals:
+Jinja:
     merged_labels: List of all merged class labels
     rule_labels: List of all rule class labels
     extracted_labels: List of all extracted class labels

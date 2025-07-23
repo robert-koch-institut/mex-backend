@@ -1,6 +1,6 @@
 <# Update the stableTargetId relationship for an extracted item.
 
-Globals:
+Jinja:
     extracted_labels: List of all extracted item labels
     merged_labels: List of all merged item labels
 

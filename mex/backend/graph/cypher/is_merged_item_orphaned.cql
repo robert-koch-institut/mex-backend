@@ -3,7 +3,7 @@
 This query determines whether a merged item is orphaned by checking if any
 extracted items still reference it via the stableTargetId relationship.
 
-Globals:
+Jinja:
     merged_labels: List of all merged class labels
     extracted_labels: List of all extracted class labels
 

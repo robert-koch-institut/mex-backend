@@ -6,7 +6,7 @@ own nodes and linked to the current item via edges that have the field names as 
 We also prune all connected nodes that have nested labels but are not part of
 the current item any more.
 
-Globals:
+Jinja:
     nested_labels: List of all labels for nested objects
 
 Args:

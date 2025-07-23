@@ -627,7 +627,7 @@ class GraphConnector(BaseConnector):
             tx.run(
                 str(query_builder.check_match_preconditions()),
                 extracted_identifier=str(extracted_item.identifier),
-                merged_identifier=(extracted_item.stableTargetId),
+                merged_identifier=str(merged_item.identifier),
                 blocked_types=["ExtractedPerson"],
             )
         )
@@ -639,38 +639,44 @@ class GraphConnector(BaseConnector):
         tx.run(
             str(query_builder.update_stable_target_id()),
             extracted_identifier=str(extracted_item.identifier),
-            merged_identifier=(merged_item.identifier),
+            merged_identifier=str(merged_item.identifier),
         )
 
-        # update additive rule
-        # - copy all edges from old to new
-        # - copy all nested from old to new
-        # - copy all values from old to new
+        # copy all nested nodes from old to new additive and subtractive rules
+        tx.run(
+            str(query_builder.copy_nested_from_rules()),
+            old_merged_identifier=str(extracted_item.stableTargetId),
+            new_merged_identifier=str(merged_item.identifier),
+        )
+        # copy all outbound edges from old to new additive and subtractive rules
+        tx.run(
+            str(query_builder.copy_outbound_edges_from_rules()),
+            old_merged_identifier=str(extracted_item.stableTargetId),
+            new_merged_identifier=str(merged_item.identifier),
+        )
 
-        # update subtractive rule
-        # - copy all edges from old to new (if value exists in new)
-        # - copy all nested from old to new (if value exists in new)
-        # - copy all values from old to new (if value exists in new)
+        # TODO(ND): for additive and subtractive rules:
+        # - append all inline values from old to new
 
-        # update preventive rule
+        # TODO(ND): for preventive rule:
         # - copy all edges from old to new (if primary-source exists in new)
 
         # if the old merged item has become orphaned, clean it up
         orphan_check = Result(
             tx.run(
                 str(query_builder.is_merged_item_orphaned()),
-                identifier=(extracted_item.stableTargetId),
+                identifier=str(extracted_item.stableTargetId),
             )
         )
         if orphan_check["is_orphaned"] is True:
             tx.run(
-                str(query_builder.update_all_references()),
-                old_identifier=str(extracted_item.stableTargetId),
-                new_identifier=(merged_item.identifier),
+                str(query_builder.copy_inbound_edges_from_merged()),
+                old_target_identifier=str(extracted_item.stableTargetId),
+                new_target_identifier=str(merged_item.identifier),
             )
             tx.run(
                 str(query_builder.delete_merged_item()),
-                identifier=(extracted_item.stableTargetId),
+                identifier=str(extracted_item.stableTargetId),
             )
 
     def match_item(
