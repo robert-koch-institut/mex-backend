@@ -1,7 +1,7 @@
 <# Update all references from old identifier to new identifier.
 
-This query rewires all edges (except stableTargetId) that point to a node with
-the old identifier to instead point to the node with the new identifier.
+This query rewires all edges that point to a node with the old identifier to instead
+point to the node with the new identifier.
 The rewiring process deletes the old edges and recreates them with the same
 labels and properties, but pointing to the new target node.
 
@@ -16,8 +16,12 @@ Returns:
 MATCH (old_target:<<merged_labels|join("|")>> {identifier: $old_identifier})
 MATCH (new_target:<<merged_labels|join("|")>> {identifier: $new_identifier})
 MATCH (source)-[old_edge]->(old_target)
-WHERE type(old_edge) <> 'stableTargetId'
-WITH source, old_edge, new_target, type(old_edge) AS edge_type, properties(old_edge) AS edge_props
+WITH
+    source,
+    old_edge,
+    new_target,
+    type(old_edge) AS edge_type,
+    properties(old_edge) AS edge_props
 MERGE (source)-[new_edge:$(edge_type)]->(new_target)
 ON CREATE SET new_edge = edge_props
 DELETE old_edge

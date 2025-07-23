@@ -635,25 +635,41 @@ class GraphConnector(BaseConnector):
             msg = f"Failed preconditions: {', '.join(failed)}"
             raise MatchingError(msg)
 
+        # update the stableTargetId of the extracted item
         tx.run(
             str(query_builder.update_stable_target_id()),
             extracted_identifier=str(extracted_item.identifier),
-            merged_identifier=(extracted_item.stableTargetId),
+            merged_identifier=(merged_item.identifier),
         )
-        is_merged_item_orphaned = Result(
+
+        # update additive rule
+        # - copy all edges from old to new
+        # - copy all nested from old to new
+        # - copy all values from old to new
+
+        # update subtractive rule
+        # - copy all edges from old to new (if value exists in new)
+        # - copy all nested from old to new (if value exists in new)
+        # - copy all values from old to new (if value exists in new)
+
+        # update preventive rule
+        # - copy all edges from old to new (if primary-source exists in new)
+
+        # if the old merged item has become orphaned, clean it up
+        orphan_check = Result(
             tx.run(
                 str(query_builder.is_merged_item_orphaned()),
                 identifier=(extracted_item.stableTargetId),
             )
         )
-        if is_merged_item_orphaned["is_orphaned"] is True:
+        if orphan_check["is_orphaned"] is True:
             tx.run(
                 str(query_builder.update_all_references()),
                 old_identifier=str(extracted_item.stableTargetId),
                 new_identifier=(merged_item.identifier),
             )
             tx.run(
-                str(query_builder.deleted_orphaned_merged_item()),
+                str(query_builder.delete_merged_item()),
                 identifier=(extracted_item.stableTargetId),
             )
 
