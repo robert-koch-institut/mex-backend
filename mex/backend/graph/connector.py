@@ -17,7 +17,11 @@ from mex.backend.fields import (
     SEARCHABLE_CLASSES,
     SEARCHABLE_FIELDS,
 )
-from mex.backend.graph.exceptions import InconsistentGraphError, IngestionError
+from mex.backend.graph.exceptions import (
+    InconsistentGraphError,
+    IngestionError,
+    MatchingError,
+)
 from mex.backend.graph.models import IngestData, MExPrimarySource, Result
 from mex.backend.graph.query import Query, QueryBuilder
 from mex.backend.graph.transform import (
@@ -44,6 +48,7 @@ from mex.common.models import (
     MERGED_MODEL_CLASSES_BY_NAME,
     RULE_MODEL_CLASSES_BY_NAME,
     AnyExtractedModel,
+    AnyMergedModel,
     AnyRuleModel,
     AnyRuleSetResponse,
 )
@@ -607,6 +612,65 @@ class GraphConnector(BaseConnector):
                 metadata={"stable_target_id": rule_set.stableTargetId},
             ) as tx:
                 self._ingest_rule_set_tx(tx, rule_set)
+
+    def match_item(
+        self,
+        extracted_item: AnyExtractedModel,
+        merged_item: AnyMergedModel,
+        old_rule_set: AnyRuleSetResponse,
+        new_rule_set: AnyRuleSetResponse,
+    ) -> None:
+        """Match an extracted item to another merged item and clean up afterwards."""
+        settings = BackendSettings.get()
+        query_builder = QueryBuilder.get()
+        with self.driver.session(default_access_mode=WRITE_ACCESS) as session:  # noqa: SIM117
+            with session.begin_transaction(
+                timeout=settings.graph_tx_timeout,
+                metadata={
+                    "extracted_identifier": extracted_item.identifier,
+                    "old_merged_identifier": extracted_item.stableTargetId,
+                    "new_merged_identifier": merged_item.identifier,
+                },
+            ) as tx:
+                try:
+                    preconditions = Result(
+                        tx.run(
+                            str(query_builder.check_match_preconditions()),
+                            extracted_identifier=str(extracted_item.identifier),
+                            merged_identifier=(extracted_item.stableTargetId),
+                            blocked_types=["ExtractedPerson"],
+                        )
+                    )
+                    if not all(preconditions.one().values()):
+                        raise MatchingError(preconditions)
+                    tx.run(
+                        str(query_builder.update_stable_target_id()),
+                        extracted_identifier=str(extracted_item.identifier),
+                        merged_identifier=(extracted_item.stableTargetId),
+                    )
+                    self._ingest_rule_set_tx(tx, old_rule_set)
+                    self._ingest_rule_set_tx(tx, new_rule_set)
+                    is_merged_item_orphaned = Result(
+                        tx.run(
+                            str(query_builder.is_merged_item_orphaned()),
+                            identifier=(extracted_item.stableTargetId),
+                        )
+                    )
+                    if is_merged_item_orphaned["is_orphaned"] is True:
+                        tx.run(
+                            str(query_builder.update_all_references()),
+                            old_identifier=str(extracted_item.stableTargetId),
+                            new_identifier=(merged_item.identifier),
+                        )
+                        tx.run(
+                            str(query_builder.deleted_orphaned_merged_item()),
+                            identifier=(extracted_item.stableTargetId),
+                        )
+                except:
+                    tx.rollback()
+                    raise
+                else:
+                    tx.commit()
 
     def flush(self) -> None:
         """Flush the database by deleting all nodes, constraints and indexes.
