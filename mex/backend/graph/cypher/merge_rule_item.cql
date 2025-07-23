@@ -1,6 +1,6 @@
 <# Upsert the current item with its associated merged item and all nested objects.
 
-One extracted or rule item is created (or updated) along with its associated
+One rule item is created (or updated) along with its associated
 merged item. In addition, all nested objects of the current item are created as their
 own nodes and linked to the current item via edges that have the field names as labels.
 We also prune all connected nodes that have nested labels but are not part of
@@ -12,10 +12,7 @@ Globals:
 Args:
     merged_label: Label for the merged item associated with the current item,
                   e.g. MergedPerson
-    current_label: Label of the current extracted or rule item,
-                   e.g. ExtractedPerson or AdditiveVariable
-    current_constraints: List of fields that will render as constraints for merging
-                         the current item
+    current_label: Label of the current rule item, e.g. AdditiveVariable
     nested_edge_labels: Ordered list of field names that contain nested objects
                         e.g. homepage, alternativeName, methodDescription
     nested_node_labels: Ordered list of class names for the `nested_edge_labels`,
@@ -28,7 +25,7 @@ Returns:
     pruned: Number of nested objects that were removed by this statement
 -#>
 MERGE (merged:<<merged_label>> {identifier: $stable_target_id})
-MERGE (current:<<current_label>> {<<current_constraints|render_constraints>>})-[:stableTargetId {position: 0}]->(merged)
+MERGE (current:<<current_label>>)-[:stableTargetId {position: 0}]->(merged)
 ON CREATE SET current = $on_create
 ON MATCH SET current += $on_match
 <%- for edge_label in nested_edge_labels -%>

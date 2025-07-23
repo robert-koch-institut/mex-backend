@@ -1,5 +1,6 @@
 import json
 from base64 import b64encode
+from collections import deque
 from functools import partial
 from itertools import count
 from typing import Any, cast
@@ -128,7 +129,7 @@ class MockedGraph:
             to_eager_result=MagicMock(
                 return_value=(
                     [Mock(items=v.items) for v in value],
-                    Mock(counters=SummaryCounters({})),
+                    Mock(counters=SummaryCounters({}), summary_notifications=[]),
                     None,
                 ),
             ),
@@ -145,7 +146,7 @@ class MockedGraph:
                 to_eager_result=MagicMock(
                     return_value=(
                         [Mock(items=v.items) for v in value],
-                        Mock(counters=SummaryCounters({})),
+                        Mock(counters=SummaryCounters({}), summary_notifications=[]),
                         None,
                     ),
                 ),
@@ -164,10 +165,11 @@ def mocked_graph(monkeypatch: MonkeyPatch) -> MockedGraph:
     run = MagicMock(spec=Session.run)
     tx = MagicMock(spec=Transaction, run=run)
     tx.__enter__ = MagicMock(spec=Transaction.__enter__, return_value=tx)
-    session = MagicMock(spec=Session, run=run, begin_transaction=tx)
+    begin_transaction = MagicMock(spec=Session.begin_transaction, return_value=tx)
+    session = MagicMock(spec=Session, run=run, begin_transaction=begin_transaction)
     session.__enter__ = MagicMock(spec=Session.__enter__, return_value=session)
-    get_session = MagicMock(spec=Driver.session, return_value=session)
-    driver = Mock(spec=Driver, session=get_session)
+    begin_session = MagicMock(spec=Driver.session, return_value=session)
+    driver = Mock(spec=Driver, session=begin_session)
     monkeypatch.setattr(
         GraphConnector, "__init__", lambda self: setattr(self, "driver", driver)
     )
@@ -381,21 +383,20 @@ def _match_organization_items(dummy_data: dict[str, AnyExtractedModel]) -> None:
     # TODO(ND): replace this crude item matching implementation (stopgap MX-1530)
     connector = GraphConnector.get()
     # remove the merged item for org2
-    with connector.driver.session(default_access_mode=WRITE_ACCESS) as session:
-        connector.commit(
-            f"""\
+    connector.commit(
+        f"""\
     MATCH(n) WHERE n.identifier='{dummy_data["organization_2"].stableTargetId}'
     DETACH DELETE n;""",
-            session=session,
-        )
-        # connect the extracted item for org2 with the merged item for org1
-        connector.commit(
-            f"""\
+        access_mode=WRITE_ACCESS,
+    )
+    # connect the extracted item for org2 with the merged item for org1
+    connector.commit(
+        f"""\
     MATCH(n :ExtractedOrganization) WHERE n.identifier = '{dummy_data["organization_2"].identifier}'
     MATCH(m :MergedOrganization) WHERE m.identifier = '{dummy_data["organization_1"].stableTargetId}'
     MERGE (n)-[:stableTargetId {{position:0}}]->(m);""",
-            session=session,
-        )
+        access_mode=WRITE_ACCESS,
+    )
     # clear the identity provider cache to refresh the `stableTargetId` property on org2
     provider = GraphIdentityProvider.get()
     provider._cache.flush()
@@ -407,7 +408,7 @@ def load_dummy_data(
 ) -> dict[str, AnyExtractedModel]:
     """Ingest dummy data into the graph."""
     connector = GraphConnector.get()
-    connector.ingest(list(dummy_data.values()))
+    deque(connector.ingest_extracted_items(dummy_data.values()))
     _match_organization_items(dummy_data)
     return dummy_data
 
@@ -417,7 +418,8 @@ def load_artificial_extracted_items(
     artificial_extracted_items: list[AnyExtractedModel],
 ) -> list[AnyExtractedModel]:
     """Ingest artificial data into the graph."""
-    GraphConnector.get().ingest(artificial_extracted_items)
+    connector = GraphConnector.get()
+    deque(connector.ingest_extracted_items(artificial_extracted_items))
     return artificial_extracted_items
 
 
@@ -453,14 +455,6 @@ def load_dummy_rule_set(
     organizational_unit_rule_set_request: OrganizationalUnitRuleSetRequest,
     load_dummy_data: dict[str, AnyExtractedModel],
 ) -> OrganizationalUnitRuleSetResponse:
-    connector = GraphConnector.get()
-    connector.ingest(
-        [
-            load_dummy_data["primary_source_2"],
-            load_dummy_data["organizational_unit_1"],
-            load_dummy_data["organizational_unit_2"],
-        ]
-    )
     return cast(
         "OrganizationalUnitRuleSetResponse",
         create_and_get_rule_set(

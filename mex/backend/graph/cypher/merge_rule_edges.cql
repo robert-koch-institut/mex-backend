@@ -1,6 +1,6 @@
-<# Merge all edges from a single item to all connected merged items.
+<# Merge all edges from a single rule item to all connected merged items.
 
-The current item can either be an extracted item or a rule.
+The current item can either be any additive, subtractive or preventive rule item.
 This statement also prunes all edges originating from the current item that are not
 part of the references to be merged during this operation.
 
@@ -10,8 +10,6 @@ Globals:
 Args:
     current_label: Label of the current item that is the source of all edges
                    being merged in this statement
-    current_constraints: List of fields that will render as constraints for matching
-                         the current item
     ref_labels: Ordered list of merged item labels of the edges being merged
 
 Returns:
@@ -19,7 +17,7 @@ Returns:
     pruned: Number of pruned edges
     edges: List of the merged edge objects
 -#>
-MATCH (source:<<current_label>> {<<current_constraints|render_constraints>>})-[:stableTargetId]->({identifier: $stable_target_id})
+MATCH (source:<<current_label>>)-[:stableTargetId]->({identifier: $stable_target_id})
 CALL (source) {
 <%- if ref_labels %>
 <%- set union = joiner("UNION ALL\n    ") %>

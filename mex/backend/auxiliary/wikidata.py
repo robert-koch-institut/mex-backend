@@ -1,3 +1,4 @@
+from collections import deque
 from typing import Annotated, cast
 
 from fastapi import APIRouter, Query
@@ -70,7 +71,7 @@ def _fetch_or_insert_organization(name: str) -> ExtractedOrganization:
     if not extracted_item:
         raise NoResultFoundError(name)
     connector = GraphConnector.get()
-    connector.ingest([extracted_item])
+    deque(connector.ingest_extracted_items([extracted_item]))
     logger.info("ingested organization %s", name)
     return extracted_item
 

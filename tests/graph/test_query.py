@@ -415,7 +415,7 @@ def test_fetch_identities(
         (
             ["personInCharge", "meetingScheduledBy", "agendaSignedOff"],
             """\
-MATCH (source:ExtractedThat {identifier: $identifier})-[:stableTargetId]->({identifier: $stable_target_id})
+MATCH (source:ExtractedThat)-[:stableTargetId]->({identifier: $stable_target_id})
 CALL (source) {
     WITH source
     MATCH (target_0 {identifier: $ref_identifiers[0]})
@@ -444,7 +444,7 @@ RETURN merged, pruned, edges;""",
         (
             [],
             """\
-MATCH (source:ExtractedThat {identifier: $identifier})-[:stableTargetId]->({identifier: $stable_target_id})
+MATCH (source:ExtractedThat)-[:stableTargetId]->({identifier: $stable_target_id})
 CALL (source) {
     RETURN null AS edge
 }
@@ -460,12 +460,11 @@ RETURN merged, pruned, edges;""",
     ],
     ids=["has-ref-labels", "no-ref-labels"],
 )
-def test_merge_edges(
+def test_merge_rule_edges(
     query_builder: QueryBuilder, ref_labels: list[str], expected: str
 ) -> None:
-    query = query_builder.merge_edges(
+    query = query_builder.merge_rule_edges(
         current_label="ExtractedThat",
-        current_constraints=["identifier"],
         ref_labels=ref_labels,
     )
     assert str(query) == expected
@@ -479,7 +478,7 @@ def test_merge_edges(
             ["Text", "Link", "Location"],
             """\
 MERGE (merged:MergedThat {identifier: $stable_target_id})
-MERGE (current:ExtractedThat {identifier: $identifier})-[:stableTargetId {position: 0}]->(merged)
+MERGE (current:ExtractedThat)-[:stableTargetId {position: 0}]->(merged)
 ON CREATE SET current = $on_create
 ON MATCH SET current += $on_match
 MERGE (current)-[edge_0:description {position: $nested_positions[0]}]->(value_0:Text)
@@ -507,7 +506,7 @@ RETURN current, edges, values, pruned;""",
             [],
             """\
 MERGE (merged:MergedThat {identifier: $stable_target_id})
-MERGE (current:ExtractedThat {identifier: $identifier})-[:stableTargetId {position: 0}]->(merged)
+MERGE (current:ExtractedThat)-[:stableTargetId {position: 0}]->(merged)
 ON CREATE SET current = $on_create
 ON MATCH SET current += $on_match
 WITH current,
@@ -524,15 +523,14 @@ RETURN current, edges, values, pruned;""",
     ],
     ids=["has-nested-labels", "no-nested-labels"],
 )
-def test_merge_item(
+def test_merge_rule_item(
     query_builder: QueryBuilder,
     nested_edge_labels: list[str],
     nested_node_labels: list[str],
     expected: str,
 ) -> None:
-    query = query_builder.merge_item(
+    query = query_builder.merge_rule_item(
         current_label="ExtractedThat",
-        current_constraints=["identifier"],
         merged_label="MergedThat",
         nested_edge_labels=nested_edge_labels,
         nested_node_labels=nested_node_labels,

@@ -1,3 +1,4 @@
+from collections import deque
 from typing import cast
 
 from mex.backend.auxiliary.primary_source import extracted_primary_source_organigram
@@ -31,5 +32,5 @@ def extracted_organizational_units() -> list[ExtractedOrganizationalUnit]:
         extracted_organization_rki(),
     )
     connector = GraphConnector.get()
-    connector.ingest(extracted_units)
+    deque(connector.ingest_extracted_items(extracted_units))
     return extracted_units

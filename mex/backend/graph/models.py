@@ -1,19 +1,43 @@
 from collections.abc import Callable, Iterator
 from functools import cache
-from typing import Any, cast
+from typing import Annotated, Any, Literal, cast
 
 from neo4j import NotificationSeverity
 from neo4j import Result as Neo4jResult
 from neo4j._data import RecordExporter
 from neo4j.graph import Relationship
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 from typing_extensions import TypedDict
 
 from mex.backend.graph.exceptions import MultipleResultsFoundError, NoResultFoundError
 from mex.backend.logging import LOGGING_LINE_LENGTH
 from mex.common.logging import logger
+from mex.common.models import (
+    MEX_PRIMARY_SOURCE_IDENTIFIER,
+    MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
+    MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    BasePrimarySource,
+)
+from mex.common.types import (
+    ExtractedPrimarySourceIdentifier,
+    MergedPrimarySourceIdentifier,
+)
 
 GraphValueType = None | str | int | list[str] | list[int]
+
+
+class MExPrimarySource(BasePrimarySource):
+    """An automatically extracted metadata set describing a primary source."""
+
+    entityType: Annotated[
+        Literal["ExtractedPrimarySource"], Field(alias="$type", frozen=True)
+    ] = "ExtractedPrimarySource"
+    hadPrimarySource: MergedPrimarySourceIdentifier = (
+        MEX_PRIMARY_SOURCE_STABLE_TARGET_ID
+    )
+    identifier: ExtractedPrimarySourceIdentifier = MEX_PRIMARY_SOURCE_IDENTIFIER
+    identifierInPrimarySource: str = MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE
+    stableTargetId: MergedPrimarySourceIdentifier = MEX_PRIMARY_SOURCE_STABLE_TARGET_ID
 
 
 class EdgeExporter(RecordExporter):
