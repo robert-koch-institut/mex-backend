@@ -46,6 +46,7 @@ from mex.common.logging import logger
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
+    MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     RULE_MODEL_CLASSES_BY_NAME,
     AnyExtractedModel,
     AnyMergedModel,
@@ -642,22 +643,42 @@ class GraphConnector(BaseConnector):
             merged_identifier=str(merged_item.identifier),
         )
 
+        # TODO(ND): ensure position collisions don't produce errors/instability on fetch
+
         # copy all nested nodes from old to new additive and subtractive rules
+        # TODO(ND): limit rule labels
         tx.run(
             str(query_builder.copy_nested_from_rules()),
             old_merged_identifier=str(extracted_item.stableTargetId),
             new_merged_identifier=str(merged_item.identifier),
         )
         # copy all outbound edges from old to new additive and subtractive rules
+        # TODO(ND): limit rule labels
         tx.run(
             str(query_builder.copy_outbound_edges_from_rules()),
             old_merged_identifier=str(extracted_item.stableTargetId),
             new_merged_identifier=str(merged_item.identifier),
         )
+        # copy all node properties from old to new additive and subtractive rules
+        # TODO(ND): limit rule labels
+        tx.run(
+            str(query_builder.copy_node_props_from_rules()),
+            old_merged_identifier=str(extracted_item.stableTargetId),
+            new_merged_identifier=str(merged_item.identifier),
+        )
 
-        # TODO(ND): for additive and subtractive rules:
-        # - append all inline values from old to new
-
+        # determine primary sources for the new merged item
+        new_identities = Result(
+            tx.run(
+                str(query_builder.fetch_identities(filter_by_stable_target_id=True)),
+                stable_target_id=str(merged_item.identifier),
+                limit=1000,
+            )
+        )
+        _new_primary_sources = [
+            *[i["hadPrimarySource"] for i in new_identities],
+            MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+        ]
         # TODO(ND): for preventive rule:
         # - copy all edges from old to new (if primary-source exists in new)
 
