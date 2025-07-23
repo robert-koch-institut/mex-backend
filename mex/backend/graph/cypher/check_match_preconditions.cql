@@ -21,9 +21,9 @@ Returns:
     old_rules_exist: Boolean indicating if the old merged item has complete rules
     merged_exists: Boolean indicating if the target merged item exists
     new_rules_exist: Boolean indicating if the target merged item has complete rules
-    not_self_merge: Boolean indicating this is not a self-merge
-    matching_types: Boolean indicating the items have matching types
-    allowed_types: Boolean indicating the extracted type can be merged
+    not_self_merge: Boolean indicating this is not a noop self-merge
+    matching_types: Boolean indicating the items have matching stem types
+    allowed_types: Boolean indicating the extracted type is not blocked
 -#>
 OPTIONAL MATCH (extracted:<<extracted_labels|join("|")>> {identifier: $extracted_identifier})-[:stableTargetId]->(old_merged:<<merged_labels|join("|")>>)
 OPTIONAL MATCH (old_merged)<-[:stableTargetId]-(old_rules:<<merged_labels|join("|")>>)
