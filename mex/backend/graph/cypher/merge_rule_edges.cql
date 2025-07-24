@@ -4,7 +4,7 @@ The current item can either be any additive, subtractive or preventive rule item
 This statement also prunes all edges originating from the current item that are not
 part of the references to be merged during this operation.
 
-Globals:
+Jinja:
     merged_labels: List of all merged class labels
 
 Args:

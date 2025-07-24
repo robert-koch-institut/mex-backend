@@ -1,6 +1,6 @@
 <# Fetch extracted or rule items including their nested objects and referenced identifiers.
 
-Globals:
+Jinja:
     extracted_labels: List of all extracted class labels
     rule_labels: List of all rule class labels
     merged_labels: List of all merged class labels
