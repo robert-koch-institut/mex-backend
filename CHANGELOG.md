@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changes
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [0.41.2] - 2025-07-24
+
+### Added
+
 - enable mypy type checking for tests
 
 ### Changes
@@ -18,14 +32,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - use a single transaction for v1 ingestion of a rule-set
 - reorganize a few functions in the rules and graph modules for clarity and consistency
 - update mex-common to 0.64
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
 
 ## [0.41.1] - 2025-07-08
 
