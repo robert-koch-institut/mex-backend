@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:f1bfcd7df22c1540cf4eb99c87b63021e90bbd05c4a94c002b0c756db9bc2ab3"
+content_hash = "sha256:eeb8b77185889527d63adf3158e395a14a48f3c52538f59738aacbea77402465"
 
 [[metadata.targets]]
 requires_python = "==3.11.*"
@@ -607,25 +607,25 @@ files = [
 
 [[package]]
 name = "mex-artificial"
-version = "0.5.2"
+version = "0.5.3"
 requires_python = "<3.13,>=3.11"
 summary = "Create artificial data for the MEx project."
 groups = ["dev"]
 dependencies = [
     "annotated-types<=0.7",
     "faker<38,>=37",
-    "mex-common<0.64,>=0.63",
+    "mex-common>=0.64",
     "pydantic>=2",
     "typer>=0.13",
 ]
 files = [
-    {file = "mex_artificial-0.5.2-py3-none-any.whl", hash = "sha256:97b7f8896c48919b890304ecf12d3ac1211e7bf2b0f509d22fa76f27587d4a6f"},
-    {file = "mex_artificial-0.5.2.tar.gz", hash = "sha256:65e62d0c815043e2b49dcd29cc0533fb7a3017d52e899dd12629a6205f99fabe"},
+    {file = "mex_artificial-0.5.3-py3-none-any.whl", hash = "sha256:2becbfdea08ed0d57580e9e074370230cf60a5c83bca9fccee72456acf9596a7"},
+    {file = "mex_artificial-0.5.3.tar.gz", hash = "sha256:8a6c1dd421ef6ccae91f34dea5a223d625ced83b8b7263803fb0ed9b9920293c"},
 ]
 
 [[package]]
 name = "mex-common"
-version = "0.63.0"
+version = "0.64.0"
 requires_python = "<3.12,>=3.11"
 summary = "Common library for MEx python projects."
 groups = ["default", "dev"]
@@ -634,7 +634,7 @@ dependencies = [
     "click<9,>=8",
     "langdetect<2,>=1",
     "ldap3<3,>=2",
-    "mex-model==4.1.0",
+    "mex-model==4.1.1",
     "numpy<3,>=2",
     "pandas<3,>=2",
     "pyarrow<21,>=20",
@@ -644,19 +644,19 @@ dependencies = [
     "requests<3,>=2",
 ]
 files = [
-    {file = "mex_common-0.63.0-py3-none-any.whl", hash = "sha256:1fefb1b62eace93587cfc0d3b20249afaa4cc692362a29a60600f6cd7557c2f6"},
-    {file = "mex_common-0.63.0.tar.gz", hash = "sha256:b3aa98651f754adf9ab146697d00b88381d7114a6d998e661365e41d7b18d4da"},
+    {file = "mex_common-0.64.0-py3-none-any.whl", hash = "sha256:623f1f06132c48809a9b38fa60e8363dd18289e7547766f834965c97080e346e"},
+    {file = "mex_common-0.64.0.tar.gz", hash = "sha256:4d1a70864b3f766ceee2628801ddf93b08a3be30496b4ace3237579b8d080b77"},
 ]
 
 [[package]]
 name = "mex-model"
-version = "4.1.0"
+version = "4.1.1"
 requires_python = ">=3.9"
 summary = "JSON schema files defining the MEx metadata model."
 groups = ["default", "dev"]
 files = [
-    {file = "mex_model-4.1.0-py3-none-any.whl", hash = "sha256:f9f4fa08416207e8ccc31c57a846abd50f93bb8fa15de63a5b77524a8b828cf2"},
-    {file = "mex_model-4.1.0.tar.gz", hash = "sha256:76112cc0a2e298da8fadf6b257fc72899f6ae0fb0ca0760448a834278f14953a"},
+    {file = "mex_model-4.1.1-py3-none-any.whl", hash = "sha256:cfe3359ae84c1b747a75f6ca44d1df886c0d66621a8a2c5e8f6d71729ebce19d"},
+    {file = "mex_model-4.1.1.tar.gz", hash = "sha256:702d016d8a96e5aeaa84aaea1ea6203d2648b7cbd1075d88eecb2a91c6fe08e1"},
 ]
 
 [[package]]

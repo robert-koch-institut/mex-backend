@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- update mex-common to 0.64
+
 ### Deprecated
 
 ### Removed
@@ -31,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - clean up v1 ingest and make it only compatible with rule-sets, until its deletion
 - use a single transaction for v1 ingestion of a rule-set
 - reorganize a few functions in the rules and graph modules for clarity and consistency
-- update mex-common to 0.64
+- update mex-common to 0.63
 
 ## [0.41.1] - 2025-07-08
 
