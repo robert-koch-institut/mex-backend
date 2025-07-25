@@ -1,7 +1,10 @@
 <# Upsert extracted items with their associated merged items and relationships.
 
-Args:
+Jinja:
     params: IngestParams object query configuration
+
+Args:
+    data: IngestData object containing items to merge
 
 Returns:
     identifier: Identifier of the extracted item
