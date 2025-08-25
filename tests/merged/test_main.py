@@ -12,6 +12,7 @@ from mex.common.models import (
     OrganizationalUnitRuleSetRequest,
     SubtractiveOrganizationalUnit,
 )
+from mex.common.types import Validation
 from tests.conftest import MockedGraph
 
 
@@ -428,10 +429,10 @@ def test_get_merged_item(
     extracted_organization_1 = load_dummy_data["organization_1"]
     extracted_organization_2 = load_dummy_data["organization_2"]
     merged_organization = create_merged_item(
-        extracted_organization_1.stableTargetId,
-        [extracted_organization_2, extracted_organization_1],
+        identifier=extracted_organization_1.stableTargetId,
+        extracted_items=[extracted_organization_2, extracted_organization_1],
         rule_set=None,
-        validate_cardinality=True,
+        validation=Validation.STRICT,
     )
     response = client_with_api_key_read_permission.get(
         f"/v0/merged-item/{merged_organization.identifier}"

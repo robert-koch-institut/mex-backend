@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changes
 
 - improve parameter documentation for cypher queries
+- change preview-merging logic to favor blocked values over empty fields
 
 ### Deprecated
 
