@@ -1,11 +1,10 @@
-from typing import Any, Literal, cast, overload
+from typing import Any, Literal, overload
 
 from pydantic import ValidationError
 
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import InconsistentGraphError, NoResultFoundError
 from mex.backend.rules.transform import transform_raw_rules_to_rule_set_response
-from mex.backend.types import Validation
 from mex.common.exceptions import MergingError
 from mex.common.merged.main import create_merged_item
 from mex.common.models import (
@@ -16,7 +15,7 @@ from mex.common.models import (
     ExtractedModelTypeAdapter,
     PaginatedItemsContainer,
 )
-from mex.common.types import Identifier
+from mex.common.types import Identifier, Validation
 
 
 @overload
@@ -78,9 +77,7 @@ def merge_search_result_item(
             identifier=Identifier(item["identifier"]),
             extracted_items=extracted_items,
             rule_set=rule_set,
-            validate_cardinality=cast(  # type: ignore[redundant-cast]
-                "Literal[True, False]", validation != Validation.LENIENT
-            ),
+            validation=validation,
         )
     except (MergingError, ValidationError):
         if validation == Validation.STRICT:

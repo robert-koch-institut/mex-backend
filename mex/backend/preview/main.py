@@ -6,7 +6,7 @@ from starlette import status
 
 from mex.backend.extracted.helpers import get_extracted_items_from_graph
 from mex.backend.merged.helpers import search_merged_items_in_graph
-from mex.backend.types import MergedType, ReferenceFieldName, Validation
+from mex.backend.types import MergedType, ReferenceFieldName
 from mex.common.merged.main import create_merged_item
 from mex.common.models import (
     AnyMergedModel,
@@ -15,7 +15,7 @@ from mex.common.models import (
     PaginatedItemsContainer,
 )
 from mex.common.transform import ensure_prefix
-from mex.common.types import Identifier
+from mex.common.types import Identifier, Validation
 
 router = APIRouter()
 
@@ -35,10 +35,10 @@ def preview_item(
         entity_type=[ensure_prefix(ruleSet.stemType, "Extracted")],
     )
     return create_merged_item(
-        stableTargetId,
-        extracted_items,
-        ruleSet,
-        validate_cardinality=True,
+        identifier=stableTargetId,
+        extracted_items=extracted_items,
+        rule_set=ruleSet,
+        validation=Validation.STRICT,
     )
 
 
