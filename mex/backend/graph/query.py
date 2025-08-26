@@ -39,6 +39,12 @@ from mex.common.transform import (
 )
 from mex.common.types import NESTED_MODEL_CLASSES_BY_NAME
 
+# TODO(ND): move this to mex-common
+EXTRACTED_AND_RULE_MODEL_CLASSES_BY_NAME = {
+    **EXTRACTED_MODEL_CLASSES_BY_NAME,
+    **RULE_MODEL_CLASSES_BY_NAME,
+}
+
 
 @validate_call
 def render_constraints(
@@ -116,8 +122,8 @@ class QueryBuilder(BaseConnector):
     def _get_ingest_query_for_entity_type(self, entity_type: str) -> str:
         """Create an ingest query for the given entity type.
 
-        Generates a complex Cypher query template for ingesting extracted models
-        into the graph database. The query handles creation of nodes, nested
+        Generates a complex Cypher query template for ingesting extracted or rule
+        models into the graph database. The query handles creation of nodes, nested
         objects (Text, Link), and reference relationships. Results are cached
         for performance.
 
@@ -130,7 +136,7 @@ class QueryBuilder(BaseConnector):
         Returns:
             Cypher query string template for ingesting this entity type
         """
-        stem_type = EXTRACTED_MODEL_CLASSES_BY_NAME[entity_type].stemType
+        stem_type = EXTRACTED_AND_RULE_MODEL_CLASSES_BY_NAME[entity_type].stemType
         merged_label = ensure_prefix(stem_type, "Merged")
         text_fields = TEXT_FIELDS_BY_CLASS_NAME[entity_type]
         link_fields = LINK_FIELDS_BY_CLASS_NAME[entity_type]
@@ -149,7 +155,7 @@ class QueryBuilder(BaseConnector):
             has_create_rels=bool(nested_types_for_class),
         )
         query_builder = QueryBuilder.get()
-        query = query_builder.merge_extracted_item(params=params)
+        query = query_builder.merge_item(params=params)
         return str(query)
 
     def close(self) -> None:

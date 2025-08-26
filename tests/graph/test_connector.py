@@ -1356,17 +1356,17 @@ def test_graph_exists_item(
 
 
 @pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
-def test_mocked_graph_merge_rule_item(
+def test_mocked_run_ingest_in_transaction_ruleset(
     mocked_graph: MockedGraph,
     organizational_unit_rule_set_response: OrganizationalUnitRuleSetResponse,
 ) -> None:
     graph = GraphConnector.get()
     with mocked_graph.session as session:
-        graph._merge_rule_item(
-            session,
-            organizational_unit_rule_set_response.additive,
-            Identifier("orgUnitStableTargetId"),
-        )
+        with session.begin_transaction() as tx:
+            graph._run_ingest_in_transaction(
+                tx,
+                organizational_unit_rule_set_response,
+            )
 
     assert mocked_graph.call_args_list[-1].args == (
         """merge_rule_item(

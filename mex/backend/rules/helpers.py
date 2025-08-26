@@ -27,7 +27,7 @@ def create_and_get_rule_set(
         subtractive=rule_set.subtractive,
         stableTargetId=stable_target_id,
     )
-    connector.ingest_rule_set(rule_set_response)
+    connector.ingest_items([rule_set_response])
     rule_types = [
         rule_set.additive.entityType,
         rule_set.subtractive.entityType,
