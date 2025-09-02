@@ -29,7 +29,6 @@ from mex.common.models import (
     ExtractedContactPoint,
     ExtractedOrganization,
     ExtractedOrganizationalUnit,
-    ExtractedPerson,
     ExtractedPrimarySource,
     OrganizationalUnitRuleSetRequest,
     OrganizationalUnitRuleSetResponse,
@@ -340,12 +339,6 @@ def dummy_data(
         title=[Text(value="Aktivität 1", language=TextLanguage.DE)],
         website=[Link(title="Activity Homepage", url="https://activity-1")],
     )
-    person_1 = ExtractedPerson(
-        hadPrimarySource=primary_source_1.stableTargetId,
-        identifierInPrimarySource="p-1",
-        fullName=["Bernd, Brot"],
-        email=[Email("person_1@example.com")],
-    )
     return {
         "primary_source_1": primary_source_1,
         "primary_source_2": primary_source_2,
@@ -356,7 +349,6 @@ def dummy_data(
         "organizational_unit_1": organizational_unit_1,
         "organizational_unit_2": organizational_unit_2,
         "activity_1": activity_1,
-        "person_1": person_1,
     }
 
 
