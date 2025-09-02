@@ -4,38 +4,45 @@ from fastapi import APIRouter, Query
 
 from mex.backend.auxiliary.organigram import extracted_organizational_units
 from mex.backend.auxiliary.primary_source import extracted_primary_source_ldap
-from mex.common.ldap.extract import get_ldap_persons
-from mex.common.ldap.transform import transform_ldap_persons_to_mex_persons
-from mex.common.models import ExtractedPerson, PaginatedItemsContainer
+from mex.common.ldap.connector import LDAPConnector
+from mex.common.ldap.transform import (
+    transform_any_ldap_actor_to_extracted_persons_or_contact_points,
+)
+from mex.common.models import (
+    ExtractedContactPoint,
+    ExtractedPerson,
+    PaginatedItemsContainer,
+)
 
 router = APIRouter()
 
 
 @router.get("/ldap", tags=["editor"])
-def search_persons_in_ldap(
-    q: Annotated[str, Query(max_length=1000)] = "A*",
+def search_persons_or_contact_points_in_ldap(
+    q: Annotated[str, Query(max_length=1000)] = "MEx*",
     offset: Annotated[int, Query(ge=0, le=10e10)] = 0,  # noqa: ARG001
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
-) -> PaginatedItemsContainer[ExtractedPerson]:
-    """Search for persons in LDAP.
+) -> PaginatedItemsContainer[ExtractedPerson | ExtractedContactPoint]:
+    """Search for person or contact points in LDAP.
 
     Args:
-        q: The name of the person to be searched
+        q: The name of the person or contact point
         offset: The starting index for pagination (not implemented)
         limit: The maximum number of results to return
 
     Returns:
-        Paginated list of ExtractedPersons
+        Paginated list of ExtractedPersons and ExtractedContactPoints
     """
-    ldap_persons = get_ldap_persons(
-        limit=limit,
-        displayName=q,
+    connector = LDAPConnector.get()
+    ldap_actors = connector.get_persons(displayName=q, limit=limit)
+    extracted_persons_or_contact_points = (
+        transform_any_ldap_actor_to_extracted_persons_or_contact_points(
+            ldap_actors,
+            extracted_organizational_units(),
+            extracted_primary_source_ldap(),
+        )
     )
-    extracted_persons = transform_ldap_persons_to_mex_persons(
-        ldap_persons,
-        extracted_primary_source_ldap(),
-        extracted_organizational_units(),
-    )
-    return PaginatedItemsContainer[ExtractedPerson](
-        items=extracted_persons, total=len(ldap_persons)
+    return PaginatedItemsContainer[ExtractedPerson | ExtractedContactPoint](
+        items=extracted_persons_or_contact_points,
+        total=len(extracted_persons_or_contact_points),
     )
