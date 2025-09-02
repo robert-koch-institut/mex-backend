@@ -55,7 +55,7 @@ class CacheConnector(BaseConnector):
         if settings.redis_url:
             self._cache: CacheProto = Redis.from_url(
                 settings.redis_url.get_secret_value()
-            )
+            )  # type: ignore [assignment]
         else:
             self._cache = LocalCache()
 

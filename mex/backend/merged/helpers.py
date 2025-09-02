@@ -1,11 +1,17 @@
 from typing import Any, Literal, overload
+from urllib.parse import urlsplit
 
+from ldap3 import AUTO_BIND_NO_TLS, Connection, Server
+from ldap3.core.exceptions import LDAPBindError
+from ldap3.utils.dn import escape_rdn
 from pydantic import ValidationError
 
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import InconsistentGraphError, NoResultFoundError
 from mex.backend.rules.transform import transform_raw_rules_to_rule_set_response
+from mex.backend.settings import BackendSettings
 from mex.common.exceptions import MergingError
+from mex.common.logging import logger
 from mex.common.merged.main import create_merged_item
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
@@ -201,3 +207,30 @@ def get_merged_item_from_graph(identifier: Identifier) -> AnyMergedModel:
         msg = "Found multiple merged items."
         raise InconsistentGraphError(msg)
     return merge_search_result_item(result["items"][0], Validation.STRICT)
+
+
+def has_write_access_ldap(username: str, password: str) -> bool:
+    """Verify if provided credentials have ldap write access."""
+    settings = BackendSettings.get()
+    url = urlsplit(settings.ldap_url.get_secret_value())
+    host = str(url.hostname)
+    port = int(url.port) if url.port else None
+    server = Server(host, port, use_ssl=True)
+    username = username.split("@")[0]
+    username = escape_rdn(username)
+    try:
+        with Connection(
+            server,
+            user=f"{username}@rki.local",
+            password=password,
+            auto_bind=AUTO_BIND_NO_TLS,
+            read_only=True,
+        ) as connection:
+            availability = connection.server.check_availability()
+            if availability is True:
+                return True
+            logger.error(availability)
+            return False
+    except LDAPBindError as error:
+        logger.error(f"LDAP bind error: {error}")
+        return False
