@@ -156,36 +156,71 @@ def has_read_access(
         )
 
 
-def has_write_access_ldap(username: str, password: str) -> bool:
-    """Verify if provided credentials have ldap write access.
+def has_write_access_ldap(
+    api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
+    credentials: Annotated[
+        HTTPBasicCredentials | None, Depends(X_API_CREDENTIALS)
+    ] = None,
+    user_agent: Annotated[str, Header(include_in_schema=False)] = "n/a",
+) -> None:
+    """Verify if provided credentials have LDAP write access.
 
     Raises:
-        LDAPBindError if credentials have no LDAP write access.
+        HTTPException if credentials have no LDAP write access or are missing.
 
     Args:
-        username: the LDAP username
-        password: the password
+        api_key: the API key
+        credentials: username and password
+        user_agent: user-agent (in case of a web browser starts with "Mozilla/")
     """
+    _check_header_for_authorization_method(api_key, credentials, user_agent)
+
+    if not credentials or api_key:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="LDAP authentication requires credentials only.",
+            headers=(
+                {"WWW-Authenticate": "Basic"}
+                if user_agent.startswith("Mozilla/")
+                else None
+            ),
+        )
+
     settings = BackendSettings.get()
     url = urlsplit(settings.ldap_url.get_secret_value())
     host = str(url.hostname)
     port = int(url.port) if url.port else None
     server = Server(host, port, use_ssl=True)
-    username = username.split("@")[0]
-    username = escape_rdn(username)
+    username = escape_rdn(credentials.username.split("@")[0])
     try:
         with Connection(
             server,
             user=f"{username}@rki.local",
-            password=password,
+            password=credentials.password,
             auto_bind=AUTO_BIND_NO_TLS,
             read_only=True,
         ) as connection:
             availability = connection.server.check_availability()
             if availability is True:
-                return True
-            logger.error(availability)
-            return False
-    except LDAPBindError as error:
-        logger.error(f"LDAP bind error: {error}")
-        return False
+                return
+            logger.error(f"LDAP server not available: {availability}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="LDAP server not available.",
+                headers=(
+                    {"WWW-Authenticate": "Basic"}
+                    if user_agent.startswith("Mozilla/")
+                    else None
+                ),
+            )
+    except LDAPBindError as e:
+        logger.error(f"LDAP bind error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="LDAP bind failed.",
+            headers=(
+                {"WWW-Authenticate": "Basic"}
+                if user_agent.startswith("Mozilla/")
+                else None
+            ),
+        ) from e

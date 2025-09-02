@@ -106,8 +106,6 @@ def test_has_read_access_with_basic_auth() -> None:
 
 
 def test_has_write_access_ldap_success() -> None:
-    username = "testuser"
-    password = "right_password"  # noqa: S105
     with patch("mex.backend.security.BackendSettings.get") as mock_settings:
         mock_settings.return_value.ldap_url.get_secret_value.return_value = (
             "ldaps://ldap.example.com:636"
@@ -115,18 +113,32 @@ def test_has_write_access_ldap_success() -> None:
         with patch("mex.backend.security.Connection") as mock_connection:
             mocked_connection = mock_connection.return_value.__enter__.return_value
             mocked_connection.server.check_availability.return_value = True
-            assert has_write_access_ldap(username, password) is True
+            has_write_access_ldap(credentials=write_credentials)
 
 
 def test_has_write_access_ldap_bind_error() -> None:
-    username = "testuser"
-    password = "wrong_password"  # noqa: S105
     with patch("mex.backend.security.BackendSettings.get") as mock_settings:
         mock_settings.return_value.ldap_url.get_secret_value.return_value = (
             "ldaps://ldap.example.com:636"
         )
-        # Patch Connection to raise LDAPBindError when instantiated
         with patch(
             "mex.backend.security.Connection", side_effect=LDAPBindError("fail")
         ):
-            assert has_write_access_ldap(username, password) is False
+            with pytest.raises(HTTPException) as error:
+                has_write_access_ldap(credentials=user_wrong_pw)
+            assert error.value.status_code == 401
+            assert "LDAP bind failed." in error.value.detail
+
+
+def test_has_write_access_ldap_server_not_available() -> None:
+    with patch("mex.backend.security.BackendSettings.get") as mock_settings:
+        mock_settings.return_value.ldap_url.get_secret_value.return_value = (
+            "ldaps://ldap.example.com:636"
+        )
+        with patch("mex.backend.security.Connection") as mock_connection:
+            mocked_connection = mock_connection.return_value.__enter__.return_value
+            mocked_connection.server.check_availability.return_value = False
+            with pytest.raises(HTTPException) as error:
+                has_write_access_ldap(credentials=write_credentials)
+            assert error.value.status_code == 403
+            assert "LDAP server not available." in error.value.detail

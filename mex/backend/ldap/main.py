@@ -1,0 +1,43 @@
+from typing import Annotated
+
+from fastapi import APIRouter, Depends
+from fastapi.security import HTTPBasicCredentials
+from requests import HTTPError
+
+from mex.backend.merged.main import get_merged_item
+from mex.common.identity import get_provider
+from mex.common.ldap.connector import LDAPConnector
+from mex.common.logging import logger
+from mex.common.models import (
+    MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    MergedPerson,
+)
+
+router = APIRouter()
+
+
+def get_merged_person_from_login(
+    credentials: Annotated[HTTPBasicCredentials, Depends()],
+) -> MergedPerson | None:
+    """Return the merged person from the ldap information and verify the login."""
+    ldap_connector = LDAPConnector.get()
+    ldap_person = ldap_connector.get_person(sAMAccountName=credentials.username)
+    provider = get_provider()
+    primary_source_identities = provider.fetch(
+        had_primary_source=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+        identifier_in_primary_source="ldap",
+    )
+    try:
+        identities = provider.fetch(
+            identifier_in_primary_source=str(ldap_person.objectGUID),
+            had_primary_source=primary_source_identities[0].stableTargetId,  # type: ignore  [arg-type]
+        )
+    except HTTPError as exc:
+        logger.error(f"Error fetching identities: {exc}")
+        return None
+    else:
+        if len(identities) > 0:
+            merged_person = get_merged_item(identities[0].stableTargetId)
+            if merged_person.entityType == "MergedPerson":
+                return merged_person
+    return None
