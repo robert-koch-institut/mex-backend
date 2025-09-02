@@ -1,12 +1,17 @@
 from secrets import compare_digest
 from typing import Annotated
+from urllib.parse import urlsplit
 
 from fastapi import Depends, Header, HTTPException
 from fastapi.security import APIKeyHeader, HTTPBasic, HTTPBasicCredentials
+from ldap3 import AUTO_BIND_NO_TLS, Connection, Server
+from ldap3.core.exceptions import LDAPBindError
+from ldap3.utils.dn import escape_rdn
 from starlette import status
 
 from mex.backend.settings import BackendSettings
 from mex.backend.types import APIKey
+from mex.common.logging import logger
 
 X_API_KEY = APIKeyHeader(name="X-API-Key", auto_error=False)
 X_API_CREDENTIALS = HTTPBasic(auto_error=False)
@@ -149,3 +154,38 @@ def has_read_access(
                 else None
             ),
         )
+
+
+def has_write_access_ldap(username: str, password: str) -> bool:
+    """Verify if provided credentials have ldap write access.
+
+    Raises:
+        LDAPBindError if credentials have no LDAP write access.
+
+    Args:
+        username: the LDAP username
+        password: the password
+    """
+    settings = BackendSettings.get()
+    url = urlsplit(settings.ldap_url.get_secret_value())
+    host = str(url.hostname)
+    port = int(url.port) if url.port else None
+    server = Server(host, port, use_ssl=True)
+    username = username.split("@")[0]
+    username = escape_rdn(username)
+    try:
+        with Connection(
+            server,
+            user=f"{username}@rki.local",
+            password=password,
+            auto_bind=AUTO_BIND_NO_TLS,
+            read_only=True,
+        ) as connection:
+            availability = connection.server.check_availability()
+            if availability is True:
+                return True
+            logger.error(availability)
+            return False
+    except LDAPBindError as error:
+        logger.error(f"LDAP bind error: {error}")
+        return False

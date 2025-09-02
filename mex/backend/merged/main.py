@@ -11,9 +11,9 @@ from starlette import status
 from mex.backend.graph.exceptions import NoResultFoundError
 from mex.backend.merged.helpers import (
     get_merged_item_from_graph,
-    has_write_access_ldap,
     search_merged_items_in_graph,
 )
+from mex.backend.security import has_write_access_ldap
 from mex.backend.types import MergedType, ReferenceFieldName
 from mex.common.identity import get_provider
 from mex.common.ldap.connector import LDAPConnector
