@@ -162,7 +162,7 @@ def has_write_access_ldap(
         HTTPBasicCredentials | None, Depends(X_API_CREDENTIALS)
     ] = None,
     user_agent: Annotated[str, Header(include_in_schema=False)] = "n/a",
-) -> None:
+) -> HTTPBasicCredentials:
     """Verify if provided credentials have LDAP write access.
 
     Raises:
@@ -202,7 +202,7 @@ def has_write_access_ldap(
         ) as connection:
             availability = connection.server.check_availability()
             if availability is True:
-                return
+                return credentials
             logger.error(f"LDAP server not available: {availability}")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

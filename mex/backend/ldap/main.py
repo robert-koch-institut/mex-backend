@@ -5,6 +5,7 @@ from fastapi.security import HTTPBasicCredentials
 from requests import HTTPError
 
 from mex.backend.merged.main import get_merged_item
+from mex.backend.security import has_write_access_ldap
 from mex.common.identity import get_provider
 from mex.common.ldap.connector import LDAPConnector
 from mex.common.logging import logger
@@ -16,8 +17,9 @@ from mex.common.models import (
 router = APIRouter()
 
 
+@router.post("/merged-person-from-login")
 def get_merged_person_from_login(
-    credentials: Annotated[HTTPBasicCredentials, Depends()],
+    credentials: Annotated[HTTPBasicCredentials, Depends(has_write_access_ldap)],
 ) -> MergedPerson | None:
     """Return the merged person from the ldap information and verify the login."""
     ldap_connector = LDAPConnector.get()

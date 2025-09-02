@@ -26,7 +26,6 @@ from mex.backend.rules.main import router as rules_router
 from mex.backend.security import (
     has_read_access,
     has_write_access,
-    has_write_access_ldap,
 )
 from mex.backend.settings import BackendSettings
 from mex.backend.system.main import router as system_router
@@ -81,7 +80,7 @@ router.include_router(orcid_router, dependencies=[Depends(has_read_access)])
 router.include_router(preview_router, dependencies=[Depends(has_read_access)])
 router.include_router(rules_router, dependencies=[Depends(has_write_access)])
 router.include_router(wikidata_router, dependencies=[Depends(has_read_access)])
-router.include_router(ldap_login_router, dependencies=[Depends(has_write_access_ldap)])
+router.include_router(ldap_login_router)
 
 router.include_router(system_router)
 

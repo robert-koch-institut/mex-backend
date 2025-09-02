@@ -113,7 +113,9 @@ def test_has_write_access_ldap_success() -> None:
         with patch("mex.backend.security.Connection") as mock_connection:
             mocked_connection = mock_connection.return_value.__enter__.return_value
             mocked_connection.server.check_availability.return_value = True
-            has_write_access_ldap(credentials=write_credentials)
+            assert write_credentials == has_write_access_ldap(
+                credentials=write_credentials
+            )
 
 
 def test_has_write_access_ldap_bind_error() -> None:
