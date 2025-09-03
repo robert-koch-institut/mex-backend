@@ -14,12 +14,14 @@ from mex.common.models import (
     PaginatedItemsContainer,
 )
 
+DEFAULT_LDAP_QUERY = "mex@rki.de"
+
 router = APIRouter()
 
 
 @router.get("/ldap", tags=["editor"])
 def search_persons_or_contact_points_in_ldap(
-    q: Annotated[str, Query(max_length=1000)] = "MEx*",
+    q: Annotated[str, Query(max_length=1000)] = DEFAULT_LDAP_QUERY,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> PaginatedItemsContainer[ExtractedPerson | ExtractedContactPoint]:
     """Search for person or contact points in LDAP.

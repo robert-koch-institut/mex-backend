@@ -7,12 +7,14 @@ from mex.common.models import ExtractedPerson, PaginatedItemsContainer
 from mex.common.orcid.extract import search_records_by_name
 from mex.common.orcid.transform import transform_orcid_person_to_mex_person
 
+DEFAULT_ORCID_QUERY = '"Maxi Musterperson"'
+
 router = APIRouter()
 
 
 @router.get("/orcid", tags=["editor"])
 def search_persons_in_orcid(
-    q: Annotated[str, Query(max_length=1000)] = '"Lars Schaade"',
+    q: Annotated[str, Query(max_length=1000)] = DEFAULT_ORCID_QUERY,
     offset: Annotated[int, Query(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> PaginatedItemsContainer[ExtractedPerson]:
