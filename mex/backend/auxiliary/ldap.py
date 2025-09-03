@@ -20,14 +20,12 @@ router = APIRouter()
 @router.get("/ldap", tags=["editor"])
 def search_persons_or_contact_points_in_ldap(
     q: Annotated[str, Query(max_length=1000)] = "MEx*",
-    offset: Annotated[int, Query(ge=0, le=10e10)] = 0,  # noqa: ARG001
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> PaginatedItemsContainer[ExtractedPerson | ExtractedContactPoint]:
     """Search for person or contact points in LDAP.
 
     Args:
         q: The name of the person or contact point
-        offset: The starting index for pagination (not implemented)
         limit: The maximum number of results to return
 
     Returns:

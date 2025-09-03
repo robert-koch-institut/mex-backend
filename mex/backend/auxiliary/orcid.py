@@ -39,5 +39,6 @@ def search_persons_in_orcid(
         for person in orcid_records.items
     ]
     return PaginatedItemsContainer[ExtractedPerson](
-        items=extracted_persons, total=orcid_records.total
+        items=extracted_persons,
+        total=orcid_records.total,
     )

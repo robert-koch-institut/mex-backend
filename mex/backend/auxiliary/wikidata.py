@@ -28,15 +28,11 @@ router = APIRouter()
 @router.get("/wikidata", tags=["editor"])
 def search_organizations_in_wikidata(
     q: Annotated[str, Query(max_length=1000)] = RKI_WIKIDATA_ID,
-    offset: Annotated[int, Query(ge=0, le=10e10)] = 0,
-    limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> PaginatedItemsContainer[ExtractedOrganization]:
     """Search for organizations in wikidata.
 
     Args:
-        q: Wikidata item ID or full URL
-        offset: start page number
-        limit: end page number
+        q: Wikidata item ID or full concept URI
 
     Returns:
         Paginated list of ExtractedOrganizations
@@ -51,7 +47,8 @@ def search_organizations_in_wikidata(
         )
     )
     return PaginatedItemsContainer[ExtractedOrganization](
-        items=extracted_organizations[offset:limit], total=len(extracted_organizations)
+        items=extracted_organizations,
+        total=len(extracted_organizations),
     )
 
 
