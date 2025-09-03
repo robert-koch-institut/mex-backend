@@ -32,7 +32,9 @@ def search_persons_or_contact_points_in_ldap(
         Paginated list of ExtractedPersons and ExtractedContactPoints
     """
     connector = LDAPConnector.get()
-    ldap_actors = connector.get_persons(displayName=q, limit=limit)
+    ldap_actors = connector.get_persons_or_functional_accounts(
+        displayName=q, limit=limit
+    )
     extracted_persons_or_contact_points = (
         transform_any_ldap_actor_to_extracted_persons_or_contact_points(
             ldap_actors,
