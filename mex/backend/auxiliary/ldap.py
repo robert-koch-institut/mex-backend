@@ -19,7 +19,7 @@ DEFAULT_LDAP_QUERY = "mex@rki.de"
 router = APIRouter()
 
 
-@router.get("/ldap", tags=["editor"])
+@router.get("/ldap", tags=["auxiliary"])
 def search_persons_or_contact_points_in_ldap(
     q: Annotated[str, Query(max_length=1000)] = DEFAULT_LDAP_QUERY,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,

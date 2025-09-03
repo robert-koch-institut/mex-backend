@@ -25,7 +25,7 @@ RKI_WIKIDATA_ID = "Q679041"
 router = APIRouter()
 
 
-@router.get("/wikidata", tags=["editor"])
+@router.get("/wikidata", tags=["auxiliary"])
 def search_organizations_in_wikidata(
     q: Annotated[str, Query(max_length=1000)] = RKI_WIKIDATA_ID,
 ) -> PaginatedItemsContainer[ExtractedOrganization]:

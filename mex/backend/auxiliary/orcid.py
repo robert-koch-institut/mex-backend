@@ -12,7 +12,7 @@ DEFAULT_ORCID_QUERY = '"Maxi Musterperson"'
 router = APIRouter()
 
 
-@router.get("/orcid", tags=["editor"])
+@router.get("/orcid", tags=["auxiliary"])
 def search_persons_in_orcid(
     q: Annotated[str, Query(max_length=1000)] = DEFAULT_ORCID_QUERY,
     offset: Annotated[int, Query(ge=0, le=10e10)] = 0,
