@@ -408,7 +408,7 @@ def load_dummy_data(
 ) -> dict[str, AnyExtractedModel]:
     """Ingest dummy data into the graph."""
     connector = GraphConnector.get()
-    deque(connector.ingest_extracted_items(dummy_data.values()))
+    deque(connector.ingest_items(dummy_data.values()))
     _match_organization_items(dummy_data)
     return dummy_data
 
@@ -419,7 +419,7 @@ def load_artificial_extracted_items(
 ) -> list[AnyExtractedModel]:
     """Ingest artificial data into the graph."""
     connector = GraphConnector.get()
-    deque(connector.ingest_extracted_items(artificial_extracted_items))
+    deque(connector.ingest_items(artificial_extracted_items))
     return artificial_extracted_items
 
 

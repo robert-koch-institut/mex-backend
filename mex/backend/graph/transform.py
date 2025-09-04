@@ -13,7 +13,7 @@ from mex.common.fields import (
     REFERENCE_FIELDS_BY_CLASS_NAME,
     TEXT_FIELDS_BY_CLASS_NAME,
 )
-from mex.common.models import AnyExtractedModel
+from mex.common.models import AnyExtractedModel, AnyRuleModel, AnyRuleSetResponse
 from mex.common.transform import to_key_and_values
 from mex.common.types import Link, Text
 
@@ -59,16 +59,18 @@ def transform_edges_into_expectations_by_edge_locator(
 
 
 def transform_model_into_ingest_data(
-    model: AnyExtractedModel | MExPrimarySource,
+    model: AnyExtractedModel | MExPrimarySource | AnyRuleModel,
+    stable_target_id: str,
 ) -> IngestData:
     """Transform the given model into an ingestion instruction.
 
-    Converts an extracted model into structured data ready for database
+    Converts an extracted or rule model into structured data ready for database
     ingestion. Handles field categorization (mutable vs final), reference
     field processing, and nested object preparation.
 
     Args:
-        model: The extracted model to transform for ingestion
+        model: The extracted or rule model to transform for ingestion
+        stable_target_id: Identifier of the associated merged item
 
     Returns:
         IngestData object containing query parameters and metadata
@@ -119,8 +121,8 @@ def transform_model_into_ingest_data(
             )
 
     return IngestData(
-        identifier=str(model.identifier),
-        stableTargetId=str(model.stableTargetId),
+        identifier=None if isinstance(model, AnyRuleModel) else str(model.identifier),
+        stableTargetId=stable_target_id,
         entityType=model.entityType,
         nodeProps=all_values,
         linkRels=link_rels,
@@ -222,7 +224,7 @@ def validate_ingested_data(
 
 
 def get_error_details_from_neo4j_error(
-    data_in: IngestData, error: Neo4jError
+    model: AnyExtractedModel | AnyRuleSetResponse | MExPrimarySource, error: Neo4jError
 ) -> list[ErrorDetails]:
     """Convert ingest-data and a neo4j error into error details."""
     return [
@@ -230,7 +232,7 @@ def get_error_details_from_neo4j_error(
             type=error.code or "unknown",
             msg=error.message or "unknown",
             loc=(),
-            input=data_in,
+            input=model,
             ctx={"meta": error.metadata},
         )
     ]

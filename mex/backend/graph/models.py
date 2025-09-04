@@ -145,11 +145,11 @@ class IngestData(BaseModel):
     """Type definition for ingestion data."""
 
     stableTargetId: str
-    identifier: str
+    identifier: str | None
     entityType: str
-    nodeProps: dict[str, GraphValueType]
-    linkRels: list[GraphRel] = []
-    createRels: list[GraphRel] = []
+    nodeProps: dict[str, GraphValueType]  # attributes saved directly on the node
+    linkRels: list[GraphRel] = []  # to other merged items
+    createRels: list[GraphRel] = []  # to nested values like Text or Link
 
     @field_validator("createRels", mode="before")
     @classmethod
@@ -163,7 +163,7 @@ class IngestData(BaseModel):
         """Sort the rels by edge label and position."""
         return sorted(v, key=lambda x: (x["edgeLabel"], x["edgeProps"]["position"]))
 
-    def metadata(self) -> dict[str, int | str]:
+    def metadata(self) -> dict[str, int | str | None]:
         """Return log-able metadata."""
         return {
             "createRels": len(self.createRels),

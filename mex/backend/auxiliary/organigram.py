@@ -32,5 +32,5 @@ def extracted_organizational_units() -> list[ExtractedOrganizationalUnit]:
         extracted_organization_rki(),
     )
     connector = GraphConnector.get()
-    deque(connector.ingest_extracted_items(extracted_units))
+    deque(connector.ingest_items(extracted_units))
     return extracted_units

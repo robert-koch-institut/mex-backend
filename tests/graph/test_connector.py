@@ -4,12 +4,12 @@ from typing import Any
 from unittest.mock import Mock, call
 
 import pytest
-from black.const import DEFAULT_LINE_LENGTH
 from pytest import MonkeyPatch
 
 from mex.backend.graph import connector as connector_module
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.graph.exceptions import InconsistentGraphError, IngestionError
+from mex.backend.graph.exceptions import IngestionError
+from mex.backend.graph.models import IngestParams
 from mex.backend.graph.query import Query
 from mex.backend.settings import BackendSettings
 from mex.common.exceptions import MExError
@@ -21,19 +21,13 @@ from mex.common.models import (
     ExtractedOrganizationalUnit,
     OrganizationalUnitRuleSetResponse,
 )
-from mex.common.types import (
-    Identifier,
-    MergedOrganizationalUnitIdentifier,
-    Text,
-    TextLanguage,
-)
+from mex.common.types import Identifier, Text, TextLanguage
 from tests.conftest import MockedGraph, get_graph
 
 
 @pytest.fixture
 def mocked_query_class(monkeypatch: MonkeyPatch) -> None:
-    monkeypatch.setattr(Query, "__str__", Query.__repr__)
-    monkeypatch.setattr(Query.REPR_MODE, "line_length", DEFAULT_LINE_LENGTH)
+    monkeypatch.setattr(Query, "__str__", lambda s: call(s.name, **s.kwargs))
 
 
 @pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
@@ -165,29 +159,30 @@ def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
     graph._seed_data()
 
     assert mocked_graph.call_args_list[-1].args == (
-        """merge_extracted_item(
-    params=IngestParams(
-        merged_label="MergedPrimarySource",
-        node_label="ExtractedPrimarySource",
-        all_referenced_labels=[
-            "MergedContactPoint",
-            "MergedOrganizationalUnit",
-            "MergedPerson",
-            "MergedPrimarySource",
-        ],
-        all_nested_labels=["Link", "Text"],
-        detach_node_edges=["contact", "hadPrimarySource", "unitInCharge"],
-        delete_node_edges=[
-            "alternativeTitle",
-            "description",
-            "title",
-            "documentation",
-            "locatedAt",
-        ],
-        has_link_rels=True,
-        has_create_rels=True,
-    )
-)""",
+        call(
+            "merge_item",
+            params=IngestParams(
+                merged_label="MergedPrimarySource",
+                node_label="ExtractedPrimarySource",
+                all_referenced_labels=[
+                    "MergedContactPoint",
+                    "MergedOrganizationalUnit",
+                    "MergedPerson",
+                    "MergedPrimarySource",
+                ],
+                all_nested_labels=["Link", "Text"],
+                detach_node_edges=["contact", "hadPrimarySource", "unitInCharge"],
+                delete_node_edges=[
+                    "alternativeTitle",
+                    "description",
+                    "title",
+                    "documentation",
+                    "locatedAt",
+                ],
+                has_link_rels=True,
+                has_create_rels=True,
+            ),
+        ),
     )
     assert mocked_graph.call_args_list[-1].kwargs == {
         "data": {
@@ -1356,94 +1351,25 @@ def test_graph_exists_item(
 
 
 @pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
-def test_mocked_graph_merge_rule_item(
+def test_mocked_run_ingest_in_transaction_ruleset(
     mocked_graph: MockedGraph,
     organizational_unit_rule_set_response: OrganizationalUnitRuleSetResponse,
+    organizational_unit_rule_set_ingest_result: list[list[dict[str, Any]]],
+    organizational_unit_rule_set_ingest_call_expectation: list[object],
 ) -> None:
+    mocked_graph.side_effect = organizational_unit_rule_set_ingest_result
     graph = GraphConnector.get()
-    with mocked_graph.session as session:
-        graph._merge_rule_item(
-            session,
-            organizational_unit_rule_set_response.additive,
-            Identifier("orgUnitStableTargetId"),
+
+    with graph.driver.session() as session, session.begin_transaction() as tx:
+        graph._run_ingest_in_transaction(
+            tx,
+            organizational_unit_rule_set_response,
         )
 
-    assert mocked_graph.call_args_list[-1].args == (
-        """merge_rule_item(
-    current_label="AdditiveOrganizationalUnit",
-    merged_label="MergedOrganizationalUnit",
-    nested_edge_labels=["name", "website"],
-    nested_node_labels=["Text", "Link"],
-)""",
-        {
-            "stable_target_id": Identifier("orgUnitStableTargetId"),
-            "on_match": {"email": []},
-            "on_create": {"email": []},
-            "nested_values": [
-                {"value": "Unit 1.7", "language": TextLanguage.EN},
-                {"language": None, "title": "Unit Homepage", "url": "https://unit-1-7"},
-            ],
-            "nested_positions": [0, 0],
-        },
+    assert (
+        mocked_graph.call_args_list
+        == organizational_unit_rule_set_ingest_call_expectation
     )
-
-
-@pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
-def test_mocked_graph_merge_rule_edges(
-    mocked_graph: MockedGraph,
-    organizational_unit_rule_set_response: OrganizationalUnitRuleSetResponse,
-) -> None:
-    mocked_graph.return_value = [
-        {"edges": ["parentUnit {position: 0}", "stableTargetId {position: 0}"]},
-    ]
-    graph = GraphConnector.get()
-    with mocked_graph.session as session:
-        graph._merge_rule_edges(
-            session,
-            organizational_unit_rule_set_response.additive,
-            Identifier("orgUnitStableTargetId"),
-        )
-
-    assert mocked_graph.call_args_list[-1].args == (
-        """\
-merge_rule_edges(
-    current_label="AdditiveOrganizationalUnit",
-    merged_label="MergedOrganizationalUnit",
-    ref_labels=["parentUnit", "stableTargetId"],
-)""",
-        {
-            "stable_target_id": Identifier("orgUnitStableTargetId"),
-            "ref_identifiers": [
-                "cWWm02l1c6cucKjIhkFqY4",
-                Identifier("orgUnitStableTargetId"),
-            ],
-            "ref_positions": [0, 0],
-        },
-    )
-
-
-@pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
-def test_mocked_graph_merge_rule_edges_fails_inconsistent(
-    mocked_graph: MockedGraph,
-    organizational_unit_rule_set_response: OrganizationalUnitRuleSetResponse,
-) -> None:
-    mocked_graph.return_value = [{"edges": ["stableTargetId {position: 0}"]}]
-    graph = GraphConnector.get()
-
-    with pytest.raises(  # noqa: SIM117
-        InconsistentGraphError,
-        match=re.escape(
-            "InconsistentGraphError: failed to merge 1 edges: "
-            "(:AdditiveOrganizationalUnit)-[:parentUnit {position: 0}]->"
-            '({identifier: "cWWm02l1c6cucKjIhkFqY4"})'
-        ),
-    ):
-        with mocked_graph.session as session:
-            graph._merge_rule_edges(
-                session,
-                organizational_unit_rule_set_response.additive,
-                Identifier("orgUnitStableTargetId"),
-            )
 
 
 @pytest.mark.integration
@@ -1475,169 +1401,25 @@ def test_graph_merge_rule_edges_fails_inconsistent(
             "ExtractedOrganizationalUnit(stableTargetId='bFQoRhcVH5DHUL', ...)"
         ),
     ):
-        deque(graph.ingest_extracted_items([consistent_org, inconsistent_unit]))
-
-
-@pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
-def test_mocked_graph_merge_rule_edges_fails_unexpected(
-    mocked_graph: MockedGraph,
-    organizational_unit_rule_set_response: OrganizationalUnitRuleSetResponse,
-) -> None:
-    mocked_graph.return_value = [
-        {
-            "edges": [
-                "stableTargetId {position: 0}",
-                "parentUnit {position: 0}",
-                "newEdgeWhoDis {position: 0}",
-            ]
-        }
-    ]
-    graph = GraphConnector.get()
-
-    with pytest.raises(  # noqa: SIM117
-        RuntimeError,
-        match=re.escape(
-            "merged 1 edges more than expected: newEdgeWhoDis {position: 0}"
-        ),
-    ):
-        with mocked_graph.session as session:
-            graph._merge_rule_edges(
-                session,
-                organizational_unit_rule_set_response.additive,
-                Identifier("orgUnitStableTargetId"),
-            )
+        deque(graph.ingest_items([consistent_org, inconsistent_unit]))
 
 
 @pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
 def test_mocked_graph_ingests_rule_set(
     mocked_graph: MockedGraph,
     organizational_unit_rule_set_response: OrganizationalUnitRuleSetResponse,
+    organizational_unit_rule_set_ingest_result: list[list[dict[str, Any]]],
+    organizational_unit_rule_set_ingest_call_expectation: list[object],
 ) -> None:
-    mocked_graph.side_effect = [
-        [{"current": {}, "$comment": "additive item"}],
-        [
-            {
-                "edges": ["parentUnit {position: 0}", "stableTargetId {position: 0}"],
-                "$comment": "additive edges",
-            }
-        ],
-        [{"current": {}, "$comment": "subtractive item"}],
-        [{"edges": ["stableTargetId {position: 0}"], "$comment": "subtractive edges"}],
-        [{"current": {}, "$comment": "preventive item"}],
-        [{"edges": ["stableTargetId {position: 0}"], "$comment": "preventive edges"}],
-    ]
-    graph = GraphConnector.get()
-    graph.ingest_rule_set(organizational_unit_rule_set_response)
+    mocked_graph.side_effect = organizational_unit_rule_set_ingest_result
 
-    assert mocked_graph.call_args_list == [
-        call(
-            """merge_rule_item(
-    current_label="AdditiveOrganizationalUnit",
-    merged_label="MergedOrganizationalUnit",
-    nested_edge_labels=["name", "website"],
-    nested_node_labels=["Text", "Link"],
-)""",
-            {
-                "stable_target_id": MergedOrganizationalUnitIdentifier(
-                    "bFQoRhcVH5DHU6"
-                ),
-                "on_match": {"email": []},
-                "on_create": {"email": []},
-                "nested_values": [
-                    {"value": "Unit 1.7", "language": TextLanguage.EN},
-                    {
-                        "language": None,
-                        "title": "Unit Homepage",
-                        "url": "https://unit-1-7",
-                    },
-                ],
-                "nested_positions": [0, 0],
-            },
-        ),
-        call(
-            """merge_rule_edges(
-    current_label="AdditiveOrganizationalUnit",
-    merged_label="MergedOrganizationalUnit",
-    ref_labels=["parentUnit", "stableTargetId"],
-)""",
-            {
-                "stable_target_id": MergedOrganizationalUnitIdentifier(
-                    "bFQoRhcVH5DHU6"
-                ),
-                "ref_identifiers": [
-                    "cWWm02l1c6cucKjIhkFqY4",
-                    MergedOrganizationalUnitIdentifier("bFQoRhcVH5DHU6"),
-                ],
-                "ref_positions": [0, 0],
-            },
-        ),
-        call(
-            """merge_rule_item(
-    current_label="SubtractiveOrganizationalUnit",
-    merged_label="MergedOrganizationalUnit",
-    nested_edge_labels=[],
-    nested_node_labels=[],
-)""",
-            {
-                "stable_target_id": MergedOrganizationalUnitIdentifier(
-                    "bFQoRhcVH5DHU6"
-                ),
-                "on_match": {"email": []},
-                "on_create": {"email": []},
-                "nested_values": [],
-                "nested_positions": [],
-            },
-        ),
-        call(
-            """merge_rule_edges(
-    current_label="SubtractiveOrganizationalUnit",
-    merged_label="MergedOrganizationalUnit",
-    ref_labels=["stableTargetId"],
-)""",
-            {
-                "stable_target_id": MergedOrganizationalUnitIdentifier(
-                    "bFQoRhcVH5DHU6"
-                ),
-                "ref_identifiers": [
-                    MergedOrganizationalUnitIdentifier("bFQoRhcVH5DHU6")
-                ],
-                "ref_positions": [0],
-            },
-        ),
-        call(
-            """merge_rule_item(
-    current_label="PreventiveOrganizationalUnit",
-    merged_label="MergedOrganizationalUnit",
-    nested_edge_labels=[],
-    nested_node_labels=[],
-)""",
-            {
-                "stable_target_id": MergedOrganizationalUnitIdentifier(
-                    "bFQoRhcVH5DHU6"
-                ),
-                "on_match": {},
-                "on_create": {},
-                "nested_values": [],
-                "nested_positions": [],
-            },
-        ),
-        call(
-            """merge_rule_edges(
-    current_label="PreventiveOrganizationalUnit",
-    merged_label="MergedOrganizationalUnit",
-    ref_labels=["stableTargetId"],
-)""",
-            {
-                "stable_target_id": MergedOrganizationalUnitIdentifier(
-                    "bFQoRhcVH5DHU6"
-                ),
-                "ref_identifiers": [
-                    MergedOrganizationalUnitIdentifier("bFQoRhcVH5DHU6")
-                ],
-                "ref_positions": [0],
-            },
-        ),
-    ]
+    graph = GraphConnector.get()
+    deque(graph.ingest_items([organizational_unit_rule_set_response]))
+
+    assert (
+        mocked_graph.call_args_list
+        == organizational_unit_rule_set_ingest_call_expectation
+    )
 
 
 @pytest.mark.usefixtures("mocked_redis")
@@ -2024,7 +1806,7 @@ def test_mocked_graph_ingests_extracted_models(
         ],
     ]
     graph = GraphConnector.get()
-    deque(graph.ingest_extracted_items(dummy_data.values()))
+    deque(graph.ingest_items(dummy_data.values()))
     assert len(mocked_graph.call_args_list) == len(dummy_data)
 
 

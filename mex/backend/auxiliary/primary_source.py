@@ -24,7 +24,7 @@ def _fetch_or_insert_primary_source(name: str) -> ExtractedPrimarySource:
     if not extracted_item:
         raise NoResultFoundError(name)
     connector = GraphConnector.get()
-    deque(connector.ingest_extracted_items([extracted_item]))
+    deque(connector.ingest_items([extracted_item]))
     logger.info("ingested primary source %s", name)
     return extracted_item
 
