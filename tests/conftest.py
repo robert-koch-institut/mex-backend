@@ -13,7 +13,7 @@ from pytest import MonkeyPatch
 from redis.client import Redis
 
 from mex.artificial.helpers import generate_artificial_extracted_items
-from mex.backend.cache.connector import CacheConnector, CacheProto, LocalCache
+from mex.backend.cache.connector import CacheConnector, LocalCache, RedisCache
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.identity.provider import GraphIdentityProvider
 from mex.backend.main import app
@@ -177,7 +177,7 @@ def mocked_graph(monkeypatch: MonkeyPatch) -> MockedGraph:
 
 
 @pytest.fixture
-def mocked_redis(monkeypatch: MonkeyPatch) -> CacheProto:
+def mocked_redis(monkeypatch: MonkeyPatch) -> LocalCache | RedisCache:
     """Mock the redis client to use a local cache instead."""
     cache = LocalCache()
     monkeypatch.setattr(Redis, "from_url", lambda _: cache)
