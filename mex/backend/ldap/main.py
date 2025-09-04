@@ -31,7 +31,7 @@ def get_merged_person_from_login(
     try:
         identities = provider.fetch(
             identifier_in_primary_source=str(ldap_person.objectGUID),
-            had_primary_source=primary_source_identities[0].stableTargetId,  # type: ignore  [arg-type]
+            had_primary_source=MergedPrimarySourceIdentifier(primary_source_identities[0].stableTargetId),
         )
     except HTTPError as exc:
         logger.error(f"Error fetching identities: {exc}")
