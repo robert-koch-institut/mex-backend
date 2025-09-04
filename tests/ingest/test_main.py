@@ -416,7 +416,7 @@ def test_ingest_mocked(
     dummy_data: dict[str, AnyExtractedModel],
     monkeypatch: MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(GraphConnector, "ingest_extracted_items", MagicMock())
+    monkeypatch.setattr(GraphConnector, "ingest_items", MagicMock())
     response = client_with_api_key_write_permission.post(
         "/v0/ingest", json={"items": list(dummy_data.values())}
     )

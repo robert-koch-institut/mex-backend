@@ -163,7 +163,7 @@ class IngestData(BaseModel):
         """Sort the rels by edge label and position."""
         return sorted(v, key=lambda x: (x["edgeLabel"], x["edgeProps"]["position"]))
 
-    def metadata(self) -> dict[str, int | str]:
+    def metadata(self) -> dict[str, int | str | None]:
         """Return log-able metadata."""
         return {
             "createRels": len(self.createRels),
