@@ -2,7 +2,6 @@ from collections.abc import Mapping
 from itertools import chain
 from typing import Final
 
-from mex.backend.utils import contains_any_types
 from mex.common.fields import (
     ALL_MODEL_CLASSES_BY_NAME,
     ALL_TYPES_BY_FIELDS_BY_CLASS_NAMES,
@@ -17,7 +16,7 @@ from mex.common.models import (
     AnyRuleModel,
 )
 from mex.common.types import MERGED_IDENTIFIER_CLASSES, NESTED_MODEL_CLASSES_BY_NAME
-from mex.common.utils import get_all_fields
+from mex.common.utils import contains_any_types, get_all_fields
 
 # fields that should be indexed as searchable fields
 SEARCHABLE_FIELDS = sorted(
