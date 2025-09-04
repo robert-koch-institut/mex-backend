@@ -14,13 +14,13 @@ from mex.backend.types import APIKey
 from mex.common.logging import logger
 
 X_API_KEY = APIKeyHeader(name="X-API-Key", auto_error=False)
-X_API_CREDENTIALS = HTTPBasic(auto_error=False)
+HTTP_BASIC_AUTH = HTTPBasic(auto_error=False)
 
 
 def _check_header_for_authorization_method(
     api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
     credentials: Annotated[
-        HTTPBasicCredentials | None, Depends(X_API_CREDENTIALS)
+        HTTPBasicCredentials | None, Depends(HTTP_BASIC_AUTH)
     ] = None,
     user_agent: Annotated[str, Header(include_in_schema=False)] = "n/a",
 ) -> None:
@@ -59,7 +59,7 @@ def _check_header_for_authorization_method(
 def has_write_access(
     api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
     credentials: Annotated[
-        HTTPBasicCredentials | None, Depends(X_API_CREDENTIALS)
+        HTTPBasicCredentials | None, Depends(HTTP_BASIC_AUTH)
     ] = None,
     user_agent: Annotated[str, Header(include_in_schema=False)] = "n/a",
 ) -> None:
@@ -106,7 +106,7 @@ def has_read_access(
     api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
     credentials: Annotated[
         HTTPBasicCredentials | None,
-        Depends(X_API_CREDENTIALS),
+        Depends(HTTP_BASIC_AUTH),
     ] = None,
     user_agent: Annotated[str, Header(include_in_schema=False)] = "n/a",
 ) -> None:
@@ -158,7 +158,7 @@ def has_read_access(
 
 def has_write_access_ldap(
     credentials: Annotated[
-        HTTPBasicCredentials | None, Depends(X_API_CREDENTIALS)
+        HTTPBasicCredentials | None, Depends(HTTP_BASIC_AUTH)
     ] = None,
 ) -> str:
     """Verify if provided credentials have LDAP write access.
@@ -189,7 +189,7 @@ def has_write_access_ldap(
                 return credentials.username  # type: ignore [union-attr]
             logger.error(f"LDAP server not available: {availability}")
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="LDAP server not available.",
                 headers=({"WWW-Authenticate": "Basic"}),
             )
