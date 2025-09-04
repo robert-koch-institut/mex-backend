@@ -29,13 +29,13 @@ jobs:
 
     services:
       neo4j:
-        image: neo4j:2025.06-community
+        image: neo4j:2025.07-community
         env:
           NEO4J_AUTH: neo4j/password
         ports:
           - 7687:7687
       redis:
-        image: bitnami/redis:8.2.0
+        image: bitnami/redis:8.2.1
         env:
           ALLOW_EMPTY_PASSWORD: yes
         ports:

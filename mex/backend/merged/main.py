@@ -10,9 +10,9 @@ from mex.backend.merged.helpers import (
     get_merged_item_from_graph,
     search_merged_items_in_graph,
 )
-from mex.backend.types import MergedType, ReferenceFieldName, Validation
+from mex.backend.types import MergedType, ReferenceFieldName
 from mex.common.models import AnyMergedModel, PaginatedItemsContainer
-from mex.common.types import Identifier
+from mex.common.types import Identifier, Validation
 
 router = APIRouter()
 
