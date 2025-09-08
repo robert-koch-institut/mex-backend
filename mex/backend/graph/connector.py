@@ -141,7 +141,7 @@ class GraphConnector(BaseConnector):
 
     def commit(
         self,
-        query: Query | str,
+        query: Query,
         /,
         access_mode: str = READ_ACCESS,
         **parameters: Any,  # noqa: ANN401
@@ -157,7 +157,7 @@ class GraphConnector(BaseConnector):
             Result object containing query execution results and metadata
         """
         with self.driver.session(default_access_mode=access_mode) as session:
-            return Result(session.run(str(query), parameters))
+            return Result(session.run(query.render(), parameters))
 
     def _fetch_extracted_or_rule_items(  # noqa: PLR0913
         self,

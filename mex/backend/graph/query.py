@@ -2,7 +2,6 @@ from collections.abc import Callable
 from functools import cache
 from typing import Annotated, Any
 
-from black import Mode, format_str
 from jinja2 import (
     Environment,
     PackageLoader,
@@ -57,22 +56,15 @@ def render_constraints(
 class Query:
     """Wrapper for queries that can be rendered."""
 
-    REPR_MODE = Mode(line_length=1024)
-
     def __init__(self, name: str, template: Template, kwargs: dict[str, Any]) -> None:
         """Create a new query instance."""
         self.name = name
         self.template = template
         self.kwargs = kwargs
 
-    def __str__(self) -> str:
+    def render(self) -> str:
         """Render the query for database execution."""
         return self.template.render(**self.kwargs)
-
-    def __repr__(self) -> str:
-        """Render the call to the query builder for logging and testing."""
-        kwargs_repr = ",".join(f"{k}={v!r}" for k, v in self.kwargs.items())
-        return format_str(f"{self.name}({kwargs_repr})", mode=self.REPR_MODE).strip()
 
 
 class QueryBuilder(BaseConnector):
@@ -128,7 +120,7 @@ class QueryBuilder(BaseConnector):
         for performance.
 
         Args:
-            entity_type: The entity type name (e.g. "ExtractedPerson")
+            entity_type: The entity type name (e.g. "ExtractedPerson", "AdditivePerson")
 
         Raises:
             KeyError: If the entity type is not found in the model classes
@@ -156,7 +148,7 @@ class QueryBuilder(BaseConnector):
         )
         query_builder = QueryBuilder.get()
         query = query_builder.merge_item(params=params)
-        return str(query)
+        return query.render()
 
     def close(self) -> None:
         """Clean up the connector."""

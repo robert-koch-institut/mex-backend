@@ -27,7 +27,7 @@ from tests.conftest import MockedGraph, get_graph
 
 @pytest.fixture
 def mocked_query_class(monkeypatch: MonkeyPatch) -> None:
-    monkeypatch.setattr(Query, "__str__", lambda s: call(s.name, **s.kwargs))
+    monkeypatch.setattr(Query, "render", lambda s: call(s.name, **s.kwargs))
 
 
 @pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
@@ -36,7 +36,7 @@ def test_check_connectivity_and_authentication(mocked_graph: MockedGraph) -> Non
     graph = GraphConnector.get()
     graph._check_connectivity_and_authentication()
 
-    assert mocked_graph.call_args_list[-1].args == ("fetch_database_status()", {})
+    assert mocked_graph.call_args_list[-1] == call(call("fetch_database_status"), {})
 
 
 @pytest.mark.usefixtures("mocked_redis")
@@ -52,24 +52,29 @@ def test_mocked_graph_seed_constraints(mocked_graph: MockedGraph) -> None:
     graph = GraphConnector.get()
     graph._seed_constraints()
 
-    assert len(
-        [
-            c
-            for c in mocked_graph.call_args_list
-            if c.args[0].startswith("create_identifier_constraint")
-        ]
-    ) == len(EXTRACTED_MODEL_CLASSES_BY_NAME) + len(MERGED_MODEL_CLASSES_BY_NAME)
+    create_identifier_constraint_calls = [
+        c
+        for c in mocked_graph.call_args_list
+        if c.args[0].args[0].startswith("create_identifier_constraint")
+    ]
+    assert len(create_identifier_constraint_calls) == len(
+        EXTRACTED_MODEL_CLASSES_BY_NAME
+    ) + len(MERGED_MODEL_CLASSES_BY_NAME)
 
-    assert len(
-        [
-            c
-            for c in mocked_graph.call_args_list
-            if c.args[0].startswith("create_provenance_constraint")
-        ]
-    ) == len(EXTRACTED_MODEL_CLASSES_BY_NAME)
+    create_provenance_constraint_calls = [
+        c
+        for c in mocked_graph.call_args_list
+        if c.args[0].args[0].startswith("create_provenance_constraint")
+    ]
+    assert len(create_provenance_constraint_calls) == len(
+        EXTRACTED_MODEL_CLASSES_BY_NAME
+    )
 
-    assert mocked_graph.call_args_list[-1].args == (
-        'create_provenance_constraint(node_label="ExtractedVariableGroup")',
+    assert mocked_graph.call_args_list[-1] == call(
+        call(
+            "create_provenance_constraint",
+            node_label="ExtractedVariableGroup",
+        ),
         {},
     )
 
@@ -89,12 +94,12 @@ def test_mocked_graph_seed_indices(
     graph = GraphConnector.get()
     graph._seed_indices()
 
-    assert mocked_graph.call_args_list[-1].args == (
-        """\
-create_full_text_search_index(
-    node_labels=["ExtractedThis", "ExtractedThat"],
-    search_fields=["title", "name", "keyword", "description"],
-)""",
+    assert mocked_graph.call_args_list[-1] == call(
+        call(
+            "create_full_text_search_index",
+            node_labels=["ExtractedThis", "ExtractedThat"],
+            search_fields=["title", "name", "keyword", "description"],
+        ),
         {
             "index_config": {
                 "fulltext.eventually_consistent": True,
@@ -117,13 +122,16 @@ create_full_text_search_index(
 
     graph._seed_indices()
 
-    assert mocked_graph.call_args_list[-2].args == ("drop_full_text_search_index()", {})
-    assert mocked_graph.call_args_list[-1].args == (
-        """\
-create_full_text_search_index(
-    node_labels=["ExtractedThis", "ExtractedThat", "ExtractedOther"],
-    search_fields=["title", "name", "keyword", "description"],
-)""",
+    assert mocked_graph.call_args_list[-2] == call(
+        call("drop_full_text_search_index"),
+        {},
+    )
+    assert mocked_graph.call_args_list[-1] == call(
+        call(
+            "create_full_text_search_index",
+            node_labels=["ExtractedThis", "ExtractedThat", "ExtractedOther"],
+            search_fields=["title", "name", "keyword", "description"],
+        ),
         {
             "index_config": {
                 "fulltext.eventually_consistent": True,
@@ -158,7 +166,7 @@ def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
     graph = GraphConnector.get()
     graph._seed_data()
 
-    assert mocked_graph.call_args_list[-1].args == (
+    assert mocked_graph.call_args_list[-1] == call(
         call(
             "merge_item",
             params=IngestParams(
@@ -183,9 +191,7 @@ def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
                 has_create_rels=True,
             ),
         ),
-    )
-    assert mocked_graph.call_args_list[-1].kwargs == {
-        "data": {
+        data={
             "stableTargetId": "00000000000000",
             "identifier": "00000000000001",
             "entityType": "ExtractedPrimarySource",
@@ -204,7 +210,7 @@ def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
             ],
             "createRels": [],
         },
-    }
+    )
 
 
 @pytest.mark.usefixtures("mocked_redis")
@@ -212,7 +218,7 @@ def test_mocked_graph_commit_raises_error(mocked_graph: MockedGraph) -> None:
     mocked_graph.run.side_effect = Exception("query failed")
     graph = GraphConnector.get()
     with pytest.raises(Exception, match="query failed"):
-        graph.commit("RETURN 1;")
+        graph._check_connectivity_and_authentication()
 
 
 @pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
@@ -244,15 +250,15 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
         limit=100,
     )
 
-    assert mocked_graph.call_args_list[-1].args == (
-        """\
-fetch_extracted_or_rule_items(
-    filter_by_query_string=True,
-    filter_by_identifier=False,
-    filter_by_stable_target_id=True,
-    filter_by_referenced_identifiers=False,
-    reference_field=None,
-)""",
+    assert mocked_graph.call_args_list[-1] == call(
+        call(
+            "fetch_extracted_or_rule_items",
+            filter_by_query_string=True,
+            filter_by_identifier=False,
+            filter_by_stable_target_id=True,
+            filter_by_referenced_identifiers=False,
+            reference_field=None,
+        ),
         {
             "labels": [
                 "ExtractedFoo",
@@ -529,15 +535,15 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
         limit=100,
     )
 
-    assert mocked_graph.call_args_list[-1].args == (
-        """\
-fetch_extracted_or_rule_items(
-    filter_by_query_string=True,
-    filter_by_identifier=False,
-    filter_by_stable_target_id=True,
-    filter_by_referenced_identifiers=False,
-    reference_field=None,
-)""",
+    assert mocked_graph.call_args_list[-1] == call(
+        call(
+            "fetch_extracted_or_rule_items",
+            filter_by_query_string=True,
+            filter_by_identifier=False,
+            filter_by_stable_target_id=True,
+            filter_by_referenced_identifiers=False,
+            reference_field=None,
+        ),
         {
             "labels": [
                 "AdditiveFoo",
@@ -709,14 +715,14 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
         limit=100,
     )
 
-    assert mocked_graph.call_args_list[-1].args == (
-        """\
-fetch_merged_items(
-    filter_by_query_string=True,
-    filter_by_identifier=True,
-    filter_by_referenced_identifiers=True,
-    reference_field="hadPrimarySource",
-)""",
+    assert mocked_graph.call_args_list[-1] == call(
+        call(
+            "fetch_merged_items",
+            filter_by_query_string=True,
+            filter_by_identifier=True,
+            filter_by_referenced_identifiers=True,
+            reference_field="hadPrimarySource",
+        ),
         {
             "labels": [
                 "MergedFoo",
@@ -1247,13 +1253,13 @@ def test_mocked_graph_fetch_identities(mocked_graph: MockedGraph) -> None:
     graph = GraphConnector.get()
     graph.fetch_identities(stable_target_id=Identifier.generate(99))
 
-    assert mocked_graph.call_args_list[-1].args == (
-        """\
-fetch_identities(
-    filter_by_had_primary_source=False,
-    filter_by_identifier_in_primary_source=False,
-    filter_by_stable_target_id=True,
-)""",
+    assert mocked_graph.call_args_list[-1] == call(
+        call(
+            "fetch_identities",
+            filter_by_had_primary_source=False,
+            filter_by_identifier_in_primary_source=False,
+            filter_by_stable_target_id=True,
+        ),
         {
             "had_primary_source": None,
             "identifier_in_primary_source": None,
@@ -1267,13 +1273,13 @@ fetch_identities(
         identifier_in_primary_source="one",
     )
 
-    assert mocked_graph.call_args_list[-1].args == (
-        """\
-fetch_identities(
-    filter_by_had_primary_source=True,
-    filter_by_identifier_in_primary_source=True,
-    filter_by_stable_target_id=False,
-)""",
+    assert mocked_graph.call_args_list[-1] == call(
+        call(
+            "fetch_identities",
+            filter_by_had_primary_source=True,
+            filter_by_identifier_in_primary_source=True,
+            filter_by_stable_target_id=False,
+        ),
         {
             "had_primary_source": Identifier.generate(101),
             "identifier_in_primary_source": "one",
@@ -1284,13 +1290,13 @@ fetch_identities(
 
     graph.fetch_identities(identifier_in_primary_source="two")
 
-    assert mocked_graph.call_args_list[-1].args == (
-        """\
-fetch_identities(
-    filter_by_had_primary_source=False,
-    filter_by_identifier_in_primary_source=True,
-    filter_by_stable_target_id=False,
-)""",
+    assert mocked_graph.call_args_list[-1] == call(
+        call(
+            "fetch_identities",
+            filter_by_had_primary_source=False,
+            filter_by_identifier_in_primary_source=True,
+            filter_by_stable_target_id=False,
+        ),
         {
             "had_primary_source": None,
             "identifier_in_primary_source": "two",
@@ -1318,9 +1324,11 @@ def test_mocked_graph_exists_item(
         entity_type="MergedFoo",
     )
 
-    assert mocked_graph.call_args_list[-1].args == (
-        """\
-exists_item(node_labels=["MergedFoo"])""",
+    assert mocked_graph.call_args_list[-1] == call(
+        call(
+            "exists_item",
+            node_labels=["MergedFoo"],
+        ),
         {"identifier": Identifier.generate(99)},
     )
 

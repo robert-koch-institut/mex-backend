@@ -19,15 +19,18 @@ from mex.common.models import (
     BasePrimarySource,
 )
 from mex.common.types import (
+    AnyPrimitiveType,
     ExtractedPrimarySourceIdentifier,
     MergedPrimarySourceIdentifier,
 )
 
-GraphValueType = None | str | int | list[str] | list[int]
-
 
 class MExPrimarySource(BasePrimarySource):
-    """An automatically extracted metadata set describing a primary source."""
+    """Static metadata for the MEx primary source itself.
+
+    An instance of this class will bypass the IdentityProvider. This way we can ensure
+    that the MEx primary source receives static identifiers.
+    """
 
     entityType: Annotated[
         Literal["ExtractedPrimarySource"], Field(alias="$type", frozen=True)
@@ -136,9 +139,9 @@ class GraphRel(TypedDict):
     """Type definition for graph relations."""
 
     nodeLabels: list[str]
-    nodeProps: dict[str, GraphValueType]
+    nodeProps: dict[str, AnyPrimitiveType | list[AnyPrimitiveType]]
     edgeLabel: str
-    edgeProps: dict[str, GraphValueType]
+    edgeProps: dict[str, AnyPrimitiveType | list[AnyPrimitiveType]]
 
 
 class IngestData(BaseModel):
@@ -147,9 +150,9 @@ class IngestData(BaseModel):
     stableTargetId: str
     identifier: str | None
     entityType: str
-    nodeProps: dict[str, GraphValueType]  # attributes saved directly on the node
-    linkRels: list[GraphRel] = []  # to other merged items
-    createRels: list[GraphRel] = []  # to nested values like Text or Link
+    nodeProps: dict[str, AnyPrimitiveType | list[AnyPrimitiveType]]  # node properties
+    linkRels: list[GraphRel] = []  # relations to other merged items
+    createRels: list[GraphRel] = []  # relations to nested values like Text or Link
 
     @field_validator("createRels", mode="before")
     @classmethod

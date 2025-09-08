@@ -15,6 +15,7 @@ Returns:
     createRels: Relations that link to nodes that need creating
 -#>
 CYPHER 25
+
 WITH $data AS data
 
 <# create merged node if not exist -#>

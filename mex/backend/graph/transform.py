@@ -41,23 +41,6 @@ def expand_references_in_search_result(
     return {label: [ref["value"] for ref in group] for label, group in groups}
 
 
-def transform_edges_into_expectations_by_edge_locator(
-    start_node_type: str,
-    ref_labels: list[str],
-    ref_identifiers: list[str],
-    ref_positions: list[int],
-) -> dict[str, str]:
-    """Generate a all expected edges and render a CYPHER-style merge statement."""
-    return {
-        (edge_locator := f"{label} {{position: {position}}}"): (
-            f'(:{start_node_type})-[:{edge_locator}]->({{identifier: "{identifier}"}})'
-        )
-        for label, position, identifier in zip(
-            ref_labels, ref_positions, ref_identifiers, strict=True
-        )
-    }
-
-
 def transform_model_into_ingest_data(
     model: AnyExtractedModel | MExPrimarySource | AnyRuleModel,
     stable_target_id: str,
@@ -130,6 +113,7 @@ def transform_model_into_ingest_data(
     )
 
 
+# TODO(ND): move this to mex-common
 def clean_dict(obj: Any) -> Any:  # noqa: ANN401
     """Clean `None` and `[]` from dicts."""
     if isinstance(obj, dict):

@@ -62,6 +62,7 @@ def organizational_unit_rule_set_ingest_result() -> list[list[dict[str, Any]]]:
     ]
 
 
+@pytest.fixture
 def organizational_unit_rule_set_ingest_call_expectation() -> list[object]:
     return [
         call(
