@@ -160,7 +160,7 @@ def has_write_access_ldap(
     credentials: Annotated[
         HTTPBasicCredentials | None, Depends(HTTP_BASIC_AUTH)
     ] = None,
-) -> str | None:
+) -> str:
     """Verify if provided credentials have LDAP write access.
 
     Raises:
@@ -188,7 +188,15 @@ def has_write_access_ldap(
             if availability is True:
                 return credentials.username  # type: ignore [union-attr]
             logger.error(f"LDAP server not available: {availability}")
-            return None
-    except LDAPBindError as error:
-        logger.error(f"LDAP bind error: {error}")
-        return None
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="LDAP server not available.",
+                headers=({"WWW-Authenticate": "Basic"}),
+            )
+    except LDAPBindError as e:
+        logger.error(f"LDAP bind error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="LDAP bind failed.",
+            headers=({"WWW-Authenticate": "Basic"}),
+        ) from e

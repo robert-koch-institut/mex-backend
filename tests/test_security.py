@@ -126,7 +126,10 @@ def test_has_write_access_ldap_bind_error() -> None:
         with patch(
             "mex.backend.security.Connection", side_effect=LDAPBindError("fail")
         ):
-            assert has_write_access_ldap(credentials=user_wrong_pw) is None
+            with pytest.raises(HTTPException) as error:
+                has_write_access_ldap(credentials=user_wrong_pw)
+            assert error.value.status_code == 401
+            assert "LDAP bind failed." in error.value.detail
 
 
 def test_has_write_access_ldap_server_not_available() -> None:
@@ -137,4 +140,7 @@ def test_has_write_access_ldap_server_not_available() -> None:
         with patch("mex.backend.security.Connection") as mock_connection:
             mocked_connection = mock_connection.return_value.__enter__.return_value
             mocked_connection.server.check_availability.return_value = False
-            assert has_write_access_ldap(credentials=write_credentials) is None
+            with pytest.raises(HTTPException) as error:
+                has_write_access_ldap(credentials=write_credentials)
+            assert error.value.status_code == 403
+            assert "LDAP server not available." in error.value.detail
