@@ -142,5 +142,5 @@ def test_has_write_access_ldap_server_not_available() -> None:
             mocked_connection.server.check_availability.return_value = False
             with pytest.raises(HTTPException) as error:
                 has_write_access_ldap(credentials=write_credentials)
-            assert error.value.status_code == 403
+            assert error.value.status_code == 503
             assert "LDAP server not available." in error.value.detail
