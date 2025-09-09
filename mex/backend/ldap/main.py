@@ -1,17 +1,17 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
-from requests import HTTPError
+from fastapi import APIRouter, Depends, HTTPException
+from starlette import status
 
 from mex.backend.merged.main import get_merged_item
 from mex.backend.security import has_write_access_ldap
 from mex.common.identity import get_provider
 from mex.common.ldap.connector import LDAPConnector
-from mex.common.logging import logger
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     MergedPerson,
 )
+from mex.common.types import MergedPrimarySourceIdentifier
 
 router = APIRouter()
 
@@ -28,17 +28,15 @@ def get_merged_person_from_login(
         had_primary_source=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
         identifier_in_primary_source="ldap",
     )
-    try:
-        identities = provider.fetch(
-            identifier_in_primary_source=str(ldap_person.objectGUID),
-            had_primary_source=MergedPrimarySourceIdentifier(primary_source_identities[0].stableTargetId),
+    identities = provider.fetch(
+        identifier_in_primary_source=str(ldap_person.objectGUID),
+        had_primary_source=MergedPrimarySourceIdentifier(
+            primary_source_identities[0].stableTargetId
+        ),
+    )
+    if not identities:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User is not authorized for MEx.",
         )
-    except HTTPError as exc:
-        logger.error(f"Error fetching identities: {exc}")
-        return None
-    else:
-        if len(identities) > 0:
-            merged_person = get_merged_item(identities[0].stableTargetId)
-            if merged_person.entityType == "MergedPerson":
-                return merged_person
-    return None
+    return get_merged_item(identities[0].stableTargetId)  # type: ignore [return-value]
