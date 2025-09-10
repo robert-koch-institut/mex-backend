@@ -1,13 +1,13 @@
 from collections import deque
 from typing import Annotated, cast
 
-from fastapi import APIRouter, Query
-from requests import HTTPError
+from fastapi import APIRouter, HTTPException, Query
 
 from mex.backend.auxiliary.primary_source import extracted_primary_source_wikidata
 from mex.backend.auxiliary.utils import fetch_extracted_item_by_source_identifiers
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import NoResultFoundError
+from mex.common.exceptions import EmptySearchResultError
 from mex.common.logging import logger
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -39,8 +39,10 @@ def search_organizations_in_wikidata(
     """
     try:
         wikidata_organizations = [get_wikidata_organization(q)]
-    except HTTPError:
-        wikidata_organizations = []
+    except ValueError as error:
+        raise HTTPException(400, list(error.args)) from None
+    except EmptySearchResultError:
+        raise HTTPException(404, q) from None
     extracted_organizations = list(
         transform_wikidata_organizations_to_extracted_organizations(
             wikidata_organizations, extracted_primary_source_wikidata()
