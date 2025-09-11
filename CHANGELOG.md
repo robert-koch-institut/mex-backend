@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - ingest endpoint now supports rule-sets
+- new endpoint returns merged person from ldap login information
 
 ### Changes
 
