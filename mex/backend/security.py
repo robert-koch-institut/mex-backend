@@ -1,21 +1,26 @@
 from secrets import compare_digest
 from typing import Annotated
+from urllib.parse import urlsplit
 
 from fastapi import Depends, Header, HTTPException
 from fastapi.security import APIKeyHeader, HTTPBasic, HTTPBasicCredentials
+from ldap3 import AUTO_BIND_NO_TLS, Connection, Server
+from ldap3.core.exceptions import LDAPBindError
+from ldap3.utils.dn import escape_rdn
 from starlette import status
 
 from mex.backend.settings import BackendSettings
 from mex.backend.types import APIKey
+from mex.common.logging import logger
 
 X_API_KEY = APIKeyHeader(name="X-API-Key", auto_error=False)
-X_API_CREDENTIALS = HTTPBasic(auto_error=False)
+HTTP_BASIC_AUTH = HTTPBasic(auto_error=False)
 
 
 def _check_header_for_authorization_method(
     api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
     credentials: Annotated[
-        HTTPBasicCredentials | None, Depends(X_API_CREDENTIALS)
+        HTTPBasicCredentials | None, Depends(HTTP_BASIC_AUTH)
     ] = None,
     user_agent: Annotated[str, Header(include_in_schema=False)] = "n/a",
 ) -> None:
@@ -54,7 +59,7 @@ def _check_header_for_authorization_method(
 def has_write_access(
     api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
     credentials: Annotated[
-        HTTPBasicCredentials | None, Depends(X_API_CREDENTIALS)
+        HTTPBasicCredentials | None, Depends(HTTP_BASIC_AUTH)
     ] = None,
     user_agent: Annotated[str, Header(include_in_schema=False)] = "n/a",
 ) -> None:
@@ -101,7 +106,7 @@ def has_read_access(
     api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
     credentials: Annotated[
         HTTPBasicCredentials | None,
-        Depends(X_API_CREDENTIALS),
+        Depends(HTTP_BASIC_AUTH),
     ] = None,
     user_agent: Annotated[str, Header(include_in_schema=False)] = "n/a",
 ) -> None:
@@ -149,3 +154,47 @@ def has_read_access(
                 else None
             ),
         )
+
+
+def has_write_access_ldap(
+    credentials: Annotated[HTTPBasicCredentials, Depends(HTTP_BASIC_AUTH)],
+) -> str:
+    """Verify if provided credentials have LDAP write access.
+
+    Raises:
+        HTTPException if credentials have no LDAP write access or are missing.
+
+    Args:
+        credentials: username and password
+    """
+    _check_header_for_authorization_method(credentials=credentials)
+    settings = BackendSettings.get()
+    url = urlsplit(settings.ldap_url.get_secret_value())
+    host = str(url.hostname)
+    port = int(url.port) if url.port else None
+    server = Server(host, port, use_ssl=True)
+    username = escape_rdn(credentials.username.split("@")[0])
+    try:
+        with Connection(
+            server,
+            user=f"{username}@rki.local",
+            password=credentials.password,
+            auto_bind=AUTO_BIND_NO_TLS,
+            read_only=True,
+        ) as connection:
+            availability = connection.server.check_availability()
+            if availability is True:
+                return credentials.username
+            logger.error(f"LDAP server not available: {availability}")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="LDAP server not available.",
+                headers=({"WWW-Authenticate": "Basic"}),
+            )
+    except LDAPBindError as e:
+        logger.error(f"LDAP bind error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="LDAP bind failed.",
+            headers=({"WWW-Authenticate": "Basic"}),
+        ) from e
