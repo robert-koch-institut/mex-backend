@@ -324,7 +324,7 @@ def dummy_data(
     activity_1 = ExtractedActivity(
         abstract=[
             Text(value="An active activity.", language=TextLanguage.EN),
-            Text(value="Une activité active.", language=None),
+            Text(value="Eng aktiv Aktivitéit.", language=None),
         ],
         contact=[
             contact_point_1.stableTargetId,

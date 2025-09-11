@@ -28,7 +28,7 @@ from starlette import status
                 ],
                 "abstract": [
                     {"value": "An active activity.", "language": "en"},
-                    {"value": "Une activité active.", "language": None},
+                    {"value": "Eng aktiv Aktivitéit.", "language": None},
                 ],
                 "start": ["2014-08-24"],
                 "end": ["2025"],
@@ -52,7 +52,7 @@ from starlette import status
                     "start": ["2014"],
                     "contact": ["bFQoRhcVH5DHUx"],
                     "abstract": [
-                        {"value": "Une activité active.", "language": None},
+                        {"value": "Eng aktiv Aktivitéit.", "language": None},
                     ],
                 },
             },
@@ -90,7 +90,7 @@ from starlette import status
                 "title": [{"value": "Aktivität 1", "language": "de"}],
                 "abstract": [
                     {"value": "An active activity.", "language": "en"},
-                    {"value": "Une activité active.", "language": None},
+                    {"value": "Eng aktiv Aktivitéit.", "language": None},
                 ],
                 "start": ["2014-08-24"],
                 "website": [

@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, cast
 
 from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
@@ -17,10 +17,10 @@ router = APIRouter()
 @router.post("/merged-person-from-login")
 def get_merged_person_from_login(
     username: Annotated[str, Depends(has_write_access_ldap)],
-) -> MergedPerson | None:
+) -> MergedPerson:
     """Return the merged person from the ldap information and verify the login."""
     ldap_connector = LDAPConnector.get()
-    ldap_person = ldap_connector.get_person(sAMAccountName=username)
+    ldap_person = ldap_connector.get_person(sam_account_name=username)
     provider = get_provider()
     primary_source_identities = extracted_primary_source_ldap()
     identities = provider.fetch(
@@ -34,4 +34,4 @@ def get_merged_person_from_login(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User is not authorized for MEx.",
         )
-    return get_merged_item(identities[0].stableTargetId)  # type: ignore [return-value]
+    return cast("MergedPerson", get_merged_item(identities[0].stableTargetId))

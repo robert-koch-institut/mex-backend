@@ -330,7 +330,7 @@ def test_ingest_extracted(
         {"value": "Robert Koch Institute", "label": "Text", "language": "en"},
         {"value": "Unit 1", "label": "Text", "language": "en"},
         {"value": "Unit 1.6", "label": "Text", "language": "en"},
-        {"value": "Une activité active.", "label": "Text"},
+        {"value": "Eng aktiv Aktivitéit.", "label": "Text"},
     ]
 
 
@@ -678,7 +678,7 @@ def test_ingest_rule_set(
         {"value": "Unit 1", "label": "Text", "language": "en"},
         {"value": "Unit 1.6", "label": "Text", "language": "en"},
         {"value": "Unit 1.7", "label": "Text", "language": "en"},
-        {"value": "Une activité active.", "label": "Text"},
+        {"value": "Eng aktiv Aktivitéit.", "label": "Text"},
     ]
 
 
