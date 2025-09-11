@@ -3,14 +3,12 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 
+from mex.backend.auxiliary.primary_source import extracted_primary_source_ldap
 from mex.backend.merged.main import get_merged_item
 from mex.backend.security import has_write_access_ldap
 from mex.common.identity import get_provider
 from mex.common.ldap.connector import LDAPConnector
-from mex.common.models import (
-    MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-    MergedPerson,
-)
+from mex.common.models import MergedPerson
 from mex.common.types import MergedPrimarySourceIdentifier
 
 router = APIRouter()
@@ -24,14 +22,11 @@ def get_merged_person_from_login(
     ldap_connector = LDAPConnector.get()
     ldap_person = ldap_connector.get_person(sAMAccountName=username)
     provider = get_provider()
-    primary_source_identities = provider.fetch(
-        had_primary_source=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-        identifier_in_primary_source="ldap",
-    )
+    primary_source_identities = extracted_primary_source_ldap()
     identities = provider.fetch(
         identifier_in_primary_source=str(ldap_person.objectGUID),
         had_primary_source=MergedPrimarySourceIdentifier(
-            primary_source_identities[0].stableTargetId
+            primary_source_identities.stableTargetId
         ),
     )
     if not identities:
