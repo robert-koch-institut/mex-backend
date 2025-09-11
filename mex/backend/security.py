@@ -173,18 +173,18 @@ def has_write_access_ldap(
     host = str(url.hostname)
     port = int(url.port) if url.port else None
     server = Server(host, port, use_ssl=True)
-    username = escape_rdn(credentials.username.split("@")[0])  # type: ignore [union-attr]
+    username = escape_rdn(credentials.username.split("@")[0])
     try:
         with Connection(
             server,
             user=f"{username}@rki.local",
-            password=credentials.password,  # type: ignore [union-attr]
+            password=credentials.password,
             auto_bind=AUTO_BIND_NO_TLS,
             read_only=True,
         ) as connection:
             availability = connection.server.check_availability()
             if availability is True:
-                return credentials.username  # type: ignore [union-attr]
+                return credentials.username
             logger.error(f"LDAP server not available: {availability}")
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
