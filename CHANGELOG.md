@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changes
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [1.1.0] - 2025-09-11
+
+### Added
+
 - ingest endpoint now supports rule-sets
 - new endpoint returns merged person from ldap login information
 
@@ -18,15 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - change rule set ingestion to use v2-style queries
 - update mex-common to 1.4
 
-### Deprecated
-
 ### Removed
 
 - removed black dependency in favor of unittest.mock
-
-### Fixed
-
-### Security
 
 ## [1.0.0] - 2025-08-25
 
