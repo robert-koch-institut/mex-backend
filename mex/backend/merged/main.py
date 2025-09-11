@@ -11,10 +11,7 @@ from mex.backend.merged.helpers import (
     search_merged_items_in_graph,
 )
 from mex.backend.types import MergedType, ReferenceFieldName
-from mex.common.models import (
-    AnyMergedModel,
-    PaginatedItemsContainer,
-)
+from mex.common.models import AnyMergedModel, PaginatedItemsContainer
 from mex.common.types import Identifier, Validation
 
 router = APIRouter()
