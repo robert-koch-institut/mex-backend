@@ -23,10 +23,10 @@ def test_get_merged_person_from_login(
             objectGUID="bFQoRhcVH5DHUI"
         )
         mock_ldap_connector_get.return_value = mock_ldap_connector
-
+        mock_extracted_primary_source_ldap = MagicMock()
+        mock_extracted_primary_source_ldap.stableTargetId = "mocked-primary-source-id"
         mock_provider = MagicMock()
         mock_provider.fetch.side_effect = [
-            [MagicMock(stableTargetId="mocked-primary-source-id")],
             [MagicMock(stableTargetId="bFQoRhcVH5DHUI")],
         ]
         mock_get_provider.return_value = mock_provider
