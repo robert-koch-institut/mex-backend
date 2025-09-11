@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - ldap search endpoint now also returns contact points
 - change rule set ingestion to use v2-style queries
-- update mex-common to 1.3
+- update mex-common to 1.4
 
 ### Deprecated
 
