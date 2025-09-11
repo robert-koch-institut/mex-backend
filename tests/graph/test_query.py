@@ -8,17 +8,21 @@ from mex.backend.graph.query import QueryBuilder, render_constraints
 def query_builder() -> QueryBuilder:
     builder = QueryBuilder.get()
     builder._env.globals.update(
-        extracted_labels=["ExtractedThis", "ExtractedThat", "ExtractedOther"],
-        merged_labels=["MergedThis", "MergedThat", "MergedOther"],
+        extracted_labels=[
+            "ExtractedPerson",
+            "ExtractedVariable",
+            "ExtractedDistribution",
+        ],
+        merged_labels=["MergedPerson", "MergedVariable", "MergedDistribution"],
         nested_labels=["Link", "Text", "Location"],
-        rule_labels=["AdditiveThis", "AdditiveThat", "AdditiveOther"],
+        rule_labels=["AdditivePerson", "AdditiveVariable", "AdditiveDistribution"],
         extracted_or_rule_labels=[
-            "ExtractedThis",
-            "ExtractedThat",
-            "ExtractedOther",
-            "AdditiveThis",
-            "AdditiveThat",
-            "AdditiveOther",
+            "ExtractedPerson",
+            "ExtractedVariable",
+            "ExtractedDistribution",
+            "AdditivePerson",
+            "AdditiveVariable",
+            "AdditiveDistribution",
         ],
     )
     return builder
@@ -39,7 +43,7 @@ def test_create_full_text_search_index(query_builder: QueryBuilder) -> None:
         search_fields=["texture", "sugarContent", "color"],
     )
     assert (
-        str(query)
+        query.render()
         == """\
 CREATE FULLTEXT INDEX search_index IF NOT EXISTS
 FOR (n:Apple|Orange)
@@ -51,7 +55,7 @@ OPTIONS {indexConfig: $index_config};"""
 def test_create_identifier_constraint(query_builder: QueryBuilder) -> None:
     query = query_builder.create_identifier_constraint(node_label="BlueBerryPie")
     assert (
-        str(query)
+        query.render()
         == """\
 CREATE CONSTRAINT blue_berry_pie_identifier_uniqueness IF NOT EXISTS
 FOR (n:BlueBerryPie)
@@ -62,7 +66,7 @@ REQUIRE n.identifier IS UNIQUE;"""
 def test_create_provenance_constraint(query_builder: QueryBuilder) -> None:
     query = query_builder.create_provenance_constraint(node_label="BlueBerryPie")
     assert (
-        str(query)
+        query.render()
         == """\
 CREATE CONSTRAINT blue_berry_pie_provenance_uniqueness IF NOT EXISTS
 FOR (n:BlueBerryPie)
@@ -73,7 +77,7 @@ REQUIRE (n.hadPrimarySource, n.identifierInPrimarySource) IS UNIQUE;"""
 def test_fetch_database_status(query_builder: QueryBuilder) -> None:
     query = query_builder.fetch_database_status()
     assert (
-        str(query)
+        query.render()
         == """\
 SHOW DEFAULT DATABASE
 YIELD currentStatus;"""
@@ -92,10 +96,10 @@ YIELD currentStatus;"""
     OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
     CALL (hit) {
-        MATCH (hit:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
+        MATCH (hit:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
         RETURN hit as extracted_or_rule_node, merged_node
     UNION
-        MATCH (hit:Link|Text|Location)<-[]-(extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
+        MATCH (hit:Link|Text|Location)<-[]-(extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
         RETURN extracted_or_rule_node, merged_node
     }
     WITH DISTINCT extracted_or_rule_node, merged_node
@@ -111,10 +115,10 @@ CALL () {
     OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
     CALL (hit) {
-        MATCH (hit:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
+        MATCH (hit:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
         RETURN hit as extracted_or_rule_node, merged_node
     UNION
-        MATCH (hit:Link|Text|Location)<-[]-(extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
+        MATCH (hit:Link|Text|Location)<-[]-(extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
         RETURN extracted_or_rule_node, merged_node
     }
     WITH DISTINCT extracted_or_rule_node, merged_node
@@ -130,7 +134,7 @@ CALL () {
     WITH
         extracted_or_rule_node,
         [
-            (extracted_or_rule_node)-[r]->(referenced_merged_node:MergedThis|MergedThat|MergedOther) |
+            (extracted_or_rule_node)-[r]->(referenced_merged_node:MergedPerson|MergedVariable|MergedDistribution) |
             {value: referenced_merged_node.identifier, position:r.position, label: type(r)}
         ] + [
             (extracted_or_rule_node)-[r]->(referenced_nested_node:Link|Text|Location) |
@@ -147,13 +151,13 @@ RETURN items, total;""",
         (
             False,
             r"""CALL () {
-    OPTIONAL MATCH (extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
+    OPTIONAL MATCH (extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
     WHERE
         ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
     RETURN COUNT(extracted_or_rule_node) AS total
 }
 CALL () {
-    OPTIONAL MATCH (extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
+    OPTIONAL MATCH (extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
     WHERE
         ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
     ORDER BY extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
@@ -162,7 +166,7 @@ CALL () {
     WITH
         extracted_or_rule_node,
         [
-            (extracted_or_rule_node)-[r]->(referenced_merged_node:MergedThis|MergedThat|MergedOther) |
+            (extracted_or_rule_node)-[r]->(referenced_merged_node:MergedPerson|MergedVariable|MergedDistribution) |
             {value: referenced_merged_node.identifier, position:r.position, label: type(r)}
         ] + [
             (extracted_or_rule_node)-[r]->(referenced_nested_node:Link|Text|Location) |
@@ -191,7 +195,7 @@ def test_fetch_extracted_or_rule_items(
         filter_by_referenced_identifiers=enable_filters,
         reference_field="hadPrimarySource",
     )
-    assert str(query) == expected
+    assert query.render() == expected
 
 
 @pytest.mark.parametrize(
@@ -210,10 +214,10 @@ def test_fetch_extracted_or_rule_items(
     OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
     CALL (hit) {
-        MATCH (hit:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
+        MATCH (hit:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
         RETURN hit as extracted_or_rule_node, merged_node
     UNION
-        MATCH (hit:Link|Text|Location)<-[]-(extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
+        MATCH (hit:Link|Text|Location)<-[]-(extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
         RETURN extracted_or_rule_node, merged_node
     }
     WITH DISTINCT merged_node AS merged_node
@@ -228,10 +232,10 @@ CALL () {
     OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
     CALL (hit) {
-        MATCH (hit:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
+        MATCH (hit:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
         RETURN hit as extracted_or_rule_node, merged_node
     UNION
-        MATCH (hit:Link|Text|Location)<-[]-(extracted_or_rule_node:ExtractedThis|ExtractedThat|ExtractedOther|AdditiveThis|AdditiveThat|AdditiveOther)-[:stableTargetId]->(merged_node:MergedThis|MergedThat|MergedOther)
+        MATCH (hit:Link|Text|Location)<-[]-(extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
         RETURN extracted_or_rule_node, merged_node
     }
     WITH DISTINCT merged_node AS merged_node
@@ -249,7 +253,7 @@ CALL () {
         extracted_or_rule_node,
         merged_node,
         [
-            (extracted_or_rule_node)-[r]->(referenced_merged_node:MergedThis|MergedThat|MergedOther) |
+            (extracted_or_rule_node)-[r]->(referenced_merged_node:MergedPerson|MergedVariable|MergedDistribution) |
             {value: referenced_merged_node.identifier, position:r.position, label: type(r)}
         ] + [
             (extracted_or_rule_node)-[r]->(referenced_nested_node:Link|Text|Location) |
@@ -273,13 +277,13 @@ RETURN items, total;""",
             False,
             False,
             r"""CALL () {
-    OPTIONAL MATCH (merged_node:MergedThis|MergedThat|MergedOther)
+    OPTIONAL MATCH (merged_node:MergedPerson|MergedVariable|MergedDistribution)
     WHERE
         ANY(label IN labels(merged_node) WHERE label IN $labels)
     RETURN COUNT(merged_node) AS total
 }
 CALL () {
-    OPTIONAL MATCH (merged_node:MergedThis|MergedThat|MergedOther)
+    OPTIONAL MATCH (merged_node:MergedPerson|MergedVariable|MergedDistribution)
     WHERE
         ANY(label IN labels(merged_node) WHERE label IN $labels)
     ORDER BY merged_node.identifier, head(labels(merged_node)) ASC
@@ -291,7 +295,7 @@ CALL () {
         extracted_or_rule_node,
         merged_node,
         [
-            (extracted_or_rule_node)-[r]->(referenced_merged_node:MergedThis|MergedThat|MergedOther) |
+            (extracted_or_rule_node)-[r]->(referenced_merged_node:MergedPerson|MergedVariable|MergedDistribution) |
             {value: referenced_merged_node.identifier, position:r.position, label: type(r)}
         ] + [
             (extracted_or_rule_node)-[r]->(referenced_nested_node:Link|Text|Location) |
@@ -326,7 +330,7 @@ def test_fetch_merged_items(
         filter_by_referenced_identifiers=filter_by_referenced_identifiers,
         reference_field="hadPrimarySource",
     )
-    assert str(query) == expected
+    assert query.render() == expected
 
 
 @pytest.mark.parametrize(
@@ -342,7 +346,7 @@ def test_fetch_merged_items(
             True,
             True,
             """\
-MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
+MATCH (n:ExtractedPerson|ExtractedVariable|ExtractedDistribution)-[:stableTargetId]->(merged:MergedPerson|MergedVariable|MergedDistribution)
 MATCH (n)-[:hadPrimarySource]->(primary_source:MergedPrimarySource)
 WHERE
     primary_source.identifier = $had_primary_source
@@ -361,7 +365,7 @@ LIMIT $limit;""",
             False,
             False,
             """\
-MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
+MATCH (n:ExtractedPerson|ExtractedVariable|ExtractedDistribution)-[:stableTargetId]->(merged:MergedPerson|MergedVariable|MergedDistribution)
 MATCH (n)-[:hadPrimarySource]->(primary_source:MergedPrimarySource)
 RETURN
     merged.identifier AS stableTargetId,
@@ -376,7 +380,7 @@ LIMIT $limit;""",
             False,
             True,
             """\
-MATCH (n:ExtractedThis|ExtractedThat|ExtractedOther)-[:stableTargetId]->(merged:MergedThis|MergedThat|MergedOther)
+MATCH (n:ExtractedPerson|ExtractedVariable|ExtractedDistribution)-[:stableTargetId]->(merged:MergedPerson|MergedVariable|MergedDistribution)
 MATCH (n)-[:hadPrimarySource]->(primary_source:MergedPrimarySource)
 WHERE
     merged.identifier = $stable_target_id
@@ -403,136 +407,92 @@ def test_fetch_identities(
         filter_by_identifier_in_primary_source=filter_by_identifier_in_primary_source,
         filter_by_stable_target_id=filter_by_stable_target_id,
     )
-    assert str(query) == expected
+    assert query.render() == expected
 
 
-@pytest.mark.parametrize(
-    (
-        "ref_labels",
-        "expected",
-    ),
-    [
-        (
-            ["personInCharge", "meetingScheduledBy", "agendaSignedOff"],
-            """\
-MATCH (source:ExtractedThat)-[:stableTargetId]->({identifier: $stable_target_id})
-CALL (source) {
-    WITH source
-    MATCH (target_0 {identifier: $ref_identifiers[0]})
-    MERGE (source)-[edge:personInCharge {position: $ref_positions[0]}]->(target_0)
-    RETURN edge
-    UNION ALL
-    WITH source
-    MATCH (target_1 {identifier: $ref_identifiers[1]})
-    MERGE (source)-[edge:meetingScheduledBy {position: $ref_positions[1]}]->(target_1)
-    RETURN edge
-    UNION ALL
-    WITH source
-    MATCH (target_2 {identifier: $ref_identifiers[2]})
-    MERGE (source)-[edge:agendaSignedOff {position: $ref_positions[2]}]->(target_2)
-    RETURN edge
+def test_merge_item(query_builder: QueryBuilder) -> None:
+    query = query_builder.get_ingest_query_for_entity_type("ExtractedVariable")
+    assert (
+        query
+        == """\
+CYPHER 25
+
+WITH $data AS data
+
+MERGE (merged:MergedVariable {identifier: data.stableTargetId})
+CALL (merged, data) {
+  WHEN data.identifier IS NOT NULL THEN {
+    MERGE (main:ExtractedVariable {identifier: data.identifier})-[:stableTargetId {position: 0}]->(merged)
+    RETURN main
+  }
+  ELSE {
+    MERGE (main:ExtractedVariable )-[:stableTargetId {position: 0}]->(merged)
+    RETURN main
+  }
 }
-WITH source, count(edge) AS merged, collect(edge) AS edges
-CALL (source, edges) {
-    MATCH (source)-[outdated_edge]->(:MergedThis|MergedThat|MergedOther)
-    WHERE NOT outdated_edge IN edges
-    DELETE outdated_edge
-    RETURN count(outdated_edge) AS pruned
+
+SET main += data.nodeProps
+
+WITH main, merged.identifier AS stableTargetId, data
+
+CALL (main, data) {
+    UNWIND data.createRels AS createRel
+    MERGE (main)-[newCreateEdge:$(createRel.edgeLabel) {position: createRel.edgeProps.position}]->(creationTarget:$(createRel.nodeLabels))
+    SET creationTarget += createRel.nodeProps
+    RETURN collect(newCreateEdge) as newCreateEdges
 }
-RETURN merged, pruned, edges;""",
-        ),
-        (
-            [],
-            """\
-MATCH (source:ExtractedThat)-[:stableTargetId]->({identifier: $stable_target_id})
-CALL (source) {
-    RETURN null AS edge
+
+CALL (main, data) {
+    UNWIND data.linkRels AS linkRel
+    MATCH (linkTarget:MergedPrimarySource|MergedResource|MergedVariable|MergedVariableGroup {identifier: linkRel.nodeProps.identifier})
+    MERGE (main)-[newLinkEdge:$(linkRel.edgeLabel) {position: linkRel.edgeProps.position}]->(linkTarget)
+    RETURN collect(newLinkEdge) as newLinkEdges
 }
-WITH source, count(edge) AS merged, collect(edge) AS edges
-CALL (source, edges) {
-    MATCH (source)-[outdated_edge]->(:MergedThis|MergedThat|MergedOther)
-    WHERE NOT outdated_edge IN edges
-    DELETE outdated_edge
-    RETURN count(outdated_edge) AS pruned
+
+CALL (main, newCreateEdges) {
+    OPTIONAL MATCH (main)-[gcEdge:description|label]->(gcNode:Text)
+        WHERE NOT gcEdge IN newCreateEdges
+    DETACH DELETE gcNode
 }
-RETURN merged, pruned, edges;""",
-        ),
-    ],
-    ids=["has-ref-labels", "no-ref-labels"],
-)
-def test_merge_rule_edges(
-    query_builder: QueryBuilder, ref_labels: list[str], expected: str
-) -> None:
-    query = query_builder.merge_rule_edges(
-        current_label="ExtractedThat",
-        ref_labels=ref_labels,
+
+CALL (main, newLinkEdges) {
+    OPTIONAL MATCH (main)-[gcEdge:belongsTo|hadPrimarySource|usedIn]->(:MergedPrimarySource|MergedResource|MergedVariable|MergedVariableGroup)
+    WHERE NOT gcEdge IN newLinkEdges
+    DELETE gcEdge
+}
+
+CALL (main) {
+    MATCH (main)-[createEdge]->(createNode:Text)
+    ORDER BY type(createEdge), createEdge.position
+    RETURN collect(
+        {
+            nodeLabels: labels(createNode),
+            nodeProps: properties(createNode),
+            edgeLabel: type(createEdge),
+            edgeProps: properties(createEdge)
+        }
+    ) AS createRels
+}
+
+CALL (main) {
+    MATCH (main)-[linkEdge]->(linkNode:MergedPrimarySource|MergedResource|MergedVariable|MergedVariableGroup)
+    WHERE type(linkEdge) <> "stableTargetId"
+    ORDER BY type(linkEdge), linkEdge.position
+    RETURN collect(
+        {
+            nodeLabels: labels(linkNode),
+            nodeProps: properties(linkNode),
+            edgeLabel: type(linkEdge),
+            edgeProps: properties(linkEdge)
+        }
+    ) AS linkRels
+}
+
+RETURN
+    main.identifier AS identifier,
+    stableTargetId,
+    head(labels(main)) AS entityType,
+    linkRels,
+    createRels,
+    properties(main) AS nodeProps;"""
     )
-    assert str(query) == expected
-
-
-@pytest.mark.parametrize(
-    ("nested_edge_labels", "nested_node_labels", "expected"),
-    [
-        (
-            ["description", "homepage", "geoLocation"],
-            ["Text", "Link", "Location"],
-            """\
-MERGE (merged:MergedThat {identifier: $stable_target_id})
-MERGE (current:ExtractedThat)-[:stableTargetId {position: 0}]->(merged)
-ON CREATE SET current = $on_create
-ON MATCH SET current += $on_match
-MERGE (current)-[edge_0:description {position: $nested_positions[0]}]->(value_0:Text)
-ON CREATE SET value_0 = $nested_values[0]
-ON MATCH SET value_0 += $nested_values[0]
-MERGE (current)-[edge_1:homepage {position: $nested_positions[1]}]->(value_1:Link)
-ON CREATE SET value_1 = $nested_values[1]
-ON MATCH SET value_1 += $nested_values[1]
-MERGE (current)-[edge_2:geoLocation {position: $nested_positions[2]}]->(value_2:Location)
-ON CREATE SET value_2 = $nested_values[2]
-ON MATCH SET value_2 += $nested_values[2]
-WITH current,
-    [edge_0, edge_1, edge_2] AS edges,
-    [value_0, value_1, value_2] AS values
-CALL (current, values) {
-    MATCH (current)-[]->(outdated_node:Link|Text|Location)
-    WHERE NOT outdated_node IN values
-    DETACH DELETE outdated_node
-    RETURN count(outdated_node) AS pruned
-}
-RETURN current, edges, values, pruned;""",
-        ),
-        (
-            [],
-            [],
-            """\
-MERGE (merged:MergedThat {identifier: $stable_target_id})
-MERGE (current:ExtractedThat)-[:stableTargetId {position: 0}]->(merged)
-ON CREATE SET current = $on_create
-ON MATCH SET current += $on_match
-WITH current,
-    [] AS edges,
-    [] AS values
-CALL (current, values) {
-    MATCH (current)-[]->(outdated_node:Link|Text|Location)
-    WHERE NOT outdated_node IN values
-    DETACH DELETE outdated_node
-    RETURN count(outdated_node) AS pruned
-}
-RETURN current, edges, values, pruned;""",
-        ),
-    ],
-    ids=["has-nested-labels", "no-nested-labels"],
-)
-def test_merge_rule_item(
-    query_builder: QueryBuilder,
-    nested_edge_labels: list[str],
-    nested_node_labels: list[str],
-    expected: str,
-) -> None:
-    query = query_builder.merge_rule_item(
-        current_label="ExtractedThat",
-        merged_label="MergedThat",
-        nested_edge_labels=nested_edge_labels,
-        nested_node_labels=nested_node_labels,
-    )
-    assert str(query) == expected

@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 from fastapi.testclient import TestClient
-from neo4j import WRITE_ACCESS, Driver, Session, SummaryCounters, Transaction
+from neo4j import Driver, Session, SummaryCounters, Transaction
 from pytest import MonkeyPatch
 from redis.client import Redis
 
@@ -243,7 +243,7 @@ def isolate_redis_cache(
 
 def get_graph() -> list[dict[str, Any]]:
     connector = GraphConnector.get()
-    graph = connector.commit(
+    result = connector.driver.execute_query(
         """
 CALL () {
     MATCH (n)
@@ -261,9 +261,9 @@ CALL () {
 }
 RETURN nodes, relations;
 """
-    ).one()
+    )
     return sorted(
-        graph["nodes"] + graph["relations"],
+        result.records[0]["nodes"] + result.records[0]["relations"],
         key=lambda i: json.dumps(i, sort_keys=True),
     )
 
@@ -383,19 +383,17 @@ def _match_organization_items(dummy_data: dict[str, AnyExtractedModel]) -> None:
     # TODO(ND): replace this crude item matching implementation (stopgap MX-1530)
     connector = GraphConnector.get()
     # remove the merged item for org2
-    connector.commit(
+    connector.driver.execute_query(
         f"""\
     MATCH(n) WHERE n.identifier='{dummy_data["organization_2"].stableTargetId}'
     DETACH DELETE n;""",
-        access_mode=WRITE_ACCESS,
     )
     # connect the extracted item for org2 with the merged item for org1
-    connector.commit(
+    connector.driver.execute_query(
         f"""\
     MATCH(n :ExtractedOrganization) WHERE n.identifier = '{dummy_data["organization_2"].identifier}'
     MATCH(m :MergedOrganization) WHERE m.identifier = '{dummy_data["organization_1"].stableTargetId}'
     MERGE (n)-[:stableTargetId {{position:0}}]->(m);""",
-        access_mode=WRITE_ACCESS,
     )
     # clear the identity provider cache to refresh the `stableTargetId` property on org2
     provider = GraphIdentityProvider.get()
@@ -408,7 +406,7 @@ def load_dummy_data(
 ) -> dict[str, AnyExtractedModel]:
     """Ingest dummy data into the graph."""
     connector = GraphConnector.get()
-    deque(connector.ingest_extracted_items(dummy_data.values()))
+    deque(connector.ingest_items(dummy_data.values()))
     _match_organization_items(dummy_data)
     return dummy_data
 
@@ -419,7 +417,7 @@ def load_artificial_extracted_items(
 ) -> list[AnyExtractedModel]:
     """Ingest artificial data into the graph."""
     connector = GraphConnector.get()
-    deque(connector.ingest_extracted_items(artificial_extracted_items))
+    deque(connector.ingest_items(artificial_extracted_items))
     return artificial_extracted_items
 
 

@@ -17,13 +17,12 @@ from mex.backend.fields import (
     SEARCHABLE_CLASSES,
     SEARCHABLE_FIELDS,
 )
-from mex.backend.graph.exceptions import InconsistentGraphError, IngestionError
+from mex.backend.graph.exceptions import IngestionError
 from mex.backend.graph.models import IngestData, MExPrimarySource, Result
 from mex.backend.graph.query import Query, QueryBuilder
 from mex.backend.graph.transform import (
     expand_references_in_search_result,
     get_error_details_from_neo4j_error,
-    transform_edges_into_expectations_by_edge_locator,
     transform_model_into_ingest_data,
     validate_ingested_data,
 )
@@ -32,11 +31,6 @@ from mex.common.connector import BaseConnector
 from mex.common.exceptions import MExError
 from mex.common.fields import (
     ALL_MODEL_CLASSES_BY_NAME,
-    FINAL_FIELDS_BY_CLASS_NAME,
-    LINK_FIELDS_BY_CLASS_NAME,
-    MUTABLE_FIELDS_BY_CLASS_NAME,
-    REFERENCE_FIELDS_BY_CLASS_NAME,
-    TEXT_FIELDS_BY_CLASS_NAME,
 )
 from mex.common.logging import logger
 from mex.common.models import (
@@ -47,8 +41,7 @@ from mex.common.models import (
     AnyRuleModel,
     AnyRuleSetResponse,
 )
-from mex.common.transform import ensure_prefix, to_key_and_values
-from mex.common.types import AnyPrimitiveType, Identifier, Link, Text
+from mex.common.types import Identifier
 
 
 class GraphConnector(BaseConnector):
@@ -139,7 +132,7 @@ class GraphConnector(BaseConnector):
 
     def _seed_data(self) -> None:
         """Ensure the primary source `mex` is seeded and linked to itself."""
-        deque(self.ingest_extracted_items([MExPrimarySource()]))
+        deque(self.ingest_items([MExPrimarySource()]))
         logger.info("seeded mex primary source")
 
     def close(self) -> None:
@@ -148,7 +141,7 @@ class GraphConnector(BaseConnector):
 
     def commit(
         self,
-        query: Query | str,
+        query: Query,
         /,
         access_mode: str = READ_ACCESS,
         **parameters: Any,  # noqa: ANN401
@@ -164,7 +157,7 @@ class GraphConnector(BaseConnector):
             Result object containing query execution results and metadata
         """
         with self.driver.session(default_access_mode=access_mode) as session:
-            return Result(session.run(str(query), parameters))
+            return Result(session.run(query.render(), parameters))
 
     def _fetch_extracted_or_rule_items(  # noqa: PLR0913
         self,
@@ -400,11 +393,29 @@ class GraphConnector(BaseConnector):
         )
         return bool(result["exists"])
 
-    def _ingest_extracted_item_tx(self, tx: Transaction, data_in: IngestData) -> None:
+    def _run_ingest_in_transaction(
+        self,
+        tx: Transaction,
+        model: AnyExtractedModel | AnyRuleSetResponse | MExPrimarySource,
+    ) -> None:
         """Ingest a single item in a database transaction."""
         query_builder = QueryBuilder.get()
-        query = query_builder.get_ingest_query_for_entity_type(data_in.entityType)
-        try:
+        if isinstance(model, AnyRuleSetResponse):
+            items_to_ingest: list[
+                AnyExtractedModel | MExPrimarySource | AnyRuleModel
+            ] = [
+                model.additive,
+                model.subtractive,
+                model.preventive,
+            ]
+        else:
+            items_to_ingest = [model]
+
+        for item in items_to_ingest:
+            query = query_builder.get_ingest_query_for_entity_type(item.entityType)
+            data_in = transform_model_into_ingest_data(
+                item, stable_target_id=model.stableTargetId
+            )
             tx_result = tx.run(query, data=data_in.model_dump())
             result = Result(tx_result)
             result.log_notifications()
@@ -412,201 +423,45 @@ class GraphConnector(BaseConnector):
             error_details = validate_ingested_data(data_in, data_out)
             if error_details:
                 msg = (
-                    f"Could not merge {data_in.entityType}"
-                    f"(stableTargetId='{data_in.stableTargetId}', ...)"
+                    f"Could not merge {model.entityType}"
+                    f"(stableTargetId='{model.stableTargetId}', ...)"
                 )
                 raise IngestionError(msg, errors=error_details, retryable=False)
-        except Neo4jError as error:
-            tx.rollback()
-            msg = (
-                f"{type(error).__name__} caused by {data_in.entityType}"
-                f"(stableTargetId='{data_in.stableTargetId}', ...)"
-            )
-            raise IngestionError(
-                msg,
-                errors=get_error_details_from_neo4j_error(data_in, error),
-                retryable=error.is_retryable(),
-            ) from None
-        except:
-            tx.rollback()
-            raise
-        else:
-            tx.commit()
 
-    def ingest_extracted_items(
+    def ingest_items(
         self,
-        models: Iterable[AnyExtractedModel | MExPrimarySource],
+        models: Iterable[AnyExtractedModel | AnyRuleSetResponse | MExPrimarySource],
     ) -> Generator[None, None, None]:
-        """Ingest a list of extracted models into the graph."""
+        """Ingest a list of extracted models or rule set responses into the graph."""
         settings = BackendSettings.get()
         with self.driver.session(default_access_mode=WRITE_ACCESS) as session:
             for model in models:
-                data_in = transform_model_into_ingest_data(model)
                 with session.begin_transaction(
                     timeout=settings.graph_tx_timeout,
-                    metadata=data_in.metadata(),
+                    metadata={
+                        "stableTargetId": model.stableTargetId,
+                        "entityType": model.entityType,
+                    },
                 ) as tx:
-                    self._ingest_extracted_item_tx(tx, data_in)
+                    try:
+                        self._run_ingest_in_transaction(tx, model)
+                    except Neo4jError as error:
+                        tx.rollback()
+                        msg = (
+                            f"{type(error).__name__} caused by {model.entityType}"
+                            f"(stableTargetId='{model.stableTargetId}', ...)"
+                        )
+                        raise IngestionError(
+                            msg,
+                            errors=get_error_details_from_neo4j_error(model, error),
+                            retryable=error.is_retryable(),
+                        ) from None
+                    except:
+                        tx.rollback()
+                        raise
+                    else:
+                        tx.commit()
                 yield
-
-    def _merge_rule_item(  # deprecated, to be removed in MX-1957
-        self,
-        tx: Transaction,
-        model: AnyRuleModel,
-        stable_target_id: Identifier,
-    ) -> None:
-        """Upsert a rule item including merged item and nested objects.
-
-        The given model is created or updated with all its inline properties.
-        All nested properties (like Text or Link) are created as their own nodes
-        and linked via edges. For multi-valued fields, the position of each nested
-        object is stored as a property on the outbound edge.
-        Any nested objects that are found in the graph, but are not present on the
-        model any more are purged.
-        In addition, a merged item is created (if it does not exist yet) and the
-        extracted item is linked to it via an edge with the label `stableTargetId`.
-
-        Args:
-            tx: Active Neo4j transaction
-            model: Model to merge into the graph as a node
-            stable_target_id: Identifier the connected merged item should have
-        """
-        query_builder = QueryBuilder.get()
-
-        text_fields = set(TEXT_FIELDS_BY_CLASS_NAME[model.entityType])
-        link_fields = set(LINK_FIELDS_BY_CLASS_NAME[model.entityType])
-        mutable_fields = set(MUTABLE_FIELDS_BY_CLASS_NAME[model.entityType])
-        final_fields = set(FINAL_FIELDS_BY_CLASS_NAME[model.entityType])
-
-        mutable_values = model.model_dump(include=mutable_fields)
-        final_values = model.model_dump(include=final_fields)
-        all_values = {**mutable_values, **final_values}
-
-        text_values = model.model_dump(include=text_fields)
-        link_values = model.model_dump(include=link_fields)
-
-        nested_edge_labels: list[str] = []
-        nested_node_labels: list[str] = []
-        nested_positions: list[int] = []
-        nested_values: list[dict[str, AnyPrimitiveType]] = []
-
-        for nested_type, raws in [(Text, text_values), (Link, link_values)]:
-            for nested_edge_label, raw_values in to_key_and_values(raws):
-                for position, raw_value in enumerate(raw_values):
-                    nested_edge_labels.append(nested_edge_label)
-                    nested_node_labels.append(nested_type.__name__)
-                    nested_positions.append(position)
-                    nested_values.append(raw_value)
-
-        query = query_builder.merge_rule_item(
-            current_label=model.entityType,
-            merged_label=ensure_prefix(model.stemType, "Merged"),
-            nested_edge_labels=nested_edge_labels,
-            nested_node_labels=nested_node_labels,
-        )
-
-        tx.run(
-            str(query),
-            {
-                "stable_target_id": stable_target_id,
-                "on_match": mutable_values,
-                "on_create": all_values,
-                "nested_values": nested_values,
-                "nested_positions": nested_positions,
-            },
-        )
-
-    def _merge_rule_edges(  # deprecated, to be removed in MX-1957
-        self,
-        tx: Transaction,
-        model: AnyRuleModel,
-        stable_target_id: Identifier,
-    ) -> None:
-        """Merge edges into the graph for all relations originating from one rule model.
-
-        All fields containing references will be iterated over. When the referenced node
-        is found and no such relation exists yet, it will be created.
-        A position attribute is added to all edges, that stores the index the reference
-        had in list of references on the originating model. This way, we can preserve
-        the order for example of `contact` persons referenced on an activity.
-
-        Args:
-            tx: Active Neo4j transaction
-            model: Model to ensure all edges are created in the graph
-            stable_target_id: Identifier of the connected merged item
-        """
-        query_builder = QueryBuilder.get()
-
-        ref_fields = REFERENCE_FIELDS_BY_CLASS_NAME[model.entityType]
-        ref_values = model.model_dump(include=set(ref_fields))
-        ref_values.update({"stableTargetId": stable_target_id})
-
-        ref_labels: list[str] = []
-        ref_identifiers: list[str] = []
-        ref_positions: list[int] = []
-
-        for field, identifiers in to_key_and_values(ref_values):
-            for position, identifier in enumerate(identifiers):
-                ref_identifiers.append(identifier)
-                ref_positions.append(position)
-                ref_labels.append(field)
-
-        query = query_builder.merge_rule_edges(
-            current_label=model.entityType,
-            merged_label=ensure_prefix(model.stemType, "Merged"),
-            ref_labels=ref_labels,
-        )
-        result = Result(
-            tx.run(
-                str(query),
-                {
-                    "stable_target_id": stable_target_id,
-                    "ref_identifiers": ref_identifiers,
-                    "ref_positions": ref_positions,
-                },
-            )
-        )
-
-        expectations_by_locator = transform_edges_into_expectations_by_edge_locator(
-            start_node_type=model.entityType,
-            ref_labels=ref_labels,
-            ref_identifiers=ref_identifiers,
-            ref_positions=ref_positions,
-        )
-        expected_edges = set(expectations_by_locator)
-        merged_edges = set(result["edges"])
-
-        if missing_edges := sorted(expected_edges - merged_edges):
-            expectations = ", ".join(expectations_by_locator[e] for e in missing_edges)
-            msg = f"failed to merge {len(missing_edges)} edges: {expectations}"
-            raise InconsistentGraphError(msg)
-        if unexpected_edges := sorted(merged_edges - expected_edges):
-            surplus = ", ".join(unexpected_edges)
-            msg = f"merged {len(unexpected_edges)} edges more than expected: {surplus}"
-            raise RuntimeError(msg)
-
-    def _ingest_rule_set_tx(  # deprecated, to be removed in MX-1957
-        self,
-        tx: Transaction,
-        rule_set: AnyRuleSetResponse,
-    ) -> None:
-        """Ingest a single rule set into the graph."""
-        for rule in (rule_set.additive, rule_set.subtractive, rule_set.preventive):
-            self._merge_rule_item(tx, rule, rule_set.stableTargetId)
-            self._merge_rule_edges(tx, rule, rule_set.stableTargetId)
-
-    def ingest_rule_set(  # deprecated, to be removed in MX-1957
-        self,
-        rule_set: AnyRuleSetResponse,
-    ) -> None:
-        """Ingest a single rule set into the graph."""
-        settings = BackendSettings.get()
-        with self.driver.session(default_access_mode=WRITE_ACCESS) as session:  # noqa: SIM117
-            with session.begin_transaction(
-                timeout=settings.graph_tx_timeout,
-                metadata={"stable_target_id": rule_set.stableTargetId},
-            ) as tx:
-                self._ingest_rule_set_tx(tx, rule_set)
 
     def flush(self) -> None:
         """Flush the database by deleting all nodes, constraints and indexes.

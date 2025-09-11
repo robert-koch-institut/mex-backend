@@ -9,17 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- ingest endpoint now supports rule-sets
+- new endpoint returns merged person from ldap login information
+
 ### Changes
 
 - ldap search endpoint now also returns contact points
+- change rule set ingestion to use v2-style queries
+- update mex-common to 1.3
 
 ### Deprecated
 
 ### Removed
 
-### Fixed
+- removed black dependency in favor of unittest.mock
 
-- fix LDAP auxiliary endpoint search results
+### Fixed
 
 ### Security
 

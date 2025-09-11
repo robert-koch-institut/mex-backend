@@ -1,7 +1,6 @@
 from mex.backend.graph.transform import (
     _SearchResultReference,
     expand_references_in_search_result,
-    transform_edges_into_expectations_by_edge_locator,
 )
 
 
@@ -68,17 +67,4 @@ def test_expand_references_in_search_result() -> None:
         "stableTargetId": ["bFQoRhcVH5DHUB"],
         "title": [{"language": "de", "value": "Aktivität 1"}],
         "website": [{"title": "Activity Homepage", "url": "https://activity-1"}],
-    }
-
-
-def test_transform_edges_into_expectations_by_edge_locator() -> None:
-    expectations = transform_edges_into_expectations_by_edge_locator(
-        "NodeLabel",
-        ["edgeLabelFoo", "edgeLabelBar"],
-        ["fooID", "barID"],
-        [0, 73],
-    )
-    assert expectations == {
-        "edgeLabelFoo {position: 0}": '(:NodeLabel)-[:edgeLabelFoo {position: 0}]->({identifier: "fooID"})',
-        "edgeLabelBar {position: 73}": '(:NodeLabel)-[:edgeLabelBar {position: 73}]->({identifier: "barID"})',
     }
