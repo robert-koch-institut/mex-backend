@@ -460,7 +460,7 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                         "title": [{"value": "Aktivität 1", "language": "de"}],
                         "abstract": [
                             {"value": "An active activity.", "language": "en"},
-                            {"value": "Une activité active."},
+                            {"value": "Eng aktiv Aktivitéit."},
                         ],
                         "website": [
                             {"title": "Activity Homepage", "url": "https://activity-1"}
@@ -1191,7 +1191,7 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                                 "title": [{"value": "Aktivität 1", "language": "de"}],
                                 "abstract": [
                                     {"value": "An active activity.", "language": "en"},
-                                    {"value": "Une activité active."},
+                                    {"value": "Eng aktiv Aktivitéit."},
                                 ],
                                 "website": [
                                     {
@@ -1780,7 +1780,7 @@ def test_mocked_graph_ingests_extracted_models(
                         "nodeLabels": ["Text"],
                     },
                     {
-                        "nodeProps": {"value": "Une activité active."},
+                        "nodeProps": {"value": "Eng aktiv Aktivitéit."},
                         "edgeLabel": "abstract",
                         "edgeProps": {"position": 1},
                         "nodeLabels": ["Text"],

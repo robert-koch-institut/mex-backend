@@ -35,7 +35,7 @@ def test_expand_references_in_search_result() -> None:
             {
                 "label": "abstract",
                 "position": 1,
-                "value": {"value": "Une activité active."},
+                "value": {"value": "Eng aktiv Aktivitéit."},
             }
         ),
         _SearchResultReference(
@@ -59,7 +59,7 @@ def test_expand_references_in_search_result() -> None:
     assert expanded == {
         "abstract": [
             {"language": "en", "value": "An active activity."},
-            {"value": "Une activité active."},
+            {"value": "Eng aktiv Aktivitéit."},
         ],
         "contact": ["bFQoRhcVH5DHUv", "bFQoRhcVH5DHUx", "bFQoRhcVH5DHUz"],
         "hadPrimarySource": ["bFQoRhcVH5DHUr"],
