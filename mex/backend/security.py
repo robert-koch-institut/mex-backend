@@ -157,9 +157,7 @@ def has_read_access(
 
 
 def has_write_access_ldap(
-    credentials: Annotated[
-        HTTPBasicCredentials | None, Depends(HTTP_BASIC_AUTH)
-    ] = None,
+    credentials: Annotated[HTTPBasicCredentials, Depends(HTTP_BASIC_AUTH)],
 ) -> str:
     """Verify if provided credentials have LDAP write access.
 
