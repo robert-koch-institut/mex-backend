@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- new endpoint returns merged person from ldap login information
+
 ### Changes
 
 - ldap search endpoint now also returns contact points
