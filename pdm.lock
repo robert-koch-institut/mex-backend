@@ -636,7 +636,7 @@ files = [
 
 [[package]]
 name = "mypy"
-version = "1.17.1"
+version = "1.18.1"
 requires_python = ">=3.9"
 summary = "Optional static typing for Python"
 groups = ["dev"]
@@ -647,14 +647,14 @@ dependencies = [
     "typing-extensions>=4.6.0",
 ]
 files = [
-    {file = "mypy-1.17.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:ad37544be07c5d7fba814eb370e006df58fed8ad1ef33ed1649cb1889ba6ff58"},
-    {file = "mypy-1.17.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:064e2ff508e5464b4bd807a7c1625bc5047c5022b85c70f030680e18f37273a5"},
-    {file = "mypy-1.17.1-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:70401bbabd2fa1aa7c43bb358f54037baf0586f41e83b0ae67dd0534fc64edfd"},
-    {file = "mypy-1.17.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:e92bdc656b7757c438660f775f872a669b8ff374edc4d18277d86b63edba6b8b"},
-    {file = "mypy-1.17.1-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:c1fdf4abb29ed1cb091cf432979e162c208a5ac676ce35010373ff29247bcad5"},
-    {file = "mypy-1.17.1-cp311-cp311-win_amd64.whl", hash = "sha256:ff2933428516ab63f961644bc49bc4cbe42bbffb2cd3b71cc7277c07d16b1a8b"},
-    {file = "mypy-1.17.1-py3-none-any.whl", hash = "sha256:a9f52c0351c21fe24c21d8c0eb1f62967b262d6729393397b6f443c3b773c3b9"},
-    {file = "mypy-1.17.1.tar.gz", hash = "sha256:25e01ec741ab5bb3eec8ba9cdb0f769230368a22c959c4937360efb89b7e9f01"},
+    {file = "mypy-1.18.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:6c903857b3e28fc5489e54042684a9509039ea0aedb2a619469438b544ae1961"},
+    {file = "mypy-1.18.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:2a0c8392c19934c2b6c65566d3a6abdc6b51d5da7f5d04e43f0eb627d6eeee65"},
+    {file = "mypy-1.18.1-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:f85eb7efa2ec73ef63fc23b8af89c2fe5bf2a4ad985ed2d3ff28c1bb3c317c92"},
+    {file = "mypy-1.18.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:82ace21edf7ba8af31c3308a61dc72df30500f4dbb26f99ac36b4b80809d7e94"},
+    {file = "mypy-1.18.1-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:a2dfd53dfe632f1ef5d161150a4b1f2d0786746ae02950eb3ac108964ee2975a"},
+    {file = "mypy-1.18.1-cp311-cp311-win_amd64.whl", hash = "sha256:320f0ad4205eefcb0e1a72428dde0ad10be73da9f92e793c36228e8ebf7298c0"},
+    {file = "mypy-1.18.1-py3-none-any.whl", hash = "sha256:b76a4de66a0ac01da1be14ecc8ae88ddea33b8380284a9e3eae39d57ebcbe26e"},
+    {file = "mypy-1.18.1.tar.gz", hash = "sha256:9e988c64ad3ac5987f43f5154f884747faf62141b7f842e87465b45299eea5a9"},
 ]
 
 [[package]]
@@ -1349,13 +1349,13 @@ files = [
 
 [[package]]
 name = "types-pyasn1"
-version = "0.6.0.20250516"
+version = "0.6.0.20250914"
 requires_python = ">=3.9"
 summary = "Typing stubs for pyasn1"
 groups = ["dev"]
 files = [
-    {file = "types_pyasn1-0.6.0.20250516-py3-none-any.whl", hash = "sha256:b9925e4e22e09eed758b93b6f2a7881b89d842c2373dd11c09b173567d170142"},
-    {file = "types_pyasn1-0.6.0.20250516.tar.gz", hash = "sha256:1a9b35a4f033cd70c384a5043a3407b2cc07afc95900732b66e0d38426c7541d"},
+    {file = "types_pyasn1-0.6.0.20250914-py3-none-any.whl", hash = "sha256:68ffeef3c28e1ed120b8b81a242f238f137543e68d466d84a97edcf3e4203b5b"},
+    {file = "types_pyasn1-0.6.0.20250914.tar.gz", hash = "sha256:236102553b76c938953037b7ae93d11d395d9413b7f2f8083d3b19d740f7eda6"},
 ]
 
 [[package]]
@@ -1371,7 +1371,7 @@ files = [
 
 [[package]]
 name = "types-requests"
-version = "2.32.4.20250809"
+version = "2.32.4.20250913"
 requires_python = ">=3.9"
 summary = "Typing stubs for requests"
 groups = ["dev"]
@@ -1379,8 +1379,8 @@ dependencies = [
     "urllib3>=2",
 ]
 files = [
-    {file = "types_requests-2.32.4.20250809-py3-none-any.whl", hash = "sha256:f73d1832fb519ece02c85b1f09d5f0dd3108938e7d47e7f94bbfa18a6782b163"},
-    {file = "types_requests-2.32.4.20250809.tar.gz", hash = "sha256:d8060de1c8ee599311f56ff58010fb4902f462a1470802cf9f6ed27bc46c4df3"},
+    {file = "types_requests-2.32.4.20250913-py3-none-any.whl", hash = "sha256:78c9c1fffebbe0fa487a418e0fa5252017e9c60d1a2da394077f1780f655d7e1"},
+    {file = "types_requests-2.32.4.20250913.tar.gz", hash = "sha256:abd6d4f9ce3a9383f269775a9835a4c24e5cd6b9f647d64f88aa4613c33def5d"},
 ]
 
 [[package]]
