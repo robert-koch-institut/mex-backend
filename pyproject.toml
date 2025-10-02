@@ -36,6 +36,7 @@ optional-dependencies.dev = [
 
 [project.scripts]
 backend = "mex.backend.main:main"
+testing-backend = "mex.backend.testing.main"
 
 [tool.cruft]
 template = "https://github.com/robert-koch-institut/mex-template"
