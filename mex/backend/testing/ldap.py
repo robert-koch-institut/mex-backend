@@ -29,7 +29,7 @@ def get_merged_person_from_login(
         identifierInPrimarySource=username,
         fullName=[username],
         email=[Email(f"{username}@rki.com")],
-        orcidId=["1234-5678-9012-3456"],
+        orcidId=["https://orcid.org/1234-5678-9012-345"],
     )
     connector = GraphConnector.get()
     deque(connector.ingest_items([person]))
