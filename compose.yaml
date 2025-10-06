@@ -24,7 +24,7 @@ services:
     expose:
       - 7687
   redis:
-    image: bitnami/redis:8.0.0
+    image: bitnamilegacy/redis:8.2.1
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
     expose:
