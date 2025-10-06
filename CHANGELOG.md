@@ -11,8 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- temporarily switch to redis to bitnamilegacy
-
 ### Deprecated
 
 ### Removed
@@ -20,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [1.1.1] - 2025-10-06
+
+### Changes
+
+- temporarily switch to redis to bitnamilegacy
 
 ## [1.1.0] - 2025-09-11
 
