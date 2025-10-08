@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:9dd60645a37ef2907799a2c15c7f9028c783ea30da0c17e1600b8a43aeb58c1b"
+content_hash = "sha256:990f568112666d71b55639a7bc5afd2238531ffa6eea909d7e9e392874feb31c"
 
 [[metadata.targets]]
 requires_python = "==3.11.*"
@@ -154,7 +154,7 @@ version = "0.4.6"
 requires_python = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
 summary = "Cross-platform colored terminal text."
 groups = ["default", "dev"]
-marker = "sys_platform == \"win32\" or platform_system == \"Windows\""
+marker = "platform_system == \"Windows\" or sys_platform == \"win32\""
 files = [
     {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
     {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
@@ -602,7 +602,7 @@ files = [
 
 [[package]]
 name = "mex-common"
-version = "1.4.0"
+version = "1.5.1"
 requires_python = "<3.12,>=3.11"
 summary = "Common library for MEx python projects."
 groups = ["default", "dev"]
@@ -611,23 +611,23 @@ dependencies = [
     "click<9,>=8",
     "langdetect<2,>=1",
     "ldap3<3,>=2",
-    "mex-model<4.3,>=4.2",
+    "mex-model<4.3,>=4.2.1",
     "numpy<3,>=2",
     "pandas<3,>=2",
     "pyarrow<22,>=21",
     "pydantic-settings<2.11,>=2",
     "pydantic<2.10,>=2",
-    "pytz<2024.2,>=2024",
+    "pytz>=2025",
     "requests<3,>=2",
 ]
 files = [
-    {file = "mex_common-1.4.0-py3-none-any.whl", hash = "sha256:38a76aeabba17568bd3f80a1e0d1fba96c79c2a3c8dd5f1ffa01eec536844c7c"},
-    {file = "mex_common-1.4.0.tar.gz", hash = "sha256:d8e66dc6dd2b074da1ead0f7fd0b8f7a3d5ee955699bfd4bfcfeaf8223eea2a5"},
+    {file = "mex_common-1.5.1-py3-none-any.whl", hash = "sha256:fe369bc867e0793683c9bb1129e8607b1ff92468a2e2d1e6dc2dc7a74eb224af"},
+    {file = "mex_common-1.5.1.tar.gz", hash = "sha256:420c329d4a57fd2f6f7d086614f115716ced2fa47f9fc4989b3d2fec4e4de41b"},
 ]
 
 [[package]]
 name = "mex-model"
-version = "4.2.0"
+version = "4.2.1"
 requires_python = ">=3.9"
 summary = "JSON schema files defining the MEx metadata model."
 groups = ["default", "dev"]
@@ -635,8 +635,8 @@ dependencies = [
     "importlib-resources>=1.3; python_version < \"3.10\"",
 ]
 files = [
-    {file = "mex_model-4.2.0-py3-none-any.whl", hash = "sha256:767d4605019cc60e87f5b37880f059f6b074632f97b6444f449739c18fa3dcac"},
-    {file = "mex_model-4.2.0.tar.gz", hash = "sha256:eee9dc1be26bfb02935e453a3fda0c5df03ec9b2db8fbc474a067125e6da0ac0"},
+    {file = "mex_model-4.2.1-py3-none-any.whl", hash = "sha256:fb170b44038bcec0720d6b88b4de90be35cdb36af5143f70bdfb8186be7f6195"},
+    {file = "mex_model-4.2.1.tar.gz", hash = "sha256:df13f4cc91e3cbe4962524ccc0c3fa168b28d10dec9f6458df2287e373cbf6a4"},
 ]
 
 [[package]]
@@ -1010,12 +1010,12 @@ files = [
 
 [[package]]
 name = "pytz"
-version = "2024.1"
+version = "2025.2"
 summary = "World timezone definitions, modern and historical"
 groups = ["default", "dev"]
 files = [
-    {file = "pytz-2024.1-py2.py3-none-any.whl", hash = "sha256:328171f4e3623139da4983451950b28e95ac706e13f3f2630a879749e7a8b319"},
-    {file = "pytz-2024.1.tar.gz", hash = "sha256:2a29735ea9c18baf14b448846bde5a48030ed267578472d8955cd0e7443a9812"},
+    {file = "pytz-2025.2-py2.py3-none-any.whl", hash = "sha256:5ddf76296dd8c44c26eb8f4b6f35488f3ccbf6fbbd7adee0b7262d43f0ec2f00"},
+    {file = "pytz-2025.2.tar.gz", hash = "sha256:360b9e3dbb49a209c21ad61809c7fb453643e048b38924c765813546746e81c3"},
 ]
 
 [[package]]
