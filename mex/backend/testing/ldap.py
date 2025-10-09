@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.merged.helpers import merge_search_result_item
+from mex.backend.merged.helpers import search_merged_items_in_graph
 from mex.backend.testing.security import has_write_access_ldap
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -35,7 +35,7 @@ def get_merged_person_from_login(
     connector = GraphConnector.get()
     deque(connector.ingest_items([person]))
 
-    result = connector.fetch_merged_items(
+    result = search_merged_items_in_graph(
         query_string=username,
         identifier=None,
         entity_type=["MergedPerson"],
@@ -43,8 +43,9 @@ def get_merged_person_from_login(
         referenced_identifiers=None,
         skip=0,
         limit=1,
+        validation=Validation.IGNORE,
     )
-    return merge_search_result_item(result["items"][0], Validation.STRICT)  # type: ignore [return-value]
+    return result.items[0]  # type: ignore [return-value]
 
 
 @router.get("/ldap", tags=["auxiliary"])
@@ -65,19 +66,19 @@ def search_persons_or_contact_points_in_ldap(
     items = [
         ExtractedPerson(
             hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-            identifierInPrimarySource="mex",
+            identifierInPrimarySource=f"{q}",
             fullName=[f"{q}"],
             email=[Email("mex@rki.com")],
         ),
         ExtractedPerson(
             hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-            identifierInPrimarySource="mex2",
-            fullName=["mex2"],
+            identifierInPrimarySource=f"{q}2",
+            fullName=[f"{q}2"],
             email=[Email("mex2@rki.com")],
         ),
         ExtractedContactPoint(
             hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-            identifierInPrimarySource="mex3",
+            identifierInPrimarySource=f"{q}3",
             email=[Email("mex3@rki.com")],
         ),
     ]
