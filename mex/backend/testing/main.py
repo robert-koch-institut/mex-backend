@@ -25,6 +25,7 @@ from mex.backend.security import (
 from mex.backend.settings import BackendSettings
 from mex.backend.system.main import router as system_router
 from mex.backend.testing.ldap import router as ldap_login_router
+from mex.backend.testing.system import router as testing_system_router
 from mex.common.cli import entrypoint
 
 app = FastAPI(
@@ -54,6 +55,7 @@ router.include_router(wikidata_router, dependencies=[Depends(has_read_access)])
 router.include_router(ldap_login_router)
 
 router.include_router(system_router)
+router.include_router(testing_system_router)
 
 app.include_router(router)
 app.add_exception_handler(BackendError, handle_detailed_error)
@@ -78,6 +80,7 @@ def main() -> None:  # pragma: no cover
     on the configured host and port.
     """
     settings = BackendSettings.get()
+    settings.debug = True
     uvicorn.run(
         "mex.backend.testing.main:app",
         host=settings.backend_host,
