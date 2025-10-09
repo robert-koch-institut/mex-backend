@@ -5,14 +5,14 @@ from fastapi.testclient import TestClient
 from neo4j import GraphDatabase
 from starlette import status
 
-from mex.backend.main import app
 from mex.backend.settings import BackendSettings
 
 if TYPE_CHECKING:  # pragma: no cover
+    from fastapi import FastAPI
     from starlette.routing import Route
 
 
-def test_all_endpoints_require_authorization(client: TestClient) -> None:
+def test_all_endpoints_require_authorization(entrypoint_app: TestClient) -> None:
     excluded_routes = [
         "/openapi.json",
         "/docs",
@@ -21,10 +21,11 @@ def test_all_endpoints_require_authorization(client: TestClient) -> None:
         "/v0/_system/check",
         "/v0/_system/metrics",
     ]
+    app = cast("FastAPI", entrypoint_app.app)
     for route in cast("list[Route]", app.routes):
         if route.methods and route.path not in excluded_routes:
             for method in route.methods:
-                client_method = getattr(client, method.lower())
+                client_method = getattr(entrypoint_app, method.lower())
                 assert (
                     client_method(route.path).status_code
                     == status.HTTP_401_UNAUTHORIZED
