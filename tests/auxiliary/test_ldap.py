@@ -2,6 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from mex.backend.auxiliary.primary_source import extracted_primary_source_ldap
+from mex.backend.auxiliary.wikidata import extracted_organization_rki
 from mex.backend.extracted.helpers import search_extracted_items_in_graph
 from mex.common.models import ExtractedPrimarySource
 from mex.common.types import Identifier, TextLanguage
@@ -13,6 +14,7 @@ def test_search_persons_in_ldap_mocked(
     client_with_api_key_read_permission: TestClient,
 ) -> None:
     response = client_with_api_key_read_permission.get("/v0/ldap", params={"q": "test"})
+    rki_organization = extracted_organization_rki()
     assert response.status_code == 200, response.text
     assert response.json() == {
         "items": [
@@ -27,7 +29,7 @@ def test_search_persons_in_ldap_mocked(
             {
                 "hadPrimarySource": "ebs5siX85RkdrhBRlsYgRP",
                 "identifierInPrimarySource": "00000000-0000-4000-8000-000000000141",
-                "affiliation": [],
+                "affiliation": [rki_organization.stableTargetId],
                 "email": [],
                 "familyName": ["Mueller"],
                 "fullName": [],
@@ -42,7 +44,7 @@ def test_search_persons_in_ldap_mocked(
             {
                 "hadPrimarySource": "ebs5siX85RkdrhBRlsYgRP",
                 "identifierInPrimarySource": "00000000-0000-4000-8000-0000000001b0",
-                "affiliation": [],
+                "affiliation": [rki_organization.stableTargetId],
                 "email": [],
                 "familyName": ["Mueller"],
                 "fullName": [],
@@ -65,7 +67,7 @@ def test_search_persons_in_ldap_mocked(
             {
                 "hadPrimarySource": "ebs5siX85RkdrhBRlsYgRP",
                 "identifierInPrimarySource": "00000000-0000-4000-8000-000000000315",
-                "affiliation": [],
+                "affiliation": [rki_organization.stableTargetId],
                 "email": [],
                 "familyName": ["Example"],
                 "fullName": [],

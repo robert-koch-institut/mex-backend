@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:9dd60645a37ef2907799a2c15c7f9028c783ea30da0c17e1600b8a43aeb58c1b"
+content_hash = "sha256:990f568112666d71b55639a7bc5afd2238531ffa6eea909d7e9e392874feb31c"
 
 [[metadata.targets]]
 requires_python = "==3.11.*"
@@ -250,7 +250,7 @@ files = [
 
 [[package]]
 name = "faker"
-version = "37.8.0"
+version = "37.9.0"
 requires_python = ">=3.9"
 summary = "Faker is a Python package that generates fake data for you."
 groups = ["dev"]
@@ -258,8 +258,8 @@ dependencies = [
     "tzdata",
 ]
 files = [
-    {file = "faker-37.8.0-py3-none-any.whl", hash = "sha256:b08233118824423b5fc239f7dd51f145e7018082b4164f8da6a9994e1f1ae793"},
-    {file = "faker-37.8.0.tar.gz", hash = "sha256:090bb5abbec2b30949a95ce1ba6b20d1d0ed222883d63483a0d4be4a970d6fb8"},
+    {file = "faker-37.9.0-py3-none-any.whl", hash = "sha256:c0c0f5e6271fa3ac4e6ecac5f5951ca9662e85da7342e2f05b5ef58bd9a4d51c"},
+    {file = "faker-37.9.0.tar.gz", hash = "sha256:c191bad2e15601f818993d024e7f2157b4fb1139467d836e5b78ec97d371331e"},
 ]
 
 [[package]]
@@ -602,7 +602,7 @@ files = [
 
 [[package]]
 name = "mex-common"
-version = "1.4.0"
+version = "1.5.1"
 requires_python = "<3.12,>=3.11"
 summary = "Common library for MEx python projects."
 groups = ["default", "dev"]
@@ -611,23 +611,23 @@ dependencies = [
     "click<9,>=8",
     "langdetect<2,>=1",
     "ldap3<3,>=2",
-    "mex-model<4.3,>=4.2",
+    "mex-model<4.3,>=4.2.1",
     "numpy<3,>=2",
     "pandas<3,>=2",
     "pyarrow<22,>=21",
     "pydantic-settings<2.11,>=2",
     "pydantic<2.10,>=2",
-    "pytz<2024.2,>=2024",
+    "pytz>=2025",
     "requests<3,>=2",
 ]
 files = [
-    {file = "mex_common-1.4.0-py3-none-any.whl", hash = "sha256:38a76aeabba17568bd3f80a1e0d1fba96c79c2a3c8dd5f1ffa01eec536844c7c"},
-    {file = "mex_common-1.4.0.tar.gz", hash = "sha256:d8e66dc6dd2b074da1ead0f7fd0b8f7a3d5ee955699bfd4bfcfeaf8223eea2a5"},
+    {file = "mex_common-1.5.1-py3-none-any.whl", hash = "sha256:fe369bc867e0793683c9bb1129e8607b1ff92468a2e2d1e6dc2dc7a74eb224af"},
+    {file = "mex_common-1.5.1.tar.gz", hash = "sha256:420c329d4a57fd2f6f7d086614f115716ced2fa47f9fc4989b3d2fec4e4de41b"},
 ]
 
 [[package]]
 name = "mex-model"
-version = "4.2.0"
+version = "4.2.1"
 requires_python = ">=3.9"
 summary = "JSON schema files defining the MEx metadata model."
 groups = ["default", "dev"]
@@ -635,8 +635,8 @@ dependencies = [
     "importlib-resources>=1.3; python_version < \"3.10\"",
 ]
 files = [
-    {file = "mex_model-4.2.0-py3-none-any.whl", hash = "sha256:767d4605019cc60e87f5b37880f059f6b074632f97b6444f449739c18fa3dcac"},
-    {file = "mex_model-4.2.0.tar.gz", hash = "sha256:eee9dc1be26bfb02935e453a3fda0c5df03ec9b2db8fbc474a067125e6da0ac0"},
+    {file = "mex_model-4.2.1-py3-none-any.whl", hash = "sha256:fb170b44038bcec0720d6b88b4de90be35cdb36af5143f70bdfb8186be7f6195"},
+    {file = "mex_model-4.2.1.tar.gz", hash = "sha256:df13f4cc91e3cbe4962524ccc0c3fa168b28d10dec9f6458df2287e373cbf6a4"},
 ]
 
 [[package]]
@@ -1010,31 +1010,31 @@ files = [
 
 [[package]]
 name = "pytz"
-version = "2024.1"
+version = "2025.2"
 summary = "World timezone definitions, modern and historical"
 groups = ["default", "dev"]
 files = [
-    {file = "pytz-2024.1-py2.py3-none-any.whl", hash = "sha256:328171f4e3623139da4983451950b28e95ac706e13f3f2630a879749e7a8b319"},
-    {file = "pytz-2024.1.tar.gz", hash = "sha256:2a29735ea9c18baf14b448846bde5a48030ed267578472d8955cd0e7443a9812"},
+    {file = "pytz-2025.2-py2.py3-none-any.whl", hash = "sha256:5ddf76296dd8c44c26eb8f4b6f35488f3ccbf6fbbd7adee0b7262d43f0ec2f00"},
+    {file = "pytz-2025.2.tar.gz", hash = "sha256:360b9e3dbb49a209c21ad61809c7fb453643e048b38924c765813546746e81c3"},
 ]
 
 [[package]]
 name = "pyyaml"
-version = "6.0.2"
+version = "6.0.3"
 requires_python = ">=3.8"
 summary = "YAML parser and emitter for Python"
 groups = ["default"]
 files = [
-    {file = "PyYAML-6.0.2-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:cc1c1159b3d456576af7a3e4d1ba7e6924cb39de8f67111c735f6fc832082774"},
-    {file = "PyYAML-6.0.2-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:1e2120ef853f59c7419231f3bf4e7021f1b936f6ebd222406c3b60212205d2ee"},
-    {file = "PyYAML-6.0.2-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5d225db5a45f21e78dd9358e58a98702a0302f2659a3c6cd320564b75b86f47c"},
-    {file = "PyYAML-6.0.2-cp311-cp311-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:5ac9328ec4831237bec75defaf839f7d4564be1e6b25ac710bd1a96321cc8317"},
-    {file = "PyYAML-6.0.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:3ad2a3decf9aaba3d29c8f537ac4b243e36bef957511b4766cb0057d32b0be85"},
-    {file = "PyYAML-6.0.2-cp311-cp311-musllinux_1_1_aarch64.whl", hash = "sha256:ff3824dc5261f50c9b0dfb3be22b4567a6f938ccce4587b38952d85fd9e9afe4"},
-    {file = "PyYAML-6.0.2-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:797b4f722ffa07cc8d62053e4cff1486fa6dc094105d13fea7b1de7d8bf71c9e"},
-    {file = "PyYAML-6.0.2-cp311-cp311-win32.whl", hash = "sha256:11d8f3dd2b9c1207dcaf2ee0bbbfd5991f571186ec9cc78427ba5bd32afae4b5"},
-    {file = "PyYAML-6.0.2-cp311-cp311-win_amd64.whl", hash = "sha256:e10ce637b18caea04431ce14fabcf5c64a1c61ec9c56b071a4b7ca131ca52d44"},
-    {file = "pyyaml-6.0.2.tar.gz", hash = "sha256:d584d9ec91ad65861cc08d42e834324ef890a082e591037abe114850ff7bbc3e"},
+    {file = "pyyaml-6.0.3-cp311-cp311-macosx_10_13_x86_64.whl", hash = "sha256:44edc647873928551a01e7a563d7452ccdebee747728c1080d881d68af7b997e"},
+    {file = "pyyaml-6.0.3-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:652cb6edd41e718550aad172851962662ff2681490a8a711af6a4d288dd96824"},
+    {file = "pyyaml-6.0.3-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:10892704fc220243f5305762e276552a0395f7beb4dbf9b14ec8fd43b57f126c"},
+    {file = "pyyaml-6.0.3-cp311-cp311-manylinux2014_s390x.manylinux_2_17_s390x.manylinux_2_28_s390x.whl", hash = "sha256:850774a7879607d3a6f50d36d04f00ee69e7fc816450e5f7e58d7f17f1ae5c00"},
+    {file = "pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:b8bb0864c5a28024fac8a632c443c87c5aa6f215c0b126c449ae1a150412f31d"},
+    {file = "pyyaml-6.0.3-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:1d37d57ad971609cf3c53ba6a7e365e40660e3be0e5175fa9f2365a379d6095a"},
+    {file = "pyyaml-6.0.3-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:37503bfbfc9d2c40b344d06b2199cf0e96e97957ab1c1b546fd4f87e53e5d3e4"},
+    {file = "pyyaml-6.0.3-cp311-cp311-win32.whl", hash = "sha256:8098f252adfa6c80ab48096053f512f2321f0b998f98150cea9bd23d83e1467b"},
+    {file = "pyyaml-6.0.3-cp311-cp311-win_amd64.whl", hash = "sha256:9f3bfb4965eb874431221a3ff3fdcddc7e74e3b07799e0e84ca4a0f867d449bf"},
+    {file = "pyyaml-6.0.3.tar.gz", hash = "sha256:d76623373421df22fb4cf8817020cbb7ef15c725b9d5e45f17e189bfc384190f"},
 ]
 
 [[package]]
