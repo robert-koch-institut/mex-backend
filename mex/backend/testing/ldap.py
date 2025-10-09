@@ -35,15 +35,15 @@ def get_merged_person_from_login(
     deque(connector.ingest_items([person]))
 
     result = connector.fetch_merged_items(
-        query_string=None,
+        query_string=username,
         identifier=None,
-        entity_type="MergedPerson",
-        reference_field="identifierInPrimarySource",
-        referenced_identifiers=[username],
+        entity_type=["MergedPerson"],
+        reference_field=None,
+        referenced_identifiers=None,
         skip=0,
         limit=1,
     )
-    return result["items"]  # type: ignore[no-any-return]
+    return result["items"][0]  # type: ignore[no-any-return]
 
 
 @router.get("/ldap", tags=["auxiliary"])

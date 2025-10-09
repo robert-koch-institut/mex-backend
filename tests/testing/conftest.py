@@ -3,8 +3,6 @@ from fastapi.testclient import TestClient
 
 from mex.backend.testing.main import app
 
-pytest_plugins = ("mex.common.testing.plugin",)
-
 
 @pytest.fixture
 def client() -> TestClient:
