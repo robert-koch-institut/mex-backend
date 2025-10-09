@@ -38,7 +38,7 @@ def _check_header_for_authorization_method(
         )
     if api_key and credentials:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authenticate with X-API-Key or credentials, not both.",
             headers=(
                 {"WWW-Authenticate": "Basic"}

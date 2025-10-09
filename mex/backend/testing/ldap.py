@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 
 from mex.backend.graph.connector import GraphConnector
+from mex.backend.merged.helpers import merge_search_result_item
 from mex.backend.testing.security import has_write_access_ldap
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -12,7 +13,7 @@ from mex.common.models import (
     MergedPerson,
     PaginatedItemsContainer,
 )
-from mex.common.types import Email
+from mex.common.types import Email, Validation
 
 DEFAULT_LDAP_QUERY = "mex@rki.de"
 
@@ -43,13 +44,14 @@ def get_merged_person_from_login(
         skip=0,
         limit=1,
     )
-    return result["items"][0]  # type: ignore[no-any-return]
+    return merge_search_result_item(result["items"][0], Validation.STRICT)  # type: ignore [return-value]
 
 
 @router.get("/ldap", tags=["auxiliary"])
 def search_persons_or_contact_points_in_ldap(
     q: Annotated[str, Query(max_length=1000)] = DEFAULT_LDAP_QUERY,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
+    _: Annotated[str | None, Depends(has_write_access_ldap)] = None,
 ) -> PaginatedItemsContainer[ExtractedPerson | ExtractedContactPoint]:
     """Search for person or contact points in LDAP.
 
