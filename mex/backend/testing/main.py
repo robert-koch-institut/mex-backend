@@ -29,7 +29,7 @@ from mex.common.cli import entrypoint
 
 app = FastAPI(
     title="mex-backend-testing",
-    summary="Robert Koch-Institut Metadata Exchange API",
+    summary="Robert Koch-Institut Metadata Exchange testing API",
     description=(
         "The MEx API includes endpoints for multiple use-cases, "
         "e.g. for extractor pipelines, the MEx editor or inter-departmental access."

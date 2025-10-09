@@ -24,7 +24,7 @@ router = APIRouter()
 def get_merged_person_from_login(
     username: Annotated[str, Depends(has_write_access_ldap)],
 ) -> MergedPerson:
-    """Return the merged person from the ldap information and verify the login."""
+    """Return a mocked merged person from the login LDAP information."""
     person = ExtractedPerson(
         hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
         identifierInPrimarySource=username,
@@ -54,7 +54,7 @@ def search_persons_or_contact_points_in_ldap(
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
     _: Annotated[str | None, Depends(has_write_access_ldap)] = None,
 ) -> PaginatedItemsContainer[ExtractedPerson | ExtractedContactPoint]:
-    """Search for person or contact points in LDAP.
+    """Search for person or contact points in LDAP and return mocked data for testing.
 
     Args:
         q: The name of the person or contact point
