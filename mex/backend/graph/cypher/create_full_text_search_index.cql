@@ -1,8 +1,11 @@
 <# Create a full text search index for faster searches on the given fields.
 
-Args:
+Jinja:
     node_labels: List of labels of nodes that have searchable fields
     search_fields: List of names of searchable fields
+
+Args:
+    index_config: Configuration mapping for the search index
 -#>
 CREATE FULLTEXT INDEX search_index IF NOT EXISTS
 FOR (n:<<node_labels|join("|")>>)

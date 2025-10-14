@@ -4,12 +4,18 @@ Jinja:
     extracted_labels: List of all extracted class labels
     merged_labels: List of all merged class labels
 
-Args:
+Jinja:
     filter_by_had_primary_source: Whether the final query should filter by identifiers
                                   of MergedPrimarySources referenced by hadPrimarySource
     filter_by_identifier_in_primary_source: Whether the final query should filter by
                                             the value of identifierInPrimarySource
     filter_by_stable_target_id: Whether the final query should filter by stableTargetId
+
+Args:
+    had_primary_source: Filter by this primary source
+    identifier_in_primary_source: Filter by this identifier in primary source
+    stable_target_id: Filter by this stable target id
+    limit: Limit pagination to this many items
 
 Returns:
     List of identity objects.

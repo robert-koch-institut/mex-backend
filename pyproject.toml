@@ -1,6 +1,6 @@
 [project]
 name = "mex-backend"
-version = "0.41.1"
+version = "1.1.1"
 description = "Backend server for the RKI metadata exchange."
 authors = [{ name = "MEx Team", email = "mex@rki.de" }]
 readme = { file = "README.md", content-type = "text/markdown" }
@@ -9,29 +9,29 @@ urls = { Repository = "https://github.com/robert-koch-institut/mex-backend" }
 requires-python = ">=3.11,<3.12"
 dependencies = [
     "backoff>=2",
-    "black>=25",
-    "fastapi>=0.115",
+    "fastapi>=0.116",
     "jinja2>=3",
-    "mex-common>=0.63,<0.64",
+    "mex-common>=1.5,<1.6",
     "neo4j>=5",
     "pydantic>=2",
     "redis[hiredis]>=6",
-    "starlette>=0.41",
-    "uvicorn[standard]>=0.30",
+    "starlette>=0.47",
+    "uvicorn[standard]>=0.35",
 ]
 optional-dependencies.dev = [
-    "httpx>=0.27",
+    "httpx>=0.28",
     "ipdb>=0.13",
-    "mex-artificial>=0.5.1,<0.6",
+    "mex-artificial>=1",
     "mypy>=1",
     "pytest-cov>=6",
     "pytest-random-order>=1",
     "pytest>=8",
     "requests>=2",
-    "ruff>=0.11",
+    "ruff>=0.12",
     "sphinx>=8",
-    "types-pytz>=2024",
-    "types-requests>=2",
+    "types-ldap3",
+    "types-pytz",
+    "types-requests",
 ]
 
 [project.scripts]

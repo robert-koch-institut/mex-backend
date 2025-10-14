@@ -9,6 +9,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- update mex-common dependency to 1.5
+- persons have rki org as affiliation
+
+### Changes
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [1.1.1] - 2025-10-06
+
+### Changes
+
+- temporarily switch to redis to bitnamilegacy
+
+## [1.1.0] - 2025-09-11
+
+### Added
+
+- ingest endpoint now supports rule-sets
+- new endpoint returns merged person from ldap login information
+
+### Changes
+
+- ldap search endpoint now also returns contact points
+- change rule set ingestion to use v2-style queries
+- update mex-common to 1.4
+
+### Removed
+
+- removed black dependency in favor of unittest.mock
+
+## [1.0.0] - 2025-08-25
+
+### Changes
+
+- improve parameter documentation for cypher queries
+- change preview-merging logic to favor blocked values over empty fields
+
+## [0.41.3] - 2025-07-24
+
+### Changes
+
+- update mex-common to 0.64
+
+## [0.41.2] - 2025-07-24
+
+### Added
+
 - enable mypy type checking for tests
 
 ### Changes
@@ -18,14 +71,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - use a single transaction for v1 ingestion of a rule-set
 - reorganize a few functions in the rules and graph modules for clarity and consistency
 - update mex-common to 0.63
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
 
 ## [0.41.1] - 2025-07-08
 

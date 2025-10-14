@@ -1,7 +1,6 @@
 from mex.backend.graph.transform import (
     _SearchResultReference,
     expand_references_in_search_result,
-    transform_edges_into_expectations_by_edge_locator,
 )
 
 
@@ -36,7 +35,7 @@ def test_expand_references_in_search_result() -> None:
             {
                 "label": "abstract",
                 "position": 1,
-                "value": {"value": "Une activité active."},
+                "value": {"value": "Eng aktiv Aktivitéit."},
             }
         ),
         _SearchResultReference(
@@ -60,7 +59,7 @@ def test_expand_references_in_search_result() -> None:
     assert expanded == {
         "abstract": [
             {"language": "en", "value": "An active activity."},
-            {"value": "Une activité active."},
+            {"value": "Eng aktiv Aktivitéit."},
         ],
         "contact": ["bFQoRhcVH5DHUv", "bFQoRhcVH5DHUx", "bFQoRhcVH5DHUz"],
         "hadPrimarySource": ["bFQoRhcVH5DHUr"],
@@ -68,17 +67,4 @@ def test_expand_references_in_search_result() -> None:
         "stableTargetId": ["bFQoRhcVH5DHUB"],
         "title": [{"language": "de", "value": "Aktivität 1"}],
         "website": [{"title": "Activity Homepage", "url": "https://activity-1"}],
-    }
-
-
-def test_transform_edges_into_expectations_by_edge_locator() -> None:
-    expectations = transform_edges_into_expectations_by_edge_locator(
-        "NodeLabel",
-        ["edgeLabelFoo", "edgeLabelBar"],
-        ["fooID", "barID"],
-        [0, 73],
-    )
-    assert expectations == {
-        "edgeLabelFoo {position: 0}": '(:NodeLabel)-[:edgeLabelFoo {position: 0}]->({identifier: "fooID"})',
-        "edgeLabelBar {position: 73}": '(:NodeLabel)-[:edgeLabelBar {position: 73}]->({identifier: "barID"})',
     }

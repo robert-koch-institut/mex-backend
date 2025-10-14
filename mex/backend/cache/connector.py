@@ -1,7 +1,7 @@
 import json
-from typing import Any, Protocol, cast
+from typing import Any, cast
 
-from pydantic import BaseModel
+from pydantic import BaseModel, SecretStr
 from redis import Redis
 
 from mex.backend.settings import BackendSettings
@@ -9,18 +9,32 @@ from mex.common.connector import BaseConnector
 from mex.common.transform import MExEncoder
 
 
-class CacheProto(Protocol):
-    """Protocol for unified cache interface."""
+class RedisCache:
+    """Wrapper around redis client for a unified cache interface."""
 
-    def get(self, key: str) -> str | None: ...  # noqa: D102
+    def __init__(self, url: SecretStr) -> None:
+        """Create a new redis client with the given url."""
+        self._client = Redis.from_url(url.get_secret_value())
 
-    def set(self, key: str, value: str) -> None: ...  # noqa: D102
+    def get(self, key: str) -> str | None:
+        """Retrieve value for the given key, or None if not found."""
+        return cast("str | None", self._client.get(key))
 
-    def info(self) -> dict[str, int | str]: ...  # noqa: D102
+    def set(self, key: str, value: str) -> None:
+        """Store a key-value pair in the cache."""
+        self._client.set(key, value)
 
-    def flushdb(self) -> None: ...  # noqa: D102
+    def info(self) -> dict[str, int | str]:
+        """Return Redis server information and statistics."""
+        return cast("dict[str, int | str]", self._client.info())
 
-    def close(self) -> None: ...  # noqa: D102
+    def flushdb(self) -> None:
+        """Clear all keys from the current database."""
+        self._client.flushdb()
+
+    def close(self) -> None:
+        """Close the Redis connection."""
+        return self._client.close()
 
 
 class LocalCache(dict[str, str]):
@@ -53,9 +67,7 @@ class CacheConnector(BaseConnector):
         """Create a new cache connector instance."""
         settings = BackendSettings.get()
         if settings.redis_url:
-            self._cache: CacheProto = Redis.from_url(
-                settings.redis_url.get_secret_value()
-            )
+            self._cache: LocalCache | RedisCache = RedisCache(settings.redis_url)
         else:
             self._cache = LocalCache()
 

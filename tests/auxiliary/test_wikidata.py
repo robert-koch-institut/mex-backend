@@ -64,7 +64,6 @@ def test_search_organization_in_wikidata_mocked(
                 "identifierInPrimarySource": "Q679041",
                 "isniId": ["https://isni.org/isni/0000000109403744"],
                 "officialName": [
-                    {"language": "en", "value": "Robert Koch Institute"},
                     {"language": "de", "value": "Robert Koch-Institut"},
                 ],
                 "rorId": ["https://ror.org/01k5qnb77"],

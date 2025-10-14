@@ -1,16 +1,23 @@
 <# Fetch merged items including their nested objects and referenced identifiers.
 
-Jinja:
-    extracted_labels: List of all extracted class labels
+Globals:
     extracted_or_rule_labels: List of all extracted and rule class labels
     merged_labels: List of all merged class labels
     nested_labels: List of labels for all nestable objects
 
-Args:
+Jinja:
     filter_by_query_string: Whether the final query should accept a full text query string
     filter_by_identifier: Whether the final query should filter by the merged identifier
     filter_by_referenced_identifiers: Whether to filter for references to items with specific identifiers
     reference_field: Name of the relationship holding referenced identifiers to use for filtering
+
+Args:
+    query_string: Full text query string
+    labels: Labels to filter items by
+    identifier: Identifier to filter items by
+    referenced_identifiers: Identifiers referenced by `reference_field`
+    skip: Skip these many nodes for pagination
+    limit: Limit pagination to this many items
 
 Returns:
     total: Count of all items found by this query

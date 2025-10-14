@@ -9,7 +9,7 @@ from mex.backend.merged.helpers import (
 )
 from mex.common.merged.main import create_merged_item
 from mex.common.models import AnyExtractedModel
-from mex.common.types import Identifier
+from mex.common.types import Identifier, Validation
 from tests.conftest import MockedGraph
 
 
@@ -245,10 +245,10 @@ def test_get_merged_item_from_graph(
     organization_2 = load_dummy_data["organization_2"]
     fetched = get_merged_item_from_graph(organization_1.stableTargetId)
     expected = create_merged_item(
-        organization_1.stableTargetId,
-        [organization_2, organization_1],
+        identifier=organization_1.stableTargetId,
+        extracted_items=[organization_2, organization_1],
         rule_set=None,
-        validate_cardinality=True,
+        validation=Validation.STRICT,
     )
     assert fetched.model_dump() == expected.model_dump()
 

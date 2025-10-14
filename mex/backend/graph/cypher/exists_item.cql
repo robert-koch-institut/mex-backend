@@ -1,7 +1,10 @@
 <# Validate whether an item with the given identifier and entity type exists.
 
-Args:
+Jinja:
     node_labels: Allowed labels of the to-be-checked item
+
+Args:
+    identifier: Identifier of the item to check
 
 Returns:
     Boolean representing the existence of the requested item.

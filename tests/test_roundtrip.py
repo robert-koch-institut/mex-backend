@@ -21,4 +21,4 @@ def test_graph_ingest_and_query_roundtrip(
         items=[e.model_dump() for e in seeded_models], total=len(seeded_models)
     )
 
-    assert fetched == expected
+    assert fetched.model_dump() == expected.model_dump()

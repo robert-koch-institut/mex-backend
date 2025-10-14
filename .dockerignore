@@ -12,7 +12,7 @@ __pycache__/
 .pdm-build
 .pdm-python
 .Python
-.web/
+.python-version
 *.egg
 *.egg-info/
 build/
@@ -90,6 +90,7 @@ celerybeat.pid
 # Environments
 *.env
 .env
+.env.tests
 .venv
 env/
 venv/
@@ -119,8 +120,10 @@ dmypy.json
 
 # MEx specific
 .aws/
+.cruft.json
 .invenio.private
 .states
+.tmp_dagster_home_*
 .web
 *.ndjson
 assets/external/
@@ -128,6 +131,7 @@ data/
 identity.csv
 logs/
 payload
+renovate.json
 schema.json
 storage/
 tmp*/
@@ -146,7 +150,6 @@ work/
 .bandit
 .isort.cfg
 .mypy.ini
-.pdm-python
 .pre-commit-config.yaml
 .pydocstyle
 Makefile

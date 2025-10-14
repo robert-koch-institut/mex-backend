@@ -13,7 +13,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PDM_CHECK_UPDATE: False
   PIP_DISABLE_PIP_VERSION_CHECK: on
   PIP_NO_CLEAN: on
   PIP_NO_INPUT: on
@@ -26,7 +25,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           token: ${{ secrets.WORKFLOW_TOKEN }}
@@ -42,7 +41,7 @@ jobs:
             ${{ env.cache-name }}-
 
       - name: Setup python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.11
 
@@ -77,11 +76,12 @@ jobs:
           git checkout -b cruft/cookiecutter-template-${template_ref}
           cruft update --skip-apply-ask
           printf '# Changes\n\n- bumped cookiecutter template to %s/commit/%s\n' "$template_url" "$template_ref" > .cruft-pr-body
+          sed -i "0,/^### Changes/s|^### Changes.*|&\n- bumped cookiecutter template to ${template_url}/commit/${template_ref}|" CHANGELOG.md
           if [[ $(find . -type f -name "*.rej" | wc -l) -ne 0 ]]; then
             printf '\n# Conflicts\n' >> .cruft-pr-body
           fi
           find . -type f -name "*.rej" | while read -r line ; do
-            printf '\n```' >> .cruft-pr-body
+            printf '\n```diff\n' >> .cruft-pr-body
             cat ${line} >> .cruft-pr-body
             printf '```\n' >> .cruft-pr-body
           done

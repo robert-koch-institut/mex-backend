@@ -12,7 +12,6 @@ on:
   workflow_dispatch:
 
 env:
-  PDM_CHECK_UPDATE: False
   PIP_DISABLE_PIP_VERSION_CHECK: on
   PIP_NO_CLEAN: on
   PIP_NO_INPUT: on
@@ -30,13 +29,13 @@ jobs:
 
     services:
       neo4j:
-        image: neo4j:2025.05-community
+        image: neo4j:2025.08-community
         env:
           NEO4J_AUTH: neo4j/password
         ports:
           - 7687:7687
       redis:
-        image: bitnami/redis:8.0.3
+        image: bitnamilegacy/redis:8.2.1
         env:
           ALLOW_EMPTY_PASSWORD: yes
         ports:
@@ -44,7 +43,7 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 1
 
@@ -69,7 +68,7 @@ jobs:
             ${{ env.cache-name }}-
 
       - name: Setup python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.11
 

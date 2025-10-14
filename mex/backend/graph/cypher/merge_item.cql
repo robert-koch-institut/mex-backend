@@ -1,33 +1,43 @@
-<# Upsert extracted items with their associated merged items and relationships.
+<# Upsert extracted or rule items with their associated merged items and relationships.
 
 Jinja:
     params: IngestParams object query configuration
 
 Args:
-    data: IngestData object with runtime information
+    data: IngestData object containing items to merge
 
 Returns:
-    identifier: Identifier of the extracted item
+    identifier: Identifier of the extracted item or null when rule
     stableTargetId: Identifier of the associated merged item
-    entityType: Type of the extracted item
-    nodeProps: Properties of the extracted item
+    entityType: Type of the extracted or rule item
+    nodeProps: Properties of the extracted or rule item
     linkRels: Relations that link to other existing nodes
     createRels: Relations that link to nodes that need creating
 -#>
+CYPHER 25
+
 WITH $data AS data
 
 <# create merged node if not exist -#>
 MERGE (merged:<<params.merged_label>> {identifier: data.stableTargetId})
-<# create extracted node if not exists -#>
-MERGE (main:<<params.node_label>> {identifier: data.identifier})
-<# connect extracted node with merged node -#>
-MERGE (main)-[:stableTargetId {position: 0}]->(merged)
+<# create extracted node or rule node and connect it to merged node -#>
+CALL (merged, data) {
+  WHEN data.identifier IS NOT NULL THEN {
+    MERGE (main:<<params.node_label>> {identifier: data.identifier})-[:stableTargetId {position: 0}]->(merged)
+    RETURN main
+  }
+  ELSE {
+    MERGE (main:<<params.node_label>> )-[:stableTargetId {position: 0}]->(merged)
+    RETURN main
+  }
+}
+
 SET main += data.nodeProps
 
 WITH main, merged.identifier AS stableTargetId, data
 
 <% if params.has_create_rels -%>
-<# create Text/Link nodes and connect them to extracted item -#>
+<# create Text/Link nodes and connect them to main node -#>
 CALL (main, data) {
     UNWIND data.createRels AS createRel
     MERGE (main)-[newCreateEdge:$(createRel.edgeLabel) {position: createRel.edgeProps.position}]->(creationTarget:$(createRel.nodeLabels))
@@ -37,7 +47,7 @@ CALL (main, data) {
 <%- endif %>
 
 <% if params.has_link_rels -%>
-<# connect extracted item to referenced merged items -#>
+<# connect main node to referenced merged items -#>
 CALL (main, data) {
     UNWIND data.linkRels AS linkRel
     MATCH (linkTarget:<<params.all_referenced_labels|join("|")>> {identifier: linkRel.nodeProps.identifier})

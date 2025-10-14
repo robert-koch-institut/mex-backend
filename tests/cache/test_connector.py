@@ -9,7 +9,7 @@ from redis import Redis
 from redis.exceptions import ConnectionError as RedisConnectionError
 from redis.exceptions import RedisError
 
-from mex.backend.cache.connector import CacheConnector, LocalCache
+from mex.backend.cache.connector import CacheConnector, LocalCache, RedisCache
 from mex.backend.settings import BackendSettings
 from mex.common.transform import MExEncoder
 
@@ -90,7 +90,8 @@ def test_cache_connector_with_redis_url(
     monkeypatch.setattr(Redis, "from_url", lambda url: mocked_redis)
 
     connector = CacheConnector()
-    assert connector._cache is mocked_redis
+    assert isinstance(connector._cache, RedisCache)
+    assert connector._cache._client is mocked_redis
 
 
 def test_cache_connector_without_redis_url(monkeypatch: MonkeyPatch) -> None:
@@ -99,6 +100,7 @@ def test_cache_connector_without_redis_url(monkeypatch: MonkeyPatch) -> None:
 
     connector = CacheConnector()
     assert isinstance(connector._cache, LocalCache)
+    assert len(connector._cache) == 0
 
 
 def test_get_value_existing_key(

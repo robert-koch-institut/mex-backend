@@ -1,3 +1,5 @@
+from collections import deque
+
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import NoResultFoundError
 from mex.backend.rules.transform import transform_raw_rules_to_rule_set_response
@@ -27,7 +29,7 @@ def create_and_get_rule_set(
         subtractive=rule_set.subtractive,
         stableTargetId=stable_target_id,
     )
-    connector.ingest_rule_set(rule_set_response)
+    deque(connector.ingest_items([rule_set_response]))
     rule_types = [
         rule_set.additive.entityType,
         rule_set.subtractive.entityType,

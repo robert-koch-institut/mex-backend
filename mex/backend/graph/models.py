@@ -19,15 +19,18 @@ from mex.common.models import (
     BasePrimarySource,
 )
 from mex.common.types import (
+    AnyPrimitiveType,
     ExtractedPrimarySourceIdentifier,
     MergedPrimarySourceIdentifier,
 )
 
-GraphValueType = None | str | int | list[str] | list[int]
-
 
 class MExPrimarySource(BasePrimarySource):
-    """An automatically extracted metadata set describing a primary source."""
+    """Static metadata for the MEx primary source itself.
+
+    An instance of this class will bypass the IdentityProvider. This way we can ensure
+    that the MEx primary source receives static identifiers.
+    """
 
     entityType: Annotated[
         Literal["ExtractedPrimarySource"], Field(alias="$type", frozen=True)
@@ -136,20 +139,20 @@ class GraphRel(TypedDict):
     """Type definition for graph relations."""
 
     nodeLabels: list[str]
-    nodeProps: dict[str, GraphValueType]
+    nodeProps: dict[str, AnyPrimitiveType | list[AnyPrimitiveType]]
     edgeLabel: str
-    edgeProps: dict[str, GraphValueType]
+    edgeProps: dict[str, AnyPrimitiveType | list[AnyPrimitiveType]]
 
 
 class IngestData(BaseModel):
     """Type definition for ingestion data."""
 
     stableTargetId: str
-    identifier: str
+    identifier: str | None
     entityType: str
-    nodeProps: dict[str, GraphValueType]
-    linkRels: list[GraphRel] = []
-    createRels: list[GraphRel] = []
+    nodeProps: dict[str, AnyPrimitiveType | list[AnyPrimitiveType]]  # node properties
+    linkRels: list[GraphRel] = []  # relations to other merged items
+    createRels: list[GraphRel] = []  # relations to nested values like Text or Link
 
     @field_validator("createRels", mode="before")
     @classmethod
@@ -163,7 +166,7 @@ class IngestData(BaseModel):
         """Sort the rels by edge label and position."""
         return sorted(v, key=lambda x: (x["edgeLabel"], x["edgeProps"]["position"]))
 
-    def metadata(self) -> dict[str, int | str]:
+    def metadata(self) -> dict[str, int | str | None]:
         """Return log-able metadata."""
         return {
             "createRels": len(self.createRels),

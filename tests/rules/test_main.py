@@ -623,5 +623,5 @@ def test_update_rule_set(
         {"value": "Robert Koch Institute", "label": "Text", "language": "en"},
         {"value": "Unit 1", "label": "Text", "language": "en"},
         {"value": "Unit 1.6", "label": "Text", "language": "en"},
-        {"value": "Une activité active.", "label": "Text"},
+        {"value": "Eng aktiv Aktivitéit.", "label": "Text"},
     ]

@@ -1,54 +1,50 @@
-from typing import Any
-
 import pytest
 from fastapi.testclient import TestClient
 
 from mex.backend.auxiliary.primary_source import extracted_primary_source_ldap
+from mex.backend.auxiliary.wikidata import extracted_organization_rki
 from mex.backend.extracted.helpers import search_extracted_items_in_graph
 from mex.common.models import ExtractedPrimarySource
 from mex.common.types import Identifier, TextLanguage
 from tests.conftest import get_graph
 
 
-def count_results(search_string: str, persons: list[dict[str, Any]]) -> int:
-    return sum(
-        1
-        for person in persons
-        if search_string in person.get("givenName", [])
-        or search_string in person.get("familyName", [])
-    )
-
-
-@pytest.mark.parametrize(
-    ("search_string", "status_code", "match_total"),
-    [
-        ("Mueller", 200, 2),
-        ("Example", 200, 1),
-        ("Moritz", 200, 2),
-        ("", 200, 0),
-        ("None-Existent", 200, 0),
-    ],
-    ids=[
-        "Get existing Person with same name",
-        "Get existing Person with unique name",
-        "Get existing Person by given name",
-        "Empty Search String",
-        "Non-existent string",
-    ],
-)
 @pytest.mark.usefixtures("mocked_ldap", "mocked_wikidata")
 def test_search_persons_in_ldap_mocked(
     client_with_api_key_read_permission: TestClient,
-    search_string: str,
-    status_code: int,
-    match_total: int,
 ) -> None:
-    result = {
+    response = client_with_api_key_read_permission.get("/v0/ldap", params={"q": "test"})
+    rki_organization = extracted_organization_rki()
+    assert response.status_code == 200, response.text
+    assert response.json() == {
         "items": [
             {
                 "hadPrimarySource": "ebs5siX85RkdrhBRlsYgRP",
-                "identifierInPrimarySource": "00000000-0000-4000-8000-000000000001",
-                "affiliation": [],
+                "identifierInPrimarySource": "00000000-0000-4000-8000-00000000007b",
+                "email": ["help@account.test"],
+                "$type": "ExtractedContactPoint",
+                "identifier": "gocAoWR0iUHruUOBoA1qdx",
+                "stableTargetId": "ccBhefRZ7rI04yfpqZDG27",
+            },
+            {
+                "hadPrimarySource": "ebs5siX85RkdrhBRlsYgRP",
+                "identifierInPrimarySource": "00000000-0000-4000-8000-000000000141",
+                "affiliation": [rki_organization.stableTargetId],
+                "email": [],
+                "familyName": ["Mueller"],
+                "fullName": [],
+                "givenName": ["Moritz"],
+                "isniId": [],
+                "memberOf": ["cjna2jitPngp6yIV63cdi9"],
+                "orcidId": [],
+                "$type": "ExtractedPerson",
+                "identifier": "c6OEuSCqKQYzHNHPC96hEF",
+                "stableTargetId": "e9KbtvmWDHuiNRgo3KhiBv",
+            },
+            {
+                "hadPrimarySource": "ebs5siX85RkdrhBRlsYgRP",
+                "identifierInPrimarySource": "00000000-0000-4000-8000-0000000001b0",
+                "affiliation": [rki_organization.stableTargetId],
                 "email": [],
                 "familyName": ["Mueller"],
                 "fullName": [],
@@ -57,13 +53,21 @@ def test_search_persons_in_ldap_mocked(
                 "memberOf": ["cjna2jitPngp6yIV63cdi9"],
                 "orcidId": [],
                 "$type": "ExtractedPerson",
-                "identifier": "uNaZQCzsY4IAJ2ahzRBQX",
-                "stableTargetId": "eXA2Qj5pKmI7HXIgcVqCfz",
+                "identifier": "cg6JHD4TPjZMRtOHqORWKv",
+                "stableTargetId": "DJx2H14ViIUC7mHPt4oAj",
             },
             {
                 "hadPrimarySource": "ebs5siX85RkdrhBRlsYgRP",
-                "identifierInPrimarySource": "00000000-0000-4000-8000-000000000002",
-                "affiliation": [],
+                "identifierInPrimarySource": "00000000-0000-4000-8000-00000000021f",
+                "email": ["info@mail.provider"],
+                "$type": "ExtractedContactPoint",
+                "identifier": "bjkwd4TcGgHzpHAJjGO3xe",
+                "stableTargetId": "d9CQ7fQoLrAannxqFdksXR",
+            },
+            {
+                "hadPrimarySource": "ebs5siX85RkdrhBRlsYgRP",
+                "identifierInPrimarySource": "00000000-0000-4000-8000-000000000315",
+                "affiliation": [rki_organization.stableTargetId],
                 "email": [],
                 "familyName": ["Example"],
                 "fullName": [],
@@ -72,34 +76,12 @@ def test_search_persons_in_ldap_mocked(
                 "memberOf": ["cjna2jitPngp6yIV63cdi9"],
                 "orcidId": [],
                 "$type": "ExtractedPerson",
-                "identifier": "hiY0YTC5dUkBrf8ujMemjh",
-                "stableTargetId": "cpKNwpoZTQ4GpIzBgO8DMx",
-            },
-            {
-                "hadPrimarySource": "ebs5siX85RkdrhBRlsYgRP",
-                "identifierInPrimarySource": "00000000-0000-4000-8000-000000000003",
-                "affiliation": [],
-                "email": [],
-                "familyName": ["Mueller"],
-                "fullName": [],
-                "givenName": ["Moritz"],
-                "isniId": [],
-                "memberOf": ["cjna2jitPngp6yIV63cdi9"],
-                "orcidId": [],
-                "$type": "ExtractedPerson",
-                "identifier": "b9Dw7MmjFtoFd6upaaKQHB",
-                "stableTargetId": "c2Yd8aNoLKIf7u6ubTUuc3",
+                "identifier": "hfhFIAgNwmVDXNvZLz9kBu",
+                "stableTargetId": "dh9jSmVfRXmSCa74KIIHGh",
             },
         ],
-        "total": 3,
+        "total": 5,
     }
-    response = client_with_api_key_read_permission.get(
-        "/v0/ldap", params={"q": search_string}
-    )
-    assert response.status_code == status_code, response.text
-    data = response.json()
-    assert data == result
-    assert count_results(search_string, data["items"]) == match_total
 
 
 def test_extracted_primary_source_ldap() -> None:
