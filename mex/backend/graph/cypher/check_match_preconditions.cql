@@ -9,11 +9,13 @@ an extracted item to be merged with a different merged item. It checks:
 - The items have matching types
 - The extracted item type is allowed to be merged
 
+Globals:
+    extracted_labels: List of all extracted class labels
+    merged_labels: List of all merged class labels
+
 Args:
     extracted_identifier: Identifier of the extracted item to merge
     merged_identifier: Identifier of the target merged item
-    extracted_labels: List of all extracted class labels
-    merged_labels: List of all merged class labels
     blocked_types: List of entity types that cannot be merged
 
 Returns:

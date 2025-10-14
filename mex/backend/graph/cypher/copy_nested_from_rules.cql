@@ -3,7 +3,7 @@
 This query duplicates all nested nodes connected to the old rules and connects
 the duplicates to the new rules with the same nested node and edge properties.
 
-Jinja:
+Globals:
     rule_labels: List of all rule labels
     merged_labels: List of all merged labels
     nested_labels: List of labels for nested nodes

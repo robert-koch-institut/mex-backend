@@ -1,13 +1,13 @@
 <# Delete a merged item along with its associated extracted, rule and nested items.
 
-Args:
-    identifier: Identifier of the merged item to be deleted
-
-Jinja:
+Globals:
     merged_labels: List of all merged class labels
     rule_labels: List of all rule class labels
     extracted_labels: List of all extracted class labels
     nested_labels: List of labels for all nestable objects
+
+Args:
+    identifier: Identifier of the merged item to be deleted
 
 Returns:
     deleted_merged_count: Number of merged items deleted

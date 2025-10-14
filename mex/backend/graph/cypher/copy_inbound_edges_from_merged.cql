@@ -5,7 +5,7 @@ point to the merged node with the new identifier.
 The copying process creates new edges with the same labels and properties,
 but pointing to the new target node.
 
-Jinja:
+Globals:
     merged_labels: List of all merged class labels
 
 Args:

@@ -3,9 +3,11 @@
 This query copies all properties from an old rule item to a new rule item.
 Since rule properties are lists, the values are extended rather than replaced.
 
+Globals:
+    rule_labels: List of all rule class labels
+
 Jinja:
     field_names: List of field names to copy from the old rule to the new rule
-    rule_labels: List of all rule class labels
 
 Args:
     old_rule_identifier: Identifier of the old rule item to copy properties from

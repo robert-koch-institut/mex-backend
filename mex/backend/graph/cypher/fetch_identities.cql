@@ -1,6 +1,6 @@
 <# Fetch only identity-related fields for the given set of filters.
 
-Jinja:
+Globals:
     extracted_labels: List of all extracted class labels
     merged_labels: List of all merged class labels
 

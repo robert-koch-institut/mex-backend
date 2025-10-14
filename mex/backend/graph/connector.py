@@ -17,10 +17,7 @@ from mex.backend.fields import (
     SEARCHABLE_CLASSES,
     SEARCHABLE_FIELDS,
 )
-from mex.backend.graph.exceptions import (
-    IngestionError,
-    MatchingError,
-)
+from mex.backend.graph.exceptions import IngestionError, MatchingError
 from mex.backend.graph.models import IngestData, MExPrimarySource, Result
 from mex.backend.graph.query import Query, QueryBuilder
 from mex.backend.graph.transform import (
@@ -516,7 +513,13 @@ class GraphConnector(BaseConnector):
         # copy all node properties from old to new additive and subtractive rules
         # TODO(ND): limit rule labels
         tx.run(
-            str(query_builder.copy_node_props_from_rules()),
+            str(
+                query_builder.copy_node_props_from_rules(
+                    field_names=[
+                        # TODO(ND): set field names
+                    ]
+                )
+            ),
             old_merged_identifier=str(extracted_item.stableTargetId),
             new_merged_identifier=str(merged_item.identifier),
         )
@@ -561,22 +564,24 @@ class GraphConnector(BaseConnector):
     ) -> None:
         """Match an extracted item to another merged item and clean up afterwards."""
         settings = BackendSettings.get()
-        with self.driver.session(default_access_mode=WRITE_ACCESS) as session:  # noqa: SIM117
-            with session.begin_transaction(
+        with (
+            self.driver.session(default_access_mode=WRITE_ACCESS) as session,
+            session.begin_transaction(
                 timeout=settings.graph_tx_timeout,
                 metadata={
                     "extracted_identifier": extracted_item.identifier,
                     "old_merged_identifier": extracted_item.stableTargetId,
                     "new_merged_identifier": merged_item.identifier,
                 },
-            ) as tx:
-                try:
-                    self._match_item_tx(tx, extracted_item, merged_item)
-                except:
-                    tx.rollback()
-                    raise
-                else:
-                    tx.commit()
+            ) as tx,
+        ):
+            try:
+                self._match_item_tx(tx, extracted_item, merged_item)
+            except:
+                tx.rollback()
+                raise
+            else:
+                tx.commit()
 
     def flush(self) -> None:
         """Flush the database by deleting all nodes, constraints and indexes.

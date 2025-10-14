@@ -4,10 +4,9 @@ This query copies all outbound edges (excluding stableTargetId) from all rule it
 connected to one merged node to all rule items of another merged node.
 Edge types, edge properties and the edge target node are preserved.
 
-Jinja:
+Globals:
     rule_labels: List of all rule labels
     merged_labels: List of all merged labels
-    nested_labels: List of labels for nested nodes
 
 Args:
     old_merged_identifier: Identifier of the old merged node
