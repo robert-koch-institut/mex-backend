@@ -1,15 +1,17 @@
 from collections.abc import Sequence
 from typing import Annotated
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Path, Query
 from fastapi.exceptions import HTTPException
 from starlette import status
 
 from mex.backend.graph.exceptions import NoResultFoundError
 from mex.backend.merged.helpers import (
+    delete_merged_item_from_graph,
     get_merged_item_from_graph,
     search_merged_items_in_graph,
 )
+from mex.backend.rules.helpers import get_rule_set_from_graph
 from mex.backend.types import MergedType, ReferenceFieldName
 from mex.common.models import AnyMergedModel, PaginatedItemsContainer
 from mex.common.types import Identifier, Validation
@@ -52,9 +54,32 @@ def search_merged_items(  # noqa: PLR0913
 
 
 @router.get("/merged-item/{identifier}", tags=["editor"])
-def get_merged_item(identifier: Identifier) -> AnyMergedModel:
+def get_merged_item(identifier: Annotated[Identifier, Path()]) -> AnyMergedModel:
     """Return one merged item for the given `identifier`."""
     try:
         return get_merged_item_from_graph(identifier)
     except NoResultFoundError as error:
         raise HTTPException(status.HTTP_404_NOT_FOUND) from error
+
+
+@router.delete(
+    "/merged-item/{identifier}", status_code=status.HTTP_204_NO_CONTENT, tags=["editor"]
+)
+def delete_merged_item(
+    identifier: Annotated[Identifier, Path()],
+    include_rule_set: Annotated[
+        bool,
+        Query(
+            description="Delete with rule-set or "
+            "fail if rule-set is present and this parameter is False."
+        ),
+    ],
+) -> None:
+    """Delete one merged item for the given `identifier`."""
+    try:
+        get_merged_item_from_graph(identifier)
+    except NoResultFoundError as error:
+        raise HTTPException(status.HTTP_404_NOT_FOUND) from error
+    if include_rule_set is False and get_rule_set_from_graph(identifier):
+        raise HTTPException(status.HTTP_412_PRECONDITION_FAILED)
+    delete_merged_item_from_graph(identifier)

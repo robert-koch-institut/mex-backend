@@ -463,6 +463,16 @@ class GraphConnector(BaseConnector):
                         tx.commit()
                 yield
 
+    def delete_item(self, identifier: str) -> Result:
+        """Delete a merged item including all extracted items and rule-sets."""
+        query_builder = QueryBuilder.get()
+        query = query_builder.delete_merged_item()
+        return self.commit(
+            query,
+            access_mode=WRITE_ACCESS,
+            identifier=str(identifier),
+        )
+
     def flush(self) -> None:
         """Flush the database by deleting all nodes, constraints and indexes.
 
