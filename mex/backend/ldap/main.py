@@ -14,7 +14,7 @@ from mex.common.types import MergedPrimarySourceIdentifier
 router = APIRouter()
 
 
-@router.post("/merged-person-from-login")
+@router.post("/merged-person-from-login", tags=["editor"])
 def get_merged_person_from_login(
     username: Annotated[str, Depends(has_write_access_ldap)],
 ) -> MergedPerson:

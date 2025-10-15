@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from typing import Annotated
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Path, Query
 from fastapi.exceptions import HTTPException
 from starlette import status
 
@@ -52,7 +52,7 @@ def search_merged_items(  # noqa: PLR0913
 
 
 @router.get("/merged-item/{identifier}", tags=["editor"])
-def get_merged_item(identifier: Identifier) -> AnyMergedModel:
+def get_merged_item(identifier: Annotated[Identifier, Path()]) -> AnyMergedModel:
     """Return one merged item for the given `identifier`."""
     try:
         return get_merged_item_from_graph(identifier)
