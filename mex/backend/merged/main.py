@@ -5,6 +5,7 @@ from fastapi import APIRouter, Path, Query
 from fastapi.exceptions import HTTPException
 from starlette import status
 
+from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import NoResultFoundError
 from mex.backend.merged.helpers import (
     delete_merged_item_from_graph,
@@ -13,7 +14,11 @@ from mex.backend.merged.helpers import (
 )
 from mex.backend.rules.helpers import get_rule_set_from_graph
 from mex.backend.types import MergedType, ReferenceFieldName
-from mex.common.models import AnyMergedModel, PaginatedItemsContainer
+from mex.common.models import (
+    MERGED_MODEL_CLASSES_BY_NAME,
+    AnyMergedModel,
+    PaginatedItemsContainer,
+)
 from mex.common.types import Identifier, Validation
 
 router = APIRouter()
@@ -76,10 +81,9 @@ def delete_merged_item(
     ] = False,
 ) -> None:
     """Delete one merged item for the given `identifier`."""
-    try:
-        get_merged_item_from_graph(identifier)
-    except NoResultFoundError as error:
-        raise HTTPException(status.HTTP_404_NOT_FOUND) from error
+    connector = GraphConnector.get()
+    if not connector.exists_item(identifier, list(MERGED_MODEL_CLASSES_BY_NAME)):
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
     if include_rule_set is False and get_rule_set_from_graph(identifier):
         raise HTTPException(status.HTTP_412_PRECONDITION_FAILED)
     delete_merged_item_from_graph(identifier)

@@ -370,22 +370,22 @@ class GraphConnector(BaseConnector):
     def exists_item(
         self,
         identifier: Identifier,
-        entity_type: str,
+        entity_types: list[str],
     ) -> bool:
         """Validate whether an item with the given identifier and entity type exists.
 
         Args:
             identifier: Identifier of the to-be-checked item
-            entity_type: Entity type of the to-be-checked item
+            entity_types: Allowed entity types of the to-be-checked item
 
         Returns:
             Boolean representing the existence of the requested item
         """
-        if entity_type not in ALL_MODEL_CLASSES_BY_NAME:
+        if not all(e in ALL_MODEL_CLASSES_BY_NAME for e in entity_types):
             return False
         query_builder = QueryBuilder.get()
         query = query_builder.exists_item(
-            node_labels=[entity_type],
+            node_labels=entity_types,
         )
         result = self.commit(
             query,
