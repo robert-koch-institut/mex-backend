@@ -67,13 +67,13 @@ def get_merged_item(identifier: Annotated[Identifier, Path()]) -> AnyMergedModel
 )
 def delete_merged_item(
     identifier: Annotated[Identifier, Path()],
-    include_rule_set: Annotated[
+    include_rule_set: Annotated[  # noqa: FBT002
         bool,
         Query(
             description="Delete with rule-set or "
             "fail if rule-set is present and this parameter is False."
         ),
-    ],
+    ] = False,
 ) -> None:
     """Delete one merged item for the given `identifier`."""
     try:

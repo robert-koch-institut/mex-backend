@@ -1831,6 +1831,32 @@ def test_connector_flush_fails(monkeypatch: MonkeyPatch) -> None:
         graph.flush()
 
 
+@pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
+def test_mocked_graph_delete_item(mocked_graph: MockedGraph) -> None:
+    mocked_graph.return_value = [
+        {
+            "deleted_merged_count": 1,
+            "deleted_extracted_count": 2,
+            "deleted_rule_count": 1,
+            "deleted_nested_count": 3,
+        }
+    ]
+    graph = GraphConnector.get()
+    result = graph.delete_item(Identifier.generate(99))
+
+    assert mocked_graph.call_args_list[-1] == call(
+        call("delete_merged_item"),
+        {"identifier": str(Identifier.generate(99))},
+    )
+
+    assert result.one() == {
+        "deleted_merged_count": 1,
+        "deleted_extracted_count": 2,
+        "deleted_rule_count": 1,
+        "deleted_nested_count": 3,
+    }
+
+
 @pytest.mark.integration
 @pytest.mark.usefixtures("load_dummy_data")
 def test_connector_flush(monkeypatch: MonkeyPatch) -> None:

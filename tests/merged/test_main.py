@@ -449,3 +449,81 @@ def test_get_merged_item_not_found(
         "/v0/merged-item/notARealIdentifier"
     )
     assert response.status_code == status.HTTP_404_NOT_FOUND, response.text
+
+
+@pytest.mark.parametrize(
+    ("identifier", "url_params"),
+    [
+        (
+            "bFQoRhcVH5DHUz",  # contact_point_1
+            "",  # item without rule set does not need parameter
+        ),
+        (
+            "bFQoRhcVH5DHUz",  # contact_point_1
+            "include_rule_set=true",  # should have no effect, but still work
+        ),
+        (
+            "bFQoRhcVH5DHUF",  # organizational_unit_2
+            "include_rule_set=true",  # unit 2 has a rule set
+        ),
+        (
+            "bFQoRhcVH5DHUI",  # load_standalone_dummy_rule_set
+            "include_rule_set=true",  # consists only of rules
+        ),
+    ],
+)
+@pytest.mark.usefixtures(
+    "load_dummy_data",
+    "load_dummy_rule_set",
+    "load_standalone_dummy_rule_set",
+)
+@pytest.mark.integration
+def test_delete_merged_item(
+    client_with_api_key_write_permission: TestClient,
+    identifier: str,
+    url_params: str,
+) -> None:
+    # Attempt to delete the item
+    response = client_with_api_key_write_permission.delete(
+        f"/v0/merged-item/{identifier}?{url_params}"
+    )
+    assert response.status_code == status.HTTP_204_NO_CONTENT, response.text
+    assert response.content == b""
+
+    # Verify item is deleted
+    get_response = client_with_api_key_write_permission.get(
+        f"/v0/merged-item/{identifier}"
+    )
+    assert get_response.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.parametrize("url_params", ["", "include_rule_set=false"])
+@pytest.mark.usefixtures("load_dummy_rule_set")
+@pytest.mark.integration
+def test_delete_merged_item_precondition_failed(
+    client_with_api_key_write_permission: TestClient,
+    load_dummy_data: dict[str, AnyExtractedModel],
+    url_params: str,
+) -> None:
+    identifier = load_dummy_data["organizational_unit_2"].stableTargetId
+    response = client_with_api_key_write_permission.delete(
+        f"/v0/merged-item/{identifier}?{url_params}"
+    )
+    # Should fail when there are rules, but `include_rule_set` is not set to `true`
+    assert response.status_code == status.HTTP_412_PRECONDITION_FAILED, response.text
+
+    # Item should still exist (deletion failed)
+    get_response = client_with_api_key_write_permission.get(
+        f"/v0/merged-item/{identifier}"
+    )
+    assert get_response.status_code == status.HTTP_200_OK, response.text
+
+
+@pytest.mark.integration
+def test_delete_merged_item_not_found(
+    client_with_api_key_write_permission: TestClient,
+) -> None:
+    response = client_with_api_key_write_permission.delete(
+        "/v0/merged-item/notARealIdentifier?include_rule_set=false"
+    )
+    assert response.status_code == status.HTTP_404_NOT_FOUND, response.text

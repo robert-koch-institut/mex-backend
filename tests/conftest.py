@@ -460,3 +460,15 @@ def load_dummy_rule_set(
             stable_target_id=load_dummy_data["organizational_unit_2"].stableTargetId,
         ),
     )
+
+
+@pytest.fixture
+def load_standalone_dummy_rule_set(
+    organizational_unit_rule_set_request: OrganizationalUnitRuleSetRequest,
+) -> OrganizationalUnitRuleSetResponse:
+    return cast(
+        "OrganizationalUnitRuleSetResponse",
+        create_and_get_rule_set(
+            organizational_unit_rule_set_request,
+        ),
+    )

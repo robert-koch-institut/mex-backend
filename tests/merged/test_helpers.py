@@ -1,9 +1,11 @@
 from typing import Any
 
 import pytest
+from pytest import LogCaptureFixture
 
 from mex.backend.exceptions import BackendError
 from mex.backend.merged.helpers import (
+    delete_merged_item_from_graph,
     get_merged_item_from_graph,
     search_merged_items_in_graph,
 )
@@ -257,3 +259,21 @@ def test_get_merged_item_from_graph(
 def test_get_merged_item_from_graph_not_found() -> None:
     with pytest.raises(BackendError, match="Merged item was not found"):
         get_merged_item_from_graph(Identifier("notARealIdentifier"))
+
+
+@pytest.mark.integration
+@pytest.mark.usefixtures("load_dummy_data")
+def test_delete_merged_item_from_graph(
+    load_dummy_data: dict[str, AnyExtractedModel],
+    caplog: LogCaptureFixture,
+) -> None:
+    # Use an existing item from dummy data
+    organization_1 = load_dummy_data["organization_1"]
+    test_identifier = organization_1.stableTargetId
+
+    # Call the function
+    delete_merged_item_from_graph(test_identifier)
+
+    # Verify logging occurred with expected content
+    assert f"deleted item {test_identifier}" in caplog.text
+    assert "deleted_merged_count" in caplog.text
