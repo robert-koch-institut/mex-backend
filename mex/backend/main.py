@@ -23,10 +23,7 @@ from mex.backend.logging import UVICORN_LOGGING_CONFIG
 from mex.backend.merged.main import router as merged_router
 from mex.backend.preview.main import router as preview_router
 from mex.backend.rules.main import router as rules_router
-from mex.backend.security import (
-    has_read_access,
-    has_write_access,
-)
+from mex.backend.security import has_read_access, has_write_access
 from mex.backend.settings import BackendSettings
 from mex.backend.system.main import router as system_router
 from mex.common.cli import entrypoint
