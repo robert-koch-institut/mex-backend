@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from typing import Annotated
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Path, Query
 from fastapi.exceptions import HTTPException
 from starlette import status
 
@@ -53,7 +53,7 @@ def search_extracted_items(  # noqa: PLR0913
 
 
 @router.get("/extracted-item/{identifier}", tags=["editor"])
-def get_extracted_item(identifier: Identifier) -> AnyExtractedModel:
+def get_extracted_item(identifier: Annotated[Identifier, Path()]) -> AnyExtractedModel:
     """Return one extracted item for the given `identifier`."""
     try:
         return get_extracted_item_from_graph(identifier)
