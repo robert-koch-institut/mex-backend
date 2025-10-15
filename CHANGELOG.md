@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- temporarily lock fastapi to 0.118 because 0.119 breaks our swagger
+
 ### Deprecated
 
 ### Removed
