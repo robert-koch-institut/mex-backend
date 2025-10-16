@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- fixed allowed values for the `referenceField` filter parameter
+
 ### Security
 
 ## [1.1.1] - 2025-10-06
