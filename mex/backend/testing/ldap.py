@@ -66,9 +66,9 @@ def search_persons_or_contact_points_in_ldap(
     items = [
         ExtractedPerson(
             hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-            identifierInPrimarySource=f"{q}",
-            fullName=[f"{q}"],
-            email=[Email("mex@rki.com")],
+            identifierInPrimarySource=f"{q}1",
+            fullName=[f"{q}1"],
+            email=[Email("mex1@rki.com")],
         ),
         ExtractedPerson(
             hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
