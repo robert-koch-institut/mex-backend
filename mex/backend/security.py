@@ -17,7 +17,7 @@ X_API_KEY = APIKeyHeader(name="X-API-Key", auto_error=False)
 HTTP_BASIC_AUTH = HTTPBasic(auto_error=False)
 
 
-def _check_header_for_authorization_method(
+def check_header_for_authorization_method(
     api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
     credentials: Annotated[
         HTTPBasicCredentials | None, Depends(HTTP_BASIC_AUTH)
@@ -76,7 +76,7 @@ def has_write_access(
     Settings:
         check credentials in backend_user_database or backend_api_key_database
     """
-    _check_header_for_authorization_method(api_key, credentials, user_agent)
+    check_header_for_authorization_method(api_key, credentials, user_agent)
 
     settings = BackendSettings.get()
     can_write = False
@@ -123,7 +123,7 @@ def has_read_access(
     Settings:
         check credentials in backend_user_database or backend_api_key_database
     """
-    _check_header_for_authorization_method(api_key, credentials, user_agent)
+    check_header_for_authorization_method(api_key, credentials, user_agent)
 
     try:
         has_write_access(api_key, credentials)  # read access implied by write access
@@ -167,7 +167,7 @@ def has_write_access_ldap(
     Args:
         credentials: username and password
     """
-    _check_header_for_authorization_method(credentials=credentials)
+    check_header_for_authorization_method(credentials=credentials)
     settings = BackendSettings.get()
     url = urlsplit(settings.ldap_url.get_secret_value())
     host = str(url.hostname)
