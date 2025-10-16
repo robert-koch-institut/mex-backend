@@ -26,7 +26,7 @@ def test_search_persons_or_contact_points_in_ldap_success(
         "/v0/ldap", params={"q": "mex", "limit": 1}
     )
     assert response.status_code == 200
-    data = response.json()
+    assert response.json() == {...}
     item = data["items"][0]
     assert item["hadPrimarySource"] == MEX_PRIMARY_SOURCE_STABLE_TARGET_ID
     assert item["identifierInPrimarySource"] == "mex"
