@@ -11,6 +11,7 @@ from mex.common.fields import (
 )
 from mex.common.models import (
     ADDITIVE_MODEL_CLASSES_BY_NAME,
+    EXTRACTED_MODEL_CLASSES_BY_NAME,
     PREVENTIVE_MODEL_CLASSES_BY_NAME,
     SUBTRACTIVE_MODEL_CLASSES_BY_NAME,
     AnyRuleModel,
@@ -117,11 +118,11 @@ INBOUND_REFERENCE_FIELDS_BY_CLASS_NAME = {
 }
 
 
-# unique set of all fields from any class that contain references
+# unique set of all fields from any extracted class that contain references
 ALL_REFERENCE_FIELD_NAMES = {
     field_name
-    for class_name in REFERENCED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME.values()
-    for field_name in class_name
+    for class_name in EXTRACTED_MODEL_CLASSES_BY_NAME
+    for field_name in REFERENCE_FIELDS_BY_CLASS_NAME[class_name]
 }
 
 # rule class lookups grouped by the field names of a rule-set

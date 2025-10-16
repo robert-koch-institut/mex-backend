@@ -218,6 +218,20 @@ def test_search_extracted_items_in_graph_bad_request(
 
 
 @pytest.mark.integration
+def test_search_extracted_items_invalid_reference_field_filter(
+    client_with_api_key_read_permission: TestClient,
+) -> None:
+    response = client_with_api_key_read_permission.get(
+        "/v0/extracted-item?referenceField=description"
+    )
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT, response.text
+    assert (
+        "Input should be 'accessPlatform', 'accessService', 'affiliation'"  # ...
+        in response.text
+    )
+
+
+@pytest.mark.integration
 def test_get_extracted_item(
     client_with_api_key_read_permission: TestClient,
     load_dummy_data: dict[str, AnyExtractedModel],

@@ -29,9 +29,7 @@ from mex.backend.graph.transform import (
 from mex.backend.settings import BackendSettings
 from mex.common.connector import BaseConnector
 from mex.common.exceptions import MExError
-from mex.common.fields import (
-    ALL_MODEL_CLASSES_BY_NAME,
-)
+from mex.common.fields import ALL_MODEL_CLASSES_BY_NAME
 from mex.common.logging import logger
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
