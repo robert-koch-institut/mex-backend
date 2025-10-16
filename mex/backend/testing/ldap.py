@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Query
 
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.merged.helpers import search_merged_items_in_graph
-from mex.backend.testing.security import has_write_access_ldap
+from mex.backend.testing.security import has_write_access_ldap_mocked
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     ExtractedContactPoint,
@@ -22,7 +22,7 @@ router = APIRouter()
 
 @router.post("/merged-person-from-login")
 def get_merged_person_from_login(
-    username: Annotated[str, Depends(has_write_access_ldap)],
+    username: Annotated[str, Depends(has_write_access_ldap_mocked)],
 ) -> MergedPerson:
     """Return a mocked merged person from the login LDAP information."""
     person = ExtractedPerson(
@@ -52,7 +52,7 @@ def get_merged_person_from_login(
 def search_persons_or_contact_points_in_ldap(
     q: Annotated[str, Query(max_length=1000)] = DEFAULT_LDAP_QUERY,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
-    _: Annotated[str | None, Depends(has_write_access_ldap)] = None,
+    _: Annotated[str | None, Depends(has_write_access_ldap_mocked)] = None,
 ) -> PaginatedItemsContainer[ExtractedPerson | ExtractedContactPoint]:
     """Search for person or contact points in LDAP and return mocked data for testing.
 

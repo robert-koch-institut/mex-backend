@@ -48,10 +48,10 @@ def _check_header_for_authorization_method(
         )
 
 
-def has_write_access_ldap(
+def has_write_access_ldap_mocked(
     credentials: Annotated[HTTPBasicCredentials, Depends(HTTP_BASIC_AUTH)],
 ) -> str:
-    """Verify if provided credentials have LDAP write access.
+    """Mocked function to verify if provided credentials have LDAP write access.
 
     Args:
         credentials: username and password
