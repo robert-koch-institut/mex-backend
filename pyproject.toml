@@ -68,7 +68,6 @@ lint = { cmd = "pre-commit run --all-files" }
 unit = { cmd = "pdm run pytest -m 'not integration'" }
 test = { cmd = "pdm run pytest" }
 all = { composite = ["install-all", "lint", "test", "doc"] }
-testing-backend = { call = "mex.backend.testing.main:main" }
 
 [tool.pydantic-mypy]
 warn_untyped_fields = true
