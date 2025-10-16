@@ -88,5 +88,5 @@ def main() -> None:  # pragma: no cover
         root_path=settings.backend_root_path,
         reload=settings.debug,
         log_config=UVICORN_LOGGING_CONFIG,
-        headers=[("server", "mex-backend")],
+        headers=[("server", "mex-backend-testing")],
     )
