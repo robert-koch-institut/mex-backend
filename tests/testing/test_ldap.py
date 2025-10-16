@@ -27,10 +27,27 @@ def test_search_persons_or_contact_points_in_ldap_success(
     )
     assert response.status_code == 200
     data = response.json()
-    assert data == {...}
-    item = data["items"][0]
-    assert item["hadPrimarySource"] == MEX_PRIMARY_SOURCE_STABLE_TARGET_ID
-    assert item["identifierInPrimarySource"] == "mex"
-    assert item["email"] == ["mex@rki.com"]
-    assert item["fullName"] == ["mex"]
-    assert item["$type"] == "ExtractedPerson"
+    assert data == {
+        "items": [
+            {
+                "$type": "ExtractedPerson",
+                "affiliation": [],
+                "email": [
+                    "mex1@rki.com",
+                ],
+                "familyName": [],
+                "fullName": [
+                    "mex1",
+                ],
+                "givenName": [],
+                "hadPrimarySource": MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+                "identifier": "bFQoRhcVH5DHUq",
+                "identifierInPrimarySource": "mex1",
+                "isniId": [],
+                "memberOf": [],
+                "orcidId": [],
+                "stableTargetId": "bFQoRhcVH5DHUr",
+            },
+        ],
+        "total": 1,
+    }
