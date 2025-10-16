@@ -114,3 +114,4 @@ components of the MEx project are open-sourced under the same license as well.
 ### Backend
 
 - `backend` starts the backend service
+- `testing-backend` starts the testing backend service
