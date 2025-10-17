@@ -6,6 +6,7 @@ from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import InconsistentGraphError, NoResultFoundError
 from mex.backend.rules.transform import transform_raw_rules_to_rule_set_response
 from mex.common.exceptions import MergingError
+from mex.common.logging import logger
 from mex.common.merged.main import create_merged_item
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
@@ -201,3 +202,10 @@ def get_merged_item_from_graph(identifier: Identifier) -> AnyMergedModel:
         msg = "Found multiple merged items."
         raise InconsistentGraphError(msg)
     return merge_search_result_item(result["items"][0], Validation.STRICT)
+
+
+def delete_merged_item_from_graph(identifier: Identifier) -> None:
+    """Delete a merged item including all extracted items and rule-sets."""
+    connector = GraphConnector.get()
+    result = connector.delete_item(identifier)
+    logger.info("deleted item %s: %s", identifier, result.one())
