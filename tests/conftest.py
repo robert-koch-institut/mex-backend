@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, Mock
 import pytest
 from fastapi.testclient import TestClient
 from neo4j import Driver, Session, SummaryCounters, Transaction
-from pytest import MonkeyPatch
+from pytest import FixtureRequest, MonkeyPatch
 from redis.client import Redis
 
 from mex.artificial.helpers import generate_artificial_extracted_items
@@ -19,6 +19,7 @@ from mex.backend.identity.provider import GraphIdentityProvider
 from mex.backend.main import app
 from mex.backend.rules.helpers import create_and_get_rule_set
 from mex.backend.settings import BackendSettings
+from mex.backend.testing.main import app as testing_app
 from mex.backend.types import APIKeyDatabase, APIUserDatabase
 from mex.common.connector import CONNECTOR_STORE
 from mex.common.models import (
@@ -111,6 +112,16 @@ def patch_test_client_json_encoder(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(
         "httpx._content.json_dumps", partial(json.dumps, cls=MExEncoder)
     )
+
+
+@pytest.fixture(params=["main", "testing"])
+def entrypoint_app(request: FixtureRequest) -> TestClient:
+    """Parametrized fixture to run tests against main or testing app."""
+    if request.param == "testing":
+        with TestClient(testing_app, raise_server_exceptions=False) as test_client:
+            return test_client
+    with TestClient(app, raise_server_exceptions=False) as test_client:
+        return test_client
 
 
 class MockedGraph:
