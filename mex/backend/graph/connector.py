@@ -17,7 +17,7 @@ from mex.backend.fields import (
     SEARCHABLE_CLASSES,
     SEARCHABLE_FIELDS,
 )
-from mex.backend.graph.exceptions import IngestionError
+from mex.backend.graph.exceptions import IngestionError, MatchingError
 from mex.backend.graph.models import IngestData, MExPrimarySource, Result
 from mex.backend.graph.query import Query, QueryBuilder
 from mex.backend.graph.transform import (
@@ -34,8 +34,10 @@ from mex.common.logging import logger
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
+    MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     RULE_MODEL_CLASSES_BY_NAME,
     AnyExtractedModel,
+    AnyMergedModel,
     AnyRuleModel,
     AnyRuleSetResponse,
 )
@@ -460,6 +462,124 @@ class GraphConnector(BaseConnector):
                     else:
                         tx.commit()
                 yield
+
+    def _match_item_tx(
+        self,
+        tx: Transaction,
+        extracted_item: AnyExtractedModel,
+        merged_item: AnyMergedModel,
+    ) -> None:
+        """Match an extracted item to another merged item and clean up afterwards."""
+        query_builder = QueryBuilder.get()
+
+        # check preconditions for a successful item matching
+        preconditions = Result(
+            tx.run(
+                str(query_builder.check_match_preconditions()),
+                extracted_identifier=str(extracted_item.identifier),
+                merged_identifier=str(merged_item.identifier),
+                blocked_types=["ExtractedPerson"],
+            )
+        )
+        if failed := [k for k, v in preconditions.one().items() if not v]:
+            msg = f"Failed preconditions: {', '.join(failed)}"
+            raise MatchingError(msg)
+
+        # update the stableTargetId of the extracted item
+        tx.run(
+            str(query_builder.update_stable_target_id()),
+            extracted_identifier=str(extracted_item.identifier),
+            merged_identifier=str(merged_item.identifier),
+        )
+
+        # TODO(ND): ensure position collisions don't produce errors/instability on fetch
+
+        # copy all nested nodes from old to new additive and subtractive rules
+        # TODO(ND): limit rule labels
+        tx.run(
+            str(query_builder.copy_nested_from_rules()),
+            old_merged_identifier=str(extracted_item.stableTargetId),
+            new_merged_identifier=str(merged_item.identifier),
+        )
+        # copy all outbound edges from old to new additive and subtractive rules
+        # TODO(ND): limit rule labels
+        tx.run(
+            str(query_builder.copy_outbound_edges_from_rules()),
+            old_merged_identifier=str(extracted_item.stableTargetId),
+            new_merged_identifier=str(merged_item.identifier),
+        )
+        # copy all node properties from old to new additive and subtractive rules
+        # TODO(ND): limit rule labels
+        tx.run(
+            str(
+                query_builder.copy_node_props_from_rules(
+                    field_names=[
+                        # TODO(ND): set field names
+                    ]
+                )
+            ),
+            old_merged_identifier=str(extracted_item.stableTargetId),
+            new_merged_identifier=str(merged_item.identifier),
+        )
+
+        # determine primary sources for the new merged item
+        new_identities = Result(
+            tx.run(
+                str(query_builder.fetch_identities(filter_by_stable_target_id=True)),
+                stable_target_id=str(merged_item.identifier),
+                limit=1000,
+            )
+        )
+        _new_primary_sources = [
+            *[i["hadPrimarySource"] for i in new_identities],
+            MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+        ]
+        # TODO(ND): for preventive rule:
+        # - copy all edges from old to new (if primary-source exists in new)
+
+        # if the old merged item has become orphaned, clean it up
+        orphan_check = Result(
+            tx.run(
+                str(query_builder.is_merged_item_orphaned()),
+                identifier=str(extracted_item.stableTargetId),
+            )
+        )
+        if orphan_check["is_orphaned"] is True:
+            tx.run(
+                str(query_builder.copy_inbound_edges_from_merged()),
+                old_target_identifier=str(extracted_item.stableTargetId),
+                new_target_identifier=str(merged_item.identifier),
+            )
+            tx.run(
+                str(query_builder.delete_merged_item()),
+                identifier=str(extracted_item.stableTargetId),
+            )
+
+    def match_item(
+        self,
+        extracted_item: AnyExtractedModel,
+        merged_item: AnyMergedModel,
+    ) -> None:
+        """Match an extracted item to another merged item and clean up afterwards."""
+        settings = BackendSettings.get()
+        with (
+            self.driver.session(default_access_mode=WRITE_ACCESS) as session,
+            session.begin_transaction(
+                timeout=settings.graph_tx_timeout,
+                metadata={
+                    "extracted_identifier": extracted_item.identifier,
+                    "old_merged_identifier": extracted_item.stableTargetId,
+                    "new_merged_identifier": merged_item.identifier,
+                },
+            ) as tx,
+        ):
+            try:
+                self._match_item_tx(tx, extracted_item, merged_item)
+            except:
+                tx.rollback()
+                raise
+            else:
+                tx.commit()
 
     def flush(self) -> None:
         """Flush the database by deleting all nodes, constraints and indexes.
