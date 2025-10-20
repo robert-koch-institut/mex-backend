@@ -1,14 +1,10 @@
 from importlib.metadata import version
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter
 from fastapi.responses import PlainTextResponse
-from starlette import status
 
-from mex.backend.graph.connector import GraphConnector
-from mex.backend.security import has_write_access
-from mex.backend.settings import BackendSettings
 from mex.common.connector import CONNECTOR_STORE
-from mex.common.models import Status, VersionStatus
+from mex.common.models import VersionStatus
 
 router = APIRouter()
 
@@ -20,26 +16,6 @@ router = APIRouter()
 def check_system_status() -> VersionStatus:
     """Check that the backend server is healthy and responsive."""
     return VersionStatus(status="ok", version=version("mex-backend"))
-
-
-@router.delete(
-    "/_system/graph",
-    dependencies=[Depends(has_write_access)],
-    tags=["system"],
-)
-def flush_graph_database() -> Status:
-    """Flush the database (only in debug mode)."""
-    settings = BackendSettings.get()
-    if settings.debug is True:
-        connector = GraphConnector.get()
-        connector.flush()
-        connector.close()
-        CONNECTOR_STORE.pop(GraphConnector)
-        return Status(status="ok")
-    raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail="refusing to flush the database",
-    )
 
 
 @router.get(

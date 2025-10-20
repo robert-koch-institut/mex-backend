@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- testing entry point
 
 - update mex-common dependency to 1.5
 - persons have rki org as affiliation
