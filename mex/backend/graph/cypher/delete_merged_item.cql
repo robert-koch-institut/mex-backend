@@ -19,12 +19,14 @@ Returns:
 MATCH (merged:<<merged_labels|join("|")>> {identifier: $identifier})
 OPTIONAL MATCH (merged)<-[:stableTargetId]-(extracted:<<extracted_labels|join("|")>>)
 OPTIONAL MATCH (merged)<-[:stableTargetId]-(rule:<<rule_labels|join("|")>>)
+OPTIONAL MATCH (merged)-[outbound]->()
 OPTIONAL MATCH (extracted)-[]->(extracted_nested:<<nested_labels|join("|")>>)
 OPTIONAL MATCH (rule)-[]->(rule_nested:<<nested_labels|join("|")>>)
 
 DETACH DELETE extracted_nested, rule_nested
 DETACH DELETE extracted, rule
-DETACH DELETE merged
+DELETE outbound
+DELETE merged
 
 RETURN
     count(DISTINCT merged) AS deleted_merged_count,

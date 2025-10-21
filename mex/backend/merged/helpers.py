@@ -3,7 +3,10 @@ from typing import Any, Literal, overload
 from pydantic import ValidationError
 
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.graph.exceptions import InconsistentGraphError, NoResultFoundError
+from mex.backend.graph.exceptions import (
+    InconsistentGraphError,
+    NoResultFoundError,
+)
 from mex.backend.rules.transform import transform_raw_rules_to_rule_set_response
 from mex.common.exceptions import MergingError
 from mex.common.logging import logger
@@ -197,7 +200,7 @@ def get_merged_item_from_graph(identifier: Identifier) -> AnyMergedModel:
     )
     if result["total"] == 0:
         msg = "Merged item was not found."
-        raise NoResultFoundError(msg) from None
+        raise NoResultFoundError(msg)
     if result["total"] != 1:
         msg = "Found multiple merged items."
         raise InconsistentGraphError(msg)
@@ -208,4 +211,7 @@ def delete_merged_item_from_graph(identifier: Identifier) -> None:
     """Delete a merged item including all extracted items and rule-sets."""
     connector = GraphConnector.get()
     result = connector.delete_item(identifier)
+    if result["deleted_merged_count"] == 0:
+        msg = "Merged item was not found."
+        raise NoResultFoundError(msg)
     logger.info("deleted item %s: %s", identifier, result.one())

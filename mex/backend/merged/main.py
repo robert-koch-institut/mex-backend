@@ -6,7 +6,7 @@ from fastapi.exceptions import HTTPException
 from starlette import status
 
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.graph.exceptions import NoResultFoundError
+from mex.backend.graph.exceptions import DeletionFailedError, NoResultFoundError
 from mex.backend.merged.helpers import (
     delete_merged_item_from_graph,
     get_merged_item_from_graph,
@@ -86,4 +86,7 @@ def delete_merged_item(
         raise HTTPException(status.HTTP_404_NOT_FOUND)
     if include_rule_set is False and get_rule_set_from_graph(identifier):
         raise HTTPException(status.HTTP_412_PRECONDITION_FAILED)
-    delete_merged_item_from_graph(identifier)
+    try:
+        delete_merged_item_from_graph(identifier)
+    except DeletionFailedError as error:
+        raise HTTPException(status.HTTP_409_CONFLICT) from error

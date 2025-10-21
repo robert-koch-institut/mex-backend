@@ -87,7 +87,7 @@ OPTIONAL MATCH (rule)-[]->(rule_nested:Link|Text|Location)
 
 DETACH DELETE extracted_nested, rule_nested
 DETACH DELETE extracted, rule
-DETACH DELETE merged
+DELETE merged
 
 RETURN
     count(DISTINCT merged) AS deleted_merged_count,

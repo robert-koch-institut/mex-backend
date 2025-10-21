@@ -1,4 +1,5 @@
 from typing import Any, cast
+from unittest.mock import Mock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -10,6 +11,7 @@ from mex.common.models import (
     AnyExtractedModel,
     ExtractedOrganizationalUnit,
     OrganizationalUnitRuleSetRequest,
+    OrganizationalUnitRuleSetResponse,
     SubtractiveOrganizationalUnit,
 )
 from mex.common.types import Validation
@@ -452,78 +454,110 @@ def test_get_merged_item_not_found(
 
 
 @pytest.mark.parametrize(
-    ("identifier", "url_params"),
+    ("item_name", "url_params"),
     [
-        (
-            "bFQoRhcVH5DHUz",  # contact_point_1
-            "",  # item without rule set does not need parameter
-        ),
-        (
-            "bFQoRhcVH5DHUz",  # contact_point_1
-            "include_rule_set=true",  # should have no effect, but still work
-        ),
-        (
-            "bFQoRhcVH5DHUF",  # organizational_unit_2
-            "include_rule_set=true",  # unit 2 has a rule set
-        ),
-        (
-            "bFQoRhcVH5DHUI",  # load_standalone_dummy_rule_set
-            "include_rule_set=true",  # consists only of rules
-        ),
+        ("activity_1", ""),
+        ("activity_1", "include_rule_set=true"),
+        ("organizational_unit_2", "include_rule_set=true"),
+        ("standalone_rule_set", "include_rule_set=true"),
+    ],
+    ids=[
+        "item without rule set does not need parameter",
+        "item without rule set can have parameter",
+        "item with rule set needs parameter",
+        "rule-set-only item needs parameter",
     ],
 )
-@pytest.mark.usefixtures(
-    "load_dummy_data",
-    "load_dummy_rule_set",
-    "load_standalone_dummy_rule_set",
-)
+@pytest.mark.usefixtures("load_dummy_rule_set")
 @pytest.mark.integration
 def test_delete_merged_item(
     client_with_api_key_write_permission: TestClient,
-    identifier: str,
+    load_dummy_data: dict[str, AnyExtractedModel],
+    load_standalone_dummy_rule_set: OrganizationalUnitRuleSetResponse,
+    item_name: str,
     url_params: str,
 ) -> None:
+    # Get item for current test
+    item = {
+        **load_dummy_data,
+        "standalone_rule_set": load_standalone_dummy_rule_set,
+    }[item_name]
+
     # Attempt to delete the item
     response = client_with_api_key_write_permission.delete(
-        f"/v0/merged-item/{identifier}?{url_params}"
+        f"/v0/merged-item/{item.stableTargetId}?{url_params}"
     )
     assert response.status_code == status.HTTP_204_NO_CONTENT, response.text
     assert response.content == b""
 
     # Verify item is deleted
     get_response = client_with_api_key_write_permission.get(
-        f"/v0/merged-item/{identifier}"
+        f"/v0/merged-item/{item.stableTargetId}"
     )
     assert get_response.status_code == status.HTTP_404_NOT_FOUND
 
 
-@pytest.mark.parametrize("url_params", ["", "include_rule_set=false"])
+@pytest.mark.parametrize(
+    (
+        "item_name",
+        "url_params",
+        "status_code_delete",
+        "status_code_after",
+    ),
+    [
+        (
+            "organizational_unit_2",
+            "",
+            status.HTTP_412_PRECONDITION_FAILED,
+            status.HTTP_200_OK,
+        ),
+        (
+            "organizational_unit_2",
+            "include_rule_set=false",
+            status.HTTP_412_PRECONDITION_FAILED,
+            status.HTTP_200_OK,
+        ),
+        (
+            "contact_point_1",
+            "",
+            status.HTTP_409_CONFLICT,
+            status.HTTP_200_OK,
+        ),
+        (
+            "not_a_real_item",
+            "",
+            status.HTTP_404_NOT_FOUND,
+            status.HTTP_404_NOT_FOUND,
+        ),
+    ],
+    ids=[
+        "item with rule set without parameter",
+        "item with rule set with explicit parameter false",
+        "item with inbound connections",
+        "non-existent items not found",
+    ],
+)
 @pytest.mark.usefixtures("load_dummy_rule_set")
 @pytest.mark.integration
-def test_delete_merged_item_precondition_failed(
+def test_delete_merged_item_fails(  # noqa: PLR0913
     client_with_api_key_write_permission: TestClient,
     load_dummy_data: dict[str, AnyExtractedModel],
+    item_name: str,
     url_params: str,
+    status_code_delete: int,
+    status_code_after: int,
 ) -> None:
-    identifier = load_dummy_data["organizational_unit_2"].stableTargetId
-    response = client_with_api_key_write_permission.delete(
-        f"/v0/merged-item/{identifier}?{url_params}"
-    )
+    # Get item for current test
+    item = load_dummy_data.get(item_name, Mock(stableTargetId="notARealIdentifier"))
+
     # Should fail when there are rules, but `include_rule_set` is not set to `true`
-    assert response.status_code == status.HTTP_412_PRECONDITION_FAILED, response.text
+    response = client_with_api_key_write_permission.delete(
+        f"/v0/merged-item/{item.stableTargetId}?{url_params}"
+    )
+    assert response.status_code == status_code_delete, response.text
 
     # Item should still exist (deletion failed)
     get_response = client_with_api_key_write_permission.get(
-        f"/v0/merged-item/{identifier}"
+        f"/v0/merged-item/{item.stableTargetId}"
     )
-    assert get_response.status_code == status.HTTP_200_OK, response.text
-
-
-@pytest.mark.integration
-def test_delete_merged_item_not_found(
-    client_with_api_key_write_permission: TestClient,
-) -> None:
-    response = client_with_api_key_write_permission.delete(
-        "/v0/merged-item/notARealIdentifier?include_rule_set=false"
-    )
-    assert response.status_code == status.HTTP_404_NOT_FOUND, response.text
+    assert get_response.status_code == status_code_after, response.text

@@ -262,18 +262,45 @@ def test_get_merged_item_from_graph_not_found() -> None:
 
 
 @pytest.mark.integration
-@pytest.mark.usefixtures("load_dummy_data")
+def test_delete_merged_item_from_graph_not_found() -> None:
+    # Expect deletion fails for non-existent item
+    with pytest.raises(BackendError, match="Merged item was not found"):
+        delete_merged_item_from_graph(Identifier("notARealIdentifier"))
+
+
+@pytest.mark.integration
+def test_delete_merged_item_from_graph_inbound_connections(
+    load_dummy_data: dict[str, AnyExtractedModel],
+) -> None:
+    # Use item with inbound connections
+    extracted_item = load_dummy_data["organization_1"]
+
+    # Expect function call fails
+    with pytest.raises(BackendError, match=r"Deletion of MergedItem.* failed"):
+        delete_merged_item_from_graph(extracted_item.stableTargetId)
+
+    # Verify item is still here
+    merged_item = get_merged_item_from_graph(extracted_item.stableTargetId)
+    assert extracted_item.stableTargetId == merged_item.identifier
+
+
+@pytest.mark.integration
 def test_delete_merged_item_from_graph(
     load_dummy_data: dict[str, AnyExtractedModel],
     caplog: LogCaptureFixture,
 ) -> None:
-    # Use an existing item from dummy data
-    organization_1 = load_dummy_data["organization_1"]
-    test_identifier = organization_1.stableTargetId
+    # Use item without inbound connections
+    extracted_item = load_dummy_data["organizational_unit_2"]
+    merged_item = get_merged_item_from_graph(extracted_item.stableTargetId)
+    assert extracted_item.stableTargetId == merged_item.identifier
 
     # Call the function
-    delete_merged_item_from_graph(test_identifier)
+    delete_merged_item_from_graph(extracted_item.stableTargetId)
 
     # Verify logging occurred with expected content
-    assert f"deleted item {test_identifier}" in caplog.text
+    assert f"deleted item {extracted_item.stableTargetId}" in caplog.text
     assert "deleted_merged_count" in caplog.text
+
+    # Verify item is gone
+    with pytest.raises(BackendError, match="Merged item was not found"):
+        get_merged_item_from_graph(extracted_item.stableTargetId)

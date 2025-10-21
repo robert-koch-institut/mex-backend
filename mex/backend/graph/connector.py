@@ -10,14 +10,14 @@ from neo4j import (
     NotificationDisabledCategory,
     Transaction,
 )
-from neo4j.exceptions import Neo4jError
+from neo4j.exceptions import ConstraintError, Neo4jError
 
 from mex.backend.fields import (
     ALL_REFERENCE_FIELD_NAMES,
     SEARCHABLE_CLASSES,
     SEARCHABLE_FIELDS,
 )
-from mex.backend.graph.exceptions import IngestionError
+from mex.backend.graph.exceptions import DeletionFailedError, IngestionError
 from mex.backend.graph.models import IngestData, MExPrimarySource, Result
 from mex.backend.graph.query import Query, QueryBuilder
 from mex.backend.graph.transform import (
@@ -465,11 +465,19 @@ class GraphConnector(BaseConnector):
         """Delete a merged item including all extracted items and rule-sets."""
         query_builder = QueryBuilder.get()
         query = query_builder.delete_merged_item()
-        return self.commit(
-            query,
-            access_mode=WRITE_ACCESS,
-            identifier=str(identifier),
-        )
+        try:
+            return self.commit(
+                query,
+                access_mode=WRITE_ACCESS,
+                identifier=str(identifier),
+            )
+        except ConstraintError as error:
+            msg = f"Deletion of MergedItem(stableTargetId='{identifier}', ...) failed."
+            raise DeletionFailedError(
+                msg,
+                errors=get_error_details_from_neo4j_error(identifier, error),
+                retryable=error.is_retryable(),
+            ) from None
 
     def flush(self) -> None:
         """Flush the database by deleting all nodes, constraints and indexes.

@@ -15,7 +15,7 @@ from mex.common.fields import (
 )
 from mex.common.models import AnyExtractedModel, AnyRuleModel, AnyRuleSetResponse
 from mex.common.transform import to_key_and_values
-from mex.common.types import Link, Text
+from mex.common.types import AnyPrimitiveType, Link, Text
 
 
 class _SearchResultReference(TypedDict):
@@ -208,15 +208,19 @@ def validate_ingested_data(
 
 
 def get_error_details_from_neo4j_error(
-    model: AnyExtractedModel | AnyRuleSetResponse | MExPrimarySource, error: Neo4jError
+    input_: AnyExtractedModel
+    | AnyRuleSetResponse
+    | MExPrimarySource
+    | AnyPrimitiveType,
+    error: Neo4jError,
 ) -> list[ErrorDetails]:
-    """Convert ingest-data and a neo4j error into error details."""
+    """Convert an input context and a neo4j error into error details."""
     return [
         ErrorDetails(
             type=error.code or "unknown",
             msg=error.message or "unknown",
             loc=(),
-            input=model,
+            input=input_,
             ctx={"meta": error.metadata},
         )
     ]
