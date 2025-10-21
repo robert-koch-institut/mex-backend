@@ -82,11 +82,13 @@ def test_delete_merged_item(query_builder: QueryBuilder) -> None:
 MATCH (merged:MergedPerson|MergedVariable|MergedDistribution {identifier: $identifier})
 OPTIONAL MATCH (merged)<-[:stableTargetId]-(extracted:ExtractedPerson|ExtractedVariable|ExtractedDistribution)
 OPTIONAL MATCH (merged)<-[:stableTargetId]-(rule:AdditivePerson|AdditiveVariable|AdditiveDistribution)
+OPTIONAL MATCH (merged)-[outbound]->()
 OPTIONAL MATCH (extracted)-[]->(extracted_nested:Link|Text|Location)
 OPTIONAL MATCH (rule)-[]->(rule_nested:Link|Text|Location)
 
 DETACH DELETE extracted_nested, rule_nested
 DETACH DELETE extracted, rule
+DELETE outbound
 DELETE merged
 
 RETURN
