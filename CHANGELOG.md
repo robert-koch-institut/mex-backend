@@ -8,14 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- testing entry point
 
-- update mex-common dependency to 1.5
+- added backend-testing entry point
 - persons have rki org as affiliation
 
 ### Changes
 
 - temporarily lock fastapi to 0.118 because 0.119 breaks our swagger
+- upgrade neo4j dependency to 2025.09
+- upgrade mex-common dependency to 1.5
 
 ### Deprecated
 
