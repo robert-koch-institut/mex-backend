@@ -1,5 +1,10 @@
 <# Delete a merged item along with its associated extracted, rule and nested items.
 
+Incoming edges from the according extracted item and rules are detached (= deleted).
+Outgoing edges are deleted separately. If there are still incoming edges (= item is
+referenced by other items), Neo4j will throw an error when trying to delete the merged
+item. Therefore referenced merged item can not be deleted by this endpoint.
+
 Globals:
     merged_labels: List of all merged class labels
     rule_labels: List of all rule class labels
