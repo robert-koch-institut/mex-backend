@@ -1,4 +1,5 @@
 from typing import Any, cast
+from unittest.mock import Mock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -10,6 +11,7 @@ from mex.common.models import (
     AnyExtractedModel,
     ExtractedOrganizationalUnit,
     OrganizationalUnitRuleSetRequest,
+    OrganizationalUnitRuleSetResponse,
     SubtractiveOrganizationalUnit,
 )
 from mex.common.types import Validation
@@ -449,3 +451,113 @@ def test_get_merged_item_not_found(
         "/v0/merged-item/notARealIdentifier"
     )
     assert response.status_code == status.HTTP_404_NOT_FOUND, response.text
+
+
+@pytest.mark.parametrize(
+    ("item_name", "url_params"),
+    [
+        ("activity_1", ""),
+        ("activity_1", "include_rule_set=true"),
+        ("organizational_unit_2", "include_rule_set=true"),
+        ("standalone_rule_set", "include_rule_set=true"),
+    ],
+    ids=[
+        "item without rule set does not need parameter",
+        "item without rule set can have parameter",
+        "item with rule set needs parameter",
+        "rule-set-only item needs parameter",
+    ],
+)
+@pytest.mark.usefixtures("load_dummy_rule_set")
+@pytest.mark.integration
+def test_delete_merged_item(
+    client_with_api_key_write_permission: TestClient,
+    load_dummy_data: dict[str, AnyExtractedModel],
+    load_standalone_dummy_rule_set: OrganizationalUnitRuleSetResponse,
+    item_name: str,
+    url_params: str,
+) -> None:
+    # Get item for current test
+    item = {
+        **load_dummy_data,
+        "standalone_rule_set": load_standalone_dummy_rule_set,
+    }[item_name]
+
+    # Attempt to delete the item
+    response = client_with_api_key_write_permission.delete(
+        f"/v0/merged-item/{item.stableTargetId}?{url_params}"
+    )
+    assert response.status_code == status.HTTP_204_NO_CONTENT, response.text
+    assert response.content == b""
+
+    # Verify item is deleted
+    get_response = client_with_api_key_write_permission.get(
+        f"/v0/merged-item/{item.stableTargetId}"
+    )
+    assert get_response.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.parametrize(
+    (
+        "item_name",
+        "url_params",
+        "status_code_delete",
+        "status_code_after",
+    ),
+    [
+        (
+            "organizational_unit_2",
+            "",
+            status.HTTP_412_PRECONDITION_FAILED,
+            status.HTTP_200_OK,
+        ),
+        (
+            "organizational_unit_2",
+            "include_rule_set=false",
+            status.HTTP_412_PRECONDITION_FAILED,
+            status.HTTP_200_OK,
+        ),
+        (
+            "contact_point_1",
+            "",
+            status.HTTP_409_CONFLICT,
+            status.HTTP_200_OK,
+        ),
+        (
+            "not_a_real_item",
+            "",
+            status.HTTP_404_NOT_FOUND,
+            status.HTTP_404_NOT_FOUND,
+        ),
+    ],
+    ids=[
+        "item with rule set without parameter",
+        "item with rule set with explicit parameter false",
+        "item with inbound connections",
+        "non-existent items not found",
+    ],
+)
+@pytest.mark.usefixtures("load_dummy_rule_set")
+@pytest.mark.integration
+def test_delete_merged_item_fails(  # noqa: PLR0913
+    client_with_api_key_write_permission: TestClient,
+    load_dummy_data: dict[str, AnyExtractedModel],
+    item_name: str,
+    url_params: str,
+    status_code_delete: int,
+    status_code_after: int,
+) -> None:
+    # Get item for current test
+    item = load_dummy_data.get(item_name, Mock(stableTargetId="notARealIdentifier"))
+
+    # Should fail when there are rules, but `include_rule_set` is not set to `true`
+    response = client_with_api_key_write_permission.delete(
+        f"/v0/merged-item/{item.stableTargetId}?{url_params}"
+    )
+    assert response.status_code == status_code_delete, response.text
+
+    # Item should still exist (deletion failed)
+    get_response = client_with_api_key_write_permission.get(
+        f"/v0/merged-item/{item.stableTargetId}"
+    )
+    assert get_response.status_code == status_code_after, response.text

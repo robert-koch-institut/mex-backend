@@ -74,6 +74,31 @@ REQUIRE (n.hadPrimarySource, n.identifierInPrimarySource) IS UNIQUE;"""
     )
 
 
+def test_delete_merged_item(query_builder: QueryBuilder) -> None:
+    query = query_builder.delete_merged_item()
+    assert (
+        query.render()
+        == """\
+MATCH (merged:MergedPerson|MergedVariable|MergedDistribution {identifier: $identifier})
+OPTIONAL MATCH (merged)<-[:stableTargetId]-(extracted:ExtractedPerson|ExtractedVariable|ExtractedDistribution)
+OPTIONAL MATCH (merged)<-[:stableTargetId]-(rule:AdditivePerson|AdditiveVariable|AdditiveDistribution)
+OPTIONAL MATCH (merged)-[outbound]->()
+OPTIONAL MATCH (extracted)-[]->(extracted_nested:Link|Text|Location)
+OPTIONAL MATCH (rule)-[]->(rule_nested:Link|Text|Location)
+
+DETACH DELETE extracted_nested, rule_nested
+DETACH DELETE extracted, rule
+DELETE outbound
+DELETE merged
+
+RETURN
+    count(DISTINCT merged) AS deleted_merged_count,
+    count(DISTINCT extracted) AS deleted_extracted_count,
+    count(DISTINCT rule) AS deleted_rule_count,
+    count(DISTINCT extracted_nested) + count(DISTINCT rule_nested) AS deleted_nested_count;"""
+    )
+
+
 def test_fetch_database_status(query_builder: QueryBuilder) -> None:
     query = query_builder.fetch_database_status()
     assert (

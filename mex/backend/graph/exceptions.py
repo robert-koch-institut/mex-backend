@@ -18,8 +18,8 @@ class InconsistentGraphError(BackendError):
     """Exception raised for inconsistencies found in the graph database."""
 
 
-class IngestionError(BackendError):
-    """Error for ingestion failures with underlying details."""
+class GraphError(BackendError):
+    """Graph error that can be constructed with more error metadata."""
 
     def __init__(
         self,
@@ -39,3 +39,11 @@ class IngestionError(BackendError):
     def is_retryable(self) -> bool:
         """Whether the error is retryable."""
         return self._retryable
+
+
+class IngestionError(GraphError):
+    """Error for ingestion failures with underlying details."""
+
+
+class DeletionFailedError(GraphError):
+    """Exception raised when the the specified item could not be deleted."""

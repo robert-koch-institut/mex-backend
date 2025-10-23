@@ -1,11 +1,11 @@
 from pydantic_core import ErrorDetails
 
-from mex.backend.graph.exceptions import IngestionError
+from mex.backend.graph.exceptions import GraphError
 
 
-def test_ingestion_error() -> None:
+def test_graph_error() -> None:
     details = ErrorDetails(type="foo", loc=(9, 9), msg="danger", input=None)
-    error = IngestionError("Something is wrong", errors=(details,), retryable=True)
+    error = GraphError("Something is wrong", errors=(details,), retryable=True)
     assert error.args[0] == "Something is wrong"
     assert error.is_retryable()
     assert error.errors() == [details]

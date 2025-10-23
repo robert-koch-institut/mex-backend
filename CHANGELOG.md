@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - update mex-common dependency to 1.5
 - persons have rki org as affiliation
+- add merged item deletion endpoint
 
 ### Changes
 

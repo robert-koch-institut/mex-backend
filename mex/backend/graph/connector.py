@@ -10,14 +10,14 @@ from neo4j import (
     NotificationDisabledCategory,
     Transaction,
 )
-from neo4j.exceptions import Neo4jError
+from neo4j.exceptions import ConstraintError, Neo4jError
 
 from mex.backend.fields import (
     ALL_REFERENCE_FIELD_NAMES,
     SEARCHABLE_CLASSES,
     SEARCHABLE_FIELDS,
 )
-from mex.backend.graph.exceptions import IngestionError
+from mex.backend.graph.exceptions import DeletionFailedError, IngestionError
 from mex.backend.graph.models import IngestData, MExPrimarySource, Result
 from mex.backend.graph.query import Query, QueryBuilder
 from mex.backend.graph.transform import (
@@ -368,22 +368,22 @@ class GraphConnector(BaseConnector):
     def exists_item(
         self,
         identifier: Identifier,
-        entity_type: str,
+        entity_types: list[str],
     ) -> bool:
         """Validate whether an item with the given identifier and entity type exists.
 
         Args:
             identifier: Identifier of the to-be-checked item
-            entity_type: Entity type of the to-be-checked item
+            entity_types: Allowed entity types of the to-be-checked item
 
         Returns:
             Boolean representing the existence of the requested item
         """
-        if entity_type not in ALL_MODEL_CLASSES_BY_NAME:
+        if not all(e in ALL_MODEL_CLASSES_BY_NAME for e in entity_types):
             return False
         query_builder = QueryBuilder.get()
         query = query_builder.exists_item(
-            node_labels=[entity_type],
+            node_labels=entity_types,
         )
         result = self.commit(
             query,
@@ -460,6 +460,24 @@ class GraphConnector(BaseConnector):
                     else:
                         tx.commit()
                 yield
+
+    def delete_item(self, identifier: str) -> Result:
+        """Delete a merged item including all extracted items and rule-sets."""
+        query_builder = QueryBuilder.get()
+        query = query_builder.delete_merged_item()
+        try:
+            return self.commit(
+                query,
+                access_mode=WRITE_ACCESS,
+                identifier=str(identifier),
+            )
+        except ConstraintError as error:
+            msg = f"Deletion of MergedItem(stableTargetId='{identifier}', ...) failed."
+            raise DeletionFailedError(
+                msg,
+                errors=get_error_details_from_neo4j_error(identifier, error),
+                retryable=error.is_retryable(),
+            ) from None
 
     def flush(self) -> None:
         """Flush the database by deleting all nodes, constraints and indexes.

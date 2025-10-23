@@ -1319,10 +1319,7 @@ def test_mocked_graph_exists_item(
     mocked_graph.return_value = [{"exists": True}]
 
     graph = GraphConnector.get()
-    graph.exists_item(
-        identifier=Identifier.generate(99),
-        entity_type="MergedFoo",
-    )
+    graph.exists_item(Identifier.generate(99), ["MergedFoo"])
 
     assert mocked_graph.call_args_list[-1] == call(
         call(
@@ -1334,14 +1331,16 @@ def test_mocked_graph_exists_item(
 
 
 @pytest.mark.parametrize(
-    ("stable_target_id", "entity_type", "exists"),
+    ("stable_target_id", "entity_types", "exists"),
     [
-        ("bFQoRhcVH5DHUB", "MergedContactPoint", True),
-        ("bFQoRhcVH5DHUB", "MergedActivity", False),
-        ("thisIdDoesNotExist", "MergedActivity", False),
+        ("bFQoRhcVH5DHUB", ["MergedContactPoint"], True),
+        ("bFQoRhcVH5DHUB", ["MergedPerson", "MergedContactPoint"], True),
+        ("bFQoRhcVH5DHUB", ["MergedActivity"], False),
+        ("thisIdDoesNotExist", ["MergedActivity"], False),
     ],
     ids=[
         "found with type filter",
+        "found with multiple types",
         "missed due to filter",
         "missed due to identifier",
     ],
@@ -1350,12 +1349,12 @@ def test_mocked_graph_exists_item(
 @pytest.mark.integration
 def test_graph_exists_item(
     stable_target_id: Identifier,
-    entity_type: str,
+    entity_types: list[str],
     exists: bool,  # noqa: FBT001
 ) -> None:
     graph = GraphConnector.get()
 
-    assert graph.exists_item(stable_target_id, entity_type) == exists
+    assert graph.exists_item(stable_target_id, entity_types) == exists
 
 
 @pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
@@ -1829,6 +1828,32 @@ def test_connector_flush_fails(monkeypatch: MonkeyPatch) -> None:
         MExError, match="database flush was attempted outside of debug mode"
     ):
         graph.flush()
+
+
+@pytest.mark.usefixtures("mocked_query_class", "mocked_redis")
+def test_mocked_graph_delete_item(mocked_graph: MockedGraph) -> None:
+    mocked_graph.return_value = [
+        {
+            "deleted_merged_count": 1,
+            "deleted_extracted_count": 2,
+            "deleted_rule_count": 1,
+            "deleted_nested_count": 3,
+        }
+    ]
+    graph = GraphConnector.get()
+    result = graph.delete_item(Identifier.generate(99))
+
+    assert mocked_graph.call_args_list[-1] == call(
+        call("delete_merged_item"),
+        {"identifier": str(Identifier.generate(99))},
+    )
+
+    assert result.one() == {
+        "deleted_merged_count": 1,
+        "deleted_extracted_count": 2,
+        "deleted_rule_count": 1,
+        "deleted_nested_count": 3,
+    }
 
 
 @pytest.mark.integration
