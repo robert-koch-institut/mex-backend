@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changes
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [1.2.0] - 2025-10-23
+
+### Added
+
 - added backend-testing entry point
 - persons have rki org as affiliation
 - add merged item deletion endpoint
@@ -19,15 +33,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - upgrade neo4j dependency to 2025.09
 - upgrade mex-common dependency to 1.5
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 
 - fixed allowed values for the `referenceField` filter parameter
-
-### Security
 
 ## [1.1.1] - 2025-10-06
 
