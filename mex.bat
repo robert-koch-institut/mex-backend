@@ -46,7 +46,7 @@ exit /b %errorlevel%
 :test
 @REM run the unit and integration test suites
 echo running all tests
-pdm run pytest --numprocesses=auto --dist=worksteal
+pdm run pytest
 exit /b %errorlevel%
 
 
