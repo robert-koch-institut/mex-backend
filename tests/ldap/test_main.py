@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
 
 from mex.common.models import MergedPerson
-from mex.common.types import Email, MergedPersonIdentifier
+from mex.common.types import MergedPersonIdentifier
 
 
 def test_get_merged_person_from_login(
@@ -32,7 +32,7 @@ def test_get_merged_person_from_login(
         mock_get_provider.return_value = mock_provider
 
         mock_person = MergedPerson(
-            email=[Email("person_1@example.com")],
+            email=["person_1@example.com"],
             fullName=["Bernd, Brot"],
             identifier=MergedPersonIdentifier("bFQoRhcVH5DHUI"),
             entityType="MergedPerson",
