@@ -16,7 +16,6 @@ def extracted_organizational_units() -> list[ExtractedOrganizationalUnit]:
     """Auxiliary function to get ldap as primary resource and ingest org units."""
     organigram_units = extract_organigram_units()
     organigram_primary_source = extracted_primary_source_organigram()
-
     unit_container = search_extracted_items_in_graph(
         entity_type=["ExtractedOrganizationalUnit"],
         referenced_identifiers=[organigram_primary_source.stableTargetId],
@@ -25,10 +24,9 @@ def extracted_organizational_units() -> list[ExtractedOrganizationalUnit]:
     )
     if unit_container.total >= len(organigram_units):
         return cast("list[ExtractedOrganizationalUnit]", unit_container.items)
-
     extracted_units = transform_organigram_units_to_organizational_units(
         organigram_units,
-        organigram_primary_source,
+        organigram_primary_source.stableTargetId,
         extracted_organization_rki(),
     )
     connector = GraphConnector.get()
