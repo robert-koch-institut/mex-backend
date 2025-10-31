@@ -76,5 +76,5 @@ jobs:
       - name: Run test suite
         env:
           MEX_GRAPH_URL: neo4j://localhost:7687
-          MEX_BACKEND_REDIS_URL: redis://localhost:6379
+          MEX_BACKEND_REDIS_URL: valkey://localhost:6379
         run: make pytest
