@@ -35,7 +35,7 @@ jobs:
         ports:
           - 7687:7687
       redis:
-        image: redis:8.2.2
+        image: valkey/valkey:9.0.0
         ports:
           - 6379:6379
 
