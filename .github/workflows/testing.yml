@@ -37,7 +37,7 @@ jobs:
       redis:
         image: valkey/valkey:9.0.0
         ports:
-          - 9999:9999
+          - 6379:6379
 
     steps:
       - name: Checkout repo
