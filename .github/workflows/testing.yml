@@ -35,9 +35,7 @@ jobs:
         ports:
           - 7687:7687
       redis:
-        image: bitnamilegacy/redis:8.2.1
-        env:
-          ALLOW_EMPTY_PASSWORD: yes
+        image: redis:8.2.2
         ports:
           - 6379:6379
 
