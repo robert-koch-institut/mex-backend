@@ -10,7 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 from neo4j import Driver, Session, SummaryCounters, Transaction
 from pytest import FixtureRequest, MonkeyPatch
-from redis.client import Redis
+from valkey import Redis
 
 from mex.artificial.helpers import generate_artificial_extracted_items
 from mex.backend.cache.connector import CacheConnector, LocalCache, RedisCache

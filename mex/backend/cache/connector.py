@@ -2,7 +2,7 @@ import json
 from typing import Any, cast
 
 from pydantic import BaseModel, SecretStr
-from redis import Redis
+from valkey import Redis
 
 from mex.backend.settings import BackendSettings
 from mex.common.connector import BaseConnector
@@ -34,7 +34,7 @@ class RedisCache:
 
     def close(self) -> None:
         """Close the Redis connection."""
-        return self._client.close()
+        self._client.close()  # type: ignore[no-untyped-call]
 
 
 class LocalCache(dict[str, str]):

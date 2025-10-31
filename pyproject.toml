@@ -14,9 +14,9 @@ dependencies = [
     "mex-common>=1.5,<1.6",
     "neo4j>=5",
     "pydantic>=2",
-    "redis[hiredis]>=6",
     "starlette>=0.47",
     "uvicorn[standard]>=0.35",
+    "valkey[libvalkey]>=6.1.1",
 ]
 optional-dependencies.dev = [
     "httpx>=0.28",
@@ -50,6 +50,10 @@ python_version = "3.11"
 show_error_codes = true
 strict = true
 plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["valkey.*"]
+ignore_missing_imports = true
 
 [tool.pdm]
 distribution = true

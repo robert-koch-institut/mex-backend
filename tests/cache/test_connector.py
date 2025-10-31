@@ -5,9 +5,9 @@ from unittest.mock import Mock
 import pytest
 from pydantic import BaseModel
 from pytest import MonkeyPatch
-from redis import Redis
-from redis.exceptions import ConnectionError as RedisConnectionError
-from redis.exceptions import RedisError
+from valkey import Redis
+from valkey.exceptions import ConnectionError as RedisConnectionError
+from valkey.exceptions import ValkeyError
 
 from mex.backend.cache.connector import CacheConnector, LocalCache, RedisCache
 from mex.backend.settings import BackendSettings
@@ -250,8 +250,8 @@ def test_redis_operation_errors(
     monkeypatch: MonkeyPatch, sample_model: DummyModel
 ) -> None:
     mock_redis = Mock()
-    mock_redis.get.side_effect = RedisError("Redis operation failed")
-    mock_redis.set.side_effect = RedisError("Redis operation failed")
+    mock_redis.get.side_effect = ValkeyError("Redis operation failed")
+    mock_redis.set.side_effect = ValkeyError("Redis operation failed")
 
     monkeypatch.setattr(Redis, "from_url", lambda url: mock_redis)
     settings = BackendSettings.get()
@@ -259,10 +259,10 @@ def test_redis_operation_errors(
 
     connector = CacheConnector()
 
-    with pytest.raises(RedisError):
+    with pytest.raises(ValkeyError):
         connector.get_value("test_key")
 
-    with pytest.raises(RedisError):
+    with pytest.raises(ValkeyError):
         connector.set_value("test_key", sample_model)
 
 
