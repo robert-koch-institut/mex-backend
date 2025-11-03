@@ -5,11 +5,11 @@ from unittest.mock import Mock
 import pytest
 from pydantic import BaseModel
 from pytest import MonkeyPatch
-from valkey import Redis
-from valkey.exceptions import ConnectionError as RedisConnectionError
+from valkey import Valkey
+from valkey.exceptions import ConnectionError as ValkeyConnectionError
 from valkey.exceptions import ValkeyError
 
-from mex.backend.cache.connector import CacheConnector, LocalCache, RedisCache
+from mex.backend.cache.connector import CacheConnector, LocalCache, ValkeyCache
 from mex.backend.settings import BackendSettings
 from mex.common.transform import MExEncoder
 
@@ -34,15 +34,15 @@ def local_cache() -> LocalCache:
 
 
 @pytest.fixture
-def mocked_redis() -> Mock:
-    """Return a mocked Redis instance."""
-    mock_redis = Mock(spec=Redis)
-    mock_redis.get.return_value = None
-    mock_redis.set.return_value = None
-    mock_redis.info.return_value = {"used_memory": 1024, "keyspace_hits": 100}
-    mock_redis.flushdb.return_value = None
-    mock_redis.close.return_value = None
-    return mock_redis
+def mocked_valkey() -> Mock:
+    """Return a mocked Valkey instance."""
+    mock_valkey = Mock(spec=Valkey)
+    mock_valkey.get.return_value = None
+    mock_valkey.set.return_value = None
+    mock_valkey.info.return_value = {"used_memory": 1024, "keyspace_hits": 100}
+    mock_valkey.flushdb.return_value = None
+    mock_valkey.close.return_value = None
+    return mock_valkey
 
 
 def test_local_cache_initialization(local_cache: LocalCache) -> None:
@@ -83,15 +83,15 @@ def test_local_cache_close(local_cache: LocalCache) -> None:
 
 
 def test_cache_connector_with_valkey_url(
-    monkeypatch: MonkeyPatch, mocked_redis: Mock
+    monkeypatch: MonkeyPatch, mocked_valkey: Mock
 ) -> None:
     settings = BackendSettings.get()
     monkeypatch.setattr(settings, "valkey_url", "valkey://localhost:6379")
-    monkeypatch.setattr(Redis, "from_url", lambda url: mocked_redis)
+    monkeypatch.setattr(Valkey, "from_url", lambda url: mocked_valkey)
 
     connector = CacheConnector()
-    assert isinstance(connector._cache, RedisCache)
-    assert connector._cache._client is mocked_redis
+    assert isinstance(connector._cache, ValkeyCache)
+    assert connector._cache._client is mocked_valkey
 
 
 def test_cache_connector_without_valkey_url(monkeypatch: MonkeyPatch) -> None:
@@ -166,7 +166,7 @@ def test_metrics_with_integer_values(monkeypatch: MonkeyPatch) -> None:
         "keyspace_misses": 50,
         "connected_clients": 5,
         "version": "7.0.0",
-        "redis_mode": "standalone",
+        "valkey_mode": "standalone",
     }
 
     connector = CacheConnector()
@@ -229,31 +229,31 @@ def test_close(monkeypatch: MonkeyPatch) -> None:
     mock_cache.close.assert_called_once()
 
 
-def test_redis_connection_error_fallback(monkeypatch: MonkeyPatch) -> None:
+def test_valkey_connection_error_fallback(monkeypatch: MonkeyPatch) -> None:
     settings = BackendSettings.get()
     monkeypatch.setattr(settings, "valkey_url", "valkey://localhost:6379")
 
     def mock_from_url(_url: str) -> Mock:
-        mock_redis = Mock()
-        mock_redis.get.side_effect = RedisConnectionError("Connection failed")
-        return mock_redis
+        mock_valkey = Mock()
+        mock_valkey.get.side_effect = ValkeyConnectionError("Connection failed")
+        return mock_valkey
 
-    monkeypatch.setattr(Redis, "from_url", mock_from_url)
+    monkeypatch.setattr(Valkey, "from_url", mock_from_url)
 
     connector = CacheConnector()
 
-    with pytest.raises(RedisConnectionError):
+    with pytest.raises(ValkeyConnectionError):
         connector.get_value("test_key")
 
 
-def test_redis_operation_errors(
+def test_valkey_operation_errors(
     monkeypatch: MonkeyPatch, sample_model: DummyModel
 ) -> None:
-    mock_redis = Mock()
-    mock_redis.get.side_effect = ValkeyError("Redis operation failed")
-    mock_redis.set.side_effect = ValkeyError("Redis operation failed")
+    mock_valkey = Mock()
+    mock_valkey.get.side_effect = ValkeyError("Valkey operation failed")
+    mock_valkey.set.side_effect = ValkeyError("Valkey operation failed")
 
-    monkeypatch.setattr(Redis, "from_url", lambda url: mock_redis)
+    monkeypatch.setattr(Valkey, "from_url", lambda url: mock_valkey)
     settings = BackendSettings.get()
     monkeypatch.setattr(settings, "valkey_url", "valkey://localhost:6379")
 
