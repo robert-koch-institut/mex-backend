@@ -82,11 +82,11 @@ def test_local_cache_close(local_cache: LocalCache) -> None:
     local_cache.close()
 
 
-def test_cache_connector_with_redis_url(
+def test_cache_connector_with_valkey_url(
     monkeypatch: MonkeyPatch, mocked_redis: Mock
 ) -> None:
     settings = BackendSettings.get()
-    monkeypatch.setattr(settings, "redis_url", "redis://localhost:6379")
+    monkeypatch.setattr(settings, "valkey_url", "valkey://localhost:6379")
     monkeypatch.setattr(Redis, "from_url", lambda url: mocked_redis)
 
     connector = CacheConnector()
@@ -94,9 +94,9 @@ def test_cache_connector_with_redis_url(
     assert connector._cache._client is mocked_redis
 
 
-def test_cache_connector_without_redis_url(monkeypatch: MonkeyPatch) -> None:
+def test_cache_connector_without_valkey_url(monkeypatch: MonkeyPatch) -> None:
     settings = BackendSettings.get()
-    monkeypatch.setattr(settings, "redis_url", None)
+    monkeypatch.setattr(settings, "valkey_url", None)
 
     connector = CacheConnector()
     assert isinstance(connector._cache, LocalCache)
@@ -231,7 +231,7 @@ def test_close(monkeypatch: MonkeyPatch) -> None:
 
 def test_redis_connection_error_fallback(monkeypatch: MonkeyPatch) -> None:
     settings = BackendSettings.get()
-    monkeypatch.setattr(settings, "redis_url", "redis://localhost:6379")
+    monkeypatch.setattr(settings, "valkey_url", "valkey://localhost:6379")
 
     def mock_from_url(_url: str) -> Mock:
         mock_redis = Mock()
@@ -255,7 +255,7 @@ def test_redis_operation_errors(
 
     monkeypatch.setattr(Redis, "from_url", lambda url: mock_redis)
     settings = BackendSettings.get()
-    monkeypatch.setattr(settings, "redis_url", "redis://localhost:6379")
+    monkeypatch.setattr(settings, "valkey_url", "valkey://localhost:6379")
 
     connector = CacheConnector()
 
@@ -270,7 +270,7 @@ def test_roundtrip_with_local_cache(
     monkeypatch: MonkeyPatch, sample_model: DummyModel
 ) -> None:
     settings = BackendSettings.get()
-    monkeypatch.setattr(settings, "redis_url", None)
+    monkeypatch.setattr(settings, "valkey_url", None)
 
     connector = CacheConnector()
 
@@ -295,7 +295,7 @@ def test_complex_model_serialization(monkeypatch: MonkeyPatch) -> None:
     )
 
     settings = BackendSettings.get()
-    monkeypatch.setattr(settings, "redis_url", None)
+    monkeypatch.setattr(settings, "valkey_url", None)
 
     connector = CacheConnector()
     connector.set_value("complex_key", complex_model)
@@ -306,7 +306,7 @@ def test_complex_model_serialization(monkeypatch: MonkeyPatch) -> None:
 
 def test_cache_isolation_after_flush(monkeypatch: MonkeyPatch) -> None:
     settings = BackendSettings.get()
-    monkeypatch.setattr(settings, "redis_url", None)
+    monkeypatch.setattr(settings, "valkey_url", None)
     monkeypatch.setattr(settings, "debug", True)
 
     connector = CacheConnector()
@@ -322,7 +322,7 @@ def test_cache_isolation_after_flush(monkeypatch: MonkeyPatch) -> None:
 
 def test_metrics_consistency(monkeypatch: MonkeyPatch) -> None:
     settings = BackendSettings.get()
-    monkeypatch.setattr(settings, "redis_url", None)
+    monkeypatch.setattr(settings, "valkey_url", None)
 
     connector = CacheConnector()
     sample_model = DummyModel(name="test", value=42)

@@ -59,15 +59,15 @@ class LocalCache(dict[str, str]):
 class CacheConnector(BaseConnector):
     """Connector to handle getting and setting cache values.
 
-    Depending on whether `redis_url` is configured, this cache connector
+    Depending on whether `valkey_url` is configured, this cache connector
     will use either a redis server or a local dictionary cache.
     """
 
     def __init__(self) -> None:
         """Create a new cache connector instance."""
         settings = BackendSettings.get()
-        if settings.redis_url:
-            self._cache: LocalCache | RedisCache = RedisCache(settings.redis_url)
+        if settings.valkey_url:
+            self._cache: LocalCache | RedisCache = RedisCache(settings.valkey_url)
         else:
             self._cache = LocalCache()
 
