@@ -51,7 +51,7 @@ from tests.conftest import MockedGraph
     ],
     ids=["new item", "existing contact point"],
 )
-@pytest.mark.usefixtures("mocked_redis")
+@pytest.mark.usefixtures("mocked_valkey")
 def test_assign_identity_mocked(
     client_with_api_key_write_permission: TestClient,
     mocked_graph: MockedGraph,
@@ -65,7 +65,7 @@ def test_assign_identity_mocked(
     assert response.json() == expected
 
 
-@pytest.mark.usefixtures("mocked_redis")
+@pytest.mark.usefixtures("mocked_valkey")
 def test_assign_identity_inconsistency_mocked(
     client_with_api_key_write_permission: TestClient,
     mocked_graph: MockedGraph,
@@ -212,7 +212,7 @@ def test_assign_identity(
     ],
     ids=["nothing found", "one item", "two items"],
 )
-@pytest.mark.usefixtures("mocked_redis")
+@pytest.mark.usefixtures("mocked_valkey")
 def test_fetch_identities_mocked(
     client_with_api_key_write_permission: TestClient,
     mocked_graph: MockedGraph,

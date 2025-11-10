@@ -34,10 +34,8 @@ jobs:
           NEO4J_AUTH: neo4j/password
         ports:
           - 7687:7687
-      redis:
-        image: bitnamilegacy/redis:8.2.1
-        env:
-          ALLOW_EMPTY_PASSWORD: yes
+      valkey:
+        image: valkey/valkey:9.0.0
         ports:
           - 6379:6379
 
@@ -78,5 +76,5 @@ jobs:
       - name: Run test suite
         env:
           MEX_GRAPH_URL: neo4j://localhost:7687
-          MEX_BACKEND_REDIS_URL: redis://localhost:6379
+          MEX_BACKEND_VALKEY_URL: valkey://localhost:6379
         run: make pytest

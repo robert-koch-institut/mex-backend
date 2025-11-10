@@ -9,7 +9,7 @@ from mex.common.models import AnyExtractedModel, ExtractedOrganizationalUnit
 from tests.conftest import MockedGraph
 
 
-@pytest.mark.usefixtures("mocked_redis")
+@pytest.mark.usefixtures("mocked_valkey")
 def test_search_extracted_items_mocked(
     client_with_api_key_read_permission: TestClient,
     mocked_graph: MockedGraph,

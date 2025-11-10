@@ -72,8 +72,8 @@ class BackendSettings(BaseSettings):
         description="Database of users.",
         validation_alias="MEX_BACKEND_API_USER_DATABASE",
     )
-    redis_url: SecretStr | None = Field(
+    valkey_url: SecretStr | None = Field(
         None,
-        description="Fully qualified URL of a redis cache server.",
-        validation_alias="MEX_BACKEND_REDIS_URL",
+        description="Fully qualified URL of a valkey cache server.",
+        validation_alias="MEX_BACKEND_VALKEY_URL",
     )

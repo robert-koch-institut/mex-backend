@@ -804,7 +804,7 @@ def test_ingest_constraint_violation(
     }
 
 
-@pytest.mark.usefixtures("mocked_graph", "mocked_redis")
+@pytest.mark.usefixtures("mocked_graph", "mocked_valkey")
 def test_ingest_mocked(
     client_with_api_key_write_permission: TestClient,
     dummy_data: dict[str, AnyExtractedModel],

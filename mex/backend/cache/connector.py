@@ -2,19 +2,19 @@ import json
 from typing import Any, cast
 
 from pydantic import BaseModel, SecretStr
-from redis import Redis
+from valkey import Valkey
 
 from mex.backend.settings import BackendSettings
 from mex.common.connector import BaseConnector
 from mex.common.transform import MExEncoder
 
 
-class RedisCache:
-    """Wrapper around redis client for a unified cache interface."""
+class ValkeyCache:
+    """Wrapper around valkey client for a unified cache interface."""
 
     def __init__(self, url: SecretStr) -> None:
-        """Create a new redis client with the given url."""
-        self._client = Redis.from_url(url.get_secret_value())
+        """Create a new valkey client with the given url."""
+        self._client = Valkey.from_url(url.get_secret_value())
 
     def get(self, key: str) -> str | None:
         """Retrieve value for the given key, or None if not found."""
@@ -25,7 +25,7 @@ class RedisCache:
         self._client.set(key, value)
 
     def info(self) -> dict[str, int | str]:
-        """Return Redis server information and statistics."""
+        """Return Valkey server information and statistics."""
         return cast("dict[str, int | str]", self._client.info())
 
     def flushdb(self) -> None:
@@ -33,8 +33,8 @@ class RedisCache:
         self._client.flushdb()
 
     def close(self) -> None:
-        """Close the Redis connection."""
-        return self._client.close()
+        """Close the Valkey connection."""
+        self._client.close()  # type: ignore[no-untyped-call]
 
 
 class LocalCache(dict[str, str]):
@@ -59,15 +59,15 @@ class LocalCache(dict[str, str]):
 class CacheConnector(BaseConnector):
     """Connector to handle getting and setting cache values.
 
-    Depending on whether `redis_url` is configured, this cache connector
-    will use either a redis server or a local dictionary cache.
+    Depending on whether `valkey_url` is configured, this cache connector
+    will use either a valkey server or a local dictionary cache.
     """
 
     def __init__(self) -> None:
         """Create a new cache connector instance."""
         settings = BackendSettings.get()
-        if settings.redis_url:
-            self._cache: LocalCache | RedisCache = RedisCache(settings.redis_url)
+        if settings.valkey_url:
+            self._cache: LocalCache | ValkeyCache = ValkeyCache(settings.valkey_url)
         else:
             self._cache = LocalCache()
 
