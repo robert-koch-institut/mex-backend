@@ -80,3 +80,16 @@ def update_and_get_rule_set(
         msg = "no merged item found for given identifier and type"
         raise NoResultFoundError(msg)
     return create_and_get_rule_set(rule_set, stable_target_id)
+
+
+def delete_rule_set_from_graph(stable_target_id: Identifier) -> None:
+    """Delete a rule-set by stableTargetId from the graph."""
+    connector = GraphConnector.get()
+    result = connector.delete_rule_set(stable_target_id)
+    record = result.one_or_none()
+    # If the MATCH didn't find the merged item, the query returns no rows
+    if not record:
+        msg = "Merged item was not found."
+        raise NoResultFoundError(msg)
+    # Note: We don't check if rules were deleted because per requirements,
+    # we should return 204 even if no rules exist

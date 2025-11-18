@@ -435,6 +435,27 @@ def test_fetch_identities(
     assert query.render() == expected
 
 
+def test_delete_rule_set(query_builder: QueryBuilder) -> None:
+    query = query_builder.delete_rule_set()
+    assert (
+        query.render()
+        == """\
+MATCH (merged:MergedPerson|MergedVariable|MergedDistribution {identifier: $stable_target_id})
+OPTIONAL MATCH (merged)<-[:stableTargetId]-(rule:AdditivePerson|AdditiveVariable|AdditiveDistribution)
+OPTIONAL MATCH (rule)-[outbound]->()
+OPTIONAL MATCH (rule)-[]->(nested:Link|Text|Location)
+
+DETACH DELETE nested
+DELETE outbound
+DETACH DELETE rule
+
+RETURN
+    merged,
+    count(DISTINCT rule) AS deleted_rule_count,
+    count(DISTINCT nested) AS deleted_nested_count;"""
+    )
+
+
 def test_merge_item(query_builder: QueryBuilder) -> None:
     query = query_builder.get_ingest_query_for_entity_type("ExtractedVariable")
     assert (

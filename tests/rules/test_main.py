@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 from fastapi.testclient import TestClient
 from starlette import status
@@ -249,6 +251,58 @@ def test_update_rule_set_not_found(
         },
     )
     assert "no merged item found" in response.text
+
+
+@pytest.mark.integration
+def test_delete_rule_set(
+    client_with_api_key_write_permission: TestClient,
+    load_dummy_rule_set: OrganizationalUnitRuleSetResponse,
+) -> None:
+    # Verify rule set exists
+    response = client_with_api_key_write_permission.get(
+        f"/v0/rule-set/{load_dummy_rule_set.stableTargetId}"
+    )
+    assert response.status_code == status.HTTP_200_OK, response.text
+
+    # Delete the rule set
+    response = client_with_api_key_write_permission.delete(
+        f"/v0/rule-set/{load_dummy_rule_set.stableTargetId}"
+    )
+    assert response.status_code == status.HTTP_204_NO_CONTENT, response.text
+    assert response.content == b""
+
+    # Verify rule set is deleted (should return 404)
+    response = client_with_api_key_write_permission.get(
+        f"/v0/rule-set/{load_dummy_rule_set.stableTargetId}"
+    )
+    assert response.status_code == status.HTTP_404_NOT_FOUND, response.text
+
+
+@pytest.mark.integration
+def test_delete_rule_set_without_rules(
+    client_with_api_key_write_permission: TestClient,
+    load_dummy_data: dict[str, Any],
+) -> None:
+    # Get an item that has no rules
+    activity_1 = load_dummy_data["activity_1"]
+
+    # Delete the rule set (should succeed with 204 even though no rules exist)
+    response = client_with_api_key_write_permission.delete(
+        f"/v0/rule-set/{activity_1.stableTargetId}"
+    )
+    assert response.status_code == status.HTTP_204_NO_CONTENT, response.text
+    assert response.content == b""
+
+
+@pytest.mark.integration
+def test_delete_rule_set_not_found(
+    client_with_api_key_write_permission: TestClient,
+) -> None:
+    # Try to delete a rule set for a non-existent merged item
+    response = client_with_api_key_write_permission.delete(
+        "/v0/rule-set/thisIdDoesNotExist"
+    )
+    assert response.status_code == status.HTTP_404_NOT_FOUND, response.text
 
 
 @pytest.mark.integration
