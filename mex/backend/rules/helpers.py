@@ -3,6 +3,7 @@ from collections import deque
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import NoResultFoundError
 from mex.backend.rules.transform import transform_raw_rules_to_rule_set_response
+from mex.common.logging import logger
 from mex.common.models import (
     RULE_SET_RESPONSE_CLASSES_BY_NAME,
     AnyRuleSetRequest,
@@ -80,3 +81,14 @@ def update_and_get_rule_set(
         msg = "no merged item found for given identifier and type"
         raise NoResultFoundError(msg)
     return create_and_get_rule_set(rule_set, stable_target_id)
+
+
+def delete_rule_set_from_graph(stable_target_id: Identifier) -> None:
+    """Delete a rule-set by stableTargetId from the graph."""
+    connector = GraphConnector.get()
+    result = connector.delete_rule_set(stable_target_id)
+    record = result.one_or_none()
+    if not record:
+        msg = "Merged item was not found."
+        raise NoResultFoundError(msg)
+    logger.info("deleted rule set for %s: %s", stable_target_id, record)

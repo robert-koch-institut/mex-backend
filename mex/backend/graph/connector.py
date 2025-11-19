@@ -479,6 +479,30 @@ class GraphConnector(BaseConnector):
                 retryable=error.is_retryable(),
             ) from None
 
+    def delete_rule_set(self, stable_target_id: str) -> Result:
+        """Delete a rule-set by stableTargetId.
+
+        Deletes all additive, subtractive, and preventive rules connected to the
+        given stableTargetId, along with their nested items and outbound connections.
+        """
+        query_builder = QueryBuilder.get()
+        query = query_builder.delete_rule_set()
+        try:
+            return self.commit(
+                query,
+                access_mode=WRITE_ACCESS,
+                stable_target_id=str(stable_target_id),
+            )
+        except ConstraintError as error:
+            msg = (
+                f"Deletion of RuleSet(stableTargetId='{stable_target_id}', ...) failed."
+            )
+            raise DeletionFailedError(
+                msg,
+                errors=get_error_details_from_neo4j_error(stable_target_id, error),
+                retryable=error.is_retryable(),
+            ) from None
+
     def flush(self) -> None:
         """Flush the database by deleting all nodes, constraints and indexes.
 
