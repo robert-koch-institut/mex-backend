@@ -36,7 +36,6 @@ from mex.common.models import (
 )
 from mex.common.transform import MExEncoder
 from mex.common.types import (
-    Email,
     Identifier,
     IdentityProvider,
     Link,
@@ -294,12 +293,12 @@ def dummy_data(
         version="Cool Version v2.13",
     )
     contact_point_1 = ExtractedContactPoint(
-        email=[Email("info@contact-point.one")],
+        email=["info@contact-point.one"],
         hadPrimarySource=primary_source_1.stableTargetId,
         identifierInPrimarySource="cp-1",
     )
     contact_point_2 = ExtractedContactPoint(
-        email=[Email("help@contact-point.two")],
+        email=["help@contact-point.two"],
         hadPrimarySource=primary_source_1.stableTargetId,
         identifierInPrimarySource="cp-2",
     )

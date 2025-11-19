@@ -5,7 +5,6 @@ from typing import Final
 from mex.common.fields import (
     ALL_MODEL_CLASSES_BY_NAME,
     ALL_TYPES_BY_FIELDS_BY_CLASS_NAMES,
-    EMAIL_FIELDS_BY_CLASS_NAME,
     REFERENCE_FIELDS_BY_CLASS_NAME,
     STRING_FIELDS_BY_CLASS_NAME,
 )
@@ -23,10 +22,7 @@ from mex.common.utils import contains_any_types, get_all_fields
 SEARCHABLE_FIELDS = sorted(
     {
         field_name
-        for field_names in chain(
-            STRING_FIELDS_BY_CLASS_NAME.values(),
-            EMAIL_FIELDS_BY_CLASS_NAME.values(),  # stopgap MX-1766
-        )
+        for field_names in STRING_FIELDS_BY_CLASS_NAME.values()
         for field_name in field_names
     }
 )
@@ -35,10 +31,7 @@ SEARCHABLE_FIELDS = sorted(
 SEARCHABLE_CLASSES = sorted(
     {
         class_name
-        for class_name, field_names in chain(
-            STRING_FIELDS_BY_CLASS_NAME.items(),
-            EMAIL_FIELDS_BY_CLASS_NAME.items(),  # stopgap MX-1766
-        )
+        for class_name, field_names in STRING_FIELDS_BY_CLASS_NAME.items()
         if field_names
     }
 )

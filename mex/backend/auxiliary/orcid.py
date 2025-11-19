@@ -33,11 +33,9 @@ def search_persons_in_orcid(
         skip=offset,
         limit=limit,
     )
+    primary_source = extracted_primary_source_orcid()
     extracted_persons = [
-        transform_orcid_person_to_mex_person(
-            person,
-            extracted_primary_source_orcid(),
-        )
+        transform_orcid_person_to_mex_person(person, primary_source.stableTargetId)
         for person in orcid_records.items
     ]
     return PaginatedItemsContainer[ExtractedPerson](
