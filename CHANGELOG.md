@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changes
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [1.3.0] - 2025-11-20
+
+### Added
+
 - delete_rule_set endpoint
 
 ### Changes
@@ -17,15 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - bumped cookiecutter template to https://github.com/robert-koch-institut/mex-template/commit/3c389d
 - **BREAKING** replace redis cache with valkey
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 
 - mex.bat test command
-
-### Security
 
 ## [1.2.0] - 2025-10-23
 
