@@ -9,13 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- delete_rule_set endpoint
-
 ### Changes
 - bumped cookiecutter template to https://github.com/robert-koch-institut/mex-template/commit/a67c71
-
-- bumped cookiecutter template to https://github.com/robert-koch-institut/mex-template/commit/6009e2
-- bumped cookiecutter template to https://github.com/robert-koch-institut/mex-template/commit/3c389d
 
 ### Deprecated
 
@@ -23,9 +18,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- mex.bat test command
-
 ### Security
+
+## [1.3.0] - 2025-11-20
+
+### Added
+
+- delete_rule_set endpoint
+
+### Changes
+
+- bumped cookiecutter template to https://github.com/robert-koch-institut/mex-template/commit/6009e2
+- bumped cookiecutter template to https://github.com/robert-koch-institut/mex-template/commit/3c389d
+- **BREAKING** replace redis cache with valkey
+
+### Fixed
+
+- mex.bat test command
 
 ## [1.2.0] - 2025-10-23
 

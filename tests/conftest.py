@@ -10,10 +10,10 @@ import pytest
 from fastapi.testclient import TestClient
 from neo4j import Driver, Session, SummaryCounters, Transaction
 from pytest import FixtureRequest, MonkeyPatch
-from redis.client import Redis
+from valkey import Valkey
 
 from mex.artificial.helpers import generate_artificial_extracted_items
-from mex.backend.cache.connector import CacheConnector, LocalCache, RedisCache
+from mex.backend.cache.connector import CacheConnector, LocalCache, ValkeyCache
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.identity.provider import GraphIdentityProvider
 from mex.backend.main import app
@@ -188,10 +188,10 @@ def mocked_graph(monkeypatch: MonkeyPatch) -> MockedGraph:
 
 
 @pytest.fixture
-def mocked_redis(monkeypatch: MonkeyPatch) -> LocalCache | RedisCache:
-    """Mock the redis client to use a local cache instead."""
+def mocked_valkey(monkeypatch: MonkeyPatch) -> LocalCache | ValkeyCache:
+    """Mock the valkey client to use a local cache instead."""
     cache = LocalCache()
-    monkeypatch.setattr(Redis, "from_url", lambda _: cache)
+    monkeypatch.setattr(Valkey, "from_url", lambda _: cache)
     return cache
 
 
@@ -238,12 +238,12 @@ def isolate_graph_database(
 
 
 @pytest.fixture(autouse=True)
-def isolate_redis_cache(
+def isolate_valkey_cache(
     is_integration_test: bool,  # noqa: FBT001
     settings: BackendSettings,
     monkeypatch: MonkeyPatch,
 ) -> None:
-    """Automatically flush the redis cache for integration testing."""
+    """Automatically flush the valkey cache for integration testing."""
     if is_integration_test:
         monkeypatch.setattr(settings, "debug", True)
         connector = CacheConnector.get()
