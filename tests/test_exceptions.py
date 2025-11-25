@@ -86,7 +86,7 @@ except InconsistentGraphError as error:
                 "message": """1 validation error for DummyModel
 numbers
   Input should be a valid list [type=list_type, input_value='foo', input_type=str]
-    For further information visit https://errors.pydantic.dev/2.9/v/list_type""",
+    For further information visit https://errors.pydantic.dev/2.12/v/list_type""",
                 "debug": {
                     "errors": [
                         {
@@ -94,7 +94,7 @@ numbers
                             "loc": ["numbers"],
                             "msg": "Input should be a valid list",
                             "input": "foo",
-                            "url": "https://errors.pydantic.dev/2.9/v/list_type",
+                            "url": "https://errors.pydantic.dev/2.12/v/list_type",
                         }
                     ],
                     "scope": MOCK_REQUEST_SCOPE,
@@ -112,7 +112,7 @@ numbers
                             "loc": ["numbers"],
                             "msg": "Input should be a valid list",
                             "input": "foo",
-                            "url": "https://errors.pydantic.dev/2.9/v/list_type",
+                            "url": "https://errors.pydantic.dev/2.12/v/list_type",
                         }
                     ],
                     "scope": MOCK_REQUEST_SCOPE,
