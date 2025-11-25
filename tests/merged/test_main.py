@@ -494,7 +494,7 @@ def test_delete_merged_item(
     get_response = client_with_api_key_write_permission.get(
         f"/v0/merged-item/{item.stableTargetId}"
     )
-    assert get_response.status_code == status.HTTP_404_NOT_FOUND
+    assert get_response.status_code == status.HTTP_404_NOT_FOUND, response.text
 
 
 @pytest.mark.parametrize(

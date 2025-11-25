@@ -1,5 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
+from starlette import status
 
 from mex.backend.auxiliary.primary_source import extracted_primary_source_ldap
 from mex.backend.auxiliary.wikidata import extracted_organization_rki
@@ -15,7 +16,7 @@ def test_search_persons_in_ldap_mocked(
 ) -> None:
     response = client_with_api_key_read_permission.get("/v0/ldap", params={"q": "test"})
     rki_organization = extracted_organization_rki()
-    assert response.status_code == 200, response.text
+    assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == {
         "items": [
             {

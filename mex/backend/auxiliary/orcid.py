@@ -36,7 +36,7 @@ def search_persons_in_orcid(
     extracted_persons = [
         transform_orcid_person_to_mex_person(
             person,
-            extracted_primary_source_orcid(),
+            extracted_primary_source_orcid().stableTargetId,
         )
         for person in orcid_records.items
     ]

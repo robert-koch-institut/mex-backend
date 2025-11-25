@@ -1,5 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
+from starlette import status
 
 from mex.common.models import MEX_PRIMARY_SOURCE_STABLE_TARGET_ID
 
@@ -11,7 +12,7 @@ def test_get_merged_person_from_login_success(
     response = client_with_basic_auth_write_permission.post(
         "/v0/merged-person-from-login"
     )
-    assert response.status_code == 200
+    assert response.status_code == status.HTTP_200_OK, response.text
     data = response.json()
     assert data["email"] == ["Writer@rki.com"]
     assert data["fullName"] == ["Writer"]
@@ -25,7 +26,7 @@ def test_search_persons_or_contact_points_in_ldap_success(
     response = client_with_basic_auth_write_permission.get(
         "/v0/ldap", params={"q": "mex", "limit": 1}
     )
-    assert response.status_code == 200
+    assert response.status_code == status.HTTP_200_OK, response.text
     data = response.json()
     assert data == {
         "items": [

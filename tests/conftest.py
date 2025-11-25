@@ -12,7 +12,7 @@ from neo4j import Driver, Session, SummaryCounters, Transaction
 from pytest import FixtureRequest, MonkeyPatch
 from valkey import Valkey
 
-from mex.artificial.helpers import generate_artificial_extracted_items
+from mex.artificial.helpers import create_artificial_items_and_rule_sets
 from mex.backend.cache.connector import CacheConnector, LocalCache, ValkeyCache
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.identity.provider import GraphIdentityProvider
@@ -26,6 +26,7 @@ from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     AdditiveOrganizationalUnit,
     AnyExtractedModel,
+    AnyRuleSetResponse,
     ExtractedActivity,
     ExtractedContactPoint,
     ExtractedOrganization,
@@ -36,7 +37,6 @@ from mex.common.models import (
 )
 from mex.common.transform import MExEncoder
 from mex.common.types import (
-    Email,
     Identifier,
     IdentityProvider,
     Link,
@@ -294,12 +294,12 @@ def dummy_data(
         version="Cool Version v2.13",
     )
     contact_point_1 = ExtractedContactPoint(
-        email=[Email("info@contact-point.one")],
+        email=["info@contact-point.one"],
         hadPrimarySource=primary_source_1.stableTargetId,
         identifierInPrimarySource="cp-1",
     )
     contact_point_2 = ExtractedContactPoint(
-        email=[Email("help@contact-point.two")],
+        email=["help@contact-point.two"],
         hadPrimarySource=primary_source_1.stableTargetId,
         identifierInPrimarySource="cp-2",
     )
@@ -364,30 +364,18 @@ def dummy_data(
 
 
 @pytest.fixture
-def artificial_extracted_items() -> list[AnyExtractedModel]:
-    return generate_artificial_extracted_items(
-        locale="de_DE",
-        seed=42,
-        count=25,
-        chattiness=16,
-        # this order is important as it represents the direction of graph relations
-        # TODO(ND): let's move that to mex-common and infer it programmatically
-        stem_types=[
-            "PrimarySource",
-            "Organization",
-            "OrganizationalUnit",
-            "ContactPoint",
-            "Person",
-            "Consent",
-            "AccessPlatform",
-            "Distribution",
-            "BibliographicResource",
-            "Activity",
-            "Resource",
-            "VariableGroup",
-            "Variable",
-        ],
-    )
+def artificial_extracted_items() -> list[AnyExtractedModel | AnyRuleSetResponse]:
+    return [
+        item
+        for container in create_artificial_items_and_rule_sets(
+            locale="de_DE",
+            seed=1,
+            count=42,
+            chattiness=8,
+        )
+        for item in [container.extracted_item, container.rule_set]
+        if item
+    ]
 
 
 def _match_organization_items(dummy_data: dict[str, AnyExtractedModel]) -> None:
@@ -420,16 +408,6 @@ def load_dummy_data(
     deque(connector.ingest_items(dummy_data.values()))
     _match_organization_items(dummy_data)
     return dummy_data
-
-
-@pytest.fixture
-def load_artificial_extracted_items(
-    artificial_extracted_items: list[AnyExtractedModel],
-) -> list[AnyExtractedModel]:
-    """Ingest artificial data into the graph."""
-    connector = GraphConnector.get()
-    deque(connector.ingest_items(artificial_extracted_items))
-    return artificial_extracted_items
 
 
 @pytest.fixture

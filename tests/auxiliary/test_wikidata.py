@@ -1,19 +1,25 @@
 import pytest
 from fastapi.testclient import TestClient
 from pytest import MonkeyPatch
+from starlette import status
 
 from mex.backend.auxiliary import wikidata
-from mex.common.models import ExtractedPrimarySource
+from mex.common.models import (
+    MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    ExtractedPrimarySource,
+)
 
 
 @pytest.mark.usefixtures("mocked_wikidata")
 def test_search_organization_in_wikidata_mocked(
     client_with_api_key_read_permission: TestClient,
     monkeypatch: MonkeyPatch,
-    extracted_primary_sources: dict[str, ExtractedPrimarySource],
 ) -> None:
     def extracted_primary_source_wikidata() -> ExtractedPrimarySource:
-        return extracted_primary_sources["wikidata"]
+        return ExtractedPrimarySource(
+            hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+            identifierInPrimarySource="wikidata",
+        )
 
     monkeypatch.setattr(
         wikidata, "extracted_primary_source_wikidata", extracted_primary_source_wikidata
@@ -22,7 +28,7 @@ def test_search_organization_in_wikidata_mocked(
     response = client_with_api_key_read_permission.get(
         "/v0/wikidata", params={"q": "Q679041"}
     )
-    assert response.status_code == 200
+    assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == {
         "items": [
             {

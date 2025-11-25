@@ -699,6 +699,7 @@ def test_ingest_extracted_and_rule(
     response = client_with_api_key_write_permission.post(
         "/v0/ingest", json={"items": [extracted_item, rule_set]}
     )
+    assert response.status_code == status.HTTP_204_NO_CONTENT, response.text
 
     response = client_with_api_key_write_permission.get(
         "/v0/merged-item", params={"entityType": "MergedPerson"}
@@ -720,6 +721,44 @@ def test_ingest_extracted_and_rule(
             }
         ],
         "total": 1,
+    }
+
+
+@pytest.mark.integration
+def test_ingest_artificial_data(
+    client_with_api_key_write_permission: TestClient,
+    artificial_extracted_items: list[AnyExtractedModel],
+) -> None:
+    response = client_with_api_key_write_permission.post(
+        "/v0/ingest", json={"items": artificial_extracted_items}
+    )
+    assert response.status_code == status.HTTP_204_NO_CONTENT, response.text
+
+    response = client_with_api_key_write_permission.get(
+        "/v0/merged-item", params={"skip": "32", "limit": "1"}
+    )
+    assert response.status_code == status.HTTP_200_OK, response.text
+    assert response.json() == {
+        "items": [
+            {
+                "affiliation": ["bFQoRhcVH5DHU9", "bFQoRhcVH5DHU5"],
+                "email": ["info@rki.de"],
+                "familyName": ["hängen einige gehören", "endlich sprechen ob"],
+                "fullName": [],
+                "givenName": ["hören"],
+                "isniId": [
+                    "https://isni.org/isni/0933295345064070",
+                    "https://isni.org/isni/1230697213369955",
+                    "https://isni.org/isni/3129455646531734",
+                    "https://isni.org/isni/8953594535588461",
+                ],
+                "memberOf": ["bFQoRhcVH5DHUN", "bFQoRhcVH5DHVb"],
+                "orcidId": ["https://orcid.org/0042-8614-8925-5679"],
+                "$type": "MergedPerson",
+                "identifier": "bFQoRhcVH5DHVh",
+            }
+        ],
+        "total": 42,
     }
 
 
