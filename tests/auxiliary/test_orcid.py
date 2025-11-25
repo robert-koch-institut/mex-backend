@@ -2,6 +2,7 @@ from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
+from starlette import status
 
 from mex.common.orcid.connector import OrcidConnector
 
@@ -46,7 +47,7 @@ def test_search_persons_in_orcid_mocked(
     response = client_with_api_key_read_permission.get(
         "/v0/orcid", params={"q": search_string}
     )
-    assert response.status_code == 200, response.text
+    assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == expected
 
 
@@ -57,7 +58,7 @@ def test_search_persons_in_orcid_empty(
     response = client_with_api_key_read_permission.get(
         "/v0/orcid", params={"q": "none shall be found"}
     )
-    assert response.status_code == 200
+    assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == {"items": [], "total": 0}
 
 
