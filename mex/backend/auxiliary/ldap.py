@@ -41,7 +41,7 @@ def search_persons_or_contact_points_in_ldap(
         transform_any_ldap_actor_to_extracted_persons_or_contact_points(
             ldap_actors,
             extracted_organizational_units(),
-            extracted_primary_source_ldap(),
+            extracted_primary_source_ldap().stableTargetId,
             extracted_organization_rki(),
         )
     )

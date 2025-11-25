@@ -45,7 +45,7 @@ def search_organizations_in_wikidata(
         raise HTTPException(404, q) from None
     extracted_organizations = list(
         transform_wikidata_organizations_to_extracted_organizations(
-            wikidata_organizations, extracted_primary_source_wikidata()
+            wikidata_organizations, extracted_primary_source_wikidata().stableTargetId
         )
     )
     return PaginatedItemsContainer[ExtractedOrganization](
@@ -65,7 +65,7 @@ def _fetch_or_insert_organization(name: str) -> ExtractedOrganization:
     wikidata_organization = get_wikidata_organization(name)
     extracted_item = transform_wikidata_organization_to_extracted_organization(
         wikidata_organization,
-        extracted_primary_source_wikidata(),
+        extracted_primary_source_wikidata().stableTargetId,
     )
     if not extracted_item:
         raise NoResultFoundError(name)

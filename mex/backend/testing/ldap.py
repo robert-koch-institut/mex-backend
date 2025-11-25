@@ -13,7 +13,7 @@ from mex.common.models import (
     MergedPerson,
     PaginatedItemsContainer,
 )
-from mex.common.types import Email, Validation
+from mex.common.types import Validation
 
 DEFAULT_LDAP_QUERY = "mex@rki.de"
 
@@ -29,7 +29,7 @@ def get_merged_person_from_login(
         hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
         identifierInPrimarySource=username,
         fullName=[username],
-        email=[Email(f"{username}@rki.com")],
+        email=[f"{username}@rki.com"],
         orcidId=["https://orcid.org/1234-5678-9012-345"],
     )
     connector = GraphConnector.get()
@@ -68,18 +68,18 @@ def search_persons_or_contact_points_in_ldap(
             hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
             identifierInPrimarySource=f"{q}1",
             fullName=[f"{q}1"],
-            email=[Email("mex1@rki.com")],
+            email=["mex1@rki.com"],
         ),
         ExtractedPerson(
             hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
             identifierInPrimarySource=f"{q}2",
             fullName=[f"{q}2"],
-            email=[Email("mex2@rki.com")],
+            email=["mex2@rki.com"],
         ),
         ExtractedContactPoint(
             hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
             identifierInPrimarySource=f"{q}3",
-            email=[Email("mex3@rki.com")],
+            email=["mex3@rki.com"],
         ),
     ]
     limited_items = items[:limit]
