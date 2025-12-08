@@ -62,6 +62,11 @@ class BackendSettings(BaseSettings):
         ),
         validation_alias="MEX_GRAPH_SESSION_TIMEOUT",
     )
+    non_matchable_types: list[str] = Field(
+        ["Consent", "Person"],
+        description="Stem types of items that are blocked from item matching.",
+        validation_alias="MEX_BACKEND_NON_MATCHABLE_TYPES",
+    )
     backend_api_key_database: APIKeyDatabase = Field(
         APIKeyDatabase(),
         description="Database of API keys.",

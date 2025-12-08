@@ -17,7 +17,11 @@ from mex.backend.fields import (
     SEARCHABLE_CLASSES,
     SEARCHABLE_FIELDS,
 )
-from mex.backend.graph.exceptions import DeletionFailedError, IngestionError
+from mex.backend.graph.exceptions import (
+    DeletionFailedError,
+    IngestionError,
+    MatchingError,
+)
 from mex.backend.graph.models import IngestData, MExPrimarySource, Result
 from mex.backend.graph.query import Query, QueryBuilder
 from mex.backend.graph.transform import (
@@ -36,6 +40,7 @@ from mex.common.models import (
     MERGED_MODEL_CLASSES_BY_NAME,
     RULE_MODEL_CLASSES_BY_NAME,
     AnyExtractedModel,
+    AnyMergedModel,
     AnyRuleModel,
     AnyRuleSetResponse,
 )
@@ -460,6 +465,56 @@ class GraphConnector(BaseConnector):
                     else:
                         tx.commit()
                 yield
+
+    def _match_item_tx(
+        self,
+        tx: Transaction,
+        extracted_item: AnyExtractedModel,
+        merged_item: AnyMergedModel,
+    ) -> None:
+        """Match an extracted item to another merged item and clean up afterwards."""
+        query_builder = QueryBuilder.get()
+
+        # check preconditions for a successful item matching
+        preconditions = Result(
+            tx.run(
+                str(query_builder.check_match_preconditions()),
+                extracted_identifier=str(extracted_item.identifier),
+                merged_identifier=str(merged_item.identifier),
+                blocked_types=BackendSettings.get().non_matchable_types,
+            )
+        )
+        if failed := [k for k, v in preconditions.one().items() if not v]:
+            msg = f"Failed preconditions: {', '.join(failed)}"
+            raise MatchingError(msg)
+
+        raise NotImplementedError
+
+    def match_item(
+        self,
+        extracted_item: AnyExtractedModel,
+        merged_item: AnyMergedModel,
+    ) -> None:
+        """Match an extracted item to another merged item and clean up afterwards."""
+        settings = BackendSettings.get()
+        with (
+            self.driver.session(default_access_mode=WRITE_ACCESS) as session,
+            session.begin_transaction(
+                timeout=settings.graph_tx_timeout,
+                metadata={
+                    "extracted_identifier": extracted_item.identifier,
+                    "old_merged_identifier": extracted_item.stableTargetId,
+                    "new_merged_identifier": merged_item.identifier,
+                },
+            ) as tx,
+        ):
+            try:
+                self._match_item_tx(tx, extracted_item, merged_item)
+            except:
+                tx.rollback()
+                raise
+            else:
+                tx.commit()
 
     def delete_item(self, identifier: str) -> Result:
         """Delete a merged item including all extracted items and rule-sets."""

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- prepare matching endpoint with endpoint, helper and precondition check
+
 ### Changes
 
 - updated template to https://github.com/robert-koch-institut/mex-template/commit/7c3e75
