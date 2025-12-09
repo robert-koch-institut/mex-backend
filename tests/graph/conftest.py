@@ -17,7 +17,7 @@ def organizational_unit_rule_set_ingest_result() -> list[list[dict[str, Any]]]:
                 "linkRels": [
                     {
                         "nodeLabels": ["MergedOrganizationalUnit"],
-                        "nodeProps": {"identifier": "cWWm02l1c6cucKjIhkFqY4"},
+                        "nodeProps": {"identifier": "bFQoRhcVH5DHU6"},
                         "edgeLabel": "parentUnit",
                         "edgeProps": {"position": 0},
                     }
@@ -95,7 +95,7 @@ def organizational_unit_rule_set_ingest_call_expectation() -> list[object]:
                 "linkRels": [
                     {
                         "nodeLabels": ["MergedOrganizationalUnit"],
-                        "nodeProps": {"identifier": "cWWm02l1c6cucKjIhkFqY4"},
+                        "nodeProps": {"identifier": "bFQoRhcVH5DHU6"},
                         "edgeLabel": "parentUnit",
                         "edgeProps": {"position": 0},
                     }

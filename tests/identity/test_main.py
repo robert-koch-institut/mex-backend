@@ -137,7 +137,7 @@ def test_assign_identity_inconsistency_mocked(
     ],
     ids=["new item", "existing contact point", "mex primary source"],
 )
-@pytest.mark.usefixtures("load_dummy_data")
+@pytest.mark.usefixtures("loaded_dummy_data")
 @pytest.mark.integration
 def test_assign_identity(
     client_with_api_key_write_permission: TestClient,
@@ -286,7 +286,7 @@ def test_fetch_identities_mocked(
         "by stableTargetId find matched orgs",
     ],
 )
-@pytest.mark.usefixtures("load_dummy_data")
+@pytest.mark.usefixtures("loaded_dummy_data")
 @pytest.mark.integration
 def test_fetch_identities(
     client_with_api_key_write_permission: TestClient,

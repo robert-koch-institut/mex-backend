@@ -473,18 +473,20 @@ class GraphConnector(BaseConnector):
         merged_item: AnyMergedModel,
     ) -> None:
         """Match an extracted item to another merged item and clean up afterwards."""
+        settings = BackendSettings.get()
         query_builder = QueryBuilder.get()
+        query = query_builder.check_match_preconditions()
 
         # check preconditions for a successful item matching
         preconditions = Result(
             tx.run(
-                str(query_builder.check_match_preconditions()),
+                query.render(),
                 extracted_identifier=str(extracted_item.identifier),
                 merged_identifier=str(merged_item.identifier),
-                blocked_types=BackendSettings.get().non_matchable_types,
+                blocked_types=[t.value for t in settings.non_matchable_types],
             )
         )
-        if failed := [k for k, v in preconditions.one().items() if not v]:
+        if failed := sorted(k for k, v in preconditions.one().items() if not v):
             msg = f"Failed preconditions: {', '.join(failed)}"
             raise MatchingError(msg)
 

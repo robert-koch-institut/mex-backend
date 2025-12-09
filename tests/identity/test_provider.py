@@ -131,7 +131,7 @@ def test_assign_identity_inconsistency_mocked(
     ],
     ids=["new item", "existing contact point", "mex primary source"],
 )
-@pytest.mark.usefixtures("load_dummy_data")
+@pytest.mark.usefixtures("loaded_dummy_data")
 @pytest.mark.integration
 def test_assign_identity(
     had_primary_source: MergedPrimarySourceIdentifier,
@@ -274,7 +274,7 @@ def test_fetch_identities_mocked(  # noqa: PLR0913
         "by stableTargetId",
     ],
 )
-@pytest.mark.usefixtures("load_dummy_data")
+@pytest.mark.usefixtures("loaded_dummy_data")
 @pytest.mark.integration
 def test_fetch_identities(
     had_primary_source: MergedPrimarySourceIdentifier | None,

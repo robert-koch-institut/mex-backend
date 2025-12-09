@@ -4,7 +4,10 @@ import pytest
 from fastapi.testclient import TestClient
 from starlette import status
 
-from mex.common.models import OrganizationalUnitRuleSetResponse
+from mex.common.models import (
+    AnyExtractedModel,
+    AnyRuleSetResponse,
+)
 from tests.conftest import get_graph
 
 
@@ -190,51 +193,25 @@ def test_get_rule_set_not_found(
     assert response.json() == {"detail": "no rules found"}
 
 
+@pytest.mark.parametrize(
+    ("rule_name", "expected"),
+    [
+        ("unit_1_rule_set", "unit_1_rule_setFOOOOO"),
+        ("unit_standalone_rule_set", "unit_standalone_rule_setBAAAA"),
+    ],
+)
 @pytest.mark.integration
 def test_get_rule_set(
     client_with_api_key_write_permission: TestClient,
-    load_dummy_rule_set: OrganizationalUnitRuleSetResponse,
+    dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
+    rule_name: str,
+    expected: dict[str, Any],
 ) -> None:
     response = client_with_api_key_write_permission.get(
-        f"/v0/rule-set/{load_dummy_rule_set.stableTargetId}"
+        f"/v0/rule-set/{dummy_data[rule_name].stableTargetId}"
     )
     assert response.status_code == status.HTTP_200_OK, response.text
-    assert response.json() == {
-        "additive": {
-            "parentUnit": "bFQoRhcVH5DHUx",
-            "name": [{"value": "Unit 1.7", "language": "en"}],
-            "alternativeName": [],
-            "email": [],
-            "shortName": [],
-            "unitOf": [],
-            "website": [
-                {"language": None, "title": "Unit Homepage", "url": "https://unit-1-7"}
-            ],
-            "$type": "AdditiveOrganizationalUnit",
-        },
-        "subtractive": {
-            "parentUnit": [],
-            "name": [],
-            "alternativeName": [],
-            "email": [],
-            "shortName": [],
-            "unitOf": [],
-            "website": [],
-            "$type": "SubtractiveOrganizationalUnit",
-        },
-        "preventive": {
-            "$type": "PreventiveOrganizationalUnit",
-            "alternativeName": [],
-            "email": [],
-            "name": [],
-            "parentUnit": [],
-            "shortName": [],
-            "unitOf": [],
-            "website": [],
-        },
-        "$type": "OrganizationalUnitRuleSetResponse",
-        "stableTargetId": load_dummy_rule_set.stableTargetId,
-    }
+    assert response.json() == expected
 
 
 @pytest.mark.integration
@@ -256,35 +233,32 @@ def test_update_rule_set_not_found(
 @pytest.mark.integration
 def test_delete_rule_set(
     client_with_api_key_write_permission: TestClient,
-    load_dummy_rule_set: OrganizationalUnitRuleSetResponse,
+    loaded_dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
 ) -> None:
+    # Get rule set identifier
+    identifier = loaded_dummy_data["unit_1_rule_set"].stableTargetId
+
     # Verify rule set exists
-    response = client_with_api_key_write_permission.get(
-        f"/v0/rule-set/{load_dummy_rule_set.stableTargetId}"
-    )
+    response = client_with_api_key_write_permission.get(f"/v0/rule-set/{identifier}")
     assert response.status_code == status.HTTP_200_OK, response.text
 
     # Delete the rule set
-    response = client_with_api_key_write_permission.delete(
-        f"/v0/rule-set/{load_dummy_rule_set.stableTargetId}"
-    )
+    response = client_with_api_key_write_permission.delete(f"/v0/rule-set/{identifier}")
     assert response.status_code == status.HTTP_204_NO_CONTENT, response.text
     assert response.content == b""
 
     # Verify rule set is deleted (should return 404)
-    response = client_with_api_key_write_permission.get(
-        f"/v0/rule-set/{load_dummy_rule_set.stableTargetId}"
-    )
+    response = client_with_api_key_write_permission.get(f"/v0/rule-set/{identifier}")
     assert response.status_code == status.HTTP_404_NOT_FOUND, response.text
 
 
 @pytest.mark.integration
 def test_delete_rule_set_without_rules(
     client_with_api_key_write_permission: TestClient,
-    load_dummy_data: dict[str, Any],
+    loaded_dummy_data: dict[str, Any],
 ) -> None:
     # Get an item that has no rules
-    activity_1 = load_dummy_data["activity_1"]
+    activity_1 = loaded_dummy_data["activity_1"]
 
     # Delete the rule set (should succeed with 204 even though no rules exist)
     response = client_with_api_key_write_permission.delete(
@@ -308,10 +282,10 @@ def test_delete_rule_set_not_found(
 @pytest.mark.integration
 def test_update_rule_set(
     client_with_api_key_write_permission: TestClient,
-    load_dummy_rule_set: OrganizationalUnitRuleSetResponse,
+    loaded_dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
 ) -> None:
     response = client_with_api_key_write_permission.put(
-        f"/v0/rule-set/{load_dummy_rule_set.stableTargetId}",
+        f"/v0/rule-set/{loaded_dummy_data['unit_1_rule_set'].stableTargetId}",
         json={
             "$type": "OrganizationalUnitRuleSetRequest",
             "additive": {
@@ -360,7 +334,7 @@ def test_update_rule_set(
             "website": [],
         },
         "$type": "OrganizationalUnitRuleSetResponse",
-        "stableTargetId": load_dummy_rule_set.stableTargetId,
+        "stableTargetId": loaded_dummy_data["unit_1_rule_set"].stableTargetId,
     }
     assert get_graph() == [
         {

@@ -16,10 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - updated template to https://github.com/robert-koch-institut/mex-template/commit/7c3e75
 - updated template to https://github.com/robert-koch-institut/mex-template/commit/a67c71
 - updated mex-common and mex-artificial to latest versions
+- change response rendering from stdlib json to orjson with sorted keys and indent
 
 ### Deprecated
 
 ### Removed
+
+- dropped support for hadPrimarySource search filter, use referenceField instead
 
 ### Fixed
 

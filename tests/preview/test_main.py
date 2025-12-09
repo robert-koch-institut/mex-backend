@@ -130,7 +130,7 @@ from starlette import status
     ],
 )
 @pytest.mark.integration
-@pytest.mark.usefixtures("load_dummy_data")
+@pytest.mark.usefixtures("loaded_dummy_data")
 def test_preview(
     stable_target_id: str,
     client_with_api_key_read_permission: TestClient,
@@ -165,7 +165,7 @@ def test_preview(
                         "version": None,
                     }
                 ],
-                "total": 9,
+                "total": 11,
             },
         ),
         (
@@ -243,86 +243,18 @@ def test_preview(
             {
                 "items": [
                     {
-                        "$type": "PreviewOrganizationalUnit",
-                        "alternativeName": [],
-                        "email": [],
-                        "identifier": "bFQoRhcVH5DHUF",
-                        "name": [
-                            {"language": "en", "value": "Unit 1.6"},
-                            {"language": "en", "value": "Unit 1.7"},
-                        ],
                         "parentUnit": "bFQoRhcVH5DHUx",
-                        "shortName": [],
-                        "unitOf": ["bFQoRhcVH5DHUv"],
-                        "website": [
-                            {
-                                "language": None,
-                                "title": "Unit Homepage",
-                                "url": "https://unit-1-7",
-                            }
-                        ],
-                    }
-                ],
-                "total": 1,
-            },
-        ),
-        (
-            "?hadPrimarySource=bFQoRhcVH5DHUt",  # deprecated
-            {
-                "items": [
-                    {
-                        "$type": "PreviewOrganization",
-                        "alternativeName": [],
-                        "geprisId": [],
-                        "gndId": [],
-                        "identifier": "bFQoRhcVH5DHUv",
-                        "isniId": [],
-                        "officialName": [
-                            {"language": "de", "value": "RKI"},
-                            {"language": "en", "value": "Robert Koch Institute"},
-                            {
-                                "language": "de",
-                                "value": "Robert Koch Institut ist the best",
-                            },
-                        ],
-                        "rorId": [],
-                        "shortName": [],
-                        "viafId": [],
-                        "wikidataId": [],
-                    },
-                    {
-                        "$type": "PreviewOrganizationalUnit",
+                        "name": [{"value": "Unit 1.6", "language": "en"}],
                         "alternativeName": [],
                         "email": [],
-                        "identifier": "bFQoRhcVH5DHUF",
-                        "name": [
-                            {"language": "en", "value": "Unit 1.6"},
-                            {"language": "en", "value": "Unit 1.7"},
-                        ],
-                        "parentUnit": "bFQoRhcVH5DHUx",
-                        "shortName": [],
-                        "unitOf": ["bFQoRhcVH5DHUv"],
-                        "website": [
-                            {
-                                "language": None,
-                                "title": "Unit Homepage",
-                                "url": "https://unit-1-7",
-                            }
-                        ],
-                    },
-                    {
-                        "$type": "PreviewOrganizationalUnit",
-                        "alternativeName": [],
-                        "email": [],
-                        "identifier": "bFQoRhcVH5DHUx",
-                        "name": [{"language": "en", "value": "Unit 1"}],
-                        "parentUnit": None,
                         "shortName": [],
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [],
-                    },
+                        "$type": "PreviewOrganizationalUnit",
+                        "identifier": "bFQoRhcVH5DHUF",
+                    }
                 ],
-                "total": 3,
+                "total": 1,
             },
         ),
         (
@@ -330,35 +262,40 @@ def test_preview(
             {
                 "items": [
                     {
-                        "$type": "PreviewOrganization",
+                        "officialName": [
+                            {"value": "RKI", "language": "de"},
+                            {"value": "Robert Koch Institute", "language": "en"},
+                        ],
                         "alternativeName": [],
                         "geprisId": [],
                         "gndId": [],
-                        "identifier": "bFQoRhcVH5DHUv",
                         "isniId": [],
-                        "officialName": [
-                            {"language": "de", "value": "RKI"},
-                            {"language": "en", "value": "Robert Koch Institute"},
-                            {
-                                "language": "de",
-                                "value": "Robert Koch Institut ist the best",
-                            },
-                        ],
                         "rorId": [],
                         "shortName": [],
                         "viafId": [],
                         "wikidataId": [],
+                        "$type": "PreviewOrganization",
+                        "identifier": "bFQoRhcVH5DHUD",
                     },
                     {
-                        "$type": "PreviewOrganizationalUnit",
+                        "parentUnit": "bFQoRhcVH5DHUx",
+                        "name": [{"value": "Unit 1.6", "language": "en"}],
                         "alternativeName": [],
                         "email": [],
+                        "shortName": [],
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [],
+                        "$type": "PreviewOrganizationalUnit",
                         "identifier": "bFQoRhcVH5DHUF",
-                        "name": [
-                            {"language": "en", "value": "Unit 1.6"},
-                            {"language": "en", "value": "Unit 1.7"},
-                        ],
+                    },
+                    {
                         "parentUnit": "bFQoRhcVH5DHUx",
+                        "name": [
+                            {"value": "Unit 1", "language": "en"},
+                            {"value": "Unit 1.7", "language": "en"},
+                        ],
+                        "alternativeName": [],
+                        "email": [],
                         "shortName": [],
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [
@@ -368,17 +305,8 @@ def test_preview(
                                 "url": "https://unit-1-7",
                             }
                         ],
-                    },
-                    {
                         "$type": "PreviewOrganizationalUnit",
-                        "alternativeName": [],
-                        "email": [],
                         "identifier": "bFQoRhcVH5DHUx",
-                        "name": [{"language": "en", "value": "Unit 1"}],
-                        "parentUnit": None,
-                        "shortName": [],
-                        "unitOf": ["bFQoRhcVH5DHUv"],
-                        "website": [],
                     },
                 ],
                 "total": 3,
@@ -394,13 +322,12 @@ def test_preview(
         "full text search",
         "identifier filter",
         "identifier filter with composite result",
-        "had primary source filter",
         "generic id filter",
         "identifier not found",
         "full text not found",
     ],
 )
-@pytest.mark.usefixtures("load_dummy_data", "load_dummy_rule_set")
+@pytest.mark.usefixtures("loaded_dummy_data")
 @pytest.mark.integration
 def test_search_preview_items(
     client_with_api_key_read_permission: TestClient,

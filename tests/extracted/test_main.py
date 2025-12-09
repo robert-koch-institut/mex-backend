@@ -1,11 +1,15 @@
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
 from starlette import status
 
-from mex.common.models import AnyExtractedModel, ExtractedOrganizationalUnit
+from mex.common.models import (
+    AnyExtractedModel,
+    AnyRuleSetResponse,
+    ExtractedOrganizationalUnit,
+)
 from tests.conftest import MockedGraph
 
 
@@ -159,18 +163,20 @@ def test_search_extracted_items_mocked(
             {
                 "items": [
                     {
-                        "$type": "ExtractedOrganizationalUnit",
+                        "hadPrimarySource": "bFQoRhcVH5DHUt",
+                        "identifierInPrimarySource": "ou-1",
+                        "parentUnit": None,
+                        "name": [{"value": "Unit 1", "language": "en"}],
                         "alternativeName": [],
                         "email": [],
-                        "hadPrimarySource": "bFQoRhcVH5DHUt",
-                        "identifier": "bFQoRhcVH5DHUw",
-                        "identifierInPrimarySource": "ou-1",
-                        "name": [{"language": "en", "value": "Unit 1"}],
-                        "parentUnit": None,
                         "shortName": [],
-                        "stableTargetId": "bFQoRhcVH5DHUx",
                         "unitOf": ["bFQoRhcVH5DHUv"],
-                        "website": [],
+                        "website": [
+                            {"language": None, "title": None, "url": "https://ou-1"}
+                        ],
+                        "$type": "ExtractedOrganizationalUnit",
+                        "identifier": "bFQoRhcVH5DHUw",
+                        "stableTargetId": "bFQoRhcVH5DHUx",
                     }
                 ],
                 "total": 1,
@@ -189,7 +195,7 @@ def test_search_extracted_items_mocked(
         "full text not found",
     ],
 )
-@pytest.mark.usefixtures("load_dummy_data")
+@pytest.mark.usefixtures("loaded_dummy_data")
 @pytest.mark.integration
 def test_search_extracted_items(
     client_with_api_key_read_permission: TestClient,
@@ -234,9 +240,11 @@ def test_search_extracted_items_invalid_reference_field_filter(
 @pytest.mark.integration
 def test_get_extracted_item(
     client_with_api_key_read_permission: TestClient,
-    load_dummy_data: dict[str, AnyExtractedModel],
+    loaded_dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
 ) -> None:
-    organization_1 = load_dummy_data["organization_1"]
+    organization_1 = cast(
+        "ExtractedOrganizationalUnit", loaded_dummy_data["organization_1"]
+    )
     response = client_with_api_key_read_permission.get(
         f"/v0/extracted-item/{organization_1.identifier}"
     )

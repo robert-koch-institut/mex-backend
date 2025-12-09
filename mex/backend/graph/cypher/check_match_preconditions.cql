@@ -38,5 +38,5 @@ WITH
    count(new_rules) = 3 AS new_rules_exist,
    elementId(old_merged) <> elementId(new_merged) AS not_self_merge,
    labels(old_merged) = labels(new_merged) AS matching_types,
-   ANY(label IN labels(extracted) WHERE label IN $blocked_types) <> false AS allowed_types,
+   NOT ANY(label IN labels(new_merged) WHERE label IN $blocked_types) AS allowed_types
 RETURN *;

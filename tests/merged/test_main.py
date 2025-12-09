@@ -9,9 +9,10 @@ from mex.backend.rules.helpers import update_and_get_rule_set
 from mex.common.merged.main import create_merged_item
 from mex.common.models import (
     AnyExtractedModel,
+    AnyRuleSetResponse,
+    ExtractedOrganization,
     ExtractedOrganizationalUnit,
     OrganizationalUnitRuleSetRequest,
-    OrganizationalUnitRuleSetResponse,
     SubtractiveOrganizationalUnit,
 )
 from mex.common.types import Validation
@@ -121,7 +122,7 @@ def test_search_merged_items_mocked(
                         "version": None,
                     }
                 ],
-                "total": 9,
+                "total": 11,
             },
         ),
         (
@@ -129,12 +130,26 @@ def test_search_merged_items_mocked(
             {
                 "items": [
                     {
-                        "email": ["info@contact-point.one"],
-                        "$type": "MergedContactPoint",
-                        "identifier": "bFQoRhcVH5DHUz",
+                        "$type": "MergedOrganization",
+                        "alternativeName": [],
+                        "geprisId": [],
+                        "gndId": [],
+                        "identifier": "bFQoRhcVH5DHUv",
+                        "isniId": [],
+                        "officialName": [
+                            {"language": "de", "value": "RKI"},
+                            {
+                                "language": "de",
+                                "value": "Robert Koch Institut ist the best",
+                            },
+                        ],
+                        "rorId": [],
+                        "shortName": [],
+                        "viafId": [],
+                        "wikidataId": [],
                     }
                 ],
-                "total": 9,
+                "total": 11,
             },
         ),
         (
@@ -199,86 +214,18 @@ def test_search_merged_items_mocked(
             {
                 "items": [
                     {
-                        "$type": "MergedOrganizationalUnit",
-                        "alternativeName": [],
-                        "email": [],
-                        "identifier": "bFQoRhcVH5DHUF",
-                        "name": [
-                            {"language": "en", "value": "Unit 1.6"},
-                            {"language": "en", "value": "Unit 1.7"},
-                        ],
                         "parentUnit": "bFQoRhcVH5DHUx",
-                        "shortName": [],
-                        "unitOf": ["bFQoRhcVH5DHUv"],
-                        "website": [
-                            {
-                                "language": None,
-                                "title": "Unit Homepage",
-                                "url": "https://unit-1-7",
-                            }
-                        ],
-                    }
-                ],
-                "total": 1,
-            },
-        ),
-        (
-            "?hadPrimarySource=bFQoRhcVH5DHUt",  # deprecated
-            {
-                "items": [
-                    {
-                        "$type": "MergedOrganization",
-                        "alternativeName": [],
-                        "geprisId": [],
-                        "gndId": [],
-                        "identifier": "bFQoRhcVH5DHUv",
-                        "isniId": [],
-                        "officialName": [
-                            {"language": "de", "value": "RKI"},
-                            {"language": "en", "value": "Robert Koch Institute"},
-                            {
-                                "language": "de",
-                                "value": "Robert Koch Institut ist the best",
-                            },
-                        ],
-                        "rorId": [],
-                        "shortName": [],
-                        "viafId": [],
-                        "wikidataId": [],
-                    },
-                    {
-                        "$type": "MergedOrganizationalUnit",
+                        "name": [{"value": "Unit 1.6", "language": "en"}],
                         "alternativeName": [],
                         "email": [],
-                        "identifier": "bFQoRhcVH5DHUF",
-                        "name": [
-                            {"language": "en", "value": "Unit 1.6"},
-                            {"language": "en", "value": "Unit 1.7"},
-                        ],
-                        "parentUnit": "bFQoRhcVH5DHUx",
-                        "shortName": [],
-                        "unitOf": ["bFQoRhcVH5DHUv"],
-                        "website": [
-                            {
-                                "language": None,
-                                "title": "Unit Homepage",
-                                "url": "https://unit-1-7",
-                            }
-                        ],
-                    },
-                    {
-                        "$type": "MergedOrganizationalUnit",
-                        "alternativeName": [],
-                        "email": [],
-                        "identifier": "bFQoRhcVH5DHUx",
-                        "name": [{"language": "en", "value": "Unit 1"}],
-                        "parentUnit": None,
                         "shortName": [],
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [],
-                    },
+                        "$type": "MergedOrganizationalUnit",
+                        "identifier": "bFQoRhcVH5DHUF",
+                    }
                 ],
-                "total": 3,
+                "total": 1,
             },
         ),
         (
@@ -350,13 +297,12 @@ def test_search_merged_items_mocked(
         "full text search",
         "identifier filter",
         "identifier filter with composite result",
-        "had primary source filter",
         "generic id filter",
         "identifier not found",
         "full text not found",
     ],
 )
-@pytest.mark.usefixtures("load_dummy_data", "load_dummy_rule_set")
+@pytest.mark.usefixtures("loaded_dummy_data")
 @pytest.mark.integration
 def test_search_merged_items(
     client_with_api_key_read_permission: TestClient,
@@ -371,7 +317,7 @@ def test_search_merged_items(
 @pytest.mark.integration
 def test_search_merged_items_skip_on_validation_error(
     client_with_api_key_read_permission: TestClient,
-    load_dummy_data: dict[str, AnyExtractedModel],
+    loaded_dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
 ) -> None:
     response = client_with_api_key_read_permission.get(
         "/v0/merged-item?entityType=MergedOrganizationalUnit"
@@ -380,13 +326,11 @@ def test_search_merged_items_skip_on_validation_error(
     assert len(response.json()["items"]) == 2
 
     # remove the name from org unit 2 to make it invalid
-    organizational_unit_2 = cast(
-        "ExtractedOrganizationalUnit", load_dummy_data["organizational_unit_2"]
-    )
+    unit_2 = cast("ExtractedOrganizationalUnit", loaded_dummy_data["unit_2"])
     update_and_get_rule_set(
-        stable_target_id=organizational_unit_2.stableTargetId,
+        stable_target_id=unit_2.stableTargetId,
         rule_set=OrganizationalUnitRuleSetRequest(
-            subtractive=SubtractiveOrganizationalUnit(name=organizational_unit_2.name)
+            subtractive=SubtractiveOrganizationalUnit(name=unit_2.name)
         ),
     )
     response = client_with_api_key_read_permission.get(
@@ -426,10 +370,14 @@ def test_search_merged_items_in_graph_bad_request(
 @pytest.mark.integration
 def test_get_merged_item(
     client_with_api_key_read_permission: TestClient,
-    load_dummy_data: dict[str, AnyExtractedModel],
+    loaded_dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
 ) -> None:
-    extracted_organization_1 = load_dummy_data["organization_1"]
-    extracted_organization_2 = load_dummy_data["organization_2"]
+    extracted_organization_1 = cast(
+        "ExtractedOrganization", loaded_dummy_data["organization_1"]
+    )
+    extracted_organization_2 = cast(
+        "ExtractedOrganization", loaded_dummy_data["organization_2"]
+    )
     merged_organization = create_merged_item(
         identifier=extracted_organization_1.stableTargetId,
         extracted_items=[extracted_organization_2, extracted_organization_1],
@@ -458,8 +406,8 @@ def test_get_merged_item_not_found(
     [
         ("activity_1", ""),
         ("activity_1", "include_rule_set=true"),
-        ("organizational_unit_2", "include_rule_set=true"),
-        ("standalone_rule_set", "include_rule_set=true"),
+        ("unit_2", "include_rule_set=true"),
+        ("unit_standalone_rule_set", "include_rule_set=true"),
     ],
     ids=[
         "item without rule set does not need parameter",
@@ -468,20 +416,15 @@ def test_get_merged_item_not_found(
         "rule-set-only item needs parameter",
     ],
 )
-@pytest.mark.usefixtures("load_dummy_rule_set")
 @pytest.mark.integration
 def test_delete_merged_item(
     client_with_api_key_write_permission: TestClient,
-    load_dummy_data: dict[str, AnyExtractedModel],
-    load_standalone_dummy_rule_set: OrganizationalUnitRuleSetResponse,
+    loaded_dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
     item_name: str,
     url_params: str,
 ) -> None:
     # Get item for current test
-    item = {
-        **load_dummy_data,
-        "standalone_rule_set": load_standalone_dummy_rule_set,
-    }[item_name]
+    item = loaded_dummy_data[item_name]
 
     # Attempt to delete the item
     response = client_with_api_key_write_permission.delete(
@@ -506,13 +449,13 @@ def test_delete_merged_item(
     ),
     [
         (
-            "organizational_unit_2",
+            "unit_2",
             "",
             status.HTTP_412_PRECONDITION_FAILED,
             status.HTTP_200_OK,
         ),
         (
-            "organizational_unit_2",
+            "unit_2",
             "include_rule_set=false",
             status.HTTP_412_PRECONDITION_FAILED,
             status.HTTP_200_OK,
@@ -537,18 +480,17 @@ def test_delete_merged_item(
         "non-existent items not found",
     ],
 )
-@pytest.mark.usefixtures("load_dummy_rule_set")
 @pytest.mark.integration
 def test_delete_merged_item_fails(  # noqa: PLR0913
     client_with_api_key_write_permission: TestClient,
-    load_dummy_data: dict[str, AnyExtractedModel],
+    loaded_dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
     item_name: str,
     url_params: str,
     status_code_delete: int,
     status_code_after: int,
 ) -> None:
     # Get item for current test
-    item = load_dummy_data.get(item_name, Mock(stableTargetId="notARealIdentifier"))
+    item = loaded_dummy_data.get(item_name, Mock(stableTargetId="notARealIdentifier"))
 
     # Should fail when there are rules, but `include_rule_set` is not set to `true`
     response = client_with_api_key_write_permission.delete(

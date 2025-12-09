@@ -15,25 +15,25 @@ from valkey import Valkey
 from mex.artificial.helpers import create_artificial_items_and_rule_sets
 from mex.backend.cache.connector import CacheConnector, LocalCache, ValkeyCache
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.identity.provider import GraphIdentityProvider
 from mex.backend.main import app
-from mex.backend.rules.helpers import create_and_get_rule_set
 from mex.backend.settings import BackendSettings
 from mex.backend.testing.main import app as testing_app
 from mex.backend.types import APIKeyDatabase, APIUserDatabase
 from mex.common.connector import CONNECTOR_STORE
+from mex.common.merged.main import create_merged_item
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     AdditiveOrganizationalUnit,
     AnyExtractedModel,
+    AnyMergedModel,
     AnyRuleSetResponse,
     ExtractedActivity,
     ExtractedContactPoint,
     ExtractedOrganization,
     ExtractedOrganizationalUnit,
     ExtractedPrimarySource,
-    OrganizationalUnitRuleSetRequest,
     OrganizationalUnitRuleSetResponse,
+    SubtractiveOrganizationalUnit,
 )
 from mex.common.transform import MExEncoder
 from mex.common.types import (
@@ -43,6 +43,7 @@ from mex.common.types import (
     Text,
     TextLanguage,
     Theme,
+    Validation,
     YearMonthDay,
 )
 
@@ -60,11 +61,6 @@ def settings() -> BackendSettings:
         read={"Reader": "read_password"}, write={"Writer": "write_password"}
     )
     return settings
-
-
-@pytest.fixture(autouse=True)
-def skip_integration_test_in_ci(is_integration_test: bool) -> None:  # noqa: FBT001
-    """Overwrite fixture from plugin to not skip integration tests in ci."""
 
 
 @pytest.fixture
@@ -282,8 +278,8 @@ RETURN nodes, relations;
 @pytest.fixture
 def dummy_data(
     set_identity_provider: None,  # noqa: ARG001
-) -> dict[str, AnyExtractedModel]:
-    """Create a set of interlinked dummy data."""
+) -> dict[str, AnyExtractedModel | AnyRuleSetResponse]:
+    """Create interlinked dummy data and return a lookup by memorable names."""
     primary_source_1 = ExtractedPrimarySource(
         hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
         identifierInPrimarySource="ps-1",
@@ -319,18 +315,37 @@ def dummy_data(
             Text(value="Robert Koch Institute", language=TextLanguage.EN),
         ],
     )
-    organizational_unit_1 = ExtractedOrganizationalUnit(
+    unit_1 = ExtractedOrganizationalUnit(
         hadPrimarySource=primary_source_2.stableTargetId,
         identifierInPrimarySource="ou-1",
         name=[Text(value="Unit 1", language=TextLanguage.EN)],
         unitOf=[organization_1.stableTargetId],
+        website=[Link(url="https://ou-1")],
     )
-    organizational_unit_2 = ExtractedOrganizationalUnit(
+    unit_1_rule_set = OrganizationalUnitRuleSetResponse(
+        additive=AdditiveOrganizationalUnit(
+            name=[Text(value="Unit 1.7", language=TextLanguage.EN)],
+            website=[Link(title="Unit Homepage", url="https://unit-1-7")],
+            parentUnit=unit_1.stableTargetId,
+        ),
+        subtractive=SubtractiveOrganizationalUnit(
+            website=[Link(url="https://ou-1")],
+        ),
+        stableTargetId=unit_1.stableTargetId,
+    )
+    unit_2 = ExtractedOrganizationalUnit(
         hadPrimarySource=primary_source_2.stableTargetId,
         identifierInPrimarySource="ou-1.6",
         name=[Text(value="Unit 1.6", language=TextLanguage.EN)],
-        parentUnit=organizational_unit_1.stableTargetId,
+        parentUnit=unit_1.stableTargetId,
         unitOf=[organization_1.stableTargetId],
+    )
+    unit_standalone_rule_set = OrganizationalUnitRuleSetResponse(
+        additive=AdditiveOrganizationalUnit(
+            name=[Text(value="Abteilung 1.8", language=TextLanguage.DE)],
+            parentUnit=unit_1.stableTargetId,
+        ),
+        stableTargetId=Identifier("StandaloneRule"),
     )
     activity_1 = ExtractedActivity(
         abstract=[
@@ -340,11 +355,11 @@ def dummy_data(
         contact=[
             contact_point_1.stableTargetId,
             contact_point_2.stableTargetId,
-            organizational_unit_1.stableTargetId,
+            unit_1.stableTargetId,
         ],
         hadPrimarySource=primary_source_1.stableTargetId,
         identifierInPrimarySource="a-1",
-        responsibleUnit=[organizational_unit_1.stableTargetId],
+        responsibleUnit=[unit_1.stableTargetId],
         start=[YearMonthDay("2014-08-24")],
         theme=[Theme["INFECTIOUS_DISEASES_AND_EPIDEMIOLOGY"]],
         title=[Text(value="Aktivität 1", language=TextLanguage.DE)],
@@ -357,14 +372,61 @@ def dummy_data(
         "contact_point_2": contact_point_2,
         "organization_1": organization_1,
         "organization_2": organization_2,
-        "organizational_unit_1": organizational_unit_1,
-        "organizational_unit_2": organizational_unit_2,
+        "unit_1": unit_1,
+        "unit_1_rule_set": unit_1_rule_set,
+        "unit_2": unit_2,
+        "unit_standalone_rule_set": unit_standalone_rule_set,
         "activity_1": activity_1,
     }
 
 
 @pytest.fixture
-def artificial_extracted_items() -> list[AnyExtractedModel | AnyRuleSetResponse]:
+def merged_dummy_data(
+    dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
+) -> dict[str, AnyMergedModel]:
+    """Merge the manually created `dummy_data` into merged items."""
+
+    def _merge_single(item: AnyExtractedModel | AnyRuleSetResponse) -> AnyMergedModel:
+        assert isinstance(item, AnyExtractedModel)
+        return create_merged_item(item.stableTargetId, [item], None, Validation.STRICT)
+
+    return {
+        "primary_source_1": _merge_single(dummy_data["primary_source_1"]),
+        "primary_source_2": _merge_single(dummy_data["primary_source_2"]),
+        "contact_point_1": _merge_single(dummy_data["contact_point_1"]),
+        "contact_point_2": _merge_single(dummy_data["contact_point_2"]),
+        "organization_1": _merge_single(dummy_data["organization_1"]),
+        "organization_2": _merge_single(dummy_data["organization_2"]),
+        "unit_1": create_merged_item(
+            dummy_data["unit_1"].stableTargetId,
+            [cast("AnyExtractedModel", dummy_data["unit_1"])],
+            cast("AnyRuleSetResponse", dummy_data["unit_1_rule_set"]),
+            Validation.STRICT,
+        ),
+        "unit_2": _merge_single(dummy_data["unit_2"]),
+        "unit_standalone_rule_set": create_merged_item(
+            dummy_data["unit_standalone_rule_set"].stableTargetId,
+            [],
+            cast("AnyRuleSetResponse", dummy_data["unit_standalone_rule_set"]),
+            Validation.STRICT,
+        ),
+        "activity_1": _merge_single(dummy_data["activity_1"]),
+    }
+
+
+@pytest.fixture
+def loaded_dummy_data(
+    dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
+) -> dict[str, AnyExtractedModel | AnyRuleSetResponse]:
+    """Ingest dummy data into the graph."""
+    connector = GraphConnector.get()
+    deque(connector.ingest_items(dummy_data.values()))
+    return dummy_data
+
+
+@pytest.fixture
+def artificial_data() -> list[AnyExtractedModel | AnyRuleSetResponse]:
+    """Return artificial dummy data."""
     return [
         item
         for container in create_artificial_items_and_rule_sets(
@@ -378,86 +440,11 @@ def artificial_extracted_items() -> list[AnyExtractedModel | AnyRuleSetResponse]
     ]
 
 
-def _match_organization_items(dummy_data: dict[str, AnyExtractedModel]) -> None:
-    # TODO(ND): replace this crude item matching implementation (stopgap MX-1530)
+@pytest.fixture
+def loaded_artificial_data(
+    artificial_data: list[AnyExtractedModel | AnyRuleSetResponse],
+) -> list[AnyExtractedModel | AnyRuleSetResponse]:
+    """Ingest artificial data into the graph."""
     connector = GraphConnector.get()
-    # remove the merged item for org2
-    connector.driver.execute_query(
-        f"""\
-    MATCH(n) WHERE n.identifier='{dummy_data["organization_2"].stableTargetId}'
-    DETACH DELETE n;""",
-    )
-    # connect the extracted item for org2 with the merged item for org1
-    connector.driver.execute_query(
-        f"""\
-    MATCH(n :ExtractedOrganization) WHERE n.identifier = '{dummy_data["organization_2"].identifier}'
-    MATCH(m :MergedOrganization) WHERE m.identifier = '{dummy_data["organization_1"].stableTargetId}'
-    MERGE (n)-[:stableTargetId {{position:0}}]->(m);""",
-    )
-    # clear the identity provider cache to refresh the `stableTargetId` property on org2
-    provider = GraphIdentityProvider.get()
-    provider._cache.flush()
-
-
-@pytest.fixture
-def load_dummy_data(
-    dummy_data: dict[str, AnyExtractedModel],
-) -> dict[str, AnyExtractedModel]:
-    """Ingest dummy data into the graph."""
-    connector = GraphConnector.get()
-    deque(connector.ingest_items(dummy_data.values()))
-    _match_organization_items(dummy_data)
-    return dummy_data
-
-
-@pytest.fixture
-def additive_organizational_unit(
-    dummy_data: dict[str, AnyExtractedModel],
-) -> AdditiveOrganizationalUnit:
-    return AdditiveOrganizationalUnit(
-        name=[Text(value="Unit 1.7", language=TextLanguage.EN)],
-        website=[Link(title="Unit Homepage", url="https://unit-1-7")],
-        parentUnit=dummy_data["organizational_unit_1"].stableTargetId,
-    )
-
-
-@pytest.fixture
-def organizational_unit_rule_set_request(
-    additive_organizational_unit: AdditiveOrganizationalUnit,
-) -> OrganizationalUnitRuleSetRequest:
-    return OrganizationalUnitRuleSetRequest(additive=additive_organizational_unit)
-
-
-@pytest.fixture
-def organizational_unit_rule_set_response(
-    additive_organizational_unit: AdditiveOrganizationalUnit,
-) -> OrganizationalUnitRuleSetResponse:
-    return OrganizationalUnitRuleSetResponse(
-        additive=additive_organizational_unit, stableTargetId=Identifier.generate(42)
-    )
-
-
-@pytest.fixture
-def load_dummy_rule_set(
-    organizational_unit_rule_set_request: OrganizationalUnitRuleSetRequest,
-    load_dummy_data: dict[str, AnyExtractedModel],
-) -> OrganizationalUnitRuleSetResponse:
-    return cast(
-        "OrganizationalUnitRuleSetResponse",
-        create_and_get_rule_set(
-            organizational_unit_rule_set_request,
-            stable_target_id=load_dummy_data["organizational_unit_2"].stableTargetId,
-        ),
-    )
-
-
-@pytest.fixture
-def load_standalone_dummy_rule_set(
-    organizational_unit_rule_set_request: OrganizationalUnitRuleSetRequest,
-) -> OrganizationalUnitRuleSetResponse:
-    return cast(
-        "OrganizationalUnitRuleSetResponse",
-        create_and_get_rule_set(
-            organizational_unit_rule_set_request,
-        ),
-    )
+    deque(connector.ingest_items(artificial_data))
+    return artificial_data

@@ -13,6 +13,7 @@ dependencies = [
     "jinja2>=3",
     "mex-common>=1.10,<2",
     "neo4j>=5",
+    "orjson>=3",
     "pydantic>=2",
     "starlette>=0.48",
     "uvicorn[standard]>=0.38",
@@ -85,7 +86,7 @@ addopts = [
     "--cov-fail-under=95",
     "--cov-branch",
     "--pdbcls=IPython.terminal.debugger:TerminalPdb",
-    "--random-order-bucket=global",
+    #"--random-order-bucket=global",
 ]
 markers = "integration: mark a test as integration test"
 
