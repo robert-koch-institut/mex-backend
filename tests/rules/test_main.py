@@ -196,8 +196,14 @@ def test_get_rule_set_not_found(
 @pytest.mark.parametrize(
     ("rule_name", "expected"),
     [
-        ("unit_1_rule_set", "unit_1_rule_setFOOOOO"),
-        ("unit_standalone_rule_set", "unit_standalone_rule_setBAAAA"),
+        pytest.param(
+            "unit_1_rule_set", "unit_1_rule_setFOOOOO", id="rule set with extracted"
+        ),
+        pytest.param(
+            "unit_standalone_rule_set",
+            "unit_standalone_rule_setBAAAA",
+            id="standalone rule set",
+        ),
     ],
 )
 @pytest.mark.integration
