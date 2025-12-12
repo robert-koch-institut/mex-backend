@@ -304,7 +304,6 @@ def dummy_data(
         identifierInPrimarySource="rki",
         officialName=[
             Text(value="RKI", language=TextLanguage.DE),
-            Text(value="Robert Koch Institut ist the best", language=TextLanguage.DE),
         ],
     )
     organization_2 = ExtractedOrganization(
@@ -337,9 +336,9 @@ def dummy_data(
         subtractive=SubtractiveOrganizationalUnit(
             name=[Text(value="Unit 1.6", language=TextLanguage.EN)],
         ),
-        stableTargetId=unit_1.stableTargetId,
+        stableTargetId=unit_2.stableTargetId,
     )
-    unit_standalone_rule_set = OrganizationalUnitRuleSetResponse(
+    unit_3_standalone_rule_set = OrganizationalUnitRuleSetResponse(
         additive=AdditiveOrganizationalUnit(
             name=[Text(value="Abteilung 1.7", language=TextLanguage.DE)],
             parentUnit=unit_1.stableTargetId,
@@ -375,7 +374,7 @@ def dummy_data(
         "unit_1": unit_1,
         "unit_2_rule_set": unit_2_rule_set,
         "unit_2": unit_2,
-        "unit_standalone_rule_set": unit_standalone_rule_set,
+        "unit_3_standalone_rule_set": unit_3_standalone_rule_set,
         "activity_1": activity_1,
     }
 
@@ -404,10 +403,10 @@ def merged_dummy_data(
             Validation.STRICT,
         ),
         "unit_2": _merge_single(dummy_data["unit_2"]),
-        "unit_standalone_rule_set": create_merged_item(
-            dummy_data["unit_standalone_rule_set"].stableTargetId,
+        "unit_3_standalone_rule_set": create_merged_item(
+            dummy_data["unit_3_standalone_rule_set"].stableTargetId,
             [],
-            cast("AnyRuleSetResponse", dummy_data["unit_standalone_rule_set"]),
+            cast("AnyRuleSetResponse", dummy_data["unit_3_standalone_rule_set"]),
             Validation.STRICT,
         ),
         "activity_1": _merge_single(dummy_data["activity_1"]),

@@ -139,10 +139,6 @@ def test_search_merged_items_mocked(
                         "isniId": [],
                         "officialName": [
                             {"language": "de", "value": "RKI"},
-                            {
-                                "language": "de",
-                                "value": "Robert Koch Institut ist the best",
-                            },
                         ],
                         "rorId": [],
                         "shortName": [],
@@ -160,13 +156,13 @@ def test_search_merged_items_mocked(
                 "items": [
                     {
                         "$type": "MergedContactPoint",
-                        "email": ["help@contact-point.two"],
+                        "email": ["info@contact-point.one"],
                         "identifier": "bFQoRhcVH5DHUB",
                     },
                     {
                         "$type": "MergedContactPoint",
-                        "email": ["info@contact-point.one"],
-                        "identifier": "bFQoRhcVH5DHUz",
+                        "email": ["help@contact-point.two"],
+                        "identifier": "bFQoRhcVH5DHUD",
                     },
                 ],
                 "total": 2,
@@ -207,8 +203,10 @@ def test_search_merged_items_mocked(
                         "parentUnit": None,
                         "shortName": [],
                         "unitOf": ["bFQoRhcVH5DHUv"],
-                        "website": [],
-                    },
+                        "website": [
+                            {"language": None, "title": None, "url": "https://ou-1"}
+                        ],
+                    }
                 ],
                 "total": 1,
             },
@@ -219,15 +217,20 @@ def test_search_merged_items_mocked(
             {
                 "items": [
                     {
-                        "parentUnit": "bFQoRhcVH5DHUx",
-                        "name": [{"value": "Unit 1.6", "language": "en"}],
+                        "$type": "MergedOrganization",
                         "alternativeName": [],
-                        "email": [],
-                        "shortName": [],
-                        "unitOf": ["bFQoRhcVH5DHUv"],
-                        "website": [],
-                        "$type": "MergedOrganizationalUnit",
+                        "geprisId": [],
+                        "gndId": [],
                         "identifier": "bFQoRhcVH5DHUF",
+                        "isniId": [],
+                        "officialName": [
+                            {"language": "de", "value": "RKI"},
+                            {"language": "en", "value": "Robert Koch Institute"},
+                        ],
+                        "rorId": [],
+                        "shortName": [],
+                        "viafId": [],
+                        "wikidataId": [],
                     }
                 ],
                 "total": 1,
@@ -243,15 +246,11 @@ def test_search_merged_items_mocked(
                         "alternativeName": [],
                         "geprisId": [],
                         "gndId": [],
-                        "identifier": "bFQoRhcVH5DHUv",
+                        "identifier": "bFQoRhcVH5DHUD",
                         "isniId": [],
                         "officialName": [
                             {"language": "de", "value": "RKI"},
                             {"language": "en", "value": "Robert Koch Institute"},
-                            {
-                                "language": "de",
-                                "value": "Robert Koch Institut ist the best",
-                            },
                         ],
                         "rorId": [],
                         "shortName": [],
@@ -263,31 +262,32 @@ def test_search_merged_items_mocked(
                         "alternativeName": [],
                         "email": [],
                         "identifier": "bFQoRhcVH5DHUF",
-                        "name": [
-                            {"language": "en", "value": "Unit 1.6"},
-                            {"language": "en", "value": "Unit 1.7"},
-                        ],
-                        "parentUnit": "bFQoRhcVH5DHUx",
+                        "name": [{"language": "en", "value": "Unit 1.6"}],
+                        "parentUnit": None,
                         "shortName": [],
                         "unitOf": ["bFQoRhcVH5DHUv"],
-                        "website": [
-                            {
-                                "language": None,
-                                "title": "Unit Homepage",
-                                "url": "https://unit-1-7",
-                            }
-                        ],
+                        "website": [],
                     },
                     {
                         "$type": "MergedOrganizationalUnit",
                         "alternativeName": [],
                         "email": [],
                         "identifier": "bFQoRhcVH5DHUx",
-                        "name": [{"language": "en", "value": "Unit 1"}],
-                        "parentUnit": None,
+                        "name": [
+                            {"language": "en", "value": "Unit 1"},
+                            {"language": "de", "value": "Abteilung 1.6"},
+                        ],
+                        "parentUnit": "bFQoRhcVH5DHUx",
                         "shortName": [],
                         "unitOf": ["bFQoRhcVH5DHUv"],
-                        "website": [],
+                        "website": [
+                            {"language": None, "title": None, "url": "https://ou-1"},
+                            {
+                                "language": None,
+                                "title": "Unit Homepage",
+                                "url": "https://unit-1-6",
+                            },
+                        ],
                     },
                 ],
                 "total": 3,
@@ -327,7 +327,7 @@ def test_search_merged_items_skip_on_validation_error(
         "/v0/merged-item?entityType=MergedOrganizationalUnit"
     )
     assert response.status_code == status.HTTP_200_OK, response.text
-    assert len(response.json()["items"]) == 2
+    assert len(response.json()["items"]) == 3
 
     # remove the name from org unit 2 to make it invalid
     unit_2 = cast("ExtractedOrganizationalUnit", loaded_dummy_data["unit_2"])
@@ -424,7 +424,7 @@ def test_get_merged_item_not_found(
             id="with-rule-set-needs-param",
         ),
         pytest.param(
-            "unit_standalone_rule_set",
+            "unit_3_standalone_rule_set",
             "include_rule_set=true",
             id="rule-set-only-needs-param",
         ),

@@ -101,12 +101,18 @@ def test_search_extracted_items_mocked(
             {
                 "items": [
                     {
-                        "$type": "ExtractedContactPoint",
-                        "email": ["info@contact-point.one"],
-                        "hadPrimarySource": "bFQoRhcVH5DHUr",
+                        "$type": "ExtractedOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "hadPrimarySource": "bFQoRhcVH5DHUt",
                         "identifier": "bFQoRhcVH5DHUy",
-                        "identifierInPrimarySource": "cp-1",
+                        "identifierInPrimarySource": "ou-1.6",
+                        "name": [{"language": "en", "value": "Unit 1.6"}],
+                        "parentUnit": None,
+                        "shortName": [],
                         "stableTargetId": "bFQoRhcVH5DHUz",
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [],
                     }
                 ],
                 "total": 10,

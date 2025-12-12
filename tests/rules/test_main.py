@@ -198,12 +198,84 @@ def test_get_rule_set_not_found(
     [
         pytest.param(
             "unit_2_rule_set",
-            "unit_2_rule_setFOOOOO",
+            {
+                "$type": "OrganizationalUnitRuleSetResponse",
+                "additive": {
+                    "$type": "AdditiveOrganizationalUnit",
+                    "alternativeName": [],
+                    "email": [],
+                    "name": [{"language": "de", "value": "Abteilung 1.6"}],
+                    "parentUnit": "bFQoRhcVH5DHUx",
+                    "shortName": [],
+                    "unitOf": [],
+                    "website": [
+                        {
+                            "language": None,
+                            "title": "Unit Homepage",
+                            "url": "https://unit-1-6",
+                        }
+                    ],
+                },
+                "preventive": {
+                    "$type": "PreventiveOrganizationalUnit",
+                    "alternativeName": [],
+                    "email": [],
+                    "name": [],
+                    "parentUnit": [],
+                    "shortName": [],
+                    "unitOf": [],
+                    "website": [],
+                },
+                "stableTargetId": "bFQoRhcVH5DHUx",
+                "subtractive": {
+                    "$type": "SubtractiveOrganizationalUnit",
+                    "alternativeName": [],
+                    "email": [],
+                    "name": [{"language": "en", "value": "Unit 1.6"}],
+                    "parentUnit": [],
+                    "shortName": [],
+                    "unitOf": [],
+                    "website": [],
+                },
+            },
             id="rule set with extracted",
         ),
         pytest.param(
-            "unit_standalone_rule_set",
-            "unit_standalone_rule_setBAAAA",
+            "unit_3_standalone_rule_set",
+            {
+                "$type": "OrganizationalUnitRuleSetResponse",
+                "additive": {
+                    "$type": "AdditiveOrganizationalUnit",
+                    "alternativeName": [],
+                    "email": ["1.7@rki.de"],
+                    "name": [{"language": "de", "value": "Abteilung 1.7"}],
+                    "parentUnit": "bFQoRhcVH5DHUx",
+                    "shortName": [],
+                    "unitOf": [],
+                    "website": [],
+                },
+                "preventive": {
+                    "$type": "PreventiveOrganizationalUnit",
+                    "alternativeName": [],
+                    "email": [],
+                    "name": [],
+                    "parentUnit": [],
+                    "shortName": [],
+                    "unitOf": [],
+                    "website": [],
+                },
+                "stableTargetId": "StandaloneRule",
+                "subtractive": {
+                    "$type": "SubtractiveOrganizationalUnit",
+                    "alternativeName": [],
+                    "email": [],
+                    "name": [],
+                    "parentUnit": [],
+                    "shortName": [],
+                    "unitOf": [],
+                    "website": [],
+                },
+            },
             id="standalone rule set",
         ),
     ],
@@ -211,12 +283,12 @@ def test_get_rule_set_not_found(
 @pytest.mark.integration
 def test_get_rule_set(
     client_with_api_key_write_permission: TestClient,
-    dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
+    loaded_dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
     rule_name: str,
     expected: dict[str, Any],
 ) -> None:
     response = client_with_api_key_write_permission.get(
-        f"/v0/rule-set/{dummy_data[rule_name].stableTargetId}"
+        f"/v0/rule-set/{loaded_dummy_data[rule_name].stableTargetId}"
     )
     assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == expected
@@ -355,6 +427,7 @@ def test_update_rule_set(
             "identifier": "bFQoRhcVH5DHUG",
             "end": [],
         },
+        {"email": ["1.7@rki.de"], "label": "AdditiveOrganizationalUnit"},
         {
             "identifierInPrimarySource": "cp-2",
             "email": ["help@contact-point.two"],
@@ -381,6 +454,7 @@ def test_update_rule_set(
         },
         {"email": [], "label": "AdditiveOrganizationalUnit"},
         {"email": [], "label": "SubtractiveOrganizationalUnit"},
+        {"email": [], "label": "SubtractiveOrganizationalUnit"},
         {
             "position": 0,
             "start": "00000000000001",
@@ -406,8 +480,33 @@ def test_update_rule_set(
             "end": "00000000000000",
         },
         {"position": 0, "start": "bFQoRhcVH5DHUG", "label": "website", "end": "Link"},
+        {"position": 0, "start": "bFQoRhcVH5DHUw", "label": "website", "end": "Link"},
+        {
+            "position": 0,
+            "start": "AdditiveOrganizationalUnit",
+            "label": "stableTargetId",
+            "end": "StandaloneRule",
+        },
+        {
+            "position": 0,
+            "start": "PreventiveOrganizationalUnit",
+            "label": "stableTargetId",
+            "end": "StandaloneRule",
+        },
+        {
+            "position": 0,
+            "start": "SubtractiveOrganizationalUnit",
+            "label": "stableTargetId",
+            "end": "StandaloneRule",
+        },
         {"position": 0, "start": "bFQoRhcVH5DHUG", "label": "abstract", "end": "Text"},
         {"position": 1, "start": "bFQoRhcVH5DHUG", "label": "abstract", "end": "Text"},
+        {
+            "position": 0,
+            "start": "AdditiveOrganizationalUnit",
+            "label": "name",
+            "end": "Text",
+        },
         {
             "position": 0,
             "start": "AdditiveOrganizationalUnit",
@@ -455,21 +554,9 @@ def test_update_rule_set(
         },
         {
             "position": 0,
-            "start": "AdditiveOrganizationalUnit",
+            "start": "bFQoRhcVH5DHUC",
             "label": "stableTargetId",
-            "end": "bFQoRhcVH5DHUF",
-        },
-        {
-            "position": 0,
-            "start": "PreventiveOrganizationalUnit",
-            "label": "stableTargetId",
-            "end": "bFQoRhcVH5DHUF",
-        },
-        {
-            "position": 0,
-            "start": "SubtractiveOrganizationalUnit",
-            "label": "stableTargetId",
-            "end": "bFQoRhcVH5DHUF",
+            "end": "bFQoRhcVH5DHUD",
         },
         {
             "position": 0,
@@ -539,12 +626,6 @@ def test_update_rule_set(
         },
         {
             "position": 0,
-            "start": "bFQoRhcVH5DHUC",
-            "label": "stableTargetId",
-            "end": "bFQoRhcVH5DHUv",
-        },
-        {
-            "position": 0,
             "start": "bFQoRhcVH5DHUu",
             "label": "stableTargetId",
             "end": "bFQoRhcVH5DHUv",
@@ -569,7 +650,7 @@ def test_update_rule_set(
         },
         {
             "position": 0,
-            "start": "bFQoRhcVH5DHUE",
+            "start": "AdditiveOrganizationalUnit",
             "label": "parentUnit",
             "end": "bFQoRhcVH5DHUx",
         },
@@ -577,6 +658,24 @@ def test_update_rule_set(
             "position": 0,
             "start": "bFQoRhcVH5DHUG",
             "label": "responsibleUnit",
+            "end": "bFQoRhcVH5DHUx",
+        },
+        {
+            "position": 0,
+            "start": "AdditiveOrganizationalUnit",
+            "label": "stableTargetId",
+            "end": "bFQoRhcVH5DHUx",
+        },
+        {
+            "position": 0,
+            "start": "PreventiveOrganizationalUnit",
+            "label": "stableTargetId",
+            "end": "bFQoRhcVH5DHUx",
+        },
+        {
+            "position": 0,
+            "start": "SubtractiveOrganizationalUnit",
+            "label": "stableTargetId",
             "end": "bFQoRhcVH5DHUx",
         },
         {
@@ -625,7 +724,9 @@ def test_update_rule_set(
             "label": "ExtractedPrimarySource",
             "identifier": "00000000000001",
         },
+        {"label": "MergedOrganizationalUnit", "identifier": "StandaloneRule"},
         {"label": "MergedContactPoint", "identifier": "bFQoRhcVH5DHUB"},
+        {"label": "MergedOrganization", "identifier": "bFQoRhcVH5DHUD"},
         {"label": "MergedOrganizationalUnit", "identifier": "bFQoRhcVH5DHUF"},
         {"label": "MergedActivity", "identifier": "bFQoRhcVH5DHUH"},
         {
@@ -645,15 +746,13 @@ def test_update_rule_set(
         {"label": "MergedOrganizationalUnit", "identifier": "bFQoRhcVH5DHUx"},
         {"label": "MergedContactPoint", "identifier": "bFQoRhcVH5DHUz"},
         {"title": "Activity Homepage", "label": "Link", "url": "https://activity-1"},
+        {"label": "Link", "url": "https://ou-1"},
         {"label": "PreventiveOrganizationalUnit"},
+        {"label": "PreventiveOrganizationalUnit"},
+        {"value": "Abteilung 1.7", "label": "Text", "language": "de"},
         {"value": "Aktivität 1", "label": "Text", "language": "de"},
         {"value": "RKI", "label": "Text", "language": "de"},
         {"value": "RKI", "label": "Text", "language": "de"},
-        {
-            "value": "Robert Koch Institut ist the best",
-            "label": "Text",
-            "language": "de",
-        },
         {"value": "A new unit name", "label": "Text", "language": "en"},
         {"value": "An active activity.", "label": "Text", "language": "en"},
         {"value": "Robert Koch Institute", "label": "Text", "language": "en"},

@@ -341,8 +341,8 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                         "geprisId": [],
                         "isniId": [],
                         "entityType": "ExtractedOrganization",
-                        "identifier": "bFQoRhcVH5DHUC",
-                        "stableTargetId": ["bFQoRhcVH5DHUD"],
+                        "identifier": "bFQoRhcVH5DHUE",
+                        "stableTargetId": ["bFQoRhcVH5DHUF"],
                         "hadPrimarySource": ["bFQoRhcVH5DHUt"],
                         "officialName": [
                             {"value": "RKI", "language": "de"},
@@ -420,7 +420,7 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                         "viafId": [],
                         "isniId": [],
                         "entityType": "ExtractedOrganization",
-                        "identifier": "bFQoRhcVH5DHUC",
+                        "identifier": "bFQoRhcVH5DHUE",
                         "hadPrimarySource": ["bFQoRhcVH5DHUt"],
                         "officialName": [
                             {"value": "RKI", "language": "de"},
@@ -437,14 +437,10 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                         "viafId": [],
                         "isniId": [],
                         "entityType": "ExtractedOrganization",
-                        "identifier": "bFQoRhcVH5DHUu",
+                        "identifier": "bFQoRhcVH5DHUF",
                         "hadPrimarySource": ["bFQoRhcVH5DHUr"],
                         "officialName": [
                             {"value": "RKI", "language": "de"},
-                            {
-                                "value": "Robert Koch Institut ist the best",
-                                "language": "de",
-                            },
                         ],
                         "stableTargetId": ["bFQoRhcVH5DHUv"],
                     },
@@ -605,11 +601,11 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
                     {
                         "email": [],
                         "entityType": "AdditiveOrganizationalUnit",
-                        "stableTargetId": ["bFQoRhcVH5DHUx"],
+                        "name": [{"value": "Abteilung 1.6", "language": "de"}],
                         "parentUnit": ["bFQoRhcVH5DHUx"],
-                        "name": [{"value": "Unit 1.7", "language": "en"}],
+                        "stableTargetId": ["bFQoRhcVH5DHUz"],
                         "website": [
-                            {"title": "Unit Homepage", "url": "https://unit-1-7"}
+                            {"title": "Unit Homepage", "url": "https://unit-1-6"}
                         ],
                     }
                 ],
@@ -868,7 +864,7 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                                 "viafId": [],
                                 "isniId": [],
                                 "entityType": "ExtractedOrganization",
-                                "identifier": "bFQoRhcVH5DHUC",
+                                "identifier": "bFQoRhcVH5DHUE",
                                 "hadPrimarySource": ["bFQoRhcVH5DHUt"],
                                 "officialName": [
                                     {"value": "RKI", "language": "de"},
@@ -877,11 +873,11 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                                         "language": "en",
                                     },
                                 ],
-                                "stableTargetId": ["bFQoRhcVH5DHUD"],
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
                             }
                         ],
                         "entityType": "MergedOrganization",
-                        "identifier": "bFQoRhcVH5DHUD",
+                        "identifier": "bFQoRhcVH5DHUF",
                     }
                 ],
                 "total": 2,
@@ -940,41 +936,19 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                     {
                         "_components": [
                             {
+                                "identifierInPrimarySource": "ou-1",
                                 "email": [],
                                 "entityType": "ExtractedOrganizationalUnit",
+                                "identifier": "bFQoRhcVH5DHUw",
                                 "hadPrimarySource": ["bFQoRhcVH5DHUt"],
-                                "identifier": "bFQoRhcVH5DHUE",
-                                "identifierInPrimarySource": "ou-1.6",
-                                "name": [{"language": "en", "value": "Unit 1.6"}],
-                                "parentUnit": ["bFQoRhcVH5DHUx"],
-                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                                "name": [{"value": "Unit 1", "language": "en"}],
+                                "stableTargetId": ["bFQoRhcVH5DHUx"],
                                 "unitOf": ["bFQoRhcVH5DHUv"],
-                            },
-                            {
-                                "email": [],
-                                "entityType": "AdditiveOrganizationalUnit",
-                                "name": [{"language": "en", "value": "Unit 1.7"}],
-                                "parentUnit": ["bFQoRhcVH5DHUx"],
-                                "stableTargetId": ["bFQoRhcVH5DHUF"],
-                                "website": [
-                                    {
-                                        "title": "Unit Homepage",
-                                        "url": "https://unit-1-7",
-                                    }
-                                ],
-                            },
-                            {
-                                "entityType": "PreventiveOrganizationalUnit",
-                                "stableTargetId": ["bFQoRhcVH5DHUF"],
-                            },
-                            {
-                                "email": [],
-                                "entityType": "SubtractiveOrganizationalUnit",
-                                "stableTargetId": ["bFQoRhcVH5DHUF"],
-                            },
+                                "website": [{"url": "https://ou-1"}],
+                            }
                         ],
                         "entityType": "MergedOrganizationalUnit",
-                        "identifier": "bFQoRhcVH5DHUF",
+                        "identifier": "bFQoRhcVH5DHUx",
                     }
                 ],
                 "total": 2,
@@ -1097,10 +1071,6 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                                 "hadPrimarySource": ["bFQoRhcVH5DHUr"],
                                 "officialName": [
                                     {"value": "RKI", "language": "de"},
-                                    {
-                                        "value": "Robert Koch Institut ist the best",
-                                        "language": "de",
-                                    },
                                 ],
                             },
                         ],
@@ -1539,15 +1509,6 @@ def test_mocked_graph_ingests_extracted_models(
                         "nodeProps": {"value": "RKI", "language": "de"},
                         "edgeLabel": "officialName",
                         "edgeProps": {"position": 0},
-                        "nodeLabels": ["Text"],
-                    },
-                    {
-                        "nodeProps": {
-                            "value": "Robert Koch Institut ist the best",
-                            "language": "de",
-                        },
-                        "edgeLabel": "officialName",
-                        "edgeProps": {"position": 1},
                         "nodeLabels": ["Text"],
                     },
                 ],

@@ -20,19 +20,24 @@ from starlette import status
             },
             {
                 "$type": "MergedActivity",
-                "contact": ["bFQoRhcVH5DHUz", "bFQoRhcVH5DHUB", "bFQoRhcVH5DHUx"],
-                "responsibleUnit": ["bFQoRhcVH5DHUx"],
-                "title": [
-                    {"value": "Aktivität 1", "language": "de"},
-                    {"value": "A new beginning", "language": "en"},
-                ],
                 "abstract": [
-                    {"value": "An active activity.", "language": "en"},
-                    {"value": "Eng aktiv Aktivitéit.", "language": None},
+                    {"language": "en", "value": "An active activity."},
+                    {"language": None, "value": "Eng aktiv Aktivitéit."},
                 ],
-                "start": ["2014-08-24"],
+                "contact": [
+                    "bFQoRhcVH5DHUB",
+                    "bFQoRhcVH5DHUD",
+                    "bFQoRhcVH5DHUx",
+                ],
                 "end": ["2025"],
+                "identifier": "bFQoRhcVH5DHUH",
+                "responsibleUnit": ["bFQoRhcVH5DHUx"],
+                "start": ["2014-08-24"],
                 "theme": ["https://mex.rki.de/item/theme-11"],
+                "title": [
+                    {"language": "de", "value": "Aktivität 1"},
+                    {"language": "en", "value": "A new beginning"},
+                ],
                 "website": [
                     {
                         "language": None,
@@ -40,7 +45,6 @@ from starlette import status
                         "url": "https://activity-1",
                     }
                 ],
-                "identifier": "bFQoRhcVH5DHUH",
             },
             id="additive",
         ),
@@ -172,12 +176,22 @@ def test_preview(
             {
                 "items": [
                     {
-                        "email": ["info@contact-point.one"],
-                        "$type": "PreviewContactPoint",
-                        "identifier": "bFQoRhcVH5DHUz",
+                        "$type": "PreviewOrganization",
+                        "alternativeName": [],
+                        "geprisId": [],
+                        "gndId": [],
+                        "identifier": "bFQoRhcVH5DHUv",
+                        "isniId": [],
+                        "officialName": [
+                            {"language": "de", "value": "RKI"},
+                        ],
+                        "rorId": [],
+                        "shortName": [],
+                        "viafId": [],
+                        "wikidataId": [],
                     }
                 ],
-                "total": 9,
+                "total": 11,
             },
             id="skip-1",
         ),
@@ -230,12 +244,17 @@ def test_preview(
                         "alternativeName": [],
                         "email": [],
                         "identifier": "bFQoRhcVH5DHUx",
-                        "name": [{"language": "en", "value": "Unit 1"}],
-                        "parentUnit": None,
+                        "name": [
+                            {"language": "en", "value": "Unit 1"},
+                            {"language": "de", "value": "Abteilung 1.6"},
+                        ],
+                        "parentUnit": "bFQoRhcVH5DHUx",
                         "shortName": [],
                         "unitOf": ["bFQoRhcVH5DHUv"],
-                        "website": [],
-                    },
+                        "website": [
+                            {"language": None, "title": None, "url": "https://ou-1"},
+                        ],
+                    }
                 ],
                 "total": 1,
             },
@@ -246,15 +265,15 @@ def test_preview(
             {
                 "items": [
                     {
-                        "parentUnit": "bFQoRhcVH5DHUx",
-                        "name": [{"value": "Unit 1.6", "language": "en"}],
+                        "$type": "PreviewOrganizationalUnit",
                         "alternativeName": [],
                         "email": [],
+                        "identifier": "bFQoRhcVH5DHUF",
+                        "name": [{"language": "en", "value": "Unit 1.6"}],
+                        "parentUnit": None,
                         "shortName": [],
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [],
-                        "$type": "PreviewOrganizationalUnit",
-                        "identifier": "bFQoRhcVH5DHUF",
                     }
                 ],
                 "total": 1,
@@ -266,51 +285,50 @@ def test_preview(
             {
                 "items": [
                     {
-                        "officialName": [
-                            {"value": "RKI", "language": "de"},
-                            {"value": "Robert Koch Institute", "language": "en"},
-                        ],
+                        "$type": "PreviewOrganization",
                         "alternativeName": [],
                         "geprisId": [],
                         "gndId": [],
+                        "identifier": "bFQoRhcVH5DHUF",
                         "isniId": [],
+                        "officialName": [
+                            {"language": "de", "value": "RKI"},
+                            {"language": "en", "value": "Robert Koch Institute"},
+                        ],
                         "rorId": [],
                         "shortName": [],
                         "viafId": [],
                         "wikidataId": [],
-                        "$type": "PreviewOrganization",
-                        "identifier": "bFQoRhcVH5DHUD",
                     },
                     {
-                        "parentUnit": "bFQoRhcVH5DHUx",
-                        "name": [{"value": "Unit 1.6", "language": "en"}],
+                        "$type": "PreviewOrganizationalUnit",
                         "alternativeName": [],
                         "email": [],
+                        "identifier": "bFQoRhcVH5DHUx",
+                        "name": [{"language": "en", "value": "Unit 1"}],
+                        "parentUnit": None,
                         "shortName": [],
                         "unitOf": ["bFQoRhcVH5DHUv"],
-                        "website": [],
-                        "$type": "PreviewOrganizationalUnit",
-                        "identifier": "bFQoRhcVH5DHUF",
+                        "website": [
+                            {"language": None, "title": None, "url": "https://ou-1"}
+                        ],
                     },
                     {
-                        "parentUnit": "bFQoRhcVH5DHUx",
-                        "name": [
-                            {"value": "Unit 1", "language": "en"},
-                            {"value": "Unit 1.7", "language": "en"},
-                        ],
+                        "$type": "PreviewOrganizationalUnit",
                         "alternativeName": [],
                         "email": [],
+                        "identifier": "bFQoRhcVH5DHUz",
+                        "name": [{"language": "de", "value": "Abteilung 1.6"}],
+                        "parentUnit": "bFQoRhcVH5DHUx",
                         "shortName": [],
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [
                             {
                                 "language": None,
                                 "title": "Unit Homepage",
-                                "url": "https://unit-1-7",
+                                "url": "https://unit-1-6",
                             }
                         ],
-                        "$type": "PreviewOrganizationalUnit",
-                        "identifier": "bFQoRhcVH5DHUx",
                     },
                 ],
                 "total": 3,

@@ -15,7 +15,7 @@ from mex.common.models import (
     AnyRuleSetResponse,
     ExtractedOrganization,
 )
-from mex.common.types import Identifier, Validation
+from mex.common.types import Identifier, TextLanguage, Validation
 from tests.conftest import MockedGraph
 
 
@@ -28,15 +28,12 @@ def test_search_merged_items_in_graph() -> None:
     assert merged_result.model_dump(exclude_defaults=True) == {
         "items": [
             {
-                "identifier": "bFQoRhcVH5DHUF",
-                "name": [
-                    {"language": "en", "value": "Unit 1.6"},
-                    {"language": "en", "value": "Unit 1.7"},
+                "officialName": [
+                    {"value": "RKI", "language": TextLanguage.DE},
+                    {"value": "Robert Koch Institute", "language": TextLanguage.EN},
                 ],
-                "parentUnit": "bFQoRhcVH5DHUx",
-                "unitOf": ["bFQoRhcVH5DHUv"],
-                "website": [{"title": "Unit Homepage", "url": "https://unit-1-7"}],
-            },
+                "identifier": "bFQoRhcVH5DHUF",
+            }
         ],
         "total": 1,
     }

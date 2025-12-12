@@ -119,9 +119,9 @@ def test_assign_identity_inconsistency_mocked(
             },
             {
                 "hadPrimarySource": "bFQoRhcVH5DHUr",
-                "identifier": "bFQoRhcVH5DHUA",
+                "identifier": "bFQoRhcVH5DHUC",
                 "identifierInPrimarySource": "cp-2",
-                "stableTargetId": "bFQoRhcVH5DHUB",
+                "stableTargetId": "bFQoRhcVH5DHUC",
             },
             id="existing-contact-point",
         ),
