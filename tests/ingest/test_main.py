@@ -57,6 +57,7 @@ def test_ingest_extracted(
             "identifier": "bFQoRhcVH5DHUG",
             "end": [],
         },
+        {"email": ["1.7@rki.de"], "label": "AdditiveOrganizationalUnit"},
         {
             "identifierInPrimarySource": "cp-2",
             "email": ["help@contact-point.two"],
@@ -81,6 +82,9 @@ def test_ingest_extracted(
             "label": "ExtractedOrganizationalUnit",
             "identifier": "bFQoRhcVH5DHUw",
         },
+        {"email": [], "label": "AdditiveOrganizationalUnit"},
+        {"email": [], "label": "SubtractiveOrganizationalUnit"},
+        {"email": [], "label": "SubtractiveOrganizationalUnit"},
         {
             "position": 0,
             "start": "00000000000001",
@@ -105,9 +109,52 @@ def test_ingest_extracted(
             "label": "stableTargetId",
             "end": "00000000000000",
         },
+        {
+            "position": 0,
+            "start": "AdditiveOrganizationalUnit",
+            "label": "website",
+            "end": "Link",
+        },
         {"position": 0, "start": "bFQoRhcVH5DHUG", "label": "website", "end": "Link"},
+        {"position": 0, "start": "bFQoRhcVH5DHUw", "label": "website", "end": "Link"},
+        {
+            "position": 0,
+            "start": "AdditiveOrganizationalUnit",
+            "label": "stableTargetId",
+            "end": "StandaloneRule",
+        },
+        {
+            "position": 0,
+            "start": "PreventiveOrganizationalUnit",
+            "label": "stableTargetId",
+            "end": "StandaloneRule",
+        },
+        {
+            "position": 0,
+            "start": "SubtractiveOrganizationalUnit",
+            "label": "stableTargetId",
+            "end": "StandaloneRule",
+        },
         {"position": 0, "start": "bFQoRhcVH5DHUG", "label": "abstract", "end": "Text"},
         {"position": 1, "start": "bFQoRhcVH5DHUG", "label": "abstract", "end": "Text"},
+        {
+            "position": 0,
+            "start": "AdditiveOrganizationalUnit",
+            "label": "name",
+            "end": "Text",
+        },
+        {
+            "position": 0,
+            "start": "AdditiveOrganizationalUnit",
+            "label": "name",
+            "end": "Text",
+        },
+        {
+            "position": 0,
+            "start": "SubtractiveOrganizationalUnit",
+            "label": "name",
+            "end": "Text",
+        },
         {"position": 0, "start": "bFQoRhcVH5DHUE", "label": "name", "end": "Text"},
         {"position": 0, "start": "bFQoRhcVH5DHUw", "label": "name", "end": "Text"},
         {
@@ -245,7 +292,13 @@ def test_ingest_extracted(
         },
         {
             "position": 0,
-            "start": "bFQoRhcVH5DHUE",
+            "start": "AdditiveOrganizationalUnit",
+            "label": "parentUnit",
+            "end": "bFQoRhcVH5DHUx",
+        },
+        {
+            "position": 0,
+            "start": "AdditiveOrganizationalUnit",
             "label": "parentUnit",
             "end": "bFQoRhcVH5DHUx",
         },
@@ -253,6 +306,24 @@ def test_ingest_extracted(
             "position": 0,
             "start": "bFQoRhcVH5DHUG",
             "label": "responsibleUnit",
+            "end": "bFQoRhcVH5DHUx",
+        },
+        {
+            "position": 0,
+            "start": "AdditiveOrganizationalUnit",
+            "label": "stableTargetId",
+            "end": "bFQoRhcVH5DHUx",
+        },
+        {
+            "position": 0,
+            "start": "PreventiveOrganizationalUnit",
+            "label": "stableTargetId",
+            "end": "bFQoRhcVH5DHUx",
+        },
+        {
+            "position": 0,
+            "start": "SubtractiveOrganizationalUnit",
+            "label": "stableTargetId",
             "end": "bFQoRhcVH5DHUx",
         },
         {
@@ -301,6 +372,7 @@ def test_ingest_extracted(
             "label": "ExtractedPrimarySource",
             "identifier": "00000000000001",
         },
+        {"label": "MergedOrganizationalUnit", "identifier": "StandaloneRule"},
         {"label": "MergedContactPoint", "identifier": "bFQoRhcVH5DHUB"},
         {"label": "MergedOrganization", "identifier": "bFQoRhcVH5DHUD"},
         {"label": "MergedOrganizationalUnit", "identifier": "bFQoRhcVH5DHUF"},
@@ -322,6 +394,12 @@ def test_ingest_extracted(
         {"label": "MergedOrganizationalUnit", "identifier": "bFQoRhcVH5DHUx"},
         {"label": "MergedContactPoint", "identifier": "bFQoRhcVH5DHUz"},
         {"title": "Activity Homepage", "label": "Link", "url": "https://activity-1"},
+        {"title": "Unit Homepage", "label": "Link", "url": "https://unit-1-6"},
+        {"label": "Link", "url": "https://ou-1"},
+        {"label": "PreventiveOrganizationalUnit"},
+        {"label": "PreventiveOrganizationalUnit"},
+        {"value": "Abteilung 1.6", "label": "Text", "language": "de"},
+        {"value": "Abteilung 1.7", "label": "Text", "language": "de"},
         {"value": "Aktivität 1", "label": "Text", "language": "de"},
         {"value": "RKI", "label": "Text", "language": "de"},
         {"value": "RKI", "label": "Text", "language": "de"},
@@ -334,6 +412,7 @@ def test_ingest_extracted(
         {"value": "Robert Koch Institute", "label": "Text", "language": "en"},
         {"value": "Unit 1", "label": "Text", "language": "en"},
         {"value": "Unit 1.6", "label": "Text", "language": "en"},
+        {"value": "Unit 1.6", "label": "Text", "language": "en"},
         {"value": "Eng aktiv Aktivitéit.", "label": "Text"},
     ]
 
@@ -341,7 +420,7 @@ def test_ingest_extracted(
 @pytest.mark.integration
 def test_ingest_rule_set(
     client_with_api_key_write_permission: TestClient,
-    dummy_data: dict[str, AnyExtractedModel],
+    loaded_dummy_data: dict[str, AnyExtractedModel],
 ) -> None:
     # post the rule set to the ingest endpoint
     response = client_with_api_key_write_permission.post(
@@ -351,9 +430,9 @@ def test_ingest_rule_set(
                 ActivityRuleSetResponse(
                     additive=AdditiveActivity(title=[Text(value="A1", language=None)]),
                     subtractive=SubtractiveActivity(
-                        contact=dummy_data["contact_point_2"].stableTargetId
+                        contact=loaded_dummy_data["contact_point_2"].stableTargetId
                     ),
-                    stableTargetId=dummy_data["activity_1"].stableTargetId,
+                    stableTargetId=loaded_dummy_data["activity_1"].stableTargetId,
                 )
             ]
         },

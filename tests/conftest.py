@@ -322,28 +322,28 @@ def dummy_data(
         unitOf=[organization_1.stableTargetId],
         website=[Link(url="https://ou-1")],
     )
-    unit_1_rule_set = OrganizationalUnitRuleSetResponse(
-        additive=AdditiveOrganizationalUnit(
-            name=[Text(value="Unit 1.7", language=TextLanguage.EN)],
-            website=[Link(title="Unit Homepage", url="https://unit-1-7")],
-            parentUnit=unit_1.stableTargetId,
-        ),
-        subtractive=SubtractiveOrganizationalUnit(
-            website=[Link(url="https://ou-1")],
-        ),
-        stableTargetId=unit_1.stableTargetId,
-    )
     unit_2 = ExtractedOrganizationalUnit(
         hadPrimarySource=primary_source_2.stableTargetId,
         identifierInPrimarySource="ou-1.6",
         name=[Text(value="Unit 1.6", language=TextLanguage.EN)],
-        parentUnit=unit_1.stableTargetId,
         unitOf=[organization_1.stableTargetId],
+    )
+    unit_2_rule_set = OrganizationalUnitRuleSetResponse(
+        additive=AdditiveOrganizationalUnit(
+            name=[Text(value="Abteilung 1.6", language=TextLanguage.DE)],
+            website=[Link(title="Unit Homepage", url="https://unit-1-6")],
+            parentUnit=unit_1.stableTargetId,
+        ),
+        subtractive=SubtractiveOrganizationalUnit(
+            name=[Text(value="Unit 1.6", language=TextLanguage.EN)],
+        ),
+        stableTargetId=unit_1.stableTargetId,
     )
     unit_standalone_rule_set = OrganizationalUnitRuleSetResponse(
         additive=AdditiveOrganizationalUnit(
-            name=[Text(value="Abteilung 1.8", language=TextLanguage.DE)],
+            name=[Text(value="Abteilung 1.7", language=TextLanguage.DE)],
             parentUnit=unit_1.stableTargetId,
+            email="1.7@rki.de",
         ),
         stableTargetId=Identifier("StandaloneRule"),
     )
@@ -373,7 +373,7 @@ def dummy_data(
         "organization_1": organization_1,
         "organization_2": organization_2,
         "unit_1": unit_1,
-        "unit_1_rule_set": unit_1_rule_set,
+        "unit_2_rule_set": unit_2_rule_set,
         "unit_2": unit_2,
         "unit_standalone_rule_set": unit_standalone_rule_set,
         "activity_1": activity_1,
@@ -400,7 +400,7 @@ def merged_dummy_data(
         "unit_1": create_merged_item(
             dummy_data["unit_1"].stableTargetId,
             [cast("AnyExtractedModel", dummy_data["unit_1"])],
-            cast("AnyRuleSetResponse", dummy_data["unit_1_rule_set"]),
+            cast("AnyRuleSetResponse", dummy_data["unit_2_rule_set"]),
             Validation.STRICT,
         ),
         "unit_2": _merge_single(dummy_data["unit_2"]),

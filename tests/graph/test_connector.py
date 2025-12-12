@@ -290,9 +290,23 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
 @pytest.mark.parametrize(
     ("query_string", "stable_target_id", "entity_type", "limit", "expected"),
     [
-        (None, "thisIdDoesNotExist", None, 10, {"items": [], "total": 0}),
-        ("this_search_term_is_not_findable", None, None, 10, {"items": [], "total": 0}),
-        (
+        pytest.param(
+            None,
+            "thisIdDoesNotExist",
+            None,
+            10,
+            {"items": [], "total": 0},
+            id="id-not-found",
+        ),
+        pytest.param(
+            "this_search_term_is_not_findable",
+            None,
+            None,
+            10,
+            {"items": [], "total": 0},
+            id="search-not-found",
+        ),
+        pytest.param(
             None,
             None,
             None,
@@ -309,8 +323,9 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                 ],
                 "total": 10,
             },
+            id="no-filters",
         ),
-        (
+        pytest.param(
             None,
             None,
             ["ExtractedOrganization"],
@@ -327,7 +342,7 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                         "isniId": [],
                         "entityType": "ExtractedOrganization",
                         "identifier": "bFQoRhcVH5DHUC",
-                        "stableTargetId": ["bFQoRhcVH5DHUv"],
+                        "stableTargetId": ["bFQoRhcVH5DHUD"],
                         "hadPrimarySource": ["bFQoRhcVH5DHUt"],
                         "officialName": [
                             {"value": "RKI", "language": "de"},
@@ -337,8 +352,9 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                 ],
                 "total": 2,
             },
+            id="entity-type-filter",
         ),
-        (
+        pytest.param(
             # find exact matches. without the quotes this might also match the second
             # contact point's email `help@contact-point.two`
             '"info@contact-point.one"',
@@ -358,8 +374,9 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                 ],
                 "total": 1,
             },
+            id="find-exact",
         ),
-        (
+        pytest.param(
             "contact point",
             None,
             None,
@@ -385,8 +402,9 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                 ],
                 "total": 2,
             },
+            id="find-fuzzy",
         ),
-        (
+        pytest.param(
             "RKI",
             None,
             None,
@@ -433,8 +451,9 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                 ],
                 "total": 2,
             },
+            id="find-Text",
         ),
-        (
+        pytest.param(
             "Homepage",
             None,
             None,
@@ -470,17 +489,8 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                 ],
                 "total": 1,
             },
+            id="find-Link",
         ),
-    ],
-    ids=[
-        "id not found",
-        "search not found",
-        "no filters",
-        "entity type filter",
-        "find exact",
-        "find fuzzy",
-        "find Text",
-        "find Link",
     ],
 )
 @pytest.mark.usefixtures("loaded_dummy_data")
@@ -575,9 +585,19 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
 @pytest.mark.parametrize(
     ("query_string", "stable_target_id", "expected"),
     [
-        (None, "thisIdDoesNotExist", {"items": [], "total": 0}),
-        ("this_search_term_is_not_findable", None, {"items": [], "total": 0}),
-        (
+        pytest.param(
+            None,
+            "thisIdDoesNotExist",
+            {"items": [], "total": 0},
+            id="id-not-found",
+        ),
+        pytest.param(
+            "this_search_term_is_not_findable",
+            None,
+            {"items": [], "total": 0},
+            id="search-not-found",
+        ),
+        pytest.param(
             None,
             None,
             {
@@ -585,7 +605,7 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
                     {
                         "email": [],
                         "entityType": "AdditiveOrganizationalUnit",
-                        "stableTargetId": ["bFQoRhcVH5DHUF"],
+                        "stableTargetId": ["bFQoRhcVH5DHUx"],
                         "parentUnit": ["bFQoRhcVH5DHUx"],
                         "name": [{"value": "Unit 1.7", "language": "en"}],
                         "website": [
@@ -593,10 +613,11 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
                         ],
                     }
                 ],
-                "total": 3,
+                "total": 6,
             },
+            id="no-filters",
         ),
-        (
+        pytest.param(
             '"Unit 1.7"',
             None,
             {
@@ -614,13 +635,8 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
                 ],
                 "total": 1,
             },
+            id="find-Link",
         ),
-    ],
-    ids=[
-        "id not found",
-        "search not found",
-        "no filters",
-        "find Link",
     ],
 )
 @pytest.mark.usefixtures("loaded_dummy_data")
@@ -786,7 +802,7 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
         "expected",
     ),
     [
-        (
+        pytest.param(
             None,
             "thisIdDoesNotExist",
             None,
@@ -794,8 +810,9 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
             None,
             10,
             {"items": [], "total": 0},
+            id="id-not-found",
         ),
-        (
+        pytest.param(
             "this_search_term_is_not_findable",
             None,
             None,
@@ -803,8 +820,9 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
             None,
             10,
             {"items": [], "total": 0},
+            id="search-not-found",
         ),
-        (
+        pytest.param(
             None,
             None,
             None,
@@ -827,10 +845,10 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                         "identifier": "00000000000000",
                     }
                 ],
-                "total": 9,
+                "total": 11,
             },
         ),
-        (
+        pytest.param(
             None,
             None,
             ["MergedOrganization"],
@@ -868,8 +886,9 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 2,
             },
+            id="no-filters",
         ),
-        (
+        pytest.param(
             None,
             None,
             None,
@@ -902,13 +921,14 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                             }
                         ],
                         "entityType": "MergedOrganization",
-                        "identifier": "bFQoRhcVH5DHUD",
+                        "identifier": "bFQoRhcVH5DHUv",
                     }
                 ],
                 "total": 3,
             },
+            id="entity-type-filter",
         ),
-        (
+        pytest.param(
             "Unit",
             None,
             None,
@@ -959,8 +979,9 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 2,
             },
+            id="had-primary-source-with-query",
         ),
-        (
+        pytest.param(
             # find exact matches. without the quotes this might also match the second
             # contact point's email `help@contact-point.two`
             '"info@contact-point.one"',
@@ -989,7 +1010,7 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 "total": 1,
             },
         ),
-        (
+        pytest.param(
             "contact point",
             None,
             None,
@@ -1029,8 +1050,9 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 2,
             },
+            id="find-exact",
         ),
-        (
+        pytest.param(
             "RKI",
             None,
             None,
@@ -1088,8 +1110,9 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 1,
             },
+            id="find-fuzzy",
         ),
-        (
+        pytest.param(
             "Homepage",
             None,
             None,
@@ -1175,19 +1198,8 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 2,
             },
+            id="find-Text",
         ),
-    ],
-    ids=[
-        "id not found",
-        "search not found",
-        "no filters",
-        "entity type filter",
-        "had primary source filter",
-        "had primary source filter and filter by query",
-        "find exact",
-        "find fuzzy",
-        "find Text",
-        "find Link",
     ],
 )
 @pytest.mark.usefixtures("loaded_dummy_data")
@@ -1301,16 +1313,30 @@ def test_mocked_graph_exists_item(
 @pytest.mark.parametrize(
     ("stable_target_id", "entity_types", "exists"),
     [
-        ("bFQoRhcVH5DHUB", ["MergedContactPoint"], True),
-        ("bFQoRhcVH5DHUB", ["MergedPerson", "MergedContactPoint"], True),
-        ("bFQoRhcVH5DHUB", ["MergedActivity"], False),
-        ("thisIdDoesNotExist", ["MergedActivity"], False),
-    ],
-    ids=[
-        "found with type filter",
-        "found with multiple types",
-        "missed due to filter",
-        "missed due to identifier",
+        pytest.param(
+            "bFQoRhcVH5DHUB",
+            ["MergedContactPoint"],
+            True,
+            id="found-with-type",
+        ),
+        pytest.param(
+            "bFQoRhcVH5DHUB",
+            ["MergedPerson", "MergedContactPoint"],
+            True,
+            id="found-multiple-types",
+        ),
+        pytest.param(
+            "bFQoRhcVH5DHUB",
+            ["MergedActivity"],
+            False,
+            id="missed-due-to-filter",
+        ),
+        pytest.param(
+            "thisIdDoesNotExist",
+            ["MergedActivity"],
+            False,
+            id="missed-due-to-id",
+        ),
     ],
 )
 @pytest.mark.usefixtures("loaded_dummy_data")
@@ -1338,7 +1364,7 @@ def test_mocked_run_ingest_in_transaction_rule_set(
     with graph.driver.session() as session, session.begin_transaction() as tx:
         graph._run_ingest_in_transaction(
             tx,
-            dummy_data["unit_1_rule_set"],
+            dummy_data["unit_2_rule_set"],
         )
 
     assert (
@@ -1388,7 +1414,7 @@ def test_mocked_graph_ingests_rule_set(
     mocked_graph.side_effect = organizational_unit_rule_set_ingest_result
 
     graph = GraphConnector.get()
-    deque(graph.ingest_items([dummy_data["unit_1_rule_set"]]))
+    deque(graph.ingest_items([dummy_data["unit_2_rule_set"]]))
 
     assert (
         mocked_graph.call_args_list

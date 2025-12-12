@@ -197,7 +197,9 @@ def test_get_rule_set_not_found(
     ("rule_name", "expected"),
     [
         pytest.param(
-            "unit_1_rule_set", "unit_1_rule_setFOOOOO", id="rule set with extracted"
+            "unit_2_rule_set",
+            "unit_2_rule_setFOOOOO",
+            id="rule set with extracted",
         ),
         pytest.param(
             "unit_standalone_rule_set",
@@ -242,7 +244,7 @@ def test_delete_rule_set(
     loaded_dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
 ) -> None:
     # Get rule set identifier
-    identifier = loaded_dummy_data["unit_1_rule_set"].stableTargetId
+    identifier = loaded_dummy_data["unit_2_rule_set"].stableTargetId
 
     # Verify rule set exists
     response = client_with_api_key_write_permission.get(f"/v0/rule-set/{identifier}")
@@ -291,7 +293,7 @@ def test_update_rule_set(
     loaded_dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
 ) -> None:
     response = client_with_api_key_write_permission.put(
-        f"/v0/rule-set/{loaded_dummy_data['unit_1_rule_set'].stableTargetId}",
+        f"/v0/rule-set/{loaded_dummy_data['unit_2_rule_set'].stableTargetId}",
         json={
             "$type": "OrganizationalUnitRuleSetRequest",
             "additive": {
@@ -340,7 +342,7 @@ def test_update_rule_set(
             "website": [],
         },
         "$type": "OrganizationalUnitRuleSetResponse",
-        "stableTargetId": loaded_dummy_data["unit_1_rule_set"].stableTargetId,
+        "stableTargetId": loaded_dummy_data["unit_2_rule_set"].stableTargetId,
     }
     assert get_graph() == [
         {

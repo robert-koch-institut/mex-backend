@@ -105,7 +105,7 @@ def test_search_merged_items_mocked(
 @pytest.mark.parametrize(
     ("query_string", "expected"),
     [
-        (
+        pytest.param(
             "?limit=1",
             {
                 "items": [
@@ -124,8 +124,9 @@ def test_search_merged_items_mocked(
                 ],
                 "total": 11,
             },
+            id="limit-1",
         ),
-        (
+        pytest.param(
             "?limit=1&skip=8",
             {
                 "items": [
@@ -151,8 +152,9 @@ def test_search_merged_items_mocked(
                 ],
                 "total": 11,
             },
+            id="skip-1",
         ),
-        (
+        pytest.param(
             "?entityType=MergedContactPoint",
             {
                 "items": [
@@ -169,8 +171,9 @@ def test_search_merged_items_mocked(
                 ],
                 "total": 2,
             },
+            id="entity-type-contact-points",
         ),
-        (
+        pytest.param(
             "?q=cool",
             {
                 "items": [
@@ -189,8 +192,9 @@ def test_search_merged_items_mocked(
                 ],
                 "total": 1,
             },
+            id="full-text-search",
         ),
-        (
+        pytest.param(
             "?identifier=bFQoRhcVH5DHUx",
             {
                 "items": [
@@ -208,8 +212,9 @@ def test_search_merged_items_mocked(
                 ],
                 "total": 1,
             },
+            id="identifier-filter",
         ),
-        (
+        pytest.param(
             "?identifier=bFQoRhcVH5DHUF",
             {
                 "items": [
@@ -227,8 +232,9 @@ def test_search_merged_items_mocked(
                 ],
                 "total": 1,
             },
+            id="identifier-filter-composite",
         ),
-        (
+        pytest.param(
             "?referencedIdentifier=bFQoRhcVH5DHUt&referenceField=hadPrimarySource",
             {
                 "items": [
@@ -286,20 +292,18 @@ def test_search_merged_items_mocked(
                 ],
                 "total": 3,
             },
+            id="generic-id-filter",
         ),
-        ("?identifier=thisIdDoesNotExist", {"items": [], "total": 0}),
-        ("?q=queryNotFound", {"items": [], "total": 0}),
-    ],
-    ids=[
-        "limit 1",
-        "skip 1",
-        "entity type contact points",
-        "full text search",
-        "identifier filter",
-        "identifier filter with composite result",
-        "generic id filter",
-        "identifier not found",
-        "full text not found",
+        pytest.param(
+            "?identifier=thisIdDoesNotExist",
+            {"items": [], "total": 0},
+            id="identifier-not-found",
+        ),
+        pytest.param(
+            "?q=queryNotFound",
+            {"items": [], "total": 0},
+            id="full-text-not-found",
+        ),
     ],
 )
 @pytest.mark.usefixtures("loaded_dummy_data")
@@ -404,16 +408,26 @@ def test_get_merged_item_not_found(
 @pytest.mark.parametrize(
     ("item_name", "url_params"),
     [
-        ("activity_1", ""),
-        ("activity_1", "include_rule_set=true"),
-        ("unit_2", "include_rule_set=true"),
-        ("unit_standalone_rule_set", "include_rule_set=true"),
-    ],
-    ids=[
-        "item without rule set does not need parameter",
-        "item without rule set can have parameter",
-        "item with rule set needs parameter",
-        "rule-set-only item needs parameter",
+        pytest.param(
+            "activity_1",
+            "",
+            id="no-rule-set-no-param",
+        ),
+        pytest.param(
+            "activity_1",
+            "include_rule_set=true",
+            id="no-rule-set-with-param",
+        ),
+        pytest.param(
+            "unit_2",
+            "include_rule_set=true",
+            id="with-rule-set-needs-param",
+        ),
+        pytest.param(
+            "unit_standalone_rule_set",
+            "include_rule_set=true",
+            id="rule-set-only-needs-param",
+        ),
     ],
 )
 @pytest.mark.integration
@@ -448,36 +462,34 @@ def test_delete_merged_item(
         "status_code_after",
     ),
     [
-        (
+        pytest.param(
             "unit_2",
             "",
             status.HTTP_412_PRECONDITION_FAILED,
             status.HTTP_200_OK,
+            id="rule-set-without-param",
         ),
-        (
+        pytest.param(
             "unit_2",
             "include_rule_set=false",
             status.HTTP_412_PRECONDITION_FAILED,
             status.HTTP_200_OK,
+            id="rule-set-explicit-false",
         ),
-        (
+        pytest.param(
             "contact_point_1",
             "",
             status.HTTP_409_CONFLICT,
             status.HTTP_200_OK,
+            id="inbound-connections",
         ),
-        (
+        pytest.param(
             "not_a_real_item",
             "",
             status.HTTP_404_NOT_FOUND,
             status.HTTP_404_NOT_FOUND,
+            id="not-found",
         ),
-    ],
-    ids=[
-        "item with rule set without parameter",
-        "item with rule set with explicit parameter false",
-        "item with inbound connections",
-        "non-existent items not found",
     ],
 )
 @pytest.mark.integration

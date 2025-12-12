@@ -45,7 +45,7 @@ def test_search_merged_items_in_graph() -> None:
 @pytest.mark.parametrize(
     ("mocked_graph_result", "expected"),
     [
-        (
+        pytest.param(
             [
                 {
                     "items": [
@@ -93,8 +93,9 @@ def test_search_merged_items_in_graph() -> None:
                 ],
                 "total": 1,
             },
+            id="no-rules",
         ),
-        (
+        pytest.param(
             [
                 {
                     "items": [
@@ -137,8 +138,9 @@ def test_search_merged_items_in_graph() -> None:
                 }
             ],
             "inconsistent number of rules found: 1",
+            id="one-rule-raises-error",
         ),
-        (
+        pytest.param(
             [
                 {
                     "items": [
@@ -222,9 +224,9 @@ def test_search_merged_items_in_graph() -> None:
                 ],
                 "total": 1,
             },
+            id="three-rules",
         ),
     ],
-    ids=["no_rules", "one_rule_raises_error", "three_rules"],
 )
 @pytest.mark.usefixtures("mocked_valkey")
 def test_search_merged_items_in_graph_mocked(

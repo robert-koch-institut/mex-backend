@@ -20,7 +20,7 @@ from tests.conftest import MockedGraph
 @pytest.mark.parametrize(
     ("mocked_return", "had_primary_source", "identifier_in_primary_source", "expected"),
     [
-        (
+        pytest.param(
             [],
             MergedPrimarySourceIdentifier("psSti00000000001"),
             "new-item",
@@ -30,8 +30,9 @@ from tests.conftest import MockedGraph
                 "identifierInPrimarySource": "new-item",
                 "stableTargetId": "bFQoRhcVH5DHUr",
             },
+            id="new-item",
         ),
-        (
+        pytest.param(
             [
                 {
                     "hadPrimarySource": "psSti00000000001",
@@ -48,9 +49,9 @@ from tests.conftest import MockedGraph
                 "identifierInPrimarySource": "existing-item",
                 "stableTargetId": "cpSti00000000002",
             },
+            id="existing-item",
         ),
     ],
-    ids=["new item", "existing item"],
 )
 @pytest.mark.usefixtures("mocked_valkey")
 def test_assign_identity_mocked(
@@ -98,7 +99,7 @@ def test_assign_identity_inconsistency_mocked(
 @pytest.mark.parametrize(
     ("had_primary_source", "identifier_in_primary_source", "expected"),
     [
-        (
+        pytest.param(
             "bFQoRhcVH5DHUr",
             "new-item",
             {
@@ -107,8 +108,9 @@ def test_assign_identity_inconsistency_mocked(
                 "identifierInPrimarySource": "new-item",
                 "stableTargetId": "bFQoRhcVH5DHUJ",
             },
+            id="new-item",
         ),
-        (
+        pytest.param(
             "bFQoRhcVH5DHUr",
             "cp-2",
             {
@@ -117,8 +119,9 @@ def test_assign_identity_inconsistency_mocked(
                 "identifierInPrimarySource": "cp-2",
                 "stableTargetId": "bFQoRhcVH5DHUB",
             },
+            id="existing-contact-point",
         ),
-        (
+        pytest.param(
             MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
             MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
             {
@@ -127,9 +130,9 @@ def test_assign_identity_inconsistency_mocked(
                 "identifierInPrimarySource": MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
                 "stableTargetId": MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
             },
+            id="mex-primary-source",
         ),
     ],
-    ids=["new item", "existing contact point", "mex primary source"],
 )
 @pytest.mark.usefixtures("loaded_dummy_data")
 @pytest.mark.integration
@@ -155,8 +158,15 @@ def test_assign_identity(
         "expected",
     ),
     [
-        ([], None, None, Identifier("thisDoesNotExist"), []),
-        (
+        pytest.param(
+            [],
+            None,
+            None,
+            Identifier("thisDoesNotExist"),
+            [],
+            id="nothing-found",
+        ),
+        pytest.param(
             [
                 {
                     "hadPrimarySource": "28282828282828",
@@ -176,8 +186,9 @@ def test_assign_identity(
                     "stableTargetId": "949494949494949494",
                 },
             ],
+            id="one-item",
         ),
-        (
+        pytest.param(
             [
                 {
                     "hadPrimarySource": "28282828282828",
@@ -209,9 +220,9 @@ def test_assign_identity(
                     "stableTargetId": "949494949494949494",
                 },
             ],
+            id="two-items",
         ),
     ],
-    ids=["nothing found", "one item", "two items"],
 )
 @pytest.mark.usefixtures("mocked_valkey")
 def test_fetch_identities_mocked(  # noqa: PLR0913
@@ -240,8 +251,14 @@ def test_fetch_identities_mocked(  # noqa: PLR0913
         "expected",
     ),
     [
-        (None, None, Identifier("thisDoesNotExist"), []),
-        (
+        pytest.param(
+            None,
+            None,
+            Identifier("thisDoesNotExist"),
+            [],
+            id="nothing-found",
+        ),
+        pytest.param(
             MergedPrimarySourceIdentifier("00000000000000"),
             "ps-1",
             None,
@@ -253,8 +270,9 @@ def test_fetch_identities_mocked(  # noqa: PLR0913
                     "stableTargetId": "bFQoRhcVH5DHUr",
                 }
             ],
+            id="by-source-and-id",
         ),
-        (
+        pytest.param(
             None,
             None,
             MergedOrganizationalUnitIdentifier("bFQoRhcVH5DHUx"),
@@ -266,12 +284,8 @@ def test_fetch_identities_mocked(  # noqa: PLR0913
                     "stableTargetId": "bFQoRhcVH5DHUx",
                 }
             ],
+            id="by-stable-target-id",
         ),
-    ],
-    ids=[
-        "nothing found",
-        "by hadPrimarySource and identifierInPrimarySource",
-        "by stableTargetId",
     ],
 )
 @pytest.mark.usefixtures("loaded_dummy_data")

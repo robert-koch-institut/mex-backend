@@ -23,7 +23,7 @@ MOCK_REQUEST_SCOPE = {
 @pytest.mark.parametrize(
     ("exception", "expected", "status_code"),
     [
-        (
+        pytest.param(
             TypeError("foo"),
             {
                 "debug": {
@@ -33,8 +33,9 @@ MOCK_REQUEST_SCOPE = {
                 "message": "foo",
             },
             status.HTTP_500_INTERNAL_SERVER_ERROR,
+            id="TypeError",
         ),
-        (
+        pytest.param(
             MExError("bar"),
             {
                 "message": "MExError: bar",
@@ -44,9 +45,9 @@ MOCK_REQUEST_SCOPE = {
                 },
             },
             status.HTTP_500_INTERNAL_SERVER_ERROR,
+            id="MExError",
         ),
     ],
-    ids=["TypeError", "MExError"],
 )
 def test_handle_uncaught_exception(
     exception: Exception, expected: dict[str, Any], status_code: int
@@ -80,7 +81,7 @@ except InconsistentGraphError as error:
 @pytest.mark.parametrize(
     ("exception", "expected"),
     [
-        (
+        pytest.param(
             validation_error,
             {
                 "message": """1 validation error for DummyModel
@@ -100,8 +101,9 @@ numbers
                     "scope": MOCK_REQUEST_SCOPE,
                 },
             },
+            id="ValidationError",
         ),
-        (
+        pytest.param(
             inconsistent_graph_error,
             {
                 "message": "InconsistentGraphError: this has to validate",
@@ -118,9 +120,9 @@ numbers
                     "scope": MOCK_REQUEST_SCOPE,
                 },
             },
+            id="InconsistentGraphError",
         ),
     ],
-    ids=["ValidationError", "InconsistentGraphError"],
 )
 def test_handle_detailed_error(exception: Exception, expected: dict[str, Any]) -> None:
     request = Mock(scope=MOCK_REQUEST_SCOPE)

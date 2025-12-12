@@ -72,7 +72,7 @@ def test_search_extracted_items_mocked(
 @pytest.mark.parametrize(
     ("query_string", "expected"),
     [
-        (
+        pytest.param(
             "?limit=1",
             {
                 "items": [
@@ -94,8 +94,9 @@ def test_search_extracted_items_mocked(
                 ],
                 "total": 10,
             },
+            id="limit-1",
         ),
-        (
+        pytest.param(
             "?limit=1&skip=9",
             {
                 "items": [
@@ -110,8 +111,9 @@ def test_search_extracted_items_mocked(
                 ],
                 "total": 10,
             },
+            id="skip-1",
         ),
-        (
+        pytest.param(
             "?entityType=ExtractedContactPoint",
             {
                 "items": [
@@ -134,8 +136,9 @@ def test_search_extracted_items_mocked(
                 ],
                 "total": 2,
             },
+            id="entity-type-contact-points",
         ),
-        (
+        pytest.param(
             "?q=cool",
             {
                 "items": [
@@ -157,8 +160,9 @@ def test_search_extracted_items_mocked(
                 ],
                 "total": 1,
             },
+            id="full-text-search",
         ),
-        (
+        pytest.param(
             "?stableTargetId=bFQoRhcVH5DHUx",
             {
                 "items": [
@@ -181,18 +185,18 @@ def test_search_extracted_items_mocked(
                 ],
                 "total": 1,
             },
+            id="stable-target-id-filter",
         ),
-        ("?stableTargetId=thisIdDoesNotExist", {"items": [], "total": 0}),
-        ("?q=queryNotFound", {"items": [], "total": 0}),
-    ],
-    ids=[
-        "limit 1",
-        "skip 1",
-        "entity type contact points",
-        "full text search",
-        "stable target id filter",
-        "identifier not found",
-        "full text not found",
+        pytest.param(
+            "?stableTargetId=thisIdDoesNotExist",
+            {"items": [], "total": 0},
+            id="identifier-not-found",
+        ),
+        pytest.param(
+            "?q=queryNotFound",
+            {"items": [], "total": 0},
+            id="full-text-not-found",
+        ),
     ],
 )
 @pytest.mark.usefixtures("loaded_dummy_data")

@@ -8,7 +8,7 @@ from starlette import status
 @pytest.mark.parametrize(
     ("stable_target_id", "json_body", "expected"),
     [
-        (
+        pytest.param(
             "bFQoRhcVH5DHUH",
             {
                 "$type": "ActivityRuleSetRequest",
@@ -42,8 +42,9 @@ from starlette import status
                 ],
                 "identifier": "bFQoRhcVH5DHUH",
             },
+            id="additive",
         ),
-        (
+        pytest.param(
             "bFQoRhcVH5DHUH",
             {
                 "$type": "ActivityRuleSetRequest",
@@ -73,8 +74,9 @@ from starlette import status
                 "$type": "MergedActivity",
                 "identifier": "bFQoRhcVH5DHUH",
             },
+            id="subtractive",
         ),
-        (
+        pytest.param(
             "bFQoRhcVH5DHUH",
             {
                 "$type": "ActivityRuleSetRequest",
@@ -103,8 +105,9 @@ from starlette import status
                 "$type": "MergedActivity",
                 "identifier": "bFQoRhcVH5DHUH",
             },
+            id="preventive",
         ),
-        (
+        pytest.param(
             "unknownStableTargetId",
             {
                 "$type": "ContactPointRuleSetRequest",
@@ -120,13 +123,8 @@ from starlette import status
                 "email": ["test@test.local"],
                 "identifier": "unknownStableTargetId",
             },
+            id="unknown-id",
         ),
-    ],
-    ids=[
-        "additive",
-        "subtractive",
-        "preventive",
-        "unknown-id",
     ],
 )
 @pytest.mark.integration
@@ -148,7 +146,7 @@ def test_preview(
 @pytest.mark.parametrize(
     ("query_string", "expected"),
     [
-        (
+        pytest.param(
             "?limit=1",
             {
                 "items": [
@@ -167,8 +165,9 @@ def test_preview(
                 ],
                 "total": 11,
             },
+            id="limit-1",
         ),
-        (
+        pytest.param(
             "?limit=1&skip=8",
             {
                 "items": [
@@ -180,8 +179,9 @@ def test_preview(
                 ],
                 "total": 9,
             },
+            id="skip-1",
         ),
-        (
+        pytest.param(
             "?entityType=MergedContactPoint",
             {
                 "items": [
@@ -198,8 +198,9 @@ def test_preview(
                 ],
                 "total": 2,
             },
+            id="entity-type-contact-points",
         ),
-        (
+        pytest.param(
             "?q=cool",
             {
                 "items": [
@@ -218,8 +219,9 @@ def test_preview(
                 ],
                 "total": 1,
             },
+            id="full-text-search",
         ),
-        (
+        pytest.param(
             "?identifier=bFQoRhcVH5DHUx",
             {
                 "items": [
@@ -237,8 +239,9 @@ def test_preview(
                 ],
                 "total": 1,
             },
+            id="identifier-filter",
         ),
-        (
+        pytest.param(
             "?identifier=bFQoRhcVH5DHUF",
             {
                 "items": [
@@ -256,8 +259,9 @@ def test_preview(
                 ],
                 "total": 1,
             },
+            id="identifier-filter-composite",
         ),
-        (
+        pytest.param(
             "?referencedIdentifier=bFQoRhcVH5DHUt&referenceField=hadPrimarySource",
             {
                 "items": [
@@ -311,20 +315,18 @@ def test_preview(
                 ],
                 "total": 3,
             },
+            id="generic-id-filter",
         ),
-        ("?identifier=thisIdDoesNotExist", {"items": [], "total": 0}),
-        ("?q=queryNotFound", {"items": [], "total": 0}),
-    ],
-    ids=[
-        "limit 1",
-        "skip 1",
-        "entity type contact points",
-        "full text search",
-        "identifier filter",
-        "identifier filter with composite result",
-        "generic id filter",
-        "identifier not found",
-        "full text not found",
+        pytest.param(
+            "?identifier=thisIdDoesNotExist",
+            {"items": [], "total": 0},
+            id="identifier-not-found",
+        ),
+        pytest.param(
+            "?q=queryNotFound",
+            {"items": [], "total": 0},
+            id="full-text-not-found",
+        ),
     ],
 )
 @pytest.mark.usefixtures("loaded_dummy_data")

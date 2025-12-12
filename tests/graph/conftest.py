@@ -12,12 +12,12 @@ def organizational_unit_rule_set_ingest_result() -> list[list[dict[str, Any]]]:
         [
             {
                 "identifier": None,
-                "stableTargetId": "bFQoRhcVH5DHU6",
+                "stableTargetId": "cWWm02l1c6cucKjIhkFqY4",
                 "entityType": "AdditiveOrganizationalUnit",
                 "linkRels": [
                     {
                         "nodeLabels": ["MergedOrganizationalUnit"],
-                        "nodeProps": {"identifier": "bFQoRhcVH5DHU6"},
+                        "nodeProps": {"identifier": "cWWm02l1c6cucKjIhkFqY4v"},
                         "edgeLabel": "parentUnit",
                         "edgeProps": {"position": 0},
                     }
@@ -57,6 +57,18 @@ def organizational_unit_rule_set_ingest_result() -> list[list[dict[str, Any]]]:
                 "stableTargetId": "bFQoRhcVH5DHU6",
                 "entityType": "PreventiveOrganizationalUnit",
                 "nodeProps": {},
+                "createRels": [
+                    {
+                        "nodeLabels": ["Link"],
+                        "nodeProps": {
+                            "title": None,
+                            "url": "https://ou-1",
+                            "language": None,
+                        },
+                        "edgeLabel": "website",
+                        "edgeProps": {"position": 0},
+                    },
+                ],
             }
         ],
     ]
@@ -88,14 +100,14 @@ def organizational_unit_rule_set_ingest_call_expectation() -> list[object]:
                 ),
             ),
             data={
-                "stableTargetId": "bFQoRhcVH5DHU6",
+                "stableTargetId": "cWWm02l1c6cucKjIhkFqY4",
                 "identifier": None,
                 "entityType": "AdditiveOrganizationalUnit",
                 "nodeProps": {"email": []},
                 "linkRels": [
                     {
                         "nodeLabels": ["MergedOrganizationalUnit"],
-                        "nodeProps": {"identifier": "bFQoRhcVH5DHU6"},
+                        "nodeProps": {"identifier": "cWWm02l1c6cucKjIhkFqY4v"},
                         "edgeLabel": "parentUnit",
                         "edgeProps": {"position": 0},
                     }
@@ -143,12 +155,23 @@ def organizational_unit_rule_set_ingest_call_expectation() -> list[object]:
                 ),
             ),
             data={
-                "stableTargetId": "bFQoRhcVH5DHU6",
+                "stableTargetId": "cWWm02l1c6cucKjIhkFqY4",
                 "identifier": None,
                 "entityType": "SubtractiveOrganizationalUnit",
                 "nodeProps": {"email": []},
                 "linkRels": [],
-                "createRels": [],
+                "createRels": [
+                    {
+                        "nodeLabels": ["Link"],
+                        "nodeProps": {
+                            "title": None,
+                            "url": "https://ou-1",
+                            "language": None,
+                        },
+                        "edgeLabel": "website",
+                        "edgeProps": {"position": 0},
+                    },
+                ],
             },
         ),
         call(
@@ -174,7 +197,7 @@ def organizational_unit_rule_set_ingest_call_expectation() -> list[object]:
                 ),
             ),
             data={
-                "stableTargetId": "bFQoRhcVH5DHU6",
+                "stableTargetId": "cWWm02l1c6cucKjIhkFqY4",
                 "identifier": None,
                 "entityType": "PreventiveOrganizationalUnit",
                 "nodeProps": {},
