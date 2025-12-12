@@ -9,8 +9,12 @@ from mex.common.types import TextLanguage
 @pytest.mark.parametrize(
     ("items", "expected"),
     [
-        ([], "inconsistent number of rules found: 0"),
-        (
+        pytest.param(
+            [],
+            "inconsistent number of rules found: 0",
+            id="wrong-item-count",
+        ),
+        pytest.param(
             [
                 {
                     "entityType": "AdditiveAccessPlatform",
@@ -26,8 +30,9 @@ from mex.common.types import TextLanguage
                 },
             ],
             "inconsistent rule item stem types",
+            id="incompatible-types",
         ),
-        (
+        pytest.param(
             [
                 {
                     "entityType": "PreventiveVariable",
@@ -44,8 +49,9 @@ from mex.common.types import TextLanguage
             ],
             "inconsistent rule item stableTargetIds: "
             "00000000000001, 00000000000002, 00000000000003",
+            id="incompatible-ids",
         ),
-        (
+        pytest.param(
             [
                 {
                     "entityType": "AdditiveVariableGroup",
@@ -82,13 +88,8 @@ from mex.common.types import TextLanguage
                 "entityType": "VariableGroupRuleSetResponse",
                 "stableTargetId": "00000000000007",
             },
+            id="valid-rule-items",
         ),
-    ],
-    ids=[
-        "wrong item count",
-        "incompatible types",
-        "incompatible stableTargetIds",
-        "valid rule items",
     ],
 )
 def test_transform_raw_rules_to_rule_set_response(

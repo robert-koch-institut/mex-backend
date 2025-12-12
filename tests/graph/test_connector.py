@@ -8,18 +8,19 @@ from pytest import MonkeyPatch
 
 from mex.backend.graph import connector as connector_module
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.graph.exceptions import IngestionError
+from mex.backend.graph.exceptions import IngestionError, MatchingError
 from mex.backend.graph.models import IngestParams
 from mex.backend.graph.query import Query
+from mex.backend.merged.helpers import get_merged_item_from_graph
 from mex.backend.settings import BackendSettings
 from mex.common.exceptions import MExError
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
     AnyExtractedModel,
+    AnyRuleSetResponse,
     ExtractedOrganization,
     ExtractedOrganizationalUnit,
-    OrganizationalUnitRuleSetResponse,
 )
 from mex.common.types import Identifier, Text, TextLanguage
 from tests.conftest import MockedGraph, get_graph
@@ -289,9 +290,23 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
 @pytest.mark.parametrize(
     ("query_string", "stable_target_id", "entity_type", "limit", "expected"),
     [
-        (None, "thisIdDoesNotExist", None, 10, {"items": [], "total": 0}),
-        ("this_search_term_is_not_findable", None, None, 10, {"items": [], "total": 0}),
-        (
+        pytest.param(
+            None,
+            "thisIdDoesNotExist",
+            None,
+            10,
+            {"items": [], "total": 0},
+            id="id-not-found",
+        ),
+        pytest.param(
+            "this_search_term_is_not_findable",
+            None,
+            None,
+            10,
+            {"items": [], "total": 0},
+            id="search-not-found",
+        ),
+        pytest.param(
             None,
             None,
             None,
@@ -308,8 +323,9 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                 ],
                 "total": 10,
             },
+            id="no-filters",
         ),
-        (
+        pytest.param(
             None,
             None,
             ["ExtractedOrganization"],
@@ -325,8 +341,8 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                         "geprisId": [],
                         "isniId": [],
                         "entityType": "ExtractedOrganization",
-                        "identifier": "bFQoRhcVH5DHUC",
-                        "stableTargetId": ["bFQoRhcVH5DHUv"],
+                        "identifier": "bFQoRhcVH5DHUE",
+                        "stableTargetId": ["bFQoRhcVH5DHUF"],
                         "hadPrimarySource": ["bFQoRhcVH5DHUt"],
                         "officialName": [
                             {"value": "RKI", "language": "de"},
@@ -336,8 +352,9 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                 ],
                 "total": 2,
             },
+            id="entity-type-filter",
         ),
-        (
+        pytest.param(
             # find exact matches. without the quotes this might also match the second
             # contact point's email `help@contact-point.two`
             '"info@contact-point.one"',
@@ -357,8 +374,9 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                 ],
                 "total": 1,
             },
+            id="find-exact",
         ),
-        (
+        pytest.param(
             "contact point",
             None,
             None,
@@ -384,8 +402,9 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                 ],
                 "total": 2,
             },
+            id="find-fuzzy",
         ),
-        (
+        pytest.param(
             "RKI",
             None,
             None,
@@ -394,46 +413,43 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                 "items": [
                     {
                         "rorId": [],
+                        "identifierInPrimarySource": "robert-koch-institute",
                         "gndId": [],
                         "wikidataId": [],
-                        "identifierInPrimarySource": "robert-koch-institute",
-                        "viafId": [],
                         "geprisId": [],
+                        "viafId": [],
                         "isniId": [],
                         "entityType": "ExtractedOrganization",
-                        "identifier": "bFQoRhcVH5DHUC",
-                        "stableTargetId": ["bFQoRhcVH5DHUv"],
+                        "identifier": "bFQoRhcVH5DHUE",
                         "hadPrimarySource": ["bFQoRhcVH5DHUt"],
                         "officialName": [
                             {"value": "RKI", "language": "de"},
                             {"value": "Robert Koch Institute", "language": "en"},
                         ],
+                        "stableTargetId": ["bFQoRhcVH5DHUD"],
                     },
                     {
                         "rorId": [],
+                        "identifierInPrimarySource": "rki",
                         "gndId": [],
                         "wikidataId": [],
-                        "identifierInPrimarySource": "rki",
-                        "viafId": [],
                         "geprisId": [],
+                        "viafId": [],
                         "isniId": [],
                         "entityType": "ExtractedOrganization",
-                        "identifier": "bFQoRhcVH5DHUu",
-                        "stableTargetId": ["bFQoRhcVH5DHUv"],
+                        "identifier": "bFQoRhcVH5DHUF",
                         "hadPrimarySource": ["bFQoRhcVH5DHUr"],
                         "officialName": [
                             {"value": "RKI", "language": "de"},
-                            {
-                                "value": "Robert Koch Institut ist the best",
-                                "language": "de",
-                            },
                         ],
+                        "stableTargetId": ["bFQoRhcVH5DHUv"],
                     },
                 ],
                 "total": 2,
             },
+            id="find-Text",
         ),
-        (
+        pytest.param(
             "Homepage",
             None,
             None,
@@ -469,20 +485,11 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                 ],
                 "total": 1,
             },
+            id="find-Link",
         ),
     ],
-    ids=[
-        "id not found",
-        "search not found",
-        "no filters",
-        "entity type filter",
-        "find exact",
-        "find fuzzy",
-        "find Text",
-        "find Link",
-    ],
 )
-@pytest.mark.usefixtures("load_dummy_data")
+@pytest.mark.usefixtures("loaded_dummy_data")
 @pytest.mark.integration
 def test_fetch_extracted_items(
     query_string: str | None,
@@ -574,9 +581,19 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
 @pytest.mark.parametrize(
     ("query_string", "stable_target_id", "expected"),
     [
-        (None, "thisIdDoesNotExist", {"items": [], "total": 0}),
-        ("this_search_term_is_not_findable", None, {"items": [], "total": 0}),
-        (
+        pytest.param(
+            None,
+            "thisIdDoesNotExist",
+            {"items": [], "total": 0},
+            id="id-not-found",
+        ),
+        pytest.param(
+            "this_search_term_is_not_findable",
+            None,
+            {"items": [], "total": 0},
+            id="search-not-found",
+        ),
+        pytest.param(
             None,
             None,
             {
@@ -584,18 +601,19 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
                     {
                         "email": [],
                         "entityType": "AdditiveOrganizationalUnit",
-                        "stableTargetId": ["bFQoRhcVH5DHUF"],
+                        "name": [{"value": "Abteilung 1.6", "language": "de"}],
                         "parentUnit": ["bFQoRhcVH5DHUx"],
-                        "name": [{"value": "Unit 1.7", "language": "en"}],
+                        "stableTargetId": ["bFQoRhcVH5DHUz"],
                         "website": [
-                            {"title": "Unit Homepage", "url": "https://unit-1-7"}
+                            {"title": "Unit Homepage", "url": "https://unit-1-6"}
                         ],
                     }
                 ],
-                "total": 3,
+                "total": 6,
             },
+            id="no-filters",
         ),
-        (
+        pytest.param(
             '"Unit 1.7"',
             None,
             {
@@ -603,7 +621,7 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
                     {
                         "email": [],
                         "entityType": "AdditiveOrganizationalUnit",
-                        "stableTargetId": ["bFQoRhcVH5DHUF"],
+                        "stableTargetId": ["bFQoRhcVH5DHUx"],
                         "parentUnit": ["bFQoRhcVH5DHUx"],
                         "name": [{"value": "Unit 1.7", "language": "en"}],
                         "website": [
@@ -613,16 +631,11 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
                 ],
                 "total": 1,
             },
+            id="find-Link",
         ),
     ],
-    ids=[
-        "id not found",
-        "search not found",
-        "no filters",
-        "find Link",
-    ],
 )
-@pytest.mark.usefixtures("load_dummy_data", "load_dummy_rule_set")
+@pytest.mark.usefixtures("loaded_dummy_data")
 @pytest.mark.integration
 def test_fetch_rule_items(
     query_string: str | None,
@@ -785,7 +798,7 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
         "expected",
     ),
     [
-        (
+        pytest.param(
             None,
             "thisIdDoesNotExist",
             None,
@@ -793,8 +806,9 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
             None,
             10,
             {"items": [], "total": 0},
+            id="id-not-found",
         ),
-        (
+        pytest.param(
             "this_search_term_is_not_findable",
             None,
             None,
@@ -802,8 +816,9 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
             None,
             10,
             {"items": [], "total": 0},
+            id="search-not-found",
         ),
-        (
+        pytest.param(
             None,
             None,
             None,
@@ -826,10 +841,10 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                         "identifier": "00000000000000",
                     }
                 ],
-                "total": 9,
+                "total": 11,
             },
         ),
-        (
+        pytest.param(
             None,
             None,
             ["MergedOrganization"],
@@ -842,15 +857,14 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                         "_components": [
                             {
                                 "rorId": [],
+                                "identifierInPrimarySource": "robert-koch-institute",
                                 "gndId": [],
                                 "wikidataId": [],
-                                "identifierInPrimarySource": "robert-koch-institute",
-                                "viafId": [],
                                 "geprisId": [],
+                                "viafId": [],
                                 "isniId": [],
                                 "entityType": "ExtractedOrganization",
-                                "identifier": "bFQoRhcVH5DHUC",
-                                "stableTargetId": ["bFQoRhcVH5DHUv"],
+                                "identifier": "bFQoRhcVH5DHUE",
                                 "hadPrimarySource": ["bFQoRhcVH5DHUt"],
                                 "officialName": [
                                     {"value": "RKI", "language": "de"},
@@ -859,36 +873,18 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                                         "language": "en",
                                     },
                                 ],
-                            },
-                            {
-                                "rorId": [],
-                                "gndId": [],
-                                "wikidataId": [],
-                                "identifierInPrimarySource": "rki",
-                                "viafId": [],
-                                "geprisId": [],
-                                "isniId": [],
-                                "entityType": "ExtractedOrganization",
-                                "identifier": "bFQoRhcVH5DHUu",
-                                "stableTargetId": ["bFQoRhcVH5DHUv"],
-                                "hadPrimarySource": ["bFQoRhcVH5DHUr"],
-                                "officialName": [
-                                    {"value": "RKI", "language": "de"},
-                                    {
-                                        "value": "Robert Koch Institut ist the best",
-                                        "language": "de",
-                                    },
-                                ],
-                            },
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                            }
                         ],
                         "entityType": "MergedOrganization",
-                        "identifier": "bFQoRhcVH5DHUv",
+                        "identifier": "bFQoRhcVH5DHUF",
                     }
                 ],
-                "total": 1,
+                "total": 2,
             },
+            id="no-filters",
         ),
-        (
+        pytest.param(
             None,
             None,
             None,
@@ -900,47 +896,35 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                     {
                         "_components": [
                             {
-                                "email": [],
-                                "entityType": "ExtractedOrganizationalUnit",
+                                "rorId": [],
+                                "identifierInPrimarySource": "robert-koch-institute",
+                                "gndId": [],
+                                "wikidataId": [],
+                                "geprisId": [],
+                                "viafId": [],
+                                "isniId": [],
+                                "entityType": "ExtractedOrganization",
+                                "identifier": "bFQoRhcVH5DHUC",
                                 "hadPrimarySource": ["bFQoRhcVH5DHUt"],
-                                "identifier": "bFQoRhcVH5DHUE",
-                                "identifierInPrimarySource": "ou-1.6",
-                                "name": [{"language": "en", "value": "Unit 1.6"}],
-                                "parentUnit": ["bFQoRhcVH5DHUx"],
-                                "stableTargetId": ["bFQoRhcVH5DHUF"],
-                                "unitOf": ["bFQoRhcVH5DHUv"],
-                            },
-                            {
-                                "email": [],
-                                "entityType": "AdditiveOrganizationalUnit",
-                                "name": [{"language": "en", "value": "Unit 1.7"}],
-                                "parentUnit": ["bFQoRhcVH5DHUx"],
-                                "stableTargetId": ["bFQoRhcVH5DHUF"],
-                                "website": [
+                                "officialName": [
+                                    {"value": "RKI", "language": "de"},
                                     {
-                                        "title": "Unit Homepage",
-                                        "url": "https://unit-1-7",
-                                    }
+                                        "value": "Robert Koch Institute",
+                                        "language": "en",
+                                    },
                                 ],
-                            },
-                            {
-                                "entityType": "PreventiveOrganizationalUnit",
-                                "stableTargetId": ["bFQoRhcVH5DHUF"],
-                            },
-                            {
-                                "email": [],
-                                "entityType": "SubtractiveOrganizationalUnit",
-                                "stableTargetId": ["bFQoRhcVH5DHUF"],
-                            },
+                                "stableTargetId": ["bFQoRhcVH5DHUD"],
+                            }
                         ],
-                        "entityType": "MergedOrganizationalUnit",
-                        "identifier": "bFQoRhcVH5DHUF",
+                        "entityType": "MergedOrganization",
+                        "identifier": "bFQoRhcVH5DHUv",
                     }
                 ],
                 "total": 3,
             },
+            id="entity-type-filter",
         ),
-        (
+        pytest.param(
             "Unit",
             None,
             None,
@@ -952,47 +936,26 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                     {
                         "_components": [
                             {
+                                "identifierInPrimarySource": "ou-1",
                                 "email": [],
                                 "entityType": "ExtractedOrganizationalUnit",
+                                "identifier": "bFQoRhcVH5DHUw",
                                 "hadPrimarySource": ["bFQoRhcVH5DHUt"],
-                                "identifier": "bFQoRhcVH5DHUE",
-                                "identifierInPrimarySource": "ou-1.6",
-                                "name": [{"language": "en", "value": "Unit 1.6"}],
-                                "parentUnit": ["bFQoRhcVH5DHUx"],
-                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                                "name": [{"value": "Unit 1", "language": "en"}],
+                                "stableTargetId": ["bFQoRhcVH5DHUx"],
                                 "unitOf": ["bFQoRhcVH5DHUv"],
-                            },
-                            {
-                                "email": [],
-                                "entityType": "AdditiveOrganizationalUnit",
-                                "name": [{"language": "en", "value": "Unit 1.7"}],
-                                "parentUnit": ["bFQoRhcVH5DHUx"],
-                                "stableTargetId": ["bFQoRhcVH5DHUF"],
-                                "website": [
-                                    {
-                                        "title": "Unit Homepage",
-                                        "url": "https://unit-1-7",
-                                    }
-                                ],
-                            },
-                            {
-                                "entityType": "PreventiveOrganizationalUnit",
-                                "stableTargetId": ["bFQoRhcVH5DHUF"],
-                            },
-                            {
-                                "email": [],
-                                "entityType": "SubtractiveOrganizationalUnit",
-                                "stableTargetId": ["bFQoRhcVH5DHUF"],
-                            },
+                                "website": [{"url": "https://ou-1"}],
+                            }
                         ],
                         "entityType": "MergedOrganizationalUnit",
-                        "identifier": "bFQoRhcVH5DHUF",
+                        "identifier": "bFQoRhcVH5DHUx",
                     }
                 ],
                 "total": 2,
             },
+            id="had-primary-source-with-query",
         ),
-        (
+        pytest.param(
             # find exact matches. without the quotes this might also match the second
             # contact point's email `help@contact-point.two`
             '"info@contact-point.one"',
@@ -1021,7 +984,7 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 "total": 1,
             },
         ),
-        (
+        pytest.param(
             "contact point",
             None,
             None,
@@ -1061,8 +1024,9 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 2,
             },
+            id="find-exact",
         ),
-        (
+        pytest.param(
             "RKI",
             None,
             None,
@@ -1107,10 +1071,6 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                                 "hadPrimarySource": ["bFQoRhcVH5DHUr"],
                                 "officialName": [
                                     {"value": "RKI", "language": "de"},
-                                    {
-                                        "value": "Robert Koch Institut ist the best",
-                                        "language": "de",
-                                    },
                                 ],
                             },
                         ],
@@ -1120,8 +1080,9 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 1,
             },
+            id="find-fuzzy",
         ),
-        (
+        pytest.param(
             "Homepage",
             None,
             None,
@@ -1207,22 +1168,11 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 2,
             },
+            id="find-Text",
         ),
     ],
-    ids=[
-        "id not found",
-        "search not found",
-        "no filters",
-        "entity type filter",
-        "had primary source filter",
-        "had primary source filter and filter by query",
-        "find exact",
-        "find fuzzy",
-        "find Text",
-        "find Link",
-    ],
 )
-@pytest.mark.usefixtures("load_dummy_data", "load_dummy_rule_set")
+@pytest.mark.usefixtures("loaded_dummy_data")
 @pytest.mark.integration
 def test_fetch_merged_items(  # noqa: PLR0913
     query_string: str | None,
@@ -1333,19 +1283,33 @@ def test_mocked_graph_exists_item(
 @pytest.mark.parametrize(
     ("stable_target_id", "entity_types", "exists"),
     [
-        ("bFQoRhcVH5DHUB", ["MergedContactPoint"], True),
-        ("bFQoRhcVH5DHUB", ["MergedPerson", "MergedContactPoint"], True),
-        ("bFQoRhcVH5DHUB", ["MergedActivity"], False),
-        ("thisIdDoesNotExist", ["MergedActivity"], False),
-    ],
-    ids=[
-        "found with type filter",
-        "found with multiple types",
-        "missed due to filter",
-        "missed due to identifier",
+        pytest.param(
+            "bFQoRhcVH5DHUB",
+            ["MergedContactPoint"],
+            True,
+            id="found-with-type",
+        ),
+        pytest.param(
+            "bFQoRhcVH5DHUB",
+            ["MergedPerson", "MergedContactPoint"],
+            True,
+            id="found-multiple-types",
+        ),
+        pytest.param(
+            "bFQoRhcVH5DHUB",
+            ["MergedActivity"],
+            False,
+            id="missed-due-to-filter",
+        ),
+        pytest.param(
+            "thisIdDoesNotExist",
+            ["MergedActivity"],
+            False,
+            id="missed-due-to-id",
+        ),
     ],
 )
-@pytest.mark.usefixtures("load_dummy_data")
+@pytest.mark.usefixtures("loaded_dummy_data")
 @pytest.mark.integration
 def test_graph_exists_item(
     stable_target_id: Identifier,
@@ -1358,9 +1322,9 @@ def test_graph_exists_item(
 
 
 @pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
-def test_mocked_run_ingest_in_transaction_ruleset(
+def test_mocked_run_ingest_in_transaction_rule_set(
     mocked_graph: MockedGraph,
-    organizational_unit_rule_set_response: OrganizationalUnitRuleSetResponse,
+    dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
     organizational_unit_rule_set_ingest_result: list[list[dict[str, Any]]],
     organizational_unit_rule_set_ingest_call_expectation: list[object],
 ) -> None:
@@ -1370,7 +1334,7 @@ def test_mocked_run_ingest_in_transaction_ruleset(
     with graph.driver.session() as session, session.begin_transaction() as tx:
         graph._run_ingest_in_transaction(
             tx,
-            organizational_unit_rule_set_response,
+            dummy_data["unit_2_rule_set"],
         )
 
     assert (
@@ -1380,14 +1344,13 @@ def test_mocked_run_ingest_in_transaction_ruleset(
 
 
 @pytest.mark.integration
-@pytest.mark.usefixtures("load_dummy_data")
 def test_graph_merge_rule_edges_fails_inconsistent(
-    load_dummy_data: dict[str, AnyExtractedModel],
+    loaded_dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
 ) -> None:
     graph = GraphConnector.get()
     consistent_org = ExtractedOrganization(
         identifierInPrimarySource="10000000",
-        hadPrimarySource=load_dummy_data["primary_source_2"].stableTargetId,
+        hadPrimarySource=loaded_dummy_data["primary_source_2"].stableTargetId,
         officialName=[Text(value="Consistent Org", language=TextLanguage.EN)],
     )
     inconsistent_unit = ExtractedOrganizationalUnit(
@@ -1395,7 +1358,7 @@ def test_graph_merge_rule_edges_fails_inconsistent(
         hadPrimarySource="whatPrimarySource",  # inconsistent identifier
         name=[Text(value="Inconsistent Unit", language=TextLanguage.EN)],
         unitOf=[
-            load_dummy_data["organization_1"].stableTargetId,  # consistent identifier
+            loaded_dummy_data["organization_1"].stableTargetId,  # consistent identifier
             "whatOrganizationalUnit",  # inconsistent identifier
             consistent_org.stableTargetId,  # consistent identifier
         ],
@@ -1414,14 +1377,14 @@ def test_graph_merge_rule_edges_fails_inconsistent(
 @pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
 def test_mocked_graph_ingests_rule_set(
     mocked_graph: MockedGraph,
-    organizational_unit_rule_set_response: OrganizationalUnitRuleSetResponse,
+    dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
     organizational_unit_rule_set_ingest_result: list[list[dict[str, Any]]],
     organizational_unit_rule_set_ingest_call_expectation: list[object],
 ) -> None:
     mocked_graph.side_effect = organizational_unit_rule_set_ingest_result
 
     graph = GraphConnector.get()
-    deque(graph.ingest_items([organizational_unit_rule_set_response]))
+    deque(graph.ingest_items([dummy_data["unit_2_rule_set"]]))
 
     assert (
         mocked_graph.call_args_list
@@ -1548,15 +1511,6 @@ def test_mocked_graph_ingests_extracted_models(
                         "edgeProps": {"position": 0},
                         "nodeLabels": ["Text"],
                     },
-                    {
-                        "nodeProps": {
-                            "value": "Robert Koch Institut ist the best",
-                            "language": "de",
-                        },
-                        "edgeLabel": "officialName",
-                        "edgeProps": {"position": 1},
-                        "nodeLabels": ["Text"],
-                    },
                 ],
                 "nodeProps": {
                     "rorId": [],
@@ -1618,10 +1572,8 @@ def test_mocked_graph_ingests_extracted_models(
         ],
         [
             {
-                "identifier": str(dummy_data["organizational_unit_1"].identifier),
-                "stableTargetId": str(
-                    dummy_data["organizational_unit_1"].stableTargetId
-                ),
+                "identifier": str(dummy_data["unit_1"].identifier),
+                "stableTargetId": str(dummy_data["unit_1"].stableTargetId),
                 "entityType": "ExtractedOrganizationalUnit",
                 "linkRels": [
                     {
@@ -1656,16 +1608,14 @@ def test_mocked_graph_ingests_extracted_models(
                 "nodeProps": {
                     "identifierInPrimarySource": "ou-1",
                     "email": [],
-                    "identifier": str(dummy_data["organizational_unit_1"].identifier),
+                    "identifier": str(dummy_data["unit_1"].identifier),
                 },
             }
         ],
         [
             {
-                "identifier": str(dummy_data["organizational_unit_2"].identifier),
-                "stableTargetId": str(
-                    dummy_data["organizational_unit_2"].stableTargetId
-                ),
+                "identifier": str(dummy_data["unit_2"].identifier),
+                "stableTargetId": str(dummy_data["unit_2"].stableTargetId),
                 "entityType": "ExtractedOrganizationalUnit",
                 "linkRels": [
                     {
@@ -1680,9 +1630,7 @@ def test_mocked_graph_ingests_extracted_models(
                     },
                     {
                         "nodeProps": {
-                            "identifier": str(
-                                dummy_data["organizational_unit_1"].stableTargetId
-                            )
+                            "identifier": str(dummy_data["unit_1"].stableTargetId)
                         },
                         "edgeLabel": "parentUnit",
                         "edgeProps": {"position": 0},
@@ -1710,7 +1658,7 @@ def test_mocked_graph_ingests_extracted_models(
                 "nodeProps": {
                     "identifierInPrimarySource": "ou-1.6",
                     "email": [],
-                    "identifier": str(dummy_data["organizational_unit_2"].identifier),
+                    "identifier": str(dummy_data["unit_2"].identifier),
                 },
             }
         ],
@@ -1742,9 +1690,7 @@ def test_mocked_graph_ingests_extracted_models(
                     },
                     {
                         "nodeProps": {
-                            "identifier": str(
-                                dummy_data["organizational_unit_1"].stableTargetId
-                            )
+                            "identifier": str(dummy_data["unit_1"].stableTargetId)
                         },
                         "edgeLabel": "contact",
                         "edgeProps": {"position": 2},
@@ -1762,9 +1708,7 @@ def test_mocked_graph_ingests_extracted_models(
                     },
                     {
                         "nodeProps": {
-                            "identifier": str(
-                                dummy_data["organizational_unit_1"].stableTargetId
-                            )
+                            "identifier": str(dummy_data["unit_1"].stableTargetId)
                         },
                         "edgeLabel": "responsibleUnit",
                         "edgeProps": {"position": 0},
@@ -1817,6 +1761,34 @@ def test_mocked_graph_ingests_extracted_models(
     assert len(mocked_graph.call_args_list) == len(dummy_data)
 
 
+if 0:
+
+    @pytest.mark.parametrize(
+        ("extracted_name", "merged_name", "expected_error"),
+        [
+            ("contact_point_1", "contact_point_2", "new_rules_exist, old_rules_exist"),
+            ("contact_point_1", "activity_1", "new_rules_exist, old_rules_exist"),
+        ],
+    )
+    @pytest.mark.integration
+    def test_match_item_failed_preconditions(
+        extracted_name: str,
+        merged_name: str,
+        expected_error: str,
+        loaded_dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
+    ) -> None:
+        extracted_item = loaded_dummy_data[extracted_name]
+        merged_item = get_merged_item_from_graph(
+            loaded_dummy_data[merged_name].stableTargetId
+        )
+
+        graph = GraphConnector.get()
+        with pytest.raises(
+            MatchingError, match=f"Failed preconditions: {expected_error}"
+        ):
+            graph.match_item(extracted_item, merged_item)
+
+
 @pytest.mark.integration
 def test_connector_flush_fails(monkeypatch: MonkeyPatch) -> None:
     settings = BackendSettings.get()
@@ -1857,7 +1829,7 @@ def test_mocked_graph_delete_item(mocked_graph: MockedGraph) -> None:
 
 
 @pytest.mark.integration
-@pytest.mark.usefixtures("load_dummy_data")
+@pytest.mark.usefixtures("loaded_dummy_data")
 def test_connector_flush(monkeypatch: MonkeyPatch) -> None:
     assert len(get_graph()) >= 10
 
