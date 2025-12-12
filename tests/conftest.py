@@ -3,7 +3,7 @@ from base64 import b64encode
 from collections import deque
 from functools import partial
 from itertools import count
-from typing import Any, cast
+from typing import Any
 from unittest.mock import MagicMock, Mock
 
 import pytest
@@ -20,12 +20,10 @@ from mex.backend.settings import BackendSettings
 from mex.backend.testing.main import app as testing_app
 from mex.backend.types import APIKeyDatabase, APIUserDatabase
 from mex.common.connector import CONNECTOR_STORE
-from mex.common.merged.main import create_merged_item
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     AdditiveOrganizationalUnit,
     AnyExtractedModel,
-    AnyMergedModel,
     AnyRuleSetResponse,
     ExtractedActivity,
     ExtractedContactPoint,
@@ -43,7 +41,6 @@ from mex.common.types import (
     Text,
     TextLanguage,
     Theme,
-    Validation,
     YearMonthDay,
 )
 
@@ -372,44 +369,10 @@ def dummy_data(
         "organization_1": organization_1,
         "organization_2": organization_2,
         "unit_1": unit_1,
-        "unit_2_rule_set": unit_2_rule_set,
         "unit_2": unit_2,
+        "unit_2_rule_set": unit_2_rule_set,
         "unit_3_standalone_rule_set": unit_3_standalone_rule_set,
         "activity_1": activity_1,
-    }
-
-
-@pytest.fixture
-def merged_dummy_data(
-    dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
-) -> dict[str, AnyMergedModel]:
-    """Merge the manually created `dummy_data` into merged items."""
-
-    def _merge_single(item: AnyExtractedModel | AnyRuleSetResponse) -> AnyMergedModel:
-        assert isinstance(item, AnyExtractedModel)
-        return create_merged_item(item.stableTargetId, [item], None, Validation.STRICT)
-
-    return {
-        "primary_source_1": _merge_single(dummy_data["primary_source_1"]),
-        "primary_source_2": _merge_single(dummy_data["primary_source_2"]),
-        "contact_point_1": _merge_single(dummy_data["contact_point_1"]),
-        "contact_point_2": _merge_single(dummy_data["contact_point_2"]),
-        "organization_1": _merge_single(dummy_data["organization_1"]),
-        "organization_2": _merge_single(dummy_data["organization_2"]),
-        "unit_1": create_merged_item(
-            dummy_data["unit_1"].stableTargetId,
-            [cast("AnyExtractedModel", dummy_data["unit_1"])],
-            cast("AnyRuleSetResponse", dummy_data["unit_2_rule_set"]),
-            Validation.STRICT,
-        ),
-        "unit_2": _merge_single(dummy_data["unit_2"]),
-        "unit_3_standalone_rule_set": create_merged_item(
-            dummy_data["unit_3_standalone_rule_set"].stableTargetId,
-            [],
-            cast("AnyRuleSetResponse", dummy_data["unit_3_standalone_rule_set"]),
-            Validation.STRICT,
-        ),
-        "activity_1": _merge_single(dummy_data["activity_1"]),
     }
 
 

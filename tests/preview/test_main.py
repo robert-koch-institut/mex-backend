@@ -62,7 +62,7 @@ from starlette import status
                 },
             },
             {
-                "contact": ["bFQoRhcVH5DHUz", "bFQoRhcVH5DHUB"],
+                "contact": ["bFQoRhcVH5DHUB", "bFQoRhcVH5DHUD"],
                 "responsibleUnit": ["bFQoRhcVH5DHUx"],
                 "title": [{"value": "Aktivität 1", "language": "de"}],
                 "abstract": [{"value": "An active activity.", "language": "en"}],
@@ -91,7 +91,7 @@ from starlette import status
                 },
             },
             {
-                "contact": ["bFQoRhcVH5DHUz", "bFQoRhcVH5DHUB", "bFQoRhcVH5DHUx"],
+                "contact": ["bFQoRhcVH5DHUB", "bFQoRhcVH5DHUD", "bFQoRhcVH5DHUx"],
                 "responsibleUnit": ["bFQoRhcVH5DHUx"],
                 "title": [{"value": "Aktivität 1", "language": "de"}],
                 "abstract": [
@@ -201,13 +201,13 @@ def test_preview(
                 "items": [
                     {
                         "$type": "PreviewContactPoint",
-                        "email": ["help@contact-point.two"],
+                        "email": ["info@contact-point.one"],
                         "identifier": "bFQoRhcVH5DHUB",
                     },
                     {
                         "$type": "PreviewContactPoint",
-                        "email": ["info@contact-point.one"],
-                        "identifier": "bFQoRhcVH5DHUz",
+                        "email": ["help@contact-point.two"],
+                        "identifier": "bFQoRhcVH5DHUD",
                     },
                 ],
                 "total": 2,
@@ -246,9 +246,8 @@ def test_preview(
                         "identifier": "bFQoRhcVH5DHUx",
                         "name": [
                             {"language": "en", "value": "Unit 1"},
-                            {"language": "de", "value": "Abteilung 1.6"},
                         ],
-                        "parentUnit": "bFQoRhcVH5DHUx",
+                        "parentUnit": None,
                         "shortName": [],
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [
@@ -261,19 +260,25 @@ def test_preview(
             id="identifier-filter",
         ),
         pytest.param(
-            "?identifier=bFQoRhcVH5DHUF",
+            "?identifier=bFQoRhcVH5DHUz",
             {
                 "items": [
                     {
                         "$type": "PreviewOrganizationalUnit",
                         "alternativeName": [],
                         "email": [],
-                        "identifier": "bFQoRhcVH5DHUF",
-                        "name": [{"language": "en", "value": "Unit 1.6"}],
-                        "parentUnit": None,
+                        "identifier": "bFQoRhcVH5DHUz",
+                        "name": [{"language": "de", "value": "Abteilung 1.6"}],
+                        "parentUnit": "bFQoRhcVH5DHUx",
                         "shortName": [],
                         "unitOf": ["bFQoRhcVH5DHUv"],
-                        "website": [],
+                        "website": [
+                            {
+                                "language": None,
+                                "title": "Unit Homepage",
+                                "url": "https://unit-1-6",
+                            }
+                        ],
                     }
                 ],
                 "total": 1,

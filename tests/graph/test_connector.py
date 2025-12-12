@@ -426,7 +426,7 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                             {"value": "RKI", "language": "de"},
                             {"value": "Robert Koch Institute", "language": "en"},
                         ],
-                        "stableTargetId": ["bFQoRhcVH5DHUD"],
+                        "stableTargetId": ["bFQoRhcVH5DHUF"],
                     },
                     {
                         "rorId": [],
@@ -437,11 +437,9 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                         "viafId": [],
                         "isniId": [],
                         "entityType": "ExtractedOrganization",
-                        "identifier": "bFQoRhcVH5DHUF",
+                        "identifier": "bFQoRhcVH5DHUu",
                         "hadPrimarySource": ["bFQoRhcVH5DHUr"],
-                        "officialName": [
-                            {"value": "RKI", "language": "de"},
-                        ],
+                        "officialName": [{"value": "RKI", "language": "de"}],
                         "stableTargetId": ["bFQoRhcVH5DHUv"],
                     },
                 ],
@@ -465,19 +463,19 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                         "activityType": [],
                         "identifier": "bFQoRhcVH5DHUG",
                         "end": [],
-                        "stableTargetId": ["bFQoRhcVH5DHUH"],
-                        "hadPrimarySource": ["bFQoRhcVH5DHUr"],
-                        "contact": [
-                            "bFQoRhcVH5DHUz",
-                            "bFQoRhcVH5DHUB",
-                            "bFQoRhcVH5DHUx",
-                        ],
-                        "responsibleUnit": ["bFQoRhcVH5DHUx"],
-                        "title": [{"value": "Aktivität 1", "language": "de"}],
                         "abstract": [
                             {"value": "An active activity.", "language": "en"},
                             {"value": "Eng aktiv Aktivitéit."},
                         ],
+                        "contact": [
+                            "bFQoRhcVH5DHUB",
+                            "bFQoRhcVH5DHUD",
+                            "bFQoRhcVH5DHUx",
+                        ],
+                        "hadPrimarySource": ["bFQoRhcVH5DHUr"],
+                        "responsibleUnit": ["bFQoRhcVH5DHUx"],
+                        "stableTargetId": ["bFQoRhcVH5DHUH"],
+                        "title": [{"value": "Aktivität 1", "language": "de"}],
                         "website": [
                             {"title": "Activity Homepage", "url": "https://activity-1"}
                         ],
@@ -614,7 +612,7 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
             id="no-filters",
         ),
         pytest.param(
-            '"Unit 1.7"',
+            '"Unit 1.6"',
             None,
             {
                 "items": [
@@ -623,9 +621,9 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
                         "entityType": "AdditiveOrganizationalUnit",
                         "stableTargetId": ["bFQoRhcVH5DHUx"],
                         "parentUnit": ["bFQoRhcVH5DHUx"],
-                        "name": [{"value": "Unit 1.7", "language": "en"}],
+                        "name": [{"value": "Unit 1.6", "language": "en"}],
                         "website": [
-                            {"title": "Unit Homepage", "url": "https://unit-1-7"}
+                            {"title": "Unit Homepage", "url": "https://unit-1-6"}
                         ],
                     }
                 ],
@@ -904,7 +902,7 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                                 "viafId": [],
                                 "isniId": [],
                                 "entityType": "ExtractedOrganization",
-                                "identifier": "bFQoRhcVH5DHUC",
+                                "identifier": "bFQoRhcVH5DHUE",
                                 "hadPrimarySource": ["bFQoRhcVH5DHUt"],
                                 "officialName": [
                                     {"value": "RKI", "language": "de"},
@@ -913,11 +911,11 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                                         "language": "en",
                                     },
                                 ],
-                                "stableTargetId": ["bFQoRhcVH5DHUD"],
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
                             }
                         ],
                         "entityType": "MergedOrganization",
-                        "identifier": "bFQoRhcVH5DHUv",
+                        "identifier": "bFQoRhcVH5DHUF",
                     }
                 ],
                 "total": 3,
@@ -956,7 +954,7 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
             id="had-primary-source-with-query",
         ),
         pytest.param(
-            # find exact matches. without the quotes this might also match the second
+            # without the quotes this might also match the second
             # contact point's email `help@contact-point.two`
             '"info@contact-point.one"',
             None,
@@ -983,6 +981,7 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 1,
             },
+            id="find-exact-matches",
         ),
         pytest.param(
             "contact point",
@@ -1094,45 +1093,6 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                     {
                         "_components": [
                             {
-                                "identifierInPrimarySource": "ou-1.6",
-                                "email": [],
-                                "entityType": "ExtractedOrganizationalUnit",
-                                "identifier": "bFQoRhcVH5DHUE",
-                                "stableTargetId": ["bFQoRhcVH5DHUF"],
-                                "hadPrimarySource": ["bFQoRhcVH5DHUt"],
-                                "parentUnit": ["bFQoRhcVH5DHUx"],
-                                "unitOf": ["bFQoRhcVH5DHUv"],
-                                "name": [{"value": "Unit 1.6", "language": "en"}],
-                            },
-                            {
-                                "email": [],
-                                "entityType": "AdditiveOrganizationalUnit",
-                                "stableTargetId": ["bFQoRhcVH5DHUF"],
-                                "parentUnit": ["bFQoRhcVH5DHUx"],
-                                "name": [{"value": "Unit 1.7", "language": "en"}],
-                                "website": [
-                                    {
-                                        "title": "Unit Homepage",
-                                        "url": "https://unit-1-7",
-                                    }
-                                ],
-                            },
-                            {
-                                "entityType": "PreventiveOrganizationalUnit",
-                                "stableTargetId": ["bFQoRhcVH5DHUF"],
-                            },
-                            {
-                                "email": [],
-                                "entityType": "SubtractiveOrganizationalUnit",
-                                "stableTargetId": ["bFQoRhcVH5DHUF"],
-                            },
-                        ],
-                        "entityType": "MergedOrganizationalUnit",
-                        "identifier": "bFQoRhcVH5DHUF",
-                    },
-                    {
-                        "_components": [
-                            {
                                 "fundingProgram": [],
                                 "identifierInPrimarySource": "a-1",
                                 "start": ["2014-08-24"],
@@ -1141,19 +1101,19 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                                 "activityType": [],
                                 "identifier": "bFQoRhcVH5DHUG",
                                 "end": [],
-                                "stableTargetId": ["bFQoRhcVH5DHUH"],
-                                "hadPrimarySource": ["bFQoRhcVH5DHUr"],
-                                "contact": [
-                                    "bFQoRhcVH5DHUz",
-                                    "bFQoRhcVH5DHUB",
-                                    "bFQoRhcVH5DHUx",
-                                ],
-                                "responsibleUnit": ["bFQoRhcVH5DHUx"],
-                                "title": [{"value": "Aktivität 1", "language": "de"}],
                                 "abstract": [
                                     {"value": "An active activity.", "language": "en"},
                                     {"value": "Eng aktiv Aktivitéit."},
                                 ],
+                                "contact": [
+                                    "bFQoRhcVH5DHUB",
+                                    "bFQoRhcVH5DHUD",
+                                    "bFQoRhcVH5DHUx",
+                                ],
+                                "hadPrimarySource": ["bFQoRhcVH5DHUr"],
+                                "responsibleUnit": ["bFQoRhcVH5DHUx"],
+                                "stableTargetId": ["bFQoRhcVH5DHUH"],
+                                "title": [{"value": "Aktivität 1", "language": "de"}],
                                 "website": [
                                     {
                                         "title": "Activity Homepage",
@@ -1164,6 +1124,45 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                         ],
                         "entityType": "MergedActivity",
                         "identifier": "bFQoRhcVH5DHUH",
+                    },
+                    {
+                        "_components": [
+                            {
+                                "identifierInPrimarySource": "ou-1.6",
+                                "email": [],
+                                "entityType": "ExtractedOrganizationalUnit",
+                                "identifier": "bFQoRhcVH5DHUy",
+                                "hadPrimarySource": ["bFQoRhcVH5DHUt"],
+                                "name": [{"value": "Unit 1.6", "language": "en"}],
+                                "stableTargetId": ["bFQoRhcVH5DHUz"],
+                                "unitOf": ["bFQoRhcVH5DHUv"],
+                            },
+                            {
+                                "email": [],
+                                "entityType": "AdditiveOrganizationalUnit",
+                                "name": [{"value": "Abteilung 1.6", "language": "de"}],
+                                "parentUnit": ["bFQoRhcVH5DHUx"],
+                                "stableTargetId": ["bFQoRhcVH5DHUz"],
+                                "website": [
+                                    {
+                                        "title": "Unit Homepage",
+                                        "url": "https://unit-1-6",
+                                    }
+                                ],
+                            },
+                            {
+                                "entityType": "PreventiveOrganizationalUnit",
+                                "stableTargetId": ["bFQoRhcVH5DHUz"],
+                            },
+                            {
+                                "email": [],
+                                "entityType": "SubtractiveOrganizationalUnit",
+                                "name": [{"value": "Unit 1.6", "language": "en"}],
+                                "stableTargetId": ["bFQoRhcVH5DHUz"],
+                            },
+                        ],
+                        "entityType": "MergedOrganizationalUnit",
+                        "identifier": "bFQoRhcVH5DHUz",
                     },
                 ],
                 "total": 2,
@@ -1379,7 +1378,7 @@ def test_mocked_graph_ingests_rule_set(
     mocked_graph: MockedGraph,
     dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
     organizational_unit_rule_set_ingest_result: list[list[dict[str, Any]]],
-    organizational_unit_rule_set_ingest_call_expectation: list[object],
+    organizational_unit_rule_set_ingest_call_expectation: list[Any],
 ) -> None:
     mocked_graph.side_effect = organizational_unit_rule_set_ingest_result
 
@@ -1603,7 +1602,13 @@ def test_mocked_graph_ingests_extracted_models(
                         "edgeLabel": "name",
                         "edgeProps": {"position": 0},
                         "nodeLabels": ["Text"],
-                    }
+                    },
+                    {
+                        "nodeProps": {"url": "https://ou-1"},
+                        "edgeLabel": "website",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["Link"],
+                    },
                 ],
                 "nodeProps": {
                     "identifierInPrimarySource": "ou-1",
@@ -1627,14 +1632,6 @@ def test_mocked_graph_ingests_extracted_models(
                         "edgeLabel": "hadPrimarySource",
                         "edgeProps": {"position": 0},
                         "nodeLabels": ["MergedPrimarySource"],
-                    },
-                    {
-                        "nodeProps": {
-                            "identifier": str(dummy_data["unit_1"].stableTargetId)
-                        },
-                        "edgeLabel": "parentUnit",
-                        "edgeProps": {"position": 0},
-                        "nodeLabels": ["MergedOrganizationalUnit"],
                     },
                     {
                         "nodeProps": {

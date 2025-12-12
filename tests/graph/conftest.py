@@ -4,20 +4,25 @@ from unittest.mock import call
 import pytest
 
 from mex.backend.graph.models import IngestParams
+from mex.common.models import AnyExtractedModel, AnyRuleSetResponse
 
 
 @pytest.fixture
-def organizational_unit_rule_set_ingest_result() -> list[list[dict[str, Any]]]:
+def organizational_unit_rule_set_ingest_result(
+    dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
+) -> list[list[dict[str, Any]]]:
     return [
         [
             {
                 "identifier": None,
-                "stableTargetId": "cWWm02l1c6cucKjIhkFqY4",
+                "stableTargetId": dummy_data["unit_2_rule_set"].stableTargetId,
                 "entityType": "AdditiveOrganizationalUnit",
                 "linkRels": [
                     {
                         "nodeLabels": ["MergedOrganizationalUnit"],
-                        "nodeProps": {"identifier": "cWWm02l1c6cucKjIhkFqY4v"},
+                        "nodeProps": {
+                            "identifier": dummy_data["unit_1"].stableTargetId
+                        },
                         "edgeLabel": "parentUnit",
                         "edgeProps": {"position": 0},
                     }
@@ -25,7 +30,7 @@ def organizational_unit_rule_set_ingest_result() -> list[list[dict[str, Any]]]:
                 "createRels": [
                     {
                         "nodeLabels": ["Text"],
-                        "nodeProps": {"value": "Unit 1.7", "language": "en"},
+                        "nodeProps": {"value": "Abteilung 1.6", "language": "de"},
                         "edgeLabel": "name",
                         "edgeProps": {"position": 0},
                     },
@@ -33,7 +38,7 @@ def organizational_unit_rule_set_ingest_result() -> list[list[dict[str, Any]]]:
                         "nodeLabels": ["Link"],
                         "nodeProps": {
                             "title": "Unit Homepage",
-                            "url": "https://unit-1-7",
+                            "url": "https://unit-1-6",
                             "language": None,
                         },
                         "edgeLabel": "website",
@@ -46,29 +51,28 @@ def organizational_unit_rule_set_ingest_result() -> list[list[dict[str, Any]]]:
         [
             {
                 "identifier": None,
-                "stableTargetId": "bFQoRhcVH5DHU6",
+                "stableTargetId": dummy_data["unit_2_rule_set"].stableTargetId,
                 "entityType": "SubtractiveOrganizationalUnit",
-                "nodeProps": {},
-            }
-        ],
-        [
-            {
-                "identifier": None,
-                "stableTargetId": "bFQoRhcVH5DHU6",
-                "entityType": "PreventiveOrganizationalUnit",
                 "nodeProps": {},
                 "createRels": [
                     {
-                        "nodeLabels": ["Link"],
+                        "nodeLabels": ["Text"],
                         "nodeProps": {
-                            "title": None,
-                            "url": "https://ou-1",
-                            "language": None,
+                            "value": "Unit 1.6",
+                            "language": "en",
                         },
-                        "edgeLabel": "website",
+                        "edgeLabel": "name",
                         "edgeProps": {"position": 0},
                     },
                 ],
+            }
+        ],
+        [
+            {
+                "identifier": None,
+                "stableTargetId": dummy_data["unit_2_rule_set"].stableTargetId,
+                "entityType": "PreventiveOrganizationalUnit",
+                "nodeProps": {},
             }
         ],
     ]
@@ -100,14 +104,14 @@ def organizational_unit_rule_set_ingest_call_expectation() -> list[object]:
                 ),
             ),
             data={
-                "stableTargetId": "cWWm02l1c6cucKjIhkFqY4",
+                "stableTargetId": "UVCwaVgI6ZnD8zavnBkdz",
                 "identifier": None,
                 "entityType": "AdditiveOrganizationalUnit",
                 "nodeProps": {"email": []},
                 "linkRels": [
                     {
                         "nodeLabels": ["MergedOrganizationalUnit"],
-                        "nodeProps": {"identifier": "cWWm02l1c6cucKjIhkFqY4v"},
+                        "nodeProps": {"identifier": "cWWm02l1c6cucKjIhkFqY4"},
                         "edgeLabel": "parentUnit",
                         "edgeProps": {"position": 0},
                     }
@@ -115,7 +119,7 @@ def organizational_unit_rule_set_ingest_call_expectation() -> list[object]:
                 "createRels": [
                     {
                         "nodeLabels": ["Text"],
-                        "nodeProps": {"value": "Unit 1.7", "language": "en"},
+                        "nodeProps": {"value": "Abteilung 1.6", "language": "de"},
                         "edgeLabel": "name",
                         "edgeProps": {"position": 0},
                     },
@@ -124,7 +128,7 @@ def organizational_unit_rule_set_ingest_call_expectation() -> list[object]:
                         "nodeProps": {
                             "language": None,
                             "title": "Unit Homepage",
-                            "url": "https://unit-1-7",
+                            "url": "https://unit-1-6",
                         },
                         "edgeLabel": "website",
                         "edgeProps": {"position": 0},
@@ -155,22 +159,18 @@ def organizational_unit_rule_set_ingest_call_expectation() -> list[object]:
                 ),
             ),
             data={
-                "stableTargetId": "cWWm02l1c6cucKjIhkFqY4",
+                "stableTargetId": "UVCwaVgI6ZnD8zavnBkdz",
                 "identifier": None,
                 "entityType": "SubtractiveOrganizationalUnit",
                 "nodeProps": {"email": []},
                 "linkRels": [],
                 "createRels": [
                     {
-                        "nodeLabels": ["Link"],
-                        "nodeProps": {
-                            "title": None,
-                            "url": "https://ou-1",
-                            "language": None,
-                        },
-                        "edgeLabel": "website",
+                        "nodeLabels": ["Text"],
+                        "nodeProps": {"value": "Unit 1.6", "language": "en"},
+                        "edgeLabel": "name",
                         "edgeProps": {"position": 0},
-                    },
+                    }
                 ],
             },
         ),
@@ -197,7 +197,7 @@ def organizational_unit_rule_set_ingest_call_expectation() -> list[object]:
                 ),
             ),
             data={
-                "stableTargetId": "cWWm02l1c6cucKjIhkFqY4",
+                "stableTargetId": "UVCwaVgI6ZnD8zavnBkdz",
                 "identifier": None,
                 "entityType": "PreventiveOrganizationalUnit",
                 "nodeProps": {},

@@ -341,20 +341,34 @@ def test_search_merged_items_skip_on_validation_error(
         "/v0/merged-item?entityType=MergedOrganizationalUnit"
     )
     assert response.status_code == status.HTTP_200_OK, response.text
-    # expect org unit 2 to be filtered out (only unit 1 remains)
-    assert response.json()["items"] == [
-        {
-            "parentUnit": None,
-            "name": [{"value": "Unit 1", "language": "en"}],
-            "alternativeName": [],
-            "email": [],
-            "shortName": [],
-            "unitOf": ["bFQoRhcVH5DHUv"],
-            "website": [],
-            "$type": "MergedOrganizationalUnit",
-            "identifier": "bFQoRhcVH5DHUx",
-        }
-    ]
+    # expect org unit 2 to be filtered out (only unit 1 and 3 remain)
+    assert response.json() == {
+        "items": [
+            {
+                "$type": "MergedOrganizationalUnit",
+                "alternativeName": [],
+                "email": [],
+                "identifier": "bFQoRhcVH5DHUx",
+                "name": [{"language": "en", "value": "Unit 1"}],
+                "parentUnit": None,
+                "shortName": [],
+                "unitOf": ["bFQoRhcVH5DHUv"],
+                "website": [{"language": None, "title": None, "url": "https://ou-1"}],
+            },
+            {
+                "$type": "MergedOrganizationalUnit",
+                "alternativeName": [],
+                "email": ["1.7@rki.de"],
+                "identifier": "StandaloneRule",
+                "name": [{"language": "de", "value": "Abteilung 1.7"}],
+                "parentUnit": "bFQoRhcVH5DHUx",
+                "shortName": [],
+                "unitOf": [],
+                "website": [],
+            },
+        ],
+        "total": 3,  # the total still contains the filtered-out items :/
+    }
 
 
 @pytest.mark.integration
