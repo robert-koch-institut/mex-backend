@@ -41,15 +41,16 @@ RUN pip install --no-cache-dir \
     /wheels/*.whl \
     && rm -rf /wheels
 
-COPY --exclude=*.lock --exclude=requirements.txt . .
-
-RUN adduser \
+    
+    RUN adduser \
     --disabled-password \
     --gecos "" \
     --shell "/sbin/nologin" \
     --no-create-home \
     --uid "10001" \
     mex
+    
+COPY --chown=mex --exclude=*.lock --exclude=requirements.txt . .
 
 USER mex
 
