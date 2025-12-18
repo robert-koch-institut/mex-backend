@@ -41,6 +41,8 @@ RUN pip install --no-cache-dir \
     /wheels/*.whl \
     && rm -rf /wheels
 
+COPY --exclude=*.lock --exclude=requirements.txt . .
+
 RUN adduser \
     --disabled-password \
     --gecos "" \
