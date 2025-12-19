@@ -18,7 +18,12 @@ from mex.backend.fields import (
     SEARCHABLE_FIELDS,
 )
 from mex.backend.graph.exceptions import DeletionFailedError, IngestionError
-from mex.backend.graph.models import IngestData, MExPrimarySource, Result
+from mex.backend.graph.models import (
+    IngestData,
+    MExEditorPrimarySource,
+    MExPrimarySource,
+    Result,
+)
 from mex.backend.graph.query import Query, QueryBuilder
 from mex.backend.graph.transform import (
     expand_references_in_search_result,
@@ -130,8 +135,8 @@ class GraphConnector(BaseConnector):
 
     def _seed_data(self) -> None:
         """Ensure the primary source `mex` is seeded and linked to itself."""
-        deque(self.ingest_items([MExPrimarySource()]))
-        logger.info("seeded mex primary source")
+        deque(self.ingest_items([MExPrimarySource(), MExEditorPrimarySource()]))
+        logger.info("seeded primary sources 'mex' and 'mex-editor'")
 
     def close(self) -> None:
         """Close the connector's underlying requests session."""
@@ -307,11 +312,19 @@ class GraphConnector(BaseConnector):
         if reference_field and reference_field not in ALL_REFERENCE_FIELD_NAMES:
             msg = "Invalid field name."
             raise ValueError(msg)
+        filter_items_with_rules = False
+        if (
+            reference_field == "hadPrimarySource"
+            and referenced_identifiers is not None
+            and MExEditorPrimarySource().stableTargetId in referenced_identifiers
+        ):
+            filter_items_with_rules = True
         query_builder = QueryBuilder.get()
         query = query_builder.fetch_merged_items(
             filter_by_query_string=bool(query_string),
             filter_by_identifier=bool(identifier),
             filter_by_referenced_identifiers=bool(referenced_identifiers),
+            filter_items_with_rules=filter_items_with_rules,
             reference_field=reference_field,
         )
         result = self.commit(
@@ -394,13 +407,19 @@ class GraphConnector(BaseConnector):
     def _run_ingest_in_transaction(
         self,
         tx: Transaction,
-        model: AnyExtractedModel | AnyRuleSetResponse | MExPrimarySource,
+        model: AnyExtractedModel
+        | AnyRuleSetResponse
+        | MExPrimarySource
+        | MExEditorPrimarySource,
     ) -> None:
         """Ingest a single item in a database transaction."""
         query_builder = QueryBuilder.get()
         if isinstance(model, AnyRuleSetResponse):
             items_to_ingest: list[
-                AnyExtractedModel | MExPrimarySource | AnyRuleModel
+                AnyExtractedModel
+                | MExPrimarySource
+                | MExEditorPrimarySource
+                | AnyRuleModel
             ] = [
                 model.additive,
                 model.subtractive,
@@ -428,7 +447,12 @@ class GraphConnector(BaseConnector):
 
     def ingest_items(
         self,
-        models: Iterable[AnyExtractedModel | AnyRuleSetResponse | MExPrimarySource],
+        models: Iterable[
+            AnyExtractedModel
+            | AnyRuleSetResponse
+            | MExPrimarySource
+            | MExEditorPrimarySource
+        ],
     ) -> Generator[None, None, None]:
         """Ingest a list of extracted models or rule set responses into the graph."""
         settings = BackendSettings.get()

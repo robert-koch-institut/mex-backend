@@ -136,10 +136,22 @@ def test_create_rule_set(client_with_api_key_write_permission: TestClient) -> No
             "position": 0,
         },
         {
+            "end": "00000000000000",
+            "label": "hadPrimarySource",
+            "position": 0,
+            "start": "00000000000003",
+        },
+        {
             "start": "00000000000001",
             "end": "00000000000000",
             "label": "stableTargetId",
             "position": 0,
+        },
+        {
+            "end": "00000000000002",
+            "label": "stableTargetId",
+            "position": 0,
+            "start": "00000000000003",
         },
         {
             "start": "SubtractiveActivity",
@@ -170,6 +182,12 @@ def test_create_rule_set(client_with_api_key_write_permission: TestClient) -> No
         {
             "identifier": "00000000000001",
             "identifierInPrimarySource": "mex",
+            "label": "ExtractedPrimarySource",
+        },
+        {"identifier": "00000000000002", "label": "MergedPrimarySource"},
+        {
+            "identifier": "00000000000003",
+            "identifierInPrimarySource": "mex-editor",
             "label": "ExtractedPrimarySource",
         },
         {"identifier": "bFQoRhcVH5DHUq", "label": "MergedActivity"},
@@ -406,6 +424,12 @@ def test_update_rule_set(
             "end": "00000000000000",
         },
         {
+            "end": "00000000000000",
+            "label": "hadPrimarySource",
+            "position": 0,
+            "start": "00000000000003",
+        },
+        {
             "position": 0,
             "start": "bFQoRhcVH5DHUq",
             "label": "hadPrimarySource",
@@ -422,6 +446,12 @@ def test_update_rule_set(
             "start": "00000000000001",
             "label": "stableTargetId",
             "end": "00000000000000",
+        },
+        {
+            "end": "00000000000002",
+            "label": "stableTargetId",
+            "position": 0,
+            "start": "00000000000003",
         },
         {"position": 0, "start": "bFQoRhcVH5DHUG", "label": "website", "end": "Link"},
         {"position": 0, "start": "bFQoRhcVH5DHUG", "label": "abstract", "end": "Text"},
@@ -642,6 +672,12 @@ def test_update_rule_set(
             "identifierInPrimarySource": "mex",
             "label": "ExtractedPrimarySource",
             "identifier": "00000000000001",
+        },
+        {"identifier": "00000000000002", "label": "MergedPrimarySource"},
+        {
+            "identifier": "00000000000003",
+            "identifierInPrimarySource": "mex-editor",
+            "label": "ExtractedPrimarySource",
         },
         {"label": "MergedContactPoint", "identifier": "bFQoRhcVH5DHUB"},
         {"label": "MergedOrganizationalUnit", "identifier": "bFQoRhcVH5DHUF"},
