@@ -228,10 +228,12 @@ def test_fetch_extracted_or_rule_items(
         "filter_by_query_string",
         "filter_by_identifier",
         "filter_by_referenced_identifiers",
+        "filter_items_with_rules",
         "expected",
     ),
     [
-        (
+        pytest.param(
+            True,
             True,
             True,
             True,
@@ -246,11 +248,18 @@ def test_fetch_extracted_or_rule_items(
         RETURN extracted_or_rule_node, merged_node
     }
     WITH DISTINCT merged_node AS merged_node
-    MATCH (merged_node)<-[:stableTargetId]-()-[:hadPrimarySource]->(referenced_node_to_filter_by)
     WHERE
         ANY(label IN labels(merged_node) WHERE label IN $labels)
         AND merged_node.identifier = $identifier
-        AND referenced_node_to_filter_by.identifier IN $referenced_identifiers
+    MATCH (merged_node)
+    WHERE
+        EXISTS {(merged_node)<-[:stableTargetId]-(:AdditivePerson|AdditiveVariable|AdditiveDistribution)}
+        OR
+        EXISTS {
+            MATCH (merged_node)<-[:stableTargetId]-()-[:hadPrimarySource]->(referenced_node_to_filter_by)
+            WHERE
+                referenced_node_to_filter_by.identifier IN $referenced_identifiers
+        }
     RETURN COUNT(merged_node) AS total
 }
 CALL () {
@@ -264,11 +273,18 @@ CALL () {
         RETURN extracted_or_rule_node, merged_node
     }
     WITH DISTINCT merged_node AS merged_node
-    MATCH (merged_node)<-[:stableTargetId]-()-[:hadPrimarySource]->(referenced_node_to_filter_by)
     WHERE
         ANY(label IN labels(merged_node) WHERE label IN $labels)
         AND merged_node.identifier = $identifier
-        AND referenced_node_to_filter_by.identifier IN $referenced_identifiers
+    MATCH (merged_node)
+    WHERE
+        EXISTS {(merged_node)<-[:stableTargetId]-(:AdditivePerson|AdditiveVariable|AdditiveDistribution)}
+        OR
+        EXISTS {
+            MATCH (merged_node)<-[:stableTargetId]-()-[:hadPrimarySource]->(referenced_node_to_filter_by)
+            WHERE
+                referenced_node_to_filter_by.identifier IN $referenced_identifiers
+        }
     ORDER BY merged_node.identifier, head(labels(merged_node)) ASC
     SKIP $skip
     LIMIT $limit
@@ -296,8 +312,10 @@ CALL () {
     RETURN items
 }
 RETURN items, total;""",
+            id="all-filters",
         ),
-        (
+        pytest.param(
+            False,
             False,
             False,
             False,
@@ -338,21 +356,23 @@ CALL () {
     RETURN items
 }
 RETURN items, total;""",
+            id="no-filters",
         ),
     ],
-    ids=["all-filters", "no-filters"],
 )
-def test_fetch_merged_items(
+def test_fetch_merged_items(  # noqa: PLR0913
     query_builder: QueryBuilder,
     filter_by_query_string: bool,  # noqa: FBT001
     filter_by_identifier: bool,  # noqa: FBT001
     filter_by_referenced_identifiers: bool,  # noqa: FBT001
+    filter_items_with_rules: bool,  # noqa: FBT001
     expected: str,
 ) -> None:
     query = query_builder.fetch_merged_items(
         filter_by_query_string=filter_by_query_string,
         filter_by_identifier=filter_by_identifier,
         filter_by_referenced_identifiers=filter_by_referenced_identifiers,
+        filter_items_with_rules=filter_items_with_rules,
         reference_field="hadPrimarySource",
     )
     assert query.render() == expected
