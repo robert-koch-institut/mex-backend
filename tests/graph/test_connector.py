@@ -9,7 +9,7 @@ from pytest import MonkeyPatch
 from mex.backend.graph import connector as connector_module
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import IngestionError
-from mex.backend.graph.models import IngestParams
+from mex.backend.graph.models import IngestParams, MExEditorPrimarySource
 from mex.backend.graph.query import Query
 from mex.backend.settings import BackendSettings
 from mex.common.exceptions import MExError
@@ -963,6 +963,58 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
             },
         ),
         (
+            None,
+            None,
+            None,
+            [MExEditorPrimarySource().stableTargetId],
+            "hadPrimarySource",
+            1,
+            {
+                "items": [
+                    {
+                        "_components": [
+                            {
+                                "email": [],
+                                "entityType": "ExtractedOrganizationalUnit",
+                                "hadPrimarySource": ["bFQoRhcVH5DHUt"],
+                                "identifier": "bFQoRhcVH5DHUE",
+                                "identifierInPrimarySource": "ou-1.6",
+                                "name": [{"language": "en", "value": "Unit 1.6"}],
+                                "parentUnit": ["bFQoRhcVH5DHUx"],
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                                "unitOf": ["bFQoRhcVH5DHUv"],
+                            },
+                            {
+                                "email": [],
+                                "entityType": "AdditiveOrganizationalUnit",
+                                "name": [{"language": "en", "value": "Unit 1.7"}],
+                                "parentUnit": ["bFQoRhcVH5DHUx"],
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                                "website": [
+                                    {
+                                        "title": "Unit Homepage",
+                                        "url": "https://unit-1-7",
+                                    }
+                                ],
+                            },
+                            {
+                                "entityType": "PreventiveOrganizationalUnit",
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                            },
+                            {
+                                "email": [],
+                                "entityType": "SubtractiveOrganizationalUnit",
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                            },
+                        ],
+                        "entityType": "MergedOrganizationalUnit",
+                        "identifier": "bFQoRhcVH5DHUF",
+                    }
+                ],
+                "total": 1,
+            },
+        ),
+        (
             "Unit",
             None,
             None,
@@ -1237,6 +1289,7 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
         "no filters",
         "entity type filter",
         "had primary source filter",
+        "had primary source mex-editor filter",
         "had primary source filter and filter by query",
         "find exact",
         "find fuzzy",

@@ -312,11 +312,19 @@ class GraphConnector(BaseConnector):
         if reference_field and reference_field not in ALL_REFERENCE_FIELD_NAMES:
             msg = "Invalid field name."
             raise ValueError(msg)
+        filter_items_with_rules = False
+        if (
+            reference_field == "hadPrimarySource"
+            and referenced_identifiers is not None
+            and MExEditorPrimarySource().stableTargetId in referenced_identifiers
+        ):
+            filter_items_with_rules = True
         query_builder = QueryBuilder.get()
         query = query_builder.fetch_merged_items(
             filter_by_query_string=bool(query_string),
             filter_by_identifier=bool(identifier),
             filter_by_referenced_identifiers=bool(referenced_identifiers),
+            filter_items_with_rules=filter_items_with_rules,
             reference_field=reference_field,
         )
         result = self.commit(
