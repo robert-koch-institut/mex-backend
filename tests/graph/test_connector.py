@@ -143,30 +143,52 @@ def test_mocked_graph_seed_indices(
 
 @pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
 def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
-    mocked_graph.return_value = [
-        {
-            "identifier": "00000000000001",
-            "stableTargetId": "00000000000000",
-            "entityType": "ExtractedPrimarySource",
-            "linkRels": [
-                {
-                    "nodeProps": {"identifier": "00000000000000"},
-                    "edgeLabel": "hadPrimarySource",
-                    "edgeProps": {"position": 0},
-                    "nodeLabels": ["MergedPrimarySource"],
-                }
-            ],
-            "createRels": [],
-            "nodeProps": {
-                "identifierInPrimarySource": "mex",
+    mocked_graph.side_effect = [
+        [
+            {
                 "identifier": "00000000000001",
-            },
-        }
+                "stableTargetId": "00000000000000",
+                "entityType": "ExtractedPrimarySource",
+                "linkRels": [
+                    {
+                        "nodeProps": {"identifier": "00000000000000"},
+                        "edgeLabel": "hadPrimarySource",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["MergedPrimarySource"],
+                    }
+                ],
+                "createRels": [],
+                "nodeProps": {
+                    "identifierInPrimarySource": "mex",
+                    "identifier": "00000000000001",
+                },
+            }
+        ],
+        [
+            {
+                "identifier": "00000000000003",
+                "stableTargetId": "00000000000002",
+                "entityType": "ExtractedPrimarySource",
+                "linkRels": [
+                    {
+                        "nodeProps": {"identifier": "00000000000000"},
+                        "edgeLabel": "hadPrimarySource",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["MergedPrimarySource"],
+                    }
+                ],
+                "createRels": [],
+                "nodeProps": {
+                    "identifierInPrimarySource": "mex-editor",
+                    "identifier": "00000000000003",
+                },
+            }
+        ],
     ]
     graph = GraphConnector.get()
     graph._seed_data()
 
-    assert mocked_graph.call_args_list[-1] == call(
+    assert mocked_graph.call_args_list[0] == call(
         call(
             "merge_item",
             params=IngestParams(
@@ -306,7 +328,7 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                         "hadPrimarySource": ["00000000000000"],
                     }
                 ],
-                "total": 10,
+                "total": 11,
             },
         ),
         (
@@ -826,7 +848,7 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                         "identifier": "00000000000000",
                     }
                 ],
-                "total": 9,
+                "total": 10,
             },
         ),
         (

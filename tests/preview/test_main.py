@@ -165,11 +165,11 @@ def test_preview(
                         "version": None,
                     }
                 ],
-                "total": 9,
+                "total": 10,
             },
         ),
         (
-            "?limit=1&skip=8",
+            "?limit=1&skip=9",
             {
                 "items": [
                     {
@@ -178,7 +178,7 @@ def test_preview(
                         "identifier": "bFQoRhcVH5DHUz",
                     }
                 ],
-                "total": 9,
+                "total": 10,
             },
         ),
         (
@@ -389,7 +389,7 @@ def test_preview(
     ],
     ids=[
         "limit 1",
-        "skip 1",
+        "skip 9",
         "entity type contact points",
         "full text search",
         "identifier filter",
