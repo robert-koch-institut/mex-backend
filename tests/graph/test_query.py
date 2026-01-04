@@ -115,7 +115,7 @@ YIELD currentStatus;"""
         "expected",
     ),
     [
-        (
+        pytest.param(
             True,
             r"""CALL () {
     OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
@@ -172,8 +172,9 @@ CALL () {
     RETURN items
 }
 RETURN items, total;""",
+            id="all-filters",
         ),
-        (
+        pytest.param(
             False,
             r"""CALL () {
     OPTIONAL MATCH (extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
@@ -204,9 +205,9 @@ CALL () {
     RETURN items
 }
 RETURN items, total;""",
+            id="no-filters",
         ),
     ],
-    ids=["all-filters", "no-filters"],
 )
 def test_fetch_extracted_or_rule_items(
     query_builder: QueryBuilder,
@@ -231,7 +232,7 @@ def test_fetch_extracted_or_rule_items(
         "expected",
     ),
     [
-        (
+        pytest.param(
             True,
             True,
             True,
@@ -296,8 +297,9 @@ CALL () {
     RETURN items
 }
 RETURN items, total;""",
+            id="all-filters",
         ),
-        (
+        pytest.param(
             False,
             False,
             False,
@@ -338,9 +340,9 @@ CALL () {
     RETURN items
 }
 RETURN items, total;""",
+            id="no-filters",
         ),
     ],
-    ids=["all-filters", "no-filters"],
 )
 def test_fetch_merged_items(
     query_builder: QueryBuilder,
@@ -366,7 +368,7 @@ def test_fetch_merged_items(
         "expected",
     ),
     [
-        (
+        pytest.param(
             True,
             True,
             True,
@@ -384,8 +386,9 @@ RETURN
     n.identifier AS identifier
 ORDER BY n.identifier ASC
 LIMIT $limit;""",
+            id="all-filters",
         ),
-        (
+        pytest.param(
             False,
             False,
             False,
@@ -399,8 +402,9 @@ RETURN
     n.identifier AS identifier
 ORDER BY n.identifier ASC
 LIMIT $limit;""",
+            id="no-filters",
         ),
-        (
+        pytest.param(
             False,
             False,
             True,
@@ -416,9 +420,9 @@ RETURN
     n.identifier AS identifier
 ORDER BY n.identifier ASC
 LIMIT $limit;""",
+            id="id-filter",
         ),
     ],
-    ids=["all-filters", "no-filters", "id-filter"],
 )
 def test_fetch_identities(
     query_builder: QueryBuilder,
