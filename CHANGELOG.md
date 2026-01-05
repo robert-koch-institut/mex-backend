@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- make renovate minimumReleaseAge optional
+
 ### Security
 
 ## [1.3.0] - 2025-11-20
