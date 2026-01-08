@@ -23,7 +23,7 @@ install: setup hooks
 linter:
 	# run the linter hooks from pre-commit on all files
 	@ echo linting all files; \
-	pdm lint; \
+	pre-commit run --all-files; \
 
 pytest:
 	# run the pytest test suite with all tests

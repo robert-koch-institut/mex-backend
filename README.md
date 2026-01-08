@@ -83,9 +83,9 @@ components of the MEx project are open-sourced under the same license as well.
 
 ### Linting and testing
 
-- run all linters with `pdm lint`
-- run only unit tests with `pdm unit`
-- run unit and integration tests with `pdm test`
+- run all linters with `.\mex.bat lint`
+- run only unit tests with `.\mex.bat unit`
+- run unit and integration tests with `.\mex.bat test`
 
 ### Updating dependencies
 
