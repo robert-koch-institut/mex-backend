@@ -83,21 +83,21 @@ components of the MEx project are open-sourced under the same license as well.
 
 ### Linting and testing
 
-- run all linters with `pdm lint`
-- run only unit tests with `pdm unit`
-- run unit and integration tests with `pdm test`
+- run all linters with `.\mex.bat lint`
+- run only unit tests with `.\mex.bat unit`
+- run unit and integration tests with `.\mex.bat test`
 
 ### Updating dependencies
 
 - update boilerplate files with `cruft update`
 - update global requirements in `requirements.txt` manually
 - update git hooks with `pre-commit autoupdate`
-- update package dependencies using `pdm update-all`
+- update package dependencies using `uv sync --upgrade`
 - update github actions in `.github/workflows/*.yml` manually
 
 ### Creating release
 
-- run `pdm release RULE` to release a new version where RULE determines which part of
+- run `mex release RULE` to release a new version where RULE determines which part of
   the version to update and is one of `major`, `minor`, `patch`.
 
 ### Container workflow
@@ -108,8 +108,8 @@ components of the MEx project are open-sourced under the same license as well.
 
 ## Commands
 
-- run `pdm run {command} --help` to print instructions
-- run `pdm run {command} --debug` for interactive debugging
+- run `uv run {command} --help` to print instructions
+- run `uv run {command} --debug` for interactive debugging
 
 ### Backend
 
