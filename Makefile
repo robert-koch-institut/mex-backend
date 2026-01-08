@@ -18,7 +18,7 @@ hooks:
 install: setup hooks
 	# install packages from lock file in local virtual environment
 	@ echo installing package; \
-	pdm install-all; \
+	uv sync; \
 
 linter:
 	# run the linter hooks from pre-commit on all files
@@ -28,12 +28,12 @@ linter:
 pytest:
 	# run the pytest test suite with all tests
 	@ echo running all tests; \
-	pdm test; \
+	uv run pytest -m 'not integration'; \
 
 wheel:
 	# build the python package
 	@ echo building wheel; \
-	pdm wheel; \
+	uv build --wheel; \
 
 image:
 	# build the docker image
@@ -61,4 +61,5 @@ start: image
 docs:
 	# use sphinx to auto-generate html docs from code
 	@ echo generating docs; \
-	pdm doc; \
+	uv run sphinx-apidoc -f -o docs/source mex; \
+	uv run sphinx-build -aE -b dirhtml docs docs/dist; \
