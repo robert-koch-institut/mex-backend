@@ -9,7 +9,7 @@ from pytest import MonkeyPatch
 from mex.backend.graph import connector as connector_module
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import IngestionError
-from mex.backend.graph.models import IngestParams
+from mex.backend.graph.models import IngestParams, MExEditorPrimarySource
 from mex.backend.graph.query import Query
 from mex.backend.settings import BackendSettings
 from mex.common.exceptions import MExError
@@ -143,30 +143,52 @@ def test_mocked_graph_seed_indices(
 
 @pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
 def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
-    mocked_graph.return_value = [
-        {
-            "identifier": "00000000000001",
-            "stableTargetId": "00000000000000",
-            "entityType": "ExtractedPrimarySource",
-            "linkRels": [
-                {
-                    "nodeProps": {"identifier": "00000000000000"},
-                    "edgeLabel": "hadPrimarySource",
-                    "edgeProps": {"position": 0},
-                    "nodeLabels": ["MergedPrimarySource"],
-                }
-            ],
-            "createRels": [],
-            "nodeProps": {
-                "identifierInPrimarySource": "mex",
+    mocked_graph.side_effect = [
+        [
+            {
                 "identifier": "00000000000001",
-            },
-        }
+                "stableTargetId": "00000000000000",
+                "entityType": "ExtractedPrimarySource",
+                "linkRels": [
+                    {
+                        "nodeProps": {"identifier": "00000000000000"},
+                        "edgeLabel": "hadPrimarySource",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["MergedPrimarySource"],
+                    }
+                ],
+                "createRels": [],
+                "nodeProps": {
+                    "identifierInPrimarySource": "mex",
+                    "identifier": "00000000000001",
+                },
+            }
+        ],
+        [
+            {
+                "identifier": "00000000000003",
+                "stableTargetId": "00000000000002",
+                "entityType": "ExtractedPrimarySource",
+                "linkRels": [
+                    {
+                        "nodeProps": {"identifier": "00000000000000"},
+                        "edgeLabel": "hadPrimarySource",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["MergedPrimarySource"],
+                    }
+                ],
+                "createRels": [],
+                "nodeProps": {
+                    "identifierInPrimarySource": "mex-editor",
+                    "identifier": "00000000000003",
+                },
+            }
+        ],
     ]
     graph = GraphConnector.get()
     graph._seed_data()
 
-    assert mocked_graph.call_args_list[-1] == call(
+    assert mocked_graph.call_args_list[0] == call(
         call(
             "merge_item",
             params=IngestParams(
@@ -306,7 +328,7 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                         "hadPrimarySource": ["00000000000000"],
                     }
                 ],
-                "total": 10,
+                "total": 11,
             },
         ),
         (
@@ -721,6 +743,7 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
             filter_by_query_string=True,
             filter_by_identifier=True,
             filter_by_referenced_identifiers=True,
+            filter_items_with_rules=False,
             reference_field="hadPrimarySource",
         ),
         {
@@ -826,7 +849,7 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                         "identifier": "00000000000000",
                     }
                 ],
-                "total": 9,
+                "total": 10,
             },
         ),
         (
@@ -938,6 +961,58 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                     }
                 ],
                 "total": 3,
+            },
+        ),
+        (
+            None,
+            None,
+            None,
+            [MExEditorPrimarySource().stableTargetId],
+            "hadPrimarySource",
+            1,
+            {
+                "items": [
+                    {
+                        "_components": [
+                            {
+                                "email": [],
+                                "entityType": "ExtractedOrganizationalUnit",
+                                "hadPrimarySource": ["bFQoRhcVH5DHUt"],
+                                "identifier": "bFQoRhcVH5DHUE",
+                                "identifierInPrimarySource": "ou-1.6",
+                                "name": [{"language": "en", "value": "Unit 1.6"}],
+                                "parentUnit": ["bFQoRhcVH5DHUx"],
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                                "unitOf": ["bFQoRhcVH5DHUv"],
+                            },
+                            {
+                                "email": [],
+                                "entityType": "AdditiveOrganizationalUnit",
+                                "name": [{"language": "en", "value": "Unit 1.7"}],
+                                "parentUnit": ["bFQoRhcVH5DHUx"],
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                                "website": [
+                                    {
+                                        "title": "Unit Homepage",
+                                        "url": "https://unit-1-7",
+                                    }
+                                ],
+                            },
+                            {
+                                "entityType": "PreventiveOrganizationalUnit",
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                            },
+                            {
+                                "email": [],
+                                "entityType": "SubtractiveOrganizationalUnit",
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                            },
+                        ],
+                        "entityType": "MergedOrganizationalUnit",
+                        "identifier": "bFQoRhcVH5DHUF",
+                    }
+                ],
+                "total": 1,
             },
         ),
         (
@@ -1215,6 +1290,7 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
         "no filters",
         "entity type filter",
         "had primary source filter",
+        "had primary source mex-editor filter",
         "had primary source filter and filter by query",
         "find exact",
         "find fuzzy",
