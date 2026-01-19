@@ -718,6 +718,7 @@ def test_ingest_extracted_and_rule(
                 "orcidId": [],
                 "$type": "MergedPerson",
                 "identifier": "bFQoRhcVH5DHUr",
+                "supersededBy": None,
             }
         ],
         "total": 1,
@@ -756,6 +757,7 @@ def test_ingest_artificial_data(
                 "orcidId": ["https://orcid.org/0042-8614-8925-5679"],
                 "$type": "MergedPerson",
                 "identifier": "bFQoRhcVH5DHVh",
+                "supersededBy": None,
             }
         ],
         "total": 42,

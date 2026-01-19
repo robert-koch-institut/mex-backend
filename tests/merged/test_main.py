@@ -95,6 +95,7 @@ def test_search_merged_items_mocked(
                 "shortName": [],
                 "unitOf": [],
                 "website": [],
+                "supersededBy": None,
             }
         ],
         "total": 14,
@@ -119,6 +120,7 @@ def test_search_merged_items_mocked(
                         "title": [],
                         "unitInCharge": [],
                         "version": None,
+                        "supersededBy": None,
                     }
                 ],
                 "total": 9,
@@ -132,6 +134,7 @@ def test_search_merged_items_mocked(
                         "email": ["info@contact-point.one"],
                         "$type": "MergedContactPoint",
                         "identifier": "bFQoRhcVH5DHUz",
+                        "supersededBy": None,
                     }
                 ],
                 "total": 9,
@@ -145,11 +148,13 @@ def test_search_merged_items_mocked(
                         "$type": "MergedContactPoint",
                         "email": ["help@contact-point.two"],
                         "identifier": "bFQoRhcVH5DHUB",
+                        "supersededBy": None,
                     },
                     {
                         "$type": "MergedContactPoint",
                         "email": ["info@contact-point.one"],
                         "identifier": "bFQoRhcVH5DHUz",
+                        "supersededBy": None,
                     },
                 ],
                 "total": 2,
@@ -170,6 +175,7 @@ def test_search_merged_items_mocked(
                         "title": [],
                         "unitInCharge": [],
                         "version": "Cool Version v2.13",
+                        "supersededBy": None,
                     }
                 ],
                 "total": 1,
@@ -189,6 +195,7 @@ def test_search_merged_items_mocked(
                         "shortName": [],
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [],
+                        "supersededBy": None,
                     },
                 ],
                 "total": 1,
@@ -217,6 +224,7 @@ def test_search_merged_items_mocked(
                                 "url": "https://unit-1-7",
                             }
                         ],
+                        "supersededBy": None,
                     }
                 ],
                 "total": 1,
@@ -245,6 +253,7 @@ def test_search_merged_items_mocked(
                         "shortName": [],
                         "viafId": [],
                         "wikidataId": [],
+                        "supersededBy": None,
                     },
                     {
                         "$type": "MergedOrganizationalUnit",
@@ -265,6 +274,7 @@ def test_search_merged_items_mocked(
                                 "url": "https://unit-1-7",
                             }
                         ],
+                        "supersededBy": None,
                     },
                     {
                         "$type": "MergedOrganizationalUnit",
@@ -276,6 +286,7 @@ def test_search_merged_items_mocked(
                         "shortName": [],
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [],
+                        "supersededBy": None,
                     },
                 ],
                 "total": 3,
@@ -304,6 +315,7 @@ def test_search_merged_items_mocked(
                         "shortName": [],
                         "viafId": [],
                         "wikidataId": [],
+                        "supersededBy": None,
                     },
                     {
                         "$type": "MergedOrganizationalUnit",
@@ -324,6 +336,7 @@ def test_search_merged_items_mocked(
                                 "url": "https://unit-1-7",
                             }
                         ],
+                        "supersededBy": None,
                     },
                     {
                         "$type": "MergedOrganizationalUnit",
@@ -335,6 +348,7 @@ def test_search_merged_items_mocked(
                         "shortName": [],
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [],
+                        "supersededBy": None,
                     },
                 ],
                 "total": 3,
@@ -405,6 +419,7 @@ def test_search_merged_items_skip_on_validation_error(
             "website": [],
             "$type": "MergedOrganizationalUnit",
             "identifier": "bFQoRhcVH5DHUx",
+            "supersededBy": None,
         }
     ]
 

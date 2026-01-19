@@ -53,6 +53,7 @@ def test_create_rule_set(client_with_api_key_write_permission: TestClient) -> No
             "theme": [],
             "website": [],
             "$type": "AdditiveActivity",
+            "supersededBy": None,
         },
         "subtractive": {
             "contact": [],
@@ -211,6 +212,7 @@ def test_get_rule_set(
                 {"language": None, "title": "Unit Homepage", "url": "https://unit-1-7"}
             ],
             "$type": "AdditiveOrganizationalUnit",
+            "supersededBy": None,
         },
         "subtractive": {
             "parentUnit": [],
@@ -338,6 +340,7 @@ def test_update_rule_set(
             "unitOf": [],
             "website": [],
             "$type": "AdditiveOrganizationalUnit",
+            "supersededBy": None,
         },
         "subtractive": {
             "parentUnit": [],

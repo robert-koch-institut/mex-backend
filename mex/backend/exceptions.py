@@ -16,6 +16,7 @@ class DetailedError(Protocol):
 
     def errors(self) -> list[ErrorDetails]:
         """Details about each underlying error."""
+        ...
 
 
 class BackendError(MExError):

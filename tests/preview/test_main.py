@@ -163,6 +163,7 @@ def test_preview(
                         "title": [],
                         "unitInCharge": [],
                         "version": None,
+                        "supersededBy": None,
                     }
                 ],
                 "total": 9,
@@ -176,6 +177,7 @@ def test_preview(
                         "email": ["info@contact-point.one"],
                         "$type": "PreviewContactPoint",
                         "identifier": "bFQoRhcVH5DHUz",
+                        "supersededBy": None,
                     }
                 ],
                 "total": 9,
@@ -189,11 +191,13 @@ def test_preview(
                         "$type": "PreviewContactPoint",
                         "email": ["help@contact-point.two"],
                         "identifier": "bFQoRhcVH5DHUB",
+                        "supersededBy": None,
                     },
                     {
                         "$type": "PreviewContactPoint",
                         "email": ["info@contact-point.one"],
                         "identifier": "bFQoRhcVH5DHUz",
+                        "supersededBy": None,
                     },
                 ],
                 "total": 2,
@@ -214,6 +218,7 @@ def test_preview(
                         "title": [],
                         "unitInCharge": [],
                         "version": "Cool Version v2.13",
+                        "supersededBy": None,
                     }
                 ],
                 "total": 1,
@@ -233,6 +238,7 @@ def test_preview(
                         "shortName": [],
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [],
+                        "supersededBy": None,
                     },
                 ],
                 "total": 1,
@@ -261,6 +267,7 @@ def test_preview(
                                 "url": "https://unit-1-7",
                             }
                         ],
+                        "supersededBy": None,
                     }
                 ],
                 "total": 1,
@@ -289,6 +296,7 @@ def test_preview(
                         "shortName": [],
                         "viafId": [],
                         "wikidataId": [],
+                        "supersededBy": None,
                     },
                     {
                         "$type": "PreviewOrganizationalUnit",
@@ -309,6 +317,7 @@ def test_preview(
                                 "url": "https://unit-1-7",
                             }
                         ],
+                        "supersededBy": None,
                     },
                     {
                         "$type": "PreviewOrganizationalUnit",
@@ -320,6 +329,7 @@ def test_preview(
                         "shortName": [],
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [],
+                        "supersededBy": None,
                     },
                 ],
                 "total": 3,
@@ -348,6 +358,7 @@ def test_preview(
                         "shortName": [],
                         "viafId": [],
                         "wikidataId": [],
+                        "supersededBy": None,
                     },
                     {
                         "$type": "PreviewOrganizationalUnit",
@@ -368,6 +379,7 @@ def test_preview(
                                 "url": "https://unit-1-7",
                             }
                         ],
+                        "supersededBy": None,
                     },
                     {
                         "$type": "PreviewOrganizationalUnit",
@@ -379,6 +391,7 @@ def test_preview(
                         "shortName": [],
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [],
+                        "supersededBy": None,
                     },
                 ],
                 "total": 3,
