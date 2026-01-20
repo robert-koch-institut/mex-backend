@@ -128,12 +128,20 @@ YIELD currentStatus;"""
         RETURN extracted_or_rule_node, merged_node
     }
     WITH DISTINCT extracted_or_rule_node, merged_node
-    MATCH (extracted_or_rule_node)-[:hadPrimarySource]->(referenced_node_to_filter_by)
     WHERE
         ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
         AND extracted_or_rule_node.identifier = $identifier
         AND merged_node.identifier = $stable_target_id
-        AND referenced_node_to_filter_by.identifier IN $referenced_identifiers
+    CALL (extracted_or_rule_node) {
+        MATCH (extracted_or_rule_node:AdditivePerson|AdditiveVariable|AdditiveDistribution)
+        RETURN extracted_or_rule_node AS filtered_node
+    UNION
+        MATCH (extracted_or_rule_node)-[:hadPrimarySource]->(referenced_node_to_filter_by)
+        WHERE
+            referenced_node_to_filter_by.identifier IN $referenced_identifiers
+        RETURN extracted_or_rule_node AS filtered_node
+    }
+    WITH filtered_node as extracted_or_rule_node
     RETURN COUNT(extracted_or_rule_node) AS total
 }
 CALL () {
@@ -147,12 +155,20 @@ CALL () {
         RETURN extracted_or_rule_node, merged_node
     }
     WITH DISTINCT extracted_or_rule_node, merged_node
-    MATCH (extracted_or_rule_node)-[:hadPrimarySource]->(referenced_node_to_filter_by)
     WHERE
         ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
         AND extracted_or_rule_node.identifier = $identifier
         AND merged_node.identifier = $stable_target_id
-        AND referenced_node_to_filter_by.identifier IN $referenced_identifiers
+    CALL (extracted_or_rule_node) {
+        MATCH (extracted_or_rule_node:AdditivePerson|AdditiveVariable|AdditiveDistribution)
+        RETURN extracted_or_rule_node AS filtered_node
+    UNION
+        MATCH (extracted_or_rule_node)-[:hadPrimarySource]->(referenced_node_to_filter_by)
+        WHERE
+            referenced_node_to_filter_by.identifier IN $referenced_identifiers
+        RETURN extracted_or_rule_node AS filtered_node
+    }
+    WITH filtered_node as extracted_or_rule_node
     ORDER BY extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
     SKIP $skip
     LIMIT $limit
@@ -218,6 +234,7 @@ def test_fetch_extracted_or_rule_items(
         filter_by_identifier=enable_filters,
         filter_by_stable_target_id=enable_filters,
         filter_by_referenced_identifiers=enable_filters,
+        filter_rule_items=enable_filters,
         reference_field="hadPrimarySource",
     )
     assert query.render() == expected
