@@ -28,7 +28,7 @@ linter:
 pytest:
 	# run the pytest test suite with all tests
 	@ echo running all tests; \
-	uv run pytest -m 'not integration'; \
+	uv run pytest; \
 
 wheel:
 	# build the python package
