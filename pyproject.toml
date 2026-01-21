@@ -19,7 +19,9 @@ dependencies = [
     "uvicorn[standard]>=0.38",
     "valkey[libvalkey]>=6,<7",
 ]
-optional-dependencies.dev = [
+
+[dependency-groups]
+dev = [
     "httpx>=0.28",
     "ipdb>=0.13",
     "mex-artificial>=1.2",
@@ -55,24 +57,6 @@ plugins = ["pydantic.mypy"]
 [[tool.mypy.overrides]]
 module = ["valkey.*"]
 ignore_missing_imports = true
-
-[tool.pdm]
-distribution = true
-
-[tool.pdm.scripts]
-update-all = { cmd = "pdm update --group :all --update-all --save-compatible" }
-lock-all = { cmd = "pdm lock --group :all --python='==3.11.*'" }
-install-all = { cmd = "pdm install --group :all --frozen-lockfile" }
-export-all = { cmd = "pdm export --group :all --no-hashes -f requirements" }
-apidoc = { cmd = "pdm run sphinx-apidoc -f -o docs/source mex" }
-sphinx = { cmd = "pdm run sphinx-build -aE -b dirhtml docs docs/dist" }
-doc = { composite = ["apidoc", "sphinx"] }
-wheel = { cmd = "pdm build --no-sdist" }
-mypy-daemon = { cmd = "pdm run dmypy run --timeout 7200 -- mex tests" }
-lint = { cmd = "pre-commit run --all-files" }
-unit = { cmd = "pdm run pytest -m 'not integration'" }
-test = { cmd = "pdm run pytest" }
-all = { composite = ["install-all", "lint", "test", "doc"] }
 
 [tool.pydantic-mypy]
 warn_untyped_fields = true
@@ -162,5 +146,11 @@ known-first-party = ["mex", "tests"]
 convention = "google"
 
 [build-system]
-requires = ["pdm-backend==2.4.6"]
-build-backend = "pdm.backend"
+requires = ["hatchling>=1.28.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["mex"]
+
+[tool.hatch.build.targets.sdist]
+packages = ["mex"]
