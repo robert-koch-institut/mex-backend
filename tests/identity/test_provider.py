@@ -114,10 +114,10 @@ def test_assign_identity_inconsistency_mocked(
             "bFQoRhcVH5DHUr",
             "cp-2",
             {
-                "identifier": "bFQoRhcVH5DHUA",
+                "identifier": "bFQoRhcVH5DHUC",
                 "hadPrimarySource": "bFQoRhcVH5DHUr",
                 "identifierInPrimarySource": "cp-2",
-                "stableTargetId": "bFQoRhcVH5DHUB",
+                "stableTargetId": "bFQoRhcVH5DHUD",
             },
             id="existing-contact-point",
         ),

@@ -246,7 +246,7 @@ def test_search_merged_items_mocked(
                         "alternativeName": [],
                         "geprisId": [],
                         "gndId": [],
-                        "identifier": "bFQoRhcVH5DHUD",
+                        "identifier": "bFQoRhcVH5DHUF",
                         "isniId": [],
                         "officialName": [
                             {"language": "de", "value": "RKI"},
@@ -261,27 +261,25 @@ def test_search_merged_items_mocked(
                         "$type": "MergedOrganizationalUnit",
                         "alternativeName": [],
                         "email": [],
-                        "identifier": "bFQoRhcVH5DHUF",
-                        "name": [{"language": "en", "value": "Unit 1.6"}],
+                        "identifier": "bFQoRhcVH5DHUx",
+                        "name": [{"language": "en", "value": "Unit 1"}],
                         "parentUnit": None,
                         "shortName": [],
                         "unitOf": ["bFQoRhcVH5DHUv"],
-                        "website": [],
+                        "website": [
+                            {"language": None, "title": None, "url": "https://ou-1"},
+                        ],
                     },
                     {
                         "$type": "MergedOrganizationalUnit",
                         "alternativeName": [],
                         "email": [],
-                        "identifier": "bFQoRhcVH5DHUx",
-                        "name": [
-                            {"language": "en", "value": "Unit 1"},
-                            {"language": "de", "value": "Abteilung 1.6"},
-                        ],
+                        "identifier": "bFQoRhcVH5DHUz",
+                        "name": [{"language": "de", "value": "Abteilung 1.6"}],
                         "parentUnit": "bFQoRhcVH5DHUx",
                         "shortName": [],
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [
-                            {"language": None, "title": None, "url": "https://ou-1"},
                             {
                                 "language": None,
                                 "title": "Unit Homepage",
@@ -393,12 +391,9 @@ def test_get_merged_item(
     extracted_organization_1 = cast(
         "ExtractedOrganization", loaded_dummy_data["organization_1"]
     )
-    extracted_organization_2 = cast(
-        "ExtractedOrganization", loaded_dummy_data["organization_2"]
-    )
     merged_organization = create_merged_item(
         identifier=extracted_organization_1.stableTargetId,
-        extracted_items=[extracted_organization_2, extracted_organization_1],
+        extracted_items=[extracted_organization_1],
         rule_set=None,
         validation=Validation.STRICT,
     )

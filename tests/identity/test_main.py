@@ -121,7 +121,7 @@ def test_assign_identity_inconsistency_mocked(
                 "hadPrimarySource": "bFQoRhcVH5DHUr",
                 "identifier": "bFQoRhcVH5DHUC",
                 "identifierInPrimarySource": "cp-2",
-                "stableTargetId": "bFQoRhcVH5DHUC",
+                "stableTargetId": "bFQoRhcVH5DHUD",
             },
             id="existing-contact-point",
         ),
@@ -274,25 +274,19 @@ def test_fetch_identities_mocked(
             id="by-stable-target-single",
         ),
         pytest.param(
-            "?stableTargetId=bFQoRhcVH5DHUv",
+            "?stableTargetId=bFQoRhcVH5DHUt",
             {
                 "items": [
                     {
-                        "identifier": "bFQoRhcVH5DHUC",
-                        "hadPrimarySource": "bFQoRhcVH5DHUt",
-                        "identifierInPrimarySource": "robert-koch-institute",
-                        "stableTargetId": "bFQoRhcVH5DHUv",
-                    },
-                    {
-                        "identifier": "bFQoRhcVH5DHUu",
-                        "hadPrimarySource": "bFQoRhcVH5DHUr",
-                        "identifierInPrimarySource": "rki",
-                        "stableTargetId": "bFQoRhcVH5DHUv",
-                    },
+                        "hadPrimarySource": "00000000000000",
+                        "identifier": "bFQoRhcVH5DHUs",
+                        "identifierInPrimarySource": "ps-2",
+                        "stableTargetId": "bFQoRhcVH5DHUt",
+                    }
                 ],
-                "total": 2,
+                "total": 1,
             },
-            id="by-stable-target-multiple",
+            id="by-stable-target-contact-point",
         ),
     ],
 )
