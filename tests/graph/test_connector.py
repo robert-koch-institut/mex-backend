@@ -1,6 +1,6 @@
 import re
 from collections import deque
-from typing import Any
+from typing import Any, cast
 from unittest.mock import Mock, call
 
 import pytest
@@ -19,8 +19,11 @@ from mex.common.models import (
     MERGED_MODEL_CLASSES_BY_NAME,
     AnyExtractedModel,
     AnyRuleSetResponse,
+    ExtractedActivity,
+    ExtractedContactPoint,
     ExtractedOrganization,
     ExtractedOrganizationalUnit,
+    ExtractedPrimarySource,
 )
 from mex.common.types import Identifier, Text, TextLanguage
 from tests.conftest import MockedGraph, get_graph
@@ -367,8 +370,8 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                         "identifierInPrimarySource": "cp-1",
                         "email": ["info@contact-point.one"],
                         "entityType": "ExtractedContactPoint",
-                        "identifier": "bFQoRhcVH5DHUy",
-                        "stableTargetId": ["bFQoRhcVH5DHUz"],
+                        "identifier": "bFQoRhcVH5DHUA",
+                        "stableTargetId": ["bFQoRhcVH5DHUB"],
                         "hadPrimarySource": ["bFQoRhcVH5DHUr"],
                     }
                 ],
@@ -384,19 +387,19 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
             {
                 "items": [
                     {
-                        "identifierInPrimarySource": "cp-2",
-                        "email": ["help@contact-point.two"],
+                        "identifierInPrimarySource": "cp-1",
+                        "email": ["info@contact-point.one"],
                         "entityType": "ExtractedContactPoint",
                         "identifier": "bFQoRhcVH5DHUA",
                         "stableTargetId": ["bFQoRhcVH5DHUB"],
                         "hadPrimarySource": ["bFQoRhcVH5DHUr"],
                     },
                     {
-                        "identifierInPrimarySource": "cp-1",
-                        "email": ["info@contact-point.one"],
+                        "identifierInPrimarySource": "cp-2",
+                        "email": ["help@contact-point.two"],
                         "entityType": "ExtractedContactPoint",
-                        "identifier": "bFQoRhcVH5DHUy",
-                        "stableTargetId": ["bFQoRhcVH5DHUz"],
+                        "identifier": "bFQoRhcVH5DHUC",
+                        "stableTargetId": ["bFQoRhcVH5DHUD"],
                         "hadPrimarySource": ["bFQoRhcVH5DHUr"],
                     },
                 ],
@@ -618,13 +621,9 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
                 "items": [
                     {
                         "email": [],
-                        "entityType": "AdditiveOrganizationalUnit",
-                        "stableTargetId": ["bFQoRhcVH5DHUx"],
-                        "parentUnit": ["bFQoRhcVH5DHUx"],
+                        "entityType": "SubtractiveOrganizationalUnit",
+                        "stableTargetId": ["bFQoRhcVH5DHUz"],
                         "name": [{"value": "Unit 1.6", "language": "en"}],
-                        "website": [
-                            {"title": "Unit Homepage", "url": "https://unit-1-6"}
-                        ],
                     }
                 ],
                 "total": 1,
@@ -970,13 +969,13 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                                 "identifierInPrimarySource": "cp-1",
                                 "email": ["info@contact-point.one"],
                                 "entityType": "ExtractedContactPoint",
-                                "identifier": "bFQoRhcVH5DHUy",
-                                "stableTargetId": ["bFQoRhcVH5DHUz"],
+                                "identifier": "bFQoRhcVH5DHUA",
+                                "stableTargetId": ["bFQoRhcVH5DHUB"],
                                 "hadPrimarySource": ["bFQoRhcVH5DHUr"],
                             }
                         ],
                         "entityType": "MergedContactPoint",
-                        "identifier": "bFQoRhcVH5DHUz",
+                        "identifier": "bFQoRhcVH5DHUB",
                     }
                 ],
                 "total": 1,
@@ -995,8 +994,8 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                     {
                         "_components": [
                             {
-                                "identifierInPrimarySource": "cp-2",
-                                "email": ["help@contact-point.two"],
+                                "identifierInPrimarySource": "cp-1",
+                                "email": ["info@contact-point.one"],
                                 "entityType": "ExtractedContactPoint",
                                 "identifier": "bFQoRhcVH5DHUA",
                                 "stableTargetId": ["bFQoRhcVH5DHUB"],
@@ -1009,16 +1008,16 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                     {
                         "_components": [
                             {
-                                "identifierInPrimarySource": "cp-1",
-                                "email": ["info@contact-point.one"],
+                                "identifierInPrimarySource": "cp-2",
+                                "email": ["help@contact-point.two"],
                                 "entityType": "ExtractedContactPoint",
-                                "identifier": "bFQoRhcVH5DHUy",
-                                "stableTargetId": ["bFQoRhcVH5DHUz"],
+                                "identifier": "bFQoRhcVH5DHUC",
+                                "stableTargetId": ["bFQoRhcVH5DHUD"],
                                 "hadPrimarySource": ["bFQoRhcVH5DHUr"],
                             }
                         ],
                         "entityType": "MergedContactPoint",
-                        "identifier": "bFQoRhcVH5DHUz",
+                        "identifier": "bFQoRhcVH5DHUD",
                     },
                 ],
                 "total": 2,
@@ -1045,8 +1044,8 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                                 "geprisId": [],
                                 "isniId": [],
                                 "entityType": "ExtractedOrganization",
-                                "identifier": "bFQoRhcVH5DHUC",
-                                "stableTargetId": ["bFQoRhcVH5DHUv"],
+                                "identifier": "bFQoRhcVH5DHUE",
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
                                 "hadPrimarySource": ["bFQoRhcVH5DHUt"],
                                 "officialName": [
                                     {"value": "RKI", "language": "de"},
@@ -1056,6 +1055,12 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                                     },
                                 ],
                             },
+                        ],
+                        "entityType": "MergedOrganization",
+                        "identifier": "bFQoRhcVH5DHUF",
+                    },
+                    {
+                        "_components": [
                             {
                                 "rorId": [],
                                 "gndId": [],
@@ -1075,9 +1080,9 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                         ],
                         "entityType": "MergedOrganization",
                         "identifier": "bFQoRhcVH5DHUv",
-                    }
+                    },
                 ],
-                "total": 1,
+                "total": 2,
             },
             id="find-fuzzy",
         ),
@@ -1394,13 +1399,22 @@ def test_mocked_graph_ingests_rule_set(
 @pytest.mark.usefixtures("mocked_valkey")
 def test_mocked_graph_ingests_extracted_models(
     mocked_graph: MockedGraph,
-    dummy_data: dict[str, AnyExtractedModel],
+    dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
 ) -> None:
+    primary_source_1 = cast("ExtractedPrimarySource", dummy_data["primary_source_1"])
+    primary_source_2 = cast("ExtractedPrimarySource", dummy_data["primary_source_2"])
+    contact_point_1 = cast("ExtractedContactPoint", dummy_data["contact_point_1"])
+    contact_point_2 = cast("ExtractedContactPoint", dummy_data["contact_point_2"])
+    organization_1 = cast("ExtractedOrganization", dummy_data["organization_1"])
+    organization_2 = cast("ExtractedOrganization", dummy_data["organization_2"])
+    unit_1 = cast("ExtractedOrganizationalUnit", dummy_data["unit_1"])
+    unit_2 = cast("ExtractedOrganizationalUnit", dummy_data["unit_2"])
+    activity_1 = cast("ExtractedActivity", dummy_data["activity_1"])
     mocked_graph.side_effect = [
         [
             {
-                "identifier": str(dummy_data["primary_source_1"].identifier),
-                "stableTargetId": str(dummy_data["primary_source_1"].stableTargetId),
+                "identifier": str(primary_source_1.identifier),
+                "stableTargetId": str(primary_source_1.stableTargetId),
                 "entityType": "ExtractedPrimarySource",
                 "linkRels": [
                     {
@@ -1413,14 +1427,14 @@ def test_mocked_graph_ingests_extracted_models(
                 "createRels": [],
                 "nodeProps": {
                     "identifierInPrimarySource": "ps-1",
-                    "identifier": str(dummy_data["primary_source_1"].identifier),
+                    "identifier": str(primary_source_1.identifier),
                 },
             }
         ],
         [
             {
-                "identifier": str(dummy_data["primary_source_2"].identifier),
-                "stableTargetId": str(dummy_data["primary_source_2"].stableTargetId),
+                "identifier": str(primary_source_2.identifier),
+                "stableTargetId": str(primary_source_2.stableTargetId),
                 "entityType": "ExtractedPrimarySource",
                 "linkRels": [
                     {
@@ -1433,22 +1447,20 @@ def test_mocked_graph_ingests_extracted_models(
                 "createRels": [],
                 "nodeProps": {
                     "identifierInPrimarySource": "ps-2",
-                    "identifier": str(dummy_data["primary_source_2"].identifier),
+                    "identifier": str(primary_source_2.identifier),
                     "version": "Cool Version v2.13",
                 },
             }
         ],
         [
             {
-                "identifier": str(dummy_data["contact_point_1"].identifier),
-                "stableTargetId": str(dummy_data["contact_point_1"].stableTargetId),
+                "identifier": str(contact_point_1.identifier),
+                "stableTargetId": str(contact_point_1.stableTargetId),
                 "entityType": "ExtractedContactPoint",
                 "linkRels": [
                     {
                         "nodeProps": {
-                            "identifier": str(
-                                dummy_data["primary_source_1"].stableTargetId
-                            )
+                            "identifier": str(primary_source_1.stableTargetId)
                         },
                         "edgeLabel": "hadPrimarySource",
                         "edgeProps": {"position": 0},
@@ -1458,21 +1470,19 @@ def test_mocked_graph_ingests_extracted_models(
                 "nodeProps": {
                     "identifierInPrimarySource": "cp-1",
                     "email": ["info@contact-point.one"],
-                    "identifier": str(dummy_data["contact_point_1"].identifier),
+                    "identifier": str(contact_point_1.identifier),
                 },
             }
         ],
         [
             {
-                "identifier": str(dummy_data["contact_point_2"].identifier),
-                "stableTargetId": str(dummy_data["contact_point_2"].stableTargetId),
+                "identifier": str(contact_point_2.identifier),
+                "stableTargetId": str(contact_point_2.stableTargetId),
                 "entityType": "ExtractedContactPoint",
                 "linkRels": [
                     {
                         "nodeProps": {
-                            "identifier": str(
-                                dummy_data["primary_source_1"].stableTargetId
-                            )
+                            "identifier": str(primary_source_1.stableTargetId)
                         },
                         "edgeLabel": "hadPrimarySource",
                         "edgeProps": {"position": 0},
@@ -1482,21 +1492,19 @@ def test_mocked_graph_ingests_extracted_models(
                 "nodeProps": {
                     "identifierInPrimarySource": "cp-2",
                     "email": ["help@contact-point.two"],
-                    "identifier": str(dummy_data["contact_point_2"].identifier),
+                    "identifier": str(contact_point_2.identifier),
                 },
             }
         ],
         [
             {
-                "identifier": str(dummy_data["organization_1"].identifier),
-                "stableTargetId": str(dummy_data["organization_1"].stableTargetId),
+                "identifier": str(organization_1.identifier),
+                "stableTargetId": str(organization_1.stableTargetId),
                 "entityType": "ExtractedOrganization",
                 "linkRels": [
                     {
                         "nodeProps": {
-                            "identifier": str(
-                                dummy_data["primary_source_1"].stableTargetId
-                            )
+                            "identifier": str(primary_source_1.stableTargetId)
                         },
                         "edgeLabel": "hadPrimarySource",
                         "edgeProps": {"position": 0},
@@ -1519,21 +1527,19 @@ def test_mocked_graph_ingests_extracted_models(
                     "geprisId": [],
                     "viafId": [],
                     "isniId": [],
-                    "identifier": str(dummy_data["organization_1"].identifier),
+                    "identifier": str(organization_1.identifier),
                 },
             }
         ],
         [
             {
-                "identifier": str(dummy_data["organization_2"].identifier),
-                "stableTargetId": str(dummy_data["organization_2"].stableTargetId),
+                "identifier": str(organization_2.identifier),
+                "stableTargetId": str(organization_2.stableTargetId),
                 "entityType": "ExtractedOrganization",
                 "linkRels": [
                     {
                         "nodeProps": {
-                            "identifier": str(
-                                dummy_data["primary_source_2"].stableTargetId
-                            )
+                            "identifier": str(primary_source_2.stableTargetId)
                         },
                         "edgeLabel": "hadPrimarySource",
                         "edgeProps": {"position": 0},
@@ -1565,32 +1571,26 @@ def test_mocked_graph_ingests_extracted_models(
                     "geprisId": [],
                     "viafId": [],
                     "isniId": [],
-                    "identifier": str(dummy_data["organization_2"].identifier),
+                    "identifier": str(organization_2.identifier),
                 },
             }
         ],
         [
             {
-                "identifier": str(dummy_data["unit_1"].identifier),
-                "stableTargetId": str(dummy_data["unit_1"].stableTargetId),
+                "identifier": str(unit_1.identifier),
+                "stableTargetId": str(unit_1.stableTargetId),
                 "entityType": "ExtractedOrganizationalUnit",
                 "linkRels": [
                     {
                         "nodeProps": {
-                            "identifier": str(
-                                dummy_data["primary_source_2"].stableTargetId
-                            )
+                            "identifier": str(primary_source_2.stableTargetId)
                         },
                         "edgeLabel": "hadPrimarySource",
                         "edgeProps": {"position": 0},
                         "nodeLabels": ["MergedPrimarySource"],
                     },
                     {
-                        "nodeProps": {
-                            "identifier": str(
-                                dummy_data["organization_1"].stableTargetId
-                            )
-                        },
+                        "nodeProps": {"identifier": str(organization_1.stableTargetId)},
                         "edgeLabel": "unitOf",
                         "edgeProps": {"position": 0},
                         "nodeLabels": ["MergedOrganization"],
@@ -1613,32 +1613,26 @@ def test_mocked_graph_ingests_extracted_models(
                 "nodeProps": {
                     "identifierInPrimarySource": "ou-1",
                     "email": [],
-                    "identifier": str(dummy_data["unit_1"].identifier),
+                    "identifier": str(unit_1.identifier),
                 },
             }
         ],
         [
             {
-                "identifier": str(dummy_data["unit_2"].identifier),
-                "stableTargetId": str(dummy_data["unit_2"].stableTargetId),
+                "identifier": str(unit_2.identifier),
+                "stableTargetId": str(unit_2.stableTargetId),
                 "entityType": "ExtractedOrganizationalUnit",
                 "linkRels": [
                     {
                         "nodeProps": {
-                            "identifier": str(
-                                dummy_data["primary_source_2"].stableTargetId
-                            )
+                            "identifier": str(primary_source_2.stableTargetId)
                         },
                         "edgeLabel": "hadPrimarySource",
                         "edgeProps": {"position": 0},
                         "nodeLabels": ["MergedPrimarySource"],
                     },
                     {
-                        "nodeProps": {
-                            "identifier": str(
-                                dummy_data["organization_1"].stableTargetId
-                            )
-                        },
+                        "nodeProps": {"identifier": str(organization_1.stableTargetId)},
                         "edgeLabel": "unitOf",
                         "edgeProps": {"position": 0},
                         "nodeLabels": ["MergedOrganization"],
@@ -1655,21 +1649,19 @@ def test_mocked_graph_ingests_extracted_models(
                 "nodeProps": {
                     "identifierInPrimarySource": "ou-1.6",
                     "email": [],
-                    "identifier": str(dummy_data["unit_2"].identifier),
+                    "identifier": str(unit_2.identifier),
                 },
             }
         ],
         [
             {
-                "identifier": str(dummy_data["activity_1"].identifier),
-                "stableTargetId": str(dummy_data["activity_1"].stableTargetId),
+                "identifier": str(activity_1.identifier),
+                "stableTargetId": str(activity_1.stableTargetId),
                 "entityType": "ExtractedActivity",
                 "linkRels": [
                     {
                         "nodeProps": {
-                            "identifier": str(
-                                dummy_data["contact_point_1"].stableTargetId
-                            )
+                            "identifier": str(contact_point_1.stableTargetId)
                         },
                         "edgeLabel": "contact",
                         "edgeProps": {"position": 0},
@@ -1677,36 +1669,28 @@ def test_mocked_graph_ingests_extracted_models(
                     },
                     {
                         "nodeProps": {
-                            "identifier": str(
-                                dummy_data["contact_point_2"].stableTargetId
-                            )
+                            "identifier": str(contact_point_2.stableTargetId)
                         },
                         "edgeLabel": "contact",
                         "edgeProps": {"position": 1},
                         "nodeLabels": ["MergedContactPoint"],
                     },
                     {
-                        "nodeProps": {
-                            "identifier": str(dummy_data["unit_1"].stableTargetId)
-                        },
+                        "nodeProps": {"identifier": str(unit_1.stableTargetId)},
                         "edgeLabel": "contact",
                         "edgeProps": {"position": 2},
                         "nodeLabels": ["MergedOrganizationalUnit"],
                     },
                     {
                         "nodeProps": {
-                            "identifier": str(
-                                dummy_data["primary_source_1"].stableTargetId
-                            )
+                            "identifier": str(primary_source_1.stableTargetId)
                         },
                         "edgeLabel": "hadPrimarySource",
                         "edgeProps": {"position": 0},
                         "nodeLabels": ["MergedPrimarySource"],
                     },
                     {
-                        "nodeProps": {
-                            "identifier": str(dummy_data["unit_1"].stableTargetId)
-                        },
+                        "nodeProps": {"identifier": str(unit_1.stableTargetId)},
                         "edgeLabel": "responsibleUnit",
                         "edgeProps": {"position": 0},
                         "nodeLabels": ["MergedOrganizationalUnit"],
@@ -1747,15 +1731,18 @@ def test_mocked_graph_ingests_extracted_models(
                     "start": ["2014-08-24"],
                     "theme": ["https://mex.rki.de/item/theme-11"],
                     "activityType": [],
-                    "identifier": str(dummy_data["activity_1"].identifier),
+                    "identifier": str(activity_1.identifier),
                     "end": [],
                 },
             }
         ],
     ]
     graph = GraphConnector.get()
-    deque(graph.ingest_items(dummy_data.values()))
-    assert len(mocked_graph.call_args_list) == len(dummy_data)
+    extracted_models = [
+        v for v in dummy_data.values() if isinstance(v, AnyExtractedModel)
+    ]
+    deque(graph.ingest_items(extracted_models))
+    assert len(mocked_graph.call_args_list) == len(extracted_models)
 
 
 @pytest.mark.parametrize(
