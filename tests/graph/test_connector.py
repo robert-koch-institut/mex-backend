@@ -1758,32 +1758,28 @@ def test_mocked_graph_ingests_extracted_models(
     assert len(mocked_graph.call_args_list) == len(dummy_data)
 
 
-if 0:
-
-    @pytest.mark.parametrize(
-        ("extracted_name", "merged_name", "expected_error"),
-        [
-            ("contact_point_1", "contact_point_2", "new_rules_exist, old_rules_exist"),
-            ("contact_point_1", "activity_1", "new_rules_exist, old_rules_exist"),
-        ],
+@pytest.mark.parametrize(
+    ("extracted_name", "merged_name", "expected_error"),
+    [
+        ("contact_point_1", "contact_point_2", "new_rules_exist, old_rules_exist"),
+        ("contact_point_1", "activity_1", "new_rules_exist, old_rules_exist"),
+    ],
+)
+@pytest.mark.integration
+def test_match_item_failed_preconditions(
+    extracted_name: str,
+    merged_name: str,
+    expected_error: str,
+    loaded_dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
+) -> None:
+    extracted_item = loaded_dummy_data[extracted_name]
+    assert isinstance(extracted_item, AnyExtractedModel)
+    merged_item = get_merged_item_from_graph(
+        loaded_dummy_data[merged_name].stableTargetId
     )
-    @pytest.mark.integration
-    def test_match_item_failed_preconditions(
-        extracted_name: str,
-        merged_name: str,
-        expected_error: str,
-        loaded_dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
-    ) -> None:
-        extracted_item = loaded_dummy_data[extracted_name]
-        merged_item = get_merged_item_from_graph(
-            loaded_dummy_data[merged_name].stableTargetId
-        )
-
-        graph = GraphConnector.get()
-        with pytest.raises(
-            MatchingError, match=f"Failed preconditions: {expected_error}"
-        ):
-            graph.match_item(extracted_item, merged_item)
+    graph = GraphConnector.get()
+    with pytest.raises(MatchingError, match=f"Failed preconditions: {expected_error}"):
+        graph.match_item(extracted_item, merged_item)
 
 
 @pytest.mark.integration

@@ -4,10 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 from starlette import status
 
-from mex.common.models import (
-    AnyExtractedModel,
-    AnyRuleSetResponse,
-)
+from mex.common.models import AnyExtractedModel, AnyRuleSetResponse
 from tests.conftest import get_graph
 
 
