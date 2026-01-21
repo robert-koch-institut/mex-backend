@@ -8,15 +8,15 @@ license = { file = "LICENSE" }
 urls = { Repository = "https://github.com/robert-koch-institut/mex-backend" }
 requires-python = ">=3.11,<3.12"
 dependencies = [
-    "backoff>=2",
+    "backoff>=2.2,<3",
     "fastapi>=0.118,<0.119",
-    "jinja2>=3",
-    "mex-common>=1.10,<2",
-    "neo4j>=5",
-    "pydantic>=2",
+    "jinja2>=3.1,<4",
+    "mex-common>=1.11,<1.12",
+    "neo4j>=6.1,<7",
+    "pydantic>=2,<3",
     "starlette>=0.48",
-    "uvicorn[standard]>=0.38",
-    "valkey[libvalkey]>=6,<7",
+    "uvicorn[standard]>=0.40",
+    "valkey[libvalkey]>=6.1,<7",
 ]
 
 [dependency-groups]
@@ -30,7 +30,7 @@ dev = [
     "pytest>=8",
     "requests>=2",
     "ruff>=0.14",
-    "sphinx>=8",
+    "sphinx>=9",
     "types-ldap3",
     "types-pytz",
     "types-requests",

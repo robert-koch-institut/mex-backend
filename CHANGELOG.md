@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - updated mex-common and mex-artificial to latest versions
 - updated template to https://github.com/robert-koch-institut/mex-template/commit/b87502
 - switch package manager from pdm to uv
+- update lock file
 
 ### Deprecated
 
