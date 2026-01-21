@@ -472,7 +472,7 @@ class GraphConnector(BaseConnector):
         extracted_item: AnyExtractedModel,
         merged_item: AnyMergedModel,
     ) -> None:
-        """Match an extracted item to another merged item and clean up afterwards."""
+        """Run all required matching steps in a single transaction."""
         settings = BackendSettings.get()
         query_builder = QueryBuilder.get()
         query = query_builder.check_match_preconditions()
@@ -497,7 +497,7 @@ class GraphConnector(BaseConnector):
         extracted_item: AnyExtractedModel,
         merged_item: AnyMergedModel,
     ) -> None:
-        """Match an extracted item to another merged item and clean up afterwards."""
+        """Match an extracted item to a new merged item and clean up afterwards."""
         settings = BackendSettings.get()
         with (
             self.driver.session(default_access_mode=WRITE_ACCESS) as session,

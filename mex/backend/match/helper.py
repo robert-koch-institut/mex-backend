@@ -16,18 +16,11 @@ def match_item_in_graph(
     extracted_item = get_extracted_item_from_graph(extracted_identifier)
     merged_item = get_merged_item_from_graph(merged_identifier)
 
-    # ensure old merged item has a rule set
+    # ensure that the old merged item has a rule set
     if not (old_rule_set := get_rule_set_from_graph(merged_item.identifier)):
         old_rule_set = RULE_SET_RESPONSE_CLASSES_BY_NAME[
             ensure_postfix(merged_item.stemType, "RuleSetResponse")
         ](stableTargetId=merged_item.identifier)
         connector.ingest_items([old_rule_set])
-
-    # ensure new merged item has a rule set
-    if not (new_rule_set := get_rule_set_from_graph(extracted_item.stableTargetId)):
-        new_rule_set = RULE_SET_RESPONSE_CLASSES_BY_NAME[
-            ensure_postfix(extracted_item.stemType, "RuleSetResponse")
-        ](stableTargetId=extracted_item.stableTargetId)
-        connector.ingest_items([new_rule_set])
 
     connector.match_item(extracted_item, merged_item)

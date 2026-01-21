@@ -223,7 +223,7 @@ def test_get_rule_set_not_found(
                     "unitOf": [],
                     "website": [],
                 },
-                "stableTargetId": "bFQoRhcVH5DHUx",
+                "stableTargetId": "bFQoRhcVH5DHUz",
                 "subtractive": {
                     "$type": "SubtractiveOrganizationalUnit",
                     "alternativeName": [],

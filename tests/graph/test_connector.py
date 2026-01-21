@@ -1761,8 +1761,8 @@ def test_mocked_graph_ingests_extracted_models(
 @pytest.mark.parametrize(
     ("extracted_name", "merged_name", "expected_error"),
     [
-        ("contact_point_1", "contact_point_2", "new_rules_exist, old_rules_exist"),
-        ("contact_point_1", "activity_1", "new_rules_exist, old_rules_exist"),
+        ("contact_point_1", "contact_point_2", "old_rules_exist"),
+        ("contact_point_1", "activity_1", "old_rules_exist, same_merged_type"),
     ],
 )
 @pytest.mark.integration
