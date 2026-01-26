@@ -907,40 +907,28 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
 
 @pytest.mark.parametrize(
     (
-        "query_string",
-        "identifier",
-        "entity_type",
-        "referenced_identifiers",
-        "reference_field",
-        "limit",
+        "query_parameters",
         "expected",
     ),
     [
-        (
-            None,
-            "thisIdDoesNotExist",
-            None,
-            None,
-            None,
-            10,
+        pytest.param(
+            {
+                "identifier": "thisIdDoesNotExist",
+            },
             {"items": [], "total": 0},
+            id="id not found",
         ),
-        (
-            "this_search_term_is_not_findable",
-            None,
-            None,
-            None,
-            None,
-            10,
+        pytest.param(
+            {
+                "query_string": "this_search_term_is_not_findable",
+            },
             {"items": [], "total": 0},
+            id="search not found",
         ),
-        (
-            None,
-            None,
-            None,
-            None,
-            None,
-            1,
+        pytest.param(
+            {
+                "limit": 1,
+            },
             {
                 "items": [
                     {
@@ -959,14 +947,13 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 10,
             },
+            id="no filters",
         ),
-        (
-            None,
-            None,
-            ["MergedOrganization"],
-            None,
-            None,
-            1,
+        pytest.param(
+            {
+                "entity_type": ["MergedOrganization"],
+                "limit": 1,
+            },
             {
                 "items": [
                     {
@@ -1018,14 +1005,14 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 1,
             },
+            id="entity type filter",
         ),
-        (
-            None,
-            None,
-            None,
-            ["bFQoRhcVH5DHUt"],
-            "hadPrimarySource",
-            1,
+        pytest.param(
+            {
+                "referenced_identifiers": ["bFQoRhcVH5DHUt"],
+                "reference_field": "hadPrimarySource",
+                "limit": 1,
+            },
             {
                 "items": [
                     {
@@ -1070,14 +1057,14 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 3,
             },
+            id="had primary source filter",
         ),
-        (
-            None,
-            None,
-            None,
-            [MExEditorPrimarySource().stableTargetId],
-            "hadPrimarySource",
-            1,
+        pytest.param(
+            {
+                "referenced_identifiers": [MExEditorPrimarySource().stableTargetId],
+                "reference_field": "hadPrimarySource",
+                "limit": 1,
+            },
             {
                 "items": [
                     {
@@ -1122,14 +1109,45 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 1,
             },
+            id="had primary source mex-editor filter",
         ),
-        (
-            "Unit",
-            None,
-            None,
-            ["bFQoRhcVH5DHUt"],
-            "hadPrimarySource",
-            1,
+        pytest.param(
+            {
+                "referenced_identifiers": [
+                    MExEditorPrimarySource().stableTargetId,
+                    "bFQoRhcVH5DHUr",
+                ],
+                "reference_field": "hadPrimarySource",
+                "limit": 1,
+            },
+            {
+                "items": [
+                    {
+                        "_components": [
+                            {
+                                "email": ["help@contact-point.two"],
+                                "entityType": "ExtractedContactPoint",
+                                "hadPrimarySource": ["bFQoRhcVH5DHUr"],
+                                "identifier": "bFQoRhcVH5DHUA",
+                                "identifierInPrimarySource": "cp-2",
+                                "stableTargetId": ["bFQoRhcVH5DHUB"],
+                            }
+                        ],
+                        "entityType": "MergedContactPoint",
+                        "identifier": "bFQoRhcVH5DHUB",
+                    }
+                ],
+                "total": 5,
+            },
+            id="filter for had primary sources mex-editor and primary source x returns 4 from x and 1 from editor",
+        ),
+        pytest.param(
+            {
+                "query_string": "Unit",
+                "referenced_identifiers": ["bFQoRhcVH5DHUt"],
+                "reference_field": "hadPrimarySource",
+                "limit": 1,
+            },
             {
                 "items": [
                     {
@@ -1174,16 +1192,14 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 2,
             },
+            id="had primary source filter and filter by query",
         ),
-        (
-            # find exact matches. without the quotes this might also match the second
-            # contact point's email `help@contact-point.two`
-            '"info@contact-point.one"',
-            None,
-            None,
-            None,
-            None,
-            10,
+        pytest.param(
+            {
+                # find exact matches. without the quotes this might also match the second
+                # contact point's email `help@contact-point.two`
+                "query_string": '"info@contact-point.one"',
+            },
             {
                 "items": [
                     {
@@ -1203,14 +1219,12 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 1,
             },
+            id="find exact",
         ),
-        (
-            "contact point",
-            None,
-            None,
-            None,
-            None,
-            10,
+        pytest.param(
+            {
+                "query_string": "contact point",
+            },
             {
                 "items": [
                     {
@@ -1244,14 +1258,12 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 2,
             },
+            id="find fuzzy",
         ),
-        (
-            "RKI",
-            None,
-            None,
-            None,
-            None,
-            10,
+        pytest.param(
+            {
+                "query_string": "RKI",
+            },
             {
                 "items": [
                     {
@@ -1303,14 +1315,12 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 1,
             },
+            id="find Text",
         ),
-        (
-            "Homepage",
-            None,
-            None,
-            None,
-            None,
-            10,
+        pytest.param(
+            {
+                "query_string": "Homepage",
+            },
             {
                 "items": [
                     {
@@ -1390,44 +1400,29 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 2,
             },
+            id="find Link",
         ),
-    ],
-    ids=[
-        "id not found",
-        "search not found",
-        "no filters",
-        "entity type filter",
-        "had primary source filter",
-        "had primary source mex-editor filter",
-        "had primary source filter and filter by query",
-        "find exact",
-        "find fuzzy",
-        "find Text",
-        "find Link",
     ],
 )
 @pytest.mark.usefixtures("load_dummy_data", "load_dummy_rule_set")
 @pytest.mark.integration
-def test_fetch_merged_items(  # noqa: PLR0913
-    query_string: str | None,
-    identifier: str | None,
-    entity_type: list[str] | None,
-    referenced_identifiers: list[str] | None,
-    reference_field: str | None,
-    limit: int,
+def test_fetch_merged_items(
+    query_parameters: dict[str, Any],
     expected: dict[str, Any],
 ) -> None:
+    query_parameter_defaults = {
+        "query_string": None,
+        "identifier": None,
+        "entity_type": None,
+        "referenced_identifiers": None,
+        "reference_field": None,
+        "skip": 0,
+        "limit": 10,
+    }
+    query_kwargs = query_parameter_defaults | query_parameters
     graph = GraphConnector.get()
 
-    result = graph.fetch_merged_items(
-        query_string=query_string,
-        identifier=identifier,
-        entity_type=entity_type,
-        referenced_identifiers=referenced_identifiers,
-        reference_field=reference_field,
-        skip=0,
-        limit=limit,
-    )
+    result = graph.fetch_merged_items(**query_kwargs)
 
     assert result.one() == expected
 
