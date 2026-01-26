@@ -77,4 +77,4 @@ jobs:
         env:
           MEX_GRAPH_URL: neo4j://localhost:7687
           MEX_BACKEND_VALKEY_URL: valkey://localhost:6379
-        run: make pytest
+        run: make test
