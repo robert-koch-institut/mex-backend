@@ -39,8 +39,7 @@
                 "patch",
                 "pin"
             ],
-            "minimumReleaseAge": "7 days",
-            "minimumReleaseAgeBehaviour": "timestamp-optional"
+            "minimumReleaseAge": "7 days"
         }
     ],
     "prFooter": ""

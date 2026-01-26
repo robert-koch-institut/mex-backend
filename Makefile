@@ -20,13 +20,18 @@ install: setup hooks
 	@ echo installing package; \
 	uv sync; \
 
-linter:
+lint:
 	# run the linter hooks from pre-commit on all files
 	@ echo linting all files; \
 	pre-commit run --all-files; \
 
-pytest:
-	# run the pytest test suite with all tests
+unit:
+	# run the test suite with all unit tests
+	@ echo running unit tests; \
+	uv run pytest -m 'not integration'; \
+
+test:
+	# run the unit and integration test suites
 	@ echo running all tests; \
 	uv run pytest; \
 
