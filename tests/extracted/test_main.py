@@ -88,11 +88,11 @@ def test_search_extracted_items_mocked(
                         "version": None,
                     }
                 ],
-                "total": 10,
+                "total": 11,
             },
         ),
         (
-            "?limit=1&skip=9",
+            "?limit=1&skip=10",
             {
                 "items": [
                     {
@@ -104,7 +104,7 @@ def test_search_extracted_items_mocked(
                         "stableTargetId": "bFQoRhcVH5DHUz",
                     }
                 ],
-                "total": 10,
+                "total": 11,
             },
         ),
         (
@@ -181,7 +181,7 @@ def test_search_extracted_items_mocked(
     ],
     ids=[
         "limit 1",
-        "skip 1",
+        "skip 10",
         "entity type contact points",
         "full text search",
         "stable target id filter",

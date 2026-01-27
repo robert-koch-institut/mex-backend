@@ -4,12 +4,14 @@ Globals:
     extracted_or_rule_labels: List of all extracted or rule labels
     merged_labels: List of all merged class labels
     nested_labels: List of labels for all nestable objects
+    rule_labels: List of all rule class labels
 
 Jinja:
     filter_by_query_string: Whether the final query should accept a full text query string
     filter_by_identifier: Whether the final query should filter by identifiers
     filter_by_stable_target_id: Whether the final query should filter by stableTargetIds
     filter_by_referenced_identifiers: Whether to filter for references to items with specific identifiers
+    filter_rule_items: Whether to filter for items that are rule items
     reference_field: Name of the relationship holding referenced identifiers to use for filtering
 
 Args:
@@ -43,9 +45,6 @@ CALL () {
 <%- else %>
     OPTIONAL MATCH (extracted_or_rule_node:<<extracted_or_rule_labels|join("|")>>)-[:stableTargetId]->(merged_node:<<merged_labels|join("|")>>)
 <%- endif %>
-    <%- if filter_by_referenced_identifiers %>
-    MATCH (extracted_or_rule_node)-[:<<reference_field>>]->(referenced_node_to_filter_by)
-    <%- endif %>
     WHERE
         ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
         <%- if filter_by_identifier %>
@@ -54,9 +53,28 @@ CALL () {
         <%- if filter_by_stable_target_id %>
         AND merged_node.identifier = $stable_target_id
         <%- endif %>
-        <%- if filter_by_referenced_identifiers %>
-        AND referenced_node_to_filter_by.identifier IN $referenced_identifiers
+    <%- if filter_rule_items or filter_by_referenced_identifiers %>
+    CALL (extracted_or_rule_node) {
+        <%- if filter_rule_items %>
+        MATCH (extracted_or_rule_node:<<rule_labels|join("|")>>)
+        <%- else %>
+        MATCH (extracted_or_rule_node)
+        WHERE false
         <%- endif %>
+        RETURN extracted_or_rule_node AS filtered_node
+    UNION
+        <%- if filter_by_referenced_identifiers %>
+        MATCH (extracted_or_rule_node)-[:<<reference_field>>]->(referenced_node_to_filter_by)
+        WHERE
+            referenced_node_to_filter_by.identifier IN $referenced_identifiers
+        <%- else %>
+        MATCH (extracted_or_rule_node)
+        WHERE false
+        <%- endif %>
+        RETURN extracted_or_rule_node AS filtered_node
+    }
+    WITH filtered_node as extracted_or_rule_node
+    <%- endif %>
 <%- endblock %>
     RETURN COUNT(extracted_or_rule_node) AS total
 }
