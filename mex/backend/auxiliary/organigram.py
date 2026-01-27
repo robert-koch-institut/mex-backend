@@ -29,7 +29,7 @@ def extracted_organizational_units() -> list[ExtractedOrganizationalUnit]:
     extracted_units = transform_organigram_units_to_organizational_units(
         organigram_units,
         organigram_primary_source.stableTargetId,
-        extracted_organization_rki(),
+        extracted_organization_rki().stableTargetId,
     )
     connector = GraphConnector.get()
     deque(connector.ingest_items(extracted_units))
