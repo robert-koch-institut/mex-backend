@@ -846,6 +846,7 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 11,
             },
+            id="no-filters",
         ),
         pytest.param(
             None,
@@ -885,7 +886,7 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 2,
             },
-            id="no-filters",
+            id="entity-type-filter",
         ),
         pytest.param(
             None,
@@ -925,7 +926,7 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 3,
             },
-            id="entity-type-filter",
+            id="primary-source-filter",
         ),
         pytest.param(
             "Unit",
@@ -956,7 +957,7 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 2,
             },
-            id="had-primary-source-with-query",
+            id="primary-source-filter-with-query",
         ),
         pytest.param(
             # without the quotes this might also match the second
