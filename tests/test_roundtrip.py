@@ -64,7 +64,7 @@ def test_graph_ingest_and_query_roundtrip(
             Validation.STRICT,
         ),
     ]
-    expected_models = sorted(seeded_and_dummy, key=lambda x: x.identifier.lower())
+    expected_models = sorted(seeded_and_dummy, key=lambda x: x.identifier)
 
     fetched_container = search_merged_items_in_graph(
         limit=len(expected_models),

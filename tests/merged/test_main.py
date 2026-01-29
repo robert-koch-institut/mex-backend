@@ -139,11 +139,10 @@ def test_search_merged_items_mocked(
                         "gndId": [],
                         "identifier": "bFQoRhcVH5DHUv",
                         "isniId": [],
-                        "officialName": [
-                            {"language": "de", "value": "RKI"},
-                        ],
+                        "officialName": [{"language": "de", "value": "RKI"}],
                         "rorId": [],
                         "shortName": [],
+                        "supersededBy": None,
                         "viafId": [],
                         "wikidataId": [],
                     }
@@ -273,9 +272,10 @@ def test_search_merged_items_mocked(
                         "name": [{"language": "en", "value": "Unit 1"}],
                         "parentUnit": None,
                         "shortName": [],
+                        "supersededBy": None,
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [
-                            {"language": None, "title": None, "url": "https://ou-1"},
+                            {"language": None, "title": None, "url": "https://ou-1"}
                         ],
                     },
                     {
@@ -293,7 +293,7 @@ def test_search_merged_items_mocked(
                                 "language": None,
                                 "title": "Unit Homepage",
                                 "url": "https://unit-1-6",
-                            },
+                            }
                         ],
                     },
                 ],
@@ -354,24 +354,26 @@ def test_search_merged_items_skip_on_validation_error(
             {
                 "$type": "MergedOrganizationalUnit",
                 "alternativeName": [],
-                "email": [],
-                "identifier": "bFQoRhcVH5DHUx",
-                "name": [{"language": "en", "value": "Unit 1"}],
-                "parentUnit": None,
-                "shortName": [],
-                "unitOf": ["bFQoRhcVH5DHUv"],
-                "website": [{"language": None, "title": None, "url": "https://ou-1"}],
-            },
-            {
-                "$type": "MergedOrganizationalUnit",
-                "alternativeName": [],
                 "email": ["1.7@rki.de"],
                 "identifier": "StandaloneRule",
                 "name": [{"language": "de", "value": "Abteilung 1.7"}],
                 "parentUnit": "bFQoRhcVH5DHUx",
                 "shortName": [],
+                "supersededBy": None,
                 "unitOf": [],
                 "website": [],
+            },
+            {
+                "$type": "MergedOrganizationalUnit",
+                "alternativeName": [],
+                "email": [],
+                "identifier": "bFQoRhcVH5DHUx",
+                "name": [{"language": "en", "value": "Unit 1"}],
+                "parentUnit": None,
+                "shortName": [],
+                "supersededBy": None,
+                "unitOf": ["bFQoRhcVH5DHUv"],
+                "website": [{"language": None, "title": None, "url": "https://ou-1"}],
             },
         ],
         "total": 3,  # the total still contains the filtered-out items :/
