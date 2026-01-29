@@ -345,7 +345,7 @@ def test_preview(
                 ],
                 "total": 3,
             },
-            id="generic-id-filter",
+            id="referenced-id-filter",
         ),
         pytest.param(
             "?identifier=thisIdDoesNotExist",
