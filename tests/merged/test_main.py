@@ -149,7 +149,7 @@ def test_search_merged_items_mocked(
                 ],
                 "total": 11,
             },
-            id="skip-1",
+            id="skip-8",
         ),
         pytest.param(
             "?entityType=MergedContactPoint",
