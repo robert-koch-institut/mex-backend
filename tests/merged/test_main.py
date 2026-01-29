@@ -299,7 +299,7 @@ def test_search_merged_items_mocked(
                 ],
                 "total": 3,
             },
-            id="generic-id-filter",
+            id="referenced-id-filter",
         ),
         pytest.param(
             "?identifier=thisIdDoesNotExist",
