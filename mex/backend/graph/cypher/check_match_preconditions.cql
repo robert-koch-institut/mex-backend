@@ -1,7 +1,6 @@
 <# Check preconditions for matching an extracted item to a new merged item.
 
-This query validates that all necessary conditions are met before allowing
-an extracted item to be matched to a different merged item.
+This query validates that the conditions for matching an extracted item to a different merged item are met.
 
 Globals:
     extracted_labels: List of all extracted class labels
