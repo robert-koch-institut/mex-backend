@@ -270,7 +270,7 @@ def test_fetch_identities_mocked(  # noqa: PLR0913
                     "stableTargetId": "bFQoRhcVH5DHUr",
                 }
             ],
-            id="by-source-and-id",
+            id="by-source-and-identifierInPrimarySource",
         ),
         pytest.param(
             None,
