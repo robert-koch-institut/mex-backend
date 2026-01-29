@@ -21,7 +21,7 @@ Returns:
 -#>
 OPTIONAL MATCH (extracted:<<extracted_labels|join("|")>> {identifier: $extracted_identifier})
 OPTIONAL MATCH (extracted)-[:stableTargetId]->(old_merged:<<merged_labels|join("|")>>)
-OPTIONAL MATCH (old_merged)<-[:stableTargetId]-(old_rules:<<merged_labels|join("|")>>)
+OPTIONAL MATCH (old_merged)<-[:stableTargetId]-(old_rules:<<rule_labels|join("|")>>)
 OPTIONAL MATCH (new_merged:<<merged_labels|join("|")>> {identifier: $merged_identifier})
 OPTIONAL MATCH (new_merged)<-[:stableTargetId]-(new_rules:<<merged_labels|join("|")>>)
 WITH
