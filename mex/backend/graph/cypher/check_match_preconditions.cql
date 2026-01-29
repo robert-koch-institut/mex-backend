@@ -23,7 +23,6 @@ OPTIONAL MATCH (extracted:<<extracted_labels|join("|")>> {identifier: $extracted
 OPTIONAL MATCH (extracted)-[:stableTargetId]->(old_merged:<<merged_labels|join("|")>>)
 OPTIONAL MATCH (old_merged)<-[:stableTargetId]-(old_rules:<<rule_labels|join("|")>>)
 OPTIONAL MATCH (new_merged:<<merged_labels|join("|")>> {identifier: $merged_identifier})
-OPTIONAL MATCH (new_merged)<-[:stableTargetId]-(new_rules:<<merged_labels|join("|")>>)
 WITH
    count(extracted) = 1 AS extracted_exists,
    count(old_rules) = 3 AS old_rules_exist,
