@@ -74,6 +74,7 @@ from mex.common.types import TextLanguage
                     "containedBy": [],
                     "label": [{"value": "group one", "language": TextLanguage.EN}],
                     "entityType": "AdditiveVariableGroup",
+                    "supersededBy": None,
                 },
                 "subtractive": {
                     "containedBy": [],

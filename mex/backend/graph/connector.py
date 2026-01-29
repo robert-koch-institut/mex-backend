@@ -434,7 +434,7 @@ class GraphConnector(BaseConnector):
     def ingest_items(
         self,
         models: Iterable[AnyExtractedModel | AnyRuleSetResponse | MExPrimarySource],
-    ) -> Generator[None, None, None]:
+    ) -> Generator[None]:
         """Ingest a list of extracted models or rule set responses into the graph."""
         settings = BackendSettings.get()
         with self.driver.session(default_access_mode=WRITE_ACCESS) as session:

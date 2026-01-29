@@ -162,6 +162,7 @@ def test_preview(
                         "documentation": [],
                         "identifier": "00000000000000",
                         "locatedAt": [],
+                        "supersededBy": None,
                         "title": [],
                         "unitInCharge": [],
                         "version": None,
@@ -203,6 +204,7 @@ def test_preview(
                         "$type": "PreviewContactPoint",
                         "email": ["info@contact-point.one"],
                         "identifier": "bFQoRhcVH5DHUB",
+                        "supersededBy": None,
                     },
                     {
                         "$type": "PreviewContactPoint",
@@ -226,6 +228,7 @@ def test_preview(
                         "documentation": [],
                         "identifier": "bFQoRhcVH5DHUt",
                         "locatedAt": [],
+                        "supersededBy": None,
                         "title": [],
                         "unitInCharge": [],
                         "version": "Cool Version v2.13",
@@ -249,6 +252,7 @@ def test_preview(
                         ],
                         "parentUnit": None,
                         "shortName": [],
+                        "supersededBy": None,
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [
                             {"language": None, "title": None, "url": "https://ou-1"},
@@ -271,6 +275,7 @@ def test_preview(
                         "name": [{"language": "de", "value": "Abteilung 1.6"}],
                         "parentUnit": "bFQoRhcVH5DHUx",
                         "shortName": [],
+                        "supersededBy": None,
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [
                             {
@@ -302,6 +307,7 @@ def test_preview(
                         ],
                         "rorId": [],
                         "shortName": [],
+                        "supersededBy": None,
                         "viafId": [],
                         "wikidataId": [],
                     },
@@ -326,6 +332,7 @@ def test_preview(
                         "name": [{"language": "de", "value": "Abteilung 1.6"}],
                         "parentUnit": "bFQoRhcVH5DHUx",
                         "shortName": [],
+                        "supersededBy": None,
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [
                             {

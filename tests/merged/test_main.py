@@ -94,6 +94,7 @@ def test_search_merged_items_mocked(
                 ],
                 "parentUnit": None,
                 "shortName": [],
+                "supersededBy": None,
                 "unitOf": [],
                 "website": [],
             }
@@ -117,6 +118,7 @@ def test_search_merged_items_mocked(
                         "documentation": [],
                         "identifier": "00000000000000",
                         "locatedAt": [],
+                        "supersededBy": None,
                         "title": [],
                         "unitInCharge": [],
                         "version": None,
@@ -158,11 +160,13 @@ def test_search_merged_items_mocked(
                         "$type": "MergedContactPoint",
                         "email": ["info@contact-point.one"],
                         "identifier": "bFQoRhcVH5DHUB",
+                        "supersededBy": None,
                     },
                     {
                         "$type": "MergedContactPoint",
                         "email": ["help@contact-point.two"],
                         "identifier": "bFQoRhcVH5DHUD",
+                        "supersededBy": None,
                     },
                 ],
                 "total": 2,
@@ -181,6 +185,7 @@ def test_search_merged_items_mocked(
                         "documentation": [],
                         "identifier": "bFQoRhcVH5DHUt",
                         "locatedAt": [],
+                        "supersededBy": None,
                         "title": [],
                         "unitInCharge": [],
                         "version": "Cool Version v2.13",
@@ -202,6 +207,7 @@ def test_search_merged_items_mocked(
                         "name": [{"language": "en", "value": "Unit 1"}],
                         "parentUnit": None,
                         "shortName": [],
+                        "supersededBy": None,
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [
                             {"language": None, "title": None, "url": "https://ou-1"}
@@ -229,6 +235,7 @@ def test_search_merged_items_mocked(
                         ],
                         "rorId": [],
                         "shortName": [],
+                        "supersededBy": None,
                         "viafId": [],
                         "wikidataId": [],
                     }
@@ -254,6 +261,7 @@ def test_search_merged_items_mocked(
                         ],
                         "rorId": [],
                         "shortName": [],
+                        "supersededBy": None,
                         "viafId": [],
                         "wikidataId": [],
                     },
@@ -278,6 +286,7 @@ def test_search_merged_items_mocked(
                         "name": [{"language": "de", "value": "Abteilung 1.6"}],
                         "parentUnit": "bFQoRhcVH5DHUx",
                         "shortName": [],
+                        "supersededBy": None,
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [
                             {
