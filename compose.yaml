@@ -24,6 +24,6 @@ services:
     expose:
       - 7687
   valkey:
-    image: valkey/valkey:9.0.0
+    image: valkey/valkey:9.0.1
     expose:
       - 6379
