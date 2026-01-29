@@ -19,7 +19,8 @@ Returns:
     same_merged_type: Boolean indicating the items have the same stem types
     merged_type_allowed: Boolean indicating the extracted type is not blocked
 -#>
-OPTIONAL MATCH (extracted:<<extracted_labels|join("|")>> {identifier: $extracted_identifier})-[:stableTargetId]->(old_merged:<<merged_labels|join("|")>>)
+OPTIONAL MATCH (extracted:<<extracted_labels|join("|")>> {identifier: $extracted_identifier})
+OPTIONAL MATCH (extracted)-[:stableTargetId]->(old_merged:<<merged_labels|join("|")>>)
 OPTIONAL MATCH (old_merged)<-[:stableTargetId]-(old_rules:<<merged_labels|join("|")>>)
 OPTIONAL MATCH (new_merged:<<merged_labels|join("|")>> {identifier: $merged_identifier})
 OPTIONAL MATCH (new_merged)<-[:stableTargetId]-(new_rules:<<merged_labels|join("|")>>)
