@@ -29,7 +29,7 @@ jobs:
 
     services:
       neo4j:
-        image: neo4j:2025.11-community
+        image: neo4j:2025.12-community
         env:
           NEO4J_AUTH: neo4j/password
         ports:
@@ -68,7 +68,7 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v6
         with:
-          python-version: 3.11
+          python-version: 3.13
 
       - name: Install requirements
         run: make install
@@ -77,4 +77,4 @@ jobs:
         env:
           MEX_GRAPH_URL: neo4j://localhost:7687
           MEX_BACKEND_VALKEY_URL: valkey://localhost:6379
-        run: make pytest
+        run: make test

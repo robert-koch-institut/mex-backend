@@ -93,6 +93,7 @@ def test_search_merged_items_mocked(
                 ],
                 "parentUnit": None,
                 "shortName": [],
+                "supersededBy": None,
                 "unitOf": [],
                 "website": [],
             }
@@ -116,6 +117,7 @@ def test_search_merged_items_mocked(
                         "documentation": [],
                         "identifier": "00000000000000",
                         "locatedAt": [],
+                        "supersededBy": None,
                         "title": [],
                         "unitInCharge": [],
                         "version": None,
@@ -132,6 +134,7 @@ def test_search_merged_items_mocked(
                         "email": ["info@contact-point.one"],
                         "$type": "MergedContactPoint",
                         "identifier": "bFQoRhcVH5DHUz",
+                        "supersededBy": None,
                     }
                 ],
                 "total": 9,
@@ -145,11 +148,13 @@ def test_search_merged_items_mocked(
                         "$type": "MergedContactPoint",
                         "email": ["help@contact-point.two"],
                         "identifier": "bFQoRhcVH5DHUB",
+                        "supersededBy": None,
                     },
                     {
                         "$type": "MergedContactPoint",
                         "email": ["info@contact-point.one"],
                         "identifier": "bFQoRhcVH5DHUz",
+                        "supersededBy": None,
                     },
                 ],
                 "total": 2,
@@ -167,6 +172,7 @@ def test_search_merged_items_mocked(
                         "documentation": [],
                         "identifier": "bFQoRhcVH5DHUt",
                         "locatedAt": [],
+                        "supersededBy": None,
                         "title": [],
                         "unitInCharge": [],
                         "version": "Cool Version v2.13",
@@ -187,6 +193,7 @@ def test_search_merged_items_mocked(
                         "name": [{"language": "en", "value": "Unit 1"}],
                         "parentUnit": None,
                         "shortName": [],
+                        "supersededBy": None,
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [],
                     },
@@ -209,6 +216,7 @@ def test_search_merged_items_mocked(
                         ],
                         "parentUnit": "bFQoRhcVH5DHUx",
                         "shortName": [],
+                        "supersededBy": None,
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [
                             {
@@ -243,6 +251,7 @@ def test_search_merged_items_mocked(
                         ],
                         "rorId": [],
                         "shortName": [],
+                        "supersededBy": None,
                         "viafId": [],
                         "wikidataId": [],
                     },
@@ -257,6 +266,7 @@ def test_search_merged_items_mocked(
                         ],
                         "parentUnit": "bFQoRhcVH5DHUx",
                         "shortName": [],
+                        "supersededBy": None,
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [
                             {
@@ -274,6 +284,7 @@ def test_search_merged_items_mocked(
                         "name": [{"language": "en", "value": "Unit 1"}],
                         "parentUnit": None,
                         "shortName": [],
+                        "supersededBy": None,
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [],
                     },
@@ -302,6 +313,7 @@ def test_search_merged_items_mocked(
                         ],
                         "rorId": [],
                         "shortName": [],
+                        "supersededBy": None,
                         "viafId": [],
                         "wikidataId": [],
                     },
@@ -316,6 +328,7 @@ def test_search_merged_items_mocked(
                         ],
                         "parentUnit": "bFQoRhcVH5DHUx",
                         "shortName": [],
+                        "supersededBy": None,
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [
                             {
@@ -333,6 +346,7 @@ def test_search_merged_items_mocked(
                         "name": [{"language": "en", "value": "Unit 1"}],
                         "parentUnit": None,
                         "shortName": [],
+                        "supersededBy": None,
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [],
                     },
@@ -401,6 +415,7 @@ def test_search_merged_items_skip_on_validation_error(
             "alternativeName": [],
             "email": [],
             "shortName": [],
+            "supersededBy": None,
             "unitOf": ["bFQoRhcVH5DHUv"],
             "website": [],
             "$type": "MergedOrganizationalUnit",

@@ -76,7 +76,7 @@ def organizational_unit_rule_set_ingest_call_expectation() -> list[object]:
                         "MergedOrganizationalUnit",
                     ],
                     all_nested_labels=["Link", "Text"],
-                    detach_node_edges=["parentUnit", "unitOf"],
+                    detach_node_edges=["parentUnit", "supersededBy", "unitOf"],
                     delete_node_edges=[
                         "alternativeName",
                         "name",
