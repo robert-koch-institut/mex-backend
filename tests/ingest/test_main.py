@@ -754,6 +754,7 @@ def test_ingest_extracted_and_rule(
                 "orcidId": [],
                 "$type": "MergedPerson",
                 "identifier": "bFQoRhcVH5DHUr",
+                "supersededBy": None,
             }
         ],
         "total": 1,
@@ -777,21 +778,22 @@ def test_ingest_artificial_data(
     assert response.json() == {
         "items": [
             {
-                "affiliation": ["bFQoRhcVH5DHU9", "bFQoRhcVH5DHU5"],
-                "email": ["info@rki.de"],
-                "familyName": ["hängen einige gehören", "endlich sprechen ob"],
-                "fullName": [],
-                "givenName": ["hören"],
-                "isniId": [
-                    "https://isni.org/isni/0933295345064070",
-                    "https://isni.org/isni/1230697213369955",
-                    "https://isni.org/isni/3129455646531734",
-                    "https://isni.org/isni/8953594535588461",
-                ],
-                "memberOf": ["bFQoRhcVH5DHUN", "bFQoRhcVH5DHVb"],
-                "orcidId": ["https://orcid.org/0042-8614-8925-5679"],
                 "$type": "MergedPerson",
+                "affiliation": [],
+                "email": ["info@rki.de"],
+                "familyName": [],
+                "fullName": ["Lehrer"],
+                "givenName": [
+                    "versuchen werden neu",
+                    "vergessen zu Geld",
+                    "sonst Polizei nie",
+                    "Wagen",
+                ],
                 "identifier": "bFQoRhcVH5DHVh",
+                "isniId": [],
+                "memberOf": ["bFQoRhcVH5DHUR"],
+                "orcidId": [],
+                "supersededBy": None,
             }
         ],
         "total": 43,

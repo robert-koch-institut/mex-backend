@@ -50,6 +50,7 @@ def test_create_rule_set(client_with_api_key_write_permission: TestClient) -> No
             "shortName": [],
             "start": ["2025"],
             "succeeds": [],
+            "supersededBy": None,
             "theme": [],
             "website": [],
             "$type": "AdditiveActivity",
@@ -224,6 +225,7 @@ def test_get_rule_set(
             "alternativeName": [],
             "email": [],
             "shortName": [],
+            "supersededBy": None,
             "unitOf": [],
             "website": [
                 {"language": None, "title": "Unit Homepage", "url": "https://unit-1-7"}
@@ -353,6 +355,7 @@ def test_update_rule_set(
             "alternativeName": [],
             "email": [],
             "shortName": [],
+            "supersededBy": None,
             "unitOf": [],
             "website": [],
             "$type": "AdditiveOrganizationalUnit",

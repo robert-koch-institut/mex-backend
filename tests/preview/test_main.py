@@ -160,6 +160,7 @@ def test_preview(
                         "documentation": [],
                         "identifier": "00000000000000",
                         "locatedAt": [],
+                        "supersededBy": None,
                         "title": [],
                         "unitInCharge": [],
                         "version": None,
@@ -176,6 +177,7 @@ def test_preview(
                         "email": ["info@contact-point.one"],
                         "$type": "PreviewContactPoint",
                         "identifier": "bFQoRhcVH5DHUz",
+                        "supersededBy": None,
                     }
                 ],
                 "total": 10,
@@ -189,11 +191,13 @@ def test_preview(
                         "$type": "PreviewContactPoint",
                         "email": ["help@contact-point.two"],
                         "identifier": "bFQoRhcVH5DHUB",
+                        "supersededBy": None,
                     },
                     {
                         "$type": "PreviewContactPoint",
                         "email": ["info@contact-point.one"],
                         "identifier": "bFQoRhcVH5DHUz",
+                        "supersededBy": None,
                     },
                 ],
                 "total": 2,
@@ -211,6 +215,7 @@ def test_preview(
                         "documentation": [],
                         "identifier": "bFQoRhcVH5DHUt",
                         "locatedAt": [],
+                        "supersededBy": None,
                         "title": [],
                         "unitInCharge": [],
                         "version": "Cool Version v2.13",
@@ -231,6 +236,7 @@ def test_preview(
                         "name": [{"language": "en", "value": "Unit 1"}],
                         "parentUnit": None,
                         "shortName": [],
+                        "supersededBy": None,
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [],
                     },
@@ -253,6 +259,7 @@ def test_preview(
                         ],
                         "parentUnit": "bFQoRhcVH5DHUx",
                         "shortName": [],
+                        "supersededBy": None,
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [
                             {
@@ -287,6 +294,7 @@ def test_preview(
                         ],
                         "rorId": [],
                         "shortName": [],
+                        "supersededBy": None,
                         "viafId": [],
                         "wikidataId": [],
                     },
@@ -301,6 +309,7 @@ def test_preview(
                         ],
                         "parentUnit": "bFQoRhcVH5DHUx",
                         "shortName": [],
+                        "supersededBy": None,
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [
                             {
@@ -318,6 +327,7 @@ def test_preview(
                         "name": [{"language": "en", "value": "Unit 1"}],
                         "parentUnit": None,
                         "shortName": [],
+                        "supersededBy": None,
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [],
                     },
@@ -346,6 +356,7 @@ def test_preview(
                         ],
                         "rorId": [],
                         "shortName": [],
+                        "supersededBy": None,
                         "viafId": [],
                         "wikidataId": [],
                     },
@@ -360,6 +371,7 @@ def test_preview(
                         ],
                         "parentUnit": "bFQoRhcVH5DHUx",
                         "shortName": [],
+                        "supersededBy": None,
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [
                             {
@@ -377,6 +389,7 @@ def test_preview(
                         "name": [{"language": "en", "value": "Unit 1"}],
                         "parentUnit": None,
                         "shortName": [],
+                        "supersededBy": None,
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [],
                     },
