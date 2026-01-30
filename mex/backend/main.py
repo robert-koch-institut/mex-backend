@@ -20,8 +20,10 @@ from mex.backend.identity.main import router as identity_router
 from mex.backend.ingest.main import router as ingest_router
 from mex.backend.ldap.main import router as ldap_login_router
 from mex.backend.logging import UVICORN_LOGGING_CONFIG
+from mex.backend.match.main import router as match_router
 from mex.backend.merged.main import router as merged_router
 from mex.backend.preview.main import router as preview_router
+from mex.backend.responses import BackendResponse
 from mex.backend.rules.main import router as rules_router
 from mex.backend.security import has_read_access, has_write_access
 from mex.backend.settings import BackendSettings
@@ -64,6 +66,7 @@ app = FastAPI(
         "email": "mex@rki.de",
         "url": "https://github.com/robert-koch-institut/mex-backend",
     },
+    default_response_class=BackendResponse,
     lifespan=lifespan,
     version="v0",
 )
@@ -72,6 +75,7 @@ router.include_router(extracted_router, dependencies=[Depends(has_read_access)])
 router.include_router(identity_router, dependencies=[Depends(has_write_access)])
 router.include_router(ingest_router, dependencies=[Depends(has_write_access)])
 router.include_router(ldap_router, dependencies=[Depends(has_read_access)])
+router.include_router(match_router, dependencies=[Depends(has_write_access)])
 router.include_router(merged_router, dependencies=[Depends(has_read_access)])
 router.include_router(orcid_router, dependencies=[Depends(has_read_access)])
 router.include_router(preview_router, dependencies=[Depends(has_read_access)])
