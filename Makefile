@@ -43,7 +43,6 @@ wheel:
 image:
 	# build the docker image
 	@ echo building docker image mex-backend:${LATEST}; \
-	export DOCKER_BUILDKIT=1; \
 	docker build \
 		--tag rki/mex-backend:${LATEST} \
 		--tag rki/mex-backend:latest .; \
@@ -52,15 +51,12 @@ run: image
 	# run the service as a docker container
 	@ echo running docker container mex-backend:${LATEST}; \
 	docker run \
-		--env MEX_BACKEND_HOST=0.0.0.0 \
 		--publish 8080:8080 \
 		rki/mex-backend:${LATEST}; \
 
 start: image
 	# start the service using docker compose
 	@ echo start mex-backend:${LATEST} with compose; \
-	export DOCKER_BUILDKIT=1; \
-	export COMPOSE_DOCKER_CLI_BUILD=1; \
 	docker compose up --remove-orphans; \
 
 docs:
