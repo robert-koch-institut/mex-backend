@@ -1,4 +1,3 @@
-version: "3.8"
 services:
   mex-backend:
     build:
@@ -6,14 +5,12 @@ services:
     ports:
       - 8080:8080
     environment:
-      - MEX_BACKEND_HOST=0.0.0.0
-      - MEX_BACKEND_PORT=8080
       - MEX_GRAPH_URL=neo4j://neo4j:7687
       - MEX_BACKEND_VALKEY_URL=valkey://valkey:6379
     expose:
       - 8080
     healthcheck:
-      test: [ "CMD", "curl", "http://0.0.0.0:8080/_system/check" ]
+      test: [ "CMD", "curl", "http://0.0.0.0:8080/v0/_system/check" ]
       interval: 60s
       timeout: 5s
       retries: 5
@@ -21,6 +18,7 @@ services:
     image: neo4j:5.25-community
     environment:
       - NEO4J_AUTH=neo4j/password
+      - NEO4J_dbms_usage__report_enabled=false
     expose:
       - 7687
   valkey:
