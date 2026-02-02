@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [1.4.0] - 2026-02-02
+
+### Changes
+
 - update neo4j in compose to 2025.12
 - updated template to https://github.com/robert-koch-institut/mex-template/commit/33ca3a
 - update python to 3.13
@@ -25,15 +37,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - switch package manager from pdm to uv
 - update lock file
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 
 - make renovate minimumReleaseAge optional
-
-### Security
 
 ## [1.3.0] - 2025-11-20
 
