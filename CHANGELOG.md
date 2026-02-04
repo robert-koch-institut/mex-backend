@@ -9,24 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- prepare matching endpoint with endpoint, helper and precondition check
-
 ### Changes
 
-- updated template to https://github.com/robert-koch-institut/mex-template/commit/33ca3a
-- update python to 3.13
-- update fastapi to 0.128
-- update mex-model, mex-common, mex-artificial
-- updated template to https://github.com/robert-koch-institut/mex-template/commit/ad26e4
-- updated template to https://github.com/robert-koch-institut/mex-template/commit/7c3e75
-- updated template to https://github.com/robert-koch-institut/mex-template/commit/a67c71
-- updated mex-common and mex-artificial to latest versions
-- updated template to https://github.com/robert-koch-institut/mex-template/commit/b87502
-- switch package manager from pdm to uv
 - change response rendering from stdlib json to orjson with sorted keys and indent
 - use pytest.param to keep test ids and test parameter sets close together
 - clean up dummy and artificial test data in conftest
-- update lock file
 
 ### Deprecated
 
@@ -36,9 +23,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- make renovate minimumReleaseAge optional
-
 ### Security
+
+## [1.4.0] - 2026-02-02
+
+### Changes
+
+- update neo4j in compose to 2025.12
+- updated template to https://github.com/robert-koch-institut/mex-template/commit/33ca3a
+- update python to 3.13
+- update fastapi to 0.128
+- update mex-model, mex-common, mex-artificial
+- updated template to https://github.com/robert-koch-institut/mex-template/commit/ad26e4
+- updated template to https://github.com/robert-koch-institut/mex-template/commit/7c3e75
+- updated template to https://github.com/robert-koch-institut/mex-template/commit/a67c71
+- updated mex-common and mex-artificial to latest versions
+- change the docker build to multi-stage build
+- updated template to https://github.com/robert-koch-institut/mex-template/commit/b87502
+- switch package manager from pdm to uv
+- update lock file
+
+### Fixed
+
+- make renovate minimumReleaseAge optional
 
 ## [1.3.0] - 2025-11-20
 
