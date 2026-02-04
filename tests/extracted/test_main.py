@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import Any
 
 import pytest
 from fastapi.encoders import jsonable_encoder
@@ -6,11 +6,9 @@ from fastapi.testclient import TestClient
 from starlette import status
 
 from mex.common.models import (
-    AnyExtractedModel,
-    AnyRuleSetResponse,
     ExtractedOrganizationalUnit,
 )
-from tests.conftest import MockedGraph
+from tests.conftest import DummyData, MockedGraph
 
 
 @pytest.mark.usefixtures("mocked_valkey")
@@ -250,11 +248,9 @@ def test_search_extracted_items_invalid_reference_field_filter(
 @pytest.mark.integration
 def test_get_extracted_item(
     client_with_api_key_read_permission: TestClient,
-    loaded_dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
+    loaded_dummy_data: DummyData,
 ) -> None:
-    organization_1 = cast(
-        "ExtractedOrganizationalUnit", loaded_dummy_data["organization_1"]
-    )
+    organization_1 = loaded_dummy_data["organization_1"]
     response = client_with_api_key_read_permission.get(
         f"/v0/extracted-item/{organization_1.identifier}"
     )

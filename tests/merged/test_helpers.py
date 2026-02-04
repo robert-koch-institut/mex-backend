@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import Any
 
 import pytest
 from pytest import LogCaptureFixture
@@ -10,13 +10,8 @@ from mex.backend.merged.helpers import (
     search_merged_items_in_graph,
 )
 from mex.common.merged.main import create_merged_item
-from mex.common.models import (
-    AnyExtractedModel,
-    AnyRuleSetResponse,
-    ExtractedOrganization,
-)
 from mex.common.types import Identifier, TextLanguage, Validation
-from tests.conftest import MockedGraph
+from tests.conftest import DummyData, MockedGraph
 
 
 @pytest.mark.usefixtures("loaded_dummy_data")
@@ -245,10 +240,10 @@ def test_search_merged_items_in_graph_mocked(
 @pytest.mark.xfail(reason="stopgap mx-1530")
 @pytest.mark.integration
 def test_get_merged_item_from_graph(
-    loaded_dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
+    loaded_dummy_data: DummyData,
 ) -> None:
-    organization_1 = cast("ExtractedOrganization", loaded_dummy_data["organization_1"])
-    organization_2 = cast("ExtractedOrganization", loaded_dummy_data["organization_2"])
+    organization_1 = loaded_dummy_data["organization_1"]
+    organization_2 = loaded_dummy_data["organization_2"]
     fetched = get_merged_item_from_graph(organization_1.stableTargetId)
     expected = create_merged_item(
         identifier=organization_1.stableTargetId,
@@ -274,7 +269,7 @@ def test_delete_merged_item_from_graph_not_found() -> None:
 
 @pytest.mark.integration
 def test_delete_merged_item_from_graph_inbound_connections(
-    loaded_dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
+    loaded_dummy_data: DummyData,
 ) -> None:
     # Use item with inbound connections
     extracted_item = loaded_dummy_data["organization_1"]
@@ -290,7 +285,7 @@ def test_delete_merged_item_from_graph_inbound_connections(
 
 @pytest.mark.integration
 def test_delete_merged_item_from_graph(
-    loaded_dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
+    loaded_dummy_data: DummyData,
     caplog: LogCaptureFixture,
 ) -> None:
     # Use item without inbound connections

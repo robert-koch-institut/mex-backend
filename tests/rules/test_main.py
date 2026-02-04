@@ -4,8 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 from starlette import status
 
-from mex.common.models import AnyExtractedModel, AnyRuleSetResponse
-from tests.conftest import get_graph
+from tests.conftest import DummyData, DummyDataName, get_graph
 
 
 @pytest.mark.integration
@@ -281,8 +280,8 @@ def test_get_rule_set_not_found(
 @pytest.mark.integration
 def test_get_rule_set(
     client_with_api_key_write_permission: TestClient,
-    loaded_dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
-    rule_name: str,
+    loaded_dummy_data: DummyData,
+    rule_name: DummyDataName,
     expected: dict[str, Any],
 ) -> None:
     response = client_with_api_key_write_permission.get(
@@ -311,7 +310,7 @@ def test_update_rule_set_not_found(
 @pytest.mark.integration
 def test_delete_rule_set(
     client_with_api_key_write_permission: TestClient,
-    loaded_dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
+    loaded_dummy_data: DummyData,
 ) -> None:
     # Get rule set identifier
     identifier = loaded_dummy_data["unit_2_rule_set"].stableTargetId
@@ -333,7 +332,7 @@ def test_delete_rule_set(
 @pytest.mark.integration
 def test_delete_rule_set_without_rules(
     client_with_api_key_write_permission: TestClient,
-    loaded_dummy_data: dict[str, Any],
+    loaded_dummy_data: DummyData,
 ) -> None:
     # Get an item that has no rules
     activity_1 = loaded_dummy_data["activity_1"]
@@ -360,7 +359,7 @@ def test_delete_rule_set_not_found(
 @pytest.mark.integration
 def test_update_rule_set(
     client_with_api_key_write_permission: TestClient,
-    loaded_dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
+    loaded_dummy_data: DummyData,
 ) -> None:
     response = client_with_api_key_write_permission.put(
         f"/v0/rule-set/{loaded_dummy_data['unit_2_rule_set'].stableTargetId}",

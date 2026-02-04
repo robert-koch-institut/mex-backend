@@ -4,12 +4,12 @@ from unittest.mock import call
 import pytest
 
 from mex.backend.graph.models import IngestParams
-from mex.common.models import AnyExtractedModel, AnyRuleSetResponse
+from tests.conftest import DummyData
 
 
 @pytest.fixture
 def organizational_unit_rule_set_ingest_result(
-    dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
+    dummy_data: DummyData,
 ) -> list[list[dict[str, Any]]]:
     return [
         [

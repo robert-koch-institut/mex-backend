@@ -20,7 +20,7 @@ from mex.common.models import (
     SubtractivePerson,
 )
 from mex.common.types import Text
-from tests.conftest import get_graph
+from tests.conftest import DummyData, get_graph
 
 
 @pytest.mark.integration
@@ -34,8 +34,7 @@ def test_ingest_empty(client_with_api_key_write_permission: TestClient) -> None:
 
 @pytest.mark.integration
 def test_ingest_extracted(
-    client_with_api_key_write_permission: TestClient,
-    dummy_data: dict[str, AnyExtractedModel],
+    client_with_api_key_write_permission: TestClient, dummy_data: DummyData
 ) -> None:
     # post the artificial data to the ingest endpoint
     response = client_with_api_key_write_permission.post(
@@ -409,7 +408,7 @@ def test_ingest_extracted(
 @pytest.mark.integration
 def test_ingest_rule_set(
     client_with_api_key_write_permission: TestClient,
-    loaded_dummy_data: dict[str, AnyExtractedModel],
+    loaded_dummy_data: DummyData,
 ) -> None:
     # post the rule set to the ingest endpoint
     response = client_with_api_key_write_permission.post(
@@ -1000,7 +999,7 @@ def test_ingest_constraint_violation(
 @pytest.mark.usefixtures("mocked_graph", "mocked_valkey")
 def test_ingest_mocked(
     client_with_api_key_write_permission: TestClient,
-    dummy_data: dict[str, AnyExtractedModel],
+    dummy_data: DummyData,
     monkeypatch: MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(GraphConnector, "ingest_items", MagicMock())

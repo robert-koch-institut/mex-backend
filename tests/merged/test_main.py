@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import Any
 from unittest.mock import Mock
 
 import pytest
@@ -8,15 +8,12 @@ from starlette import status
 from mex.backend.rules.helpers import update_and_get_rule_set
 from mex.common.merged.main import create_merged_item
 from mex.common.models import (
-    AnyExtractedModel,
-    AnyRuleSetResponse,
-    ExtractedOrganization,
     ExtractedOrganizationalUnit,
     OrganizationalUnitRuleSetRequest,
     SubtractiveOrganizationalUnit,
 )
 from mex.common.types import Validation
-from tests.conftest import MockedGraph
+from tests.conftest import DummyData, DummyDataName, MockedGraph
 
 
 @pytest.mark.usefixtures("mocked_valkey")
@@ -328,7 +325,7 @@ def test_search_merged_items(
 @pytest.mark.integration
 def test_search_merged_items_skip_on_validation_error(
     client_with_api_key_read_permission: TestClient,
-    loaded_dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
+    loaded_dummy_data: DummyData,
 ) -> None:
     response = client_with_api_key_read_permission.get(
         "/v0/merged-item?entityType=MergedOrganizationalUnit"
@@ -337,7 +334,7 @@ def test_search_merged_items_skip_on_validation_error(
     assert len(response.json()["items"]) == 3
 
     # remove the name from org unit 2 to make it invalid
-    unit_2 = cast("ExtractedOrganizationalUnit", loaded_dummy_data["unit_2"])
+    unit_2 = loaded_dummy_data["unit_2"]
     update_and_get_rule_set(
         stable_target_id=unit_2.stableTargetId,
         rule_set=OrganizationalUnitRuleSetRequest(
@@ -397,11 +394,10 @@ def test_search_merged_items_in_graph_bad_request(
 @pytest.mark.integration
 def test_get_merged_item(
     client_with_api_key_read_permission: TestClient,
-    loaded_dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
+    loaded_dummy_data: DummyData,
 ) -> None:
-    extracted_organization_1 = cast(
-        "ExtractedOrganization", loaded_dummy_data["organization_1"]
-    )
+    extracted_organization_1 = loaded_dummy_data["organization_1"]
+
     merged_organization = create_merged_item(
         identifier=extracted_organization_1.stableTargetId,
         extracted_items=[extracted_organization_1],
@@ -453,8 +449,8 @@ def test_get_merged_item_not_found(
 @pytest.mark.integration
 def test_delete_merged_item(
     client_with_api_key_write_permission: TestClient,
-    loaded_dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
-    item_name: str,
+    loaded_dummy_data: DummyData,
+    item_name: DummyDataName,
     url_params: str,
 ) -> None:
     # Get item for current test
@@ -515,14 +511,17 @@ def test_delete_merged_item(
 @pytest.mark.integration
 def test_delete_merged_item_fails(  # noqa: PLR0913
     client_with_api_key_write_permission: TestClient,
-    loaded_dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
-    item_name: str,
+    loaded_dummy_data: DummyData,
+    item_name: DummyDataName,
     url_params: str,
     status_code_delete: int,
     status_code_after: int,
 ) -> None:
     # Get item for current test
-    item = loaded_dummy_data.get(item_name, Mock(stableTargetId="notARealIdentifier"))
+    try:
+        item = loaded_dummy_data[item_name]
+    except KeyError:
+        item = Mock(stableTargetId="notARealIdentifier")
 
     # Should fail when there are rules, but `include_rule_set` is not set to `true`
     response = client_with_api_key_write_permission.delete(

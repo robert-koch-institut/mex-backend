@@ -14,12 +14,11 @@ from mex.common.models import (
     PaginatedItemsContainer,
 )
 from mex.common.types import Validation
+from tests.conftest import DummyData
 
 
 @pytest.fixture
-def merged_dummy_data(
-    dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
-) -> dict[str, AnyMergedModel]:
+def merged_dummy_data(dummy_data: DummyData) -> dict[str, AnyMergedModel]:
     """Merge the manually created `dummy_data` into merged items."""
 
     def _merge_single(item: AnyExtractedModel | AnyRuleSetResponse) -> AnyMergedModel:
@@ -36,14 +35,14 @@ def merged_dummy_data(
         "unit_1": _merge_single(dummy_data["unit_1"]),
         "unit_2": create_merged_item(
             dummy_data["unit_2"].stableTargetId,
-            [cast("AnyExtractedModel", dummy_data["unit_2"])],
-            cast("AnyRuleSetResponse", dummy_data["unit_2_rule_set"]),
+            [dummy_data["unit_2"]],
+            dummy_data["unit_2_rule_set"],
             Validation.STRICT,
         ),
         "unit_3": create_merged_item(
             dummy_data["unit_3_standalone_rule_set"].stableTargetId,
             [],
-            cast("AnyRuleSetResponse", dummy_data["unit_3_standalone_rule_set"]),
+            dummy_data["unit_3_standalone_rule_set"],
             Validation.STRICT,
         ),
         "activity_1": _merge_single(dummy_data["activity_1"]),

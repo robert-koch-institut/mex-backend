@@ -3,7 +3,7 @@ from base64 import b64encode
 from collections import deque
 from functools import partial
 from itertools import count
-from typing import Any
+from typing import Any, Literal, TypedDict
 from unittest.mock import MagicMock, Mock
 
 import pytest
@@ -272,10 +272,39 @@ RETURN nodes, relations;
     )
 
 
+class DummyData(TypedDict):
+    primary_source_1: ExtractedPrimarySource
+    primary_source_2: ExtractedPrimarySource
+    contact_point_1: ExtractedContactPoint
+    contact_point_2: ExtractedContactPoint
+    organization_1: ExtractedOrganization
+    organization_2: ExtractedOrganization
+    unit_1: ExtractedOrganizationalUnit
+    unit_2: ExtractedOrganizationalUnit
+    unit_2_rule_set: OrganizationalUnitRuleSetResponse
+    unit_3_standalone_rule_set: OrganizationalUnitRuleSetResponse
+    activity_1: ExtractedActivity
+
+
+DummyDataName = Literal[
+    "primary_source_1",
+    "primary_source_2",
+    "contact_point_1",
+    "contact_point_2",
+    "organization_1",
+    "organization_2",
+    "unit_1",
+    "unit_2",
+    "unit_2_rule_set",
+    "unit_3_standalone_rule_set",
+    "activity_1",
+]
+
+
 @pytest.fixture
 def dummy_data(
     set_identity_provider: None,  # noqa: ARG001
-) -> dict[str, AnyExtractedModel | AnyRuleSetResponse]:
+) -> DummyData:
     """Create interlinked dummy data and return a lookup by memorable names."""
     primary_source_1 = ExtractedPrimarySource(
         hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -361,28 +390,26 @@ def dummy_data(
         title=[Text(value="Aktivität 1", language=TextLanguage.DE)],
         website=[Link(title="Activity Homepage", url="https://activity-1")],
     )
-    return {
-        "primary_source_1": primary_source_1,
-        "primary_source_2": primary_source_2,
-        "contact_point_1": contact_point_1,
-        "contact_point_2": contact_point_2,
-        "organization_1": organization_1,
-        "organization_2": organization_2,
-        "unit_1": unit_1,
-        "unit_2": unit_2,
-        "unit_2_rule_set": unit_2_rule_set,
-        "unit_3_standalone_rule_set": unit_3_standalone_rule_set,
-        "activity_1": activity_1,
-    }
+    return DummyData(
+        primary_source_1=primary_source_1,
+        primary_source_2=primary_source_2,
+        contact_point_1=contact_point_1,
+        contact_point_2=contact_point_2,
+        organization_1=organization_1,
+        organization_2=organization_2,
+        unit_1=unit_1,
+        unit_2=unit_2,
+        unit_2_rule_set=unit_2_rule_set,
+        unit_3_standalone_rule_set=unit_3_standalone_rule_set,
+        activity_1=activity_1,
+    )
 
 
 @pytest.fixture
-def loaded_dummy_data(
-    dummy_data: dict[str, AnyExtractedModel | AnyRuleSetResponse],
-) -> dict[str, AnyExtractedModel | AnyRuleSetResponse]:
+def loaded_dummy_data(dummy_data: DummyData) -> DummyData:
     """Ingest dummy data into the graph."""
     connector = GraphConnector.get()
-    deque(connector.ingest_items(dummy_data.values()))
+    deque(connector.ingest_items(dummy_data.values()))  # type: ignore[arg-type]
     return dummy_data
 
 
