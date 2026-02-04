@@ -416,11 +416,11 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                 "items": [
                     {
                         "rorId": [],
-                        "identifierInPrimarySource": "robert-koch-institute",
                         "gndId": [],
                         "wikidataId": [],
-                        "geprisId": [],
+                        "identifierInPrimarySource": "robert-koch-institute",
                         "viafId": [],
+                        "geprisId": [],
                         "isniId": [],
                         "entityType": "ExtractedOrganization",
                         "identifier": "bFQoRhcVH5DHUC",
@@ -433,9 +433,9 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                     },
                     {
                         "rorId": [],
+                        "identifierInPrimarySource": "rki",
                         "gndId": [],
                         "wikidataId": [],
-                        "identifierInPrimarySource": "rki",
                         "viafId": [],
                         "geprisId": [],
                         "isniId": [],
@@ -1001,12 +1001,12 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                     {
                         "_components": [
                             {
+                                "identifierInPrimarySource": "cp-1",
                                 "email": ["info@contact-point.one"],
                                 "entityType": "ExtractedContactPoint",
-                                "hadPrimarySource": ["bFQoRhcVH5DHUr"],
                                 "identifier": "bFQoRhcVH5DHUA",
-                                "identifierInPrimarySource": "cp-1",
                                 "stableTargetId": ["bFQoRhcVH5DHUB"],
+                                "hadPrimarySource": ["bFQoRhcVH5DHUr"],
                             }
                         ],
                         "entityType": "MergedContactPoint",
@@ -1015,12 +1015,12 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                     {
                         "_components": [
                             {
+                                "identifierInPrimarySource": "cp-2",
                                 "email": ["help@contact-point.two"],
                                 "entityType": "ExtractedContactPoint",
-                                "hadPrimarySource": ["bFQoRhcVH5DHUr"],
                                 "identifier": "bFQoRhcVH5DHUC",
-                                "identifierInPrimarySource": "cp-2",
                                 "stableTargetId": ["bFQoRhcVH5DHUD"],
+                                "hadPrimarySource": ["bFQoRhcVH5DHUr"],
                             }
                         ],
                         "entityType": "MergedContactPoint",
@@ -1043,13 +1043,17 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                     {
                         "_components": [
                             {
-                                "entityType": "ExtractedOrganization",
-                                "geprisId": [],
+                                "rorId": [],
                                 "gndId": [],
-                                "hadPrimarySource": ["bFQoRhcVH5DHUt"],
-                                "identifier": "bFQoRhcVH5DHUE",
+                                "wikidataId": [],
                                 "identifierInPrimarySource": "robert-koch-institute",
+                                "viafId": [],
+                                "geprisId": [],
                                 "isniId": [],
+                                "entityType": "ExtractedOrganization",
+                                "identifier": "bFQoRhcVH5DHUE",
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                                "hadPrimarySource": ["bFQoRhcVH5DHUt"],
                                 "officialName": [
                                     {"value": "RKI", "language": "de"},
                                     {
@@ -1057,10 +1061,6 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                                         "language": "en",
                                     },
                                 ],
-                                "rorId": [],
-                                "stableTargetId": ["bFQoRhcVH5DHUF"],
-                                "viafId": [],
-                                "wikidataId": [],
                             },
                         ],
                         "entityType": "MergedOrganization",
@@ -1069,20 +1069,20 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                     {
                         "_components": [
                             {
-                                "entityType": "ExtractedOrganization",
-                                "geprisId": [],
+                                "rorId": [],
                                 "gndId": [],
-                                "hadPrimarySource": ["bFQoRhcVH5DHUr"],
-                                "identifier": "bFQoRhcVH5DHUu",
+                                "wikidataId": [],
                                 "identifierInPrimarySource": "rki",
+                                "viafId": [],
+                                "geprisId": [],
                                 "isniId": [],
+                                "entityType": "ExtractedOrganization",
+                                "identifier": "bFQoRhcVH5DHUu",
+                                "stableTargetId": ["bFQoRhcVH5DHUv"],
+                                "hadPrimarySource": ["bFQoRhcVH5DHUr"],
                                 "officialName": [
                                     {"value": "RKI", "language": "de"},
                                 ],
-                                "rorId": [],
-                                "stableTargetId": ["bFQoRhcVH5DHUv"],
-                                "viafId": [],
-                                "wikidataId": [],
                             },
                         ],
                         "entityType": "MergedOrganization",
@@ -1152,9 +1152,9 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                             {
                                 "email": [],
                                 "entityType": "AdditiveOrganizationalUnit",
-                                "name": [{"value": "Abteilung 1.6", "language": "de"}],
-                                "parentUnit": ["bFQoRhcVH5DHUx"],
                                 "stableTargetId": ["bFQoRhcVH5DHUz"],
+                                "parentUnit": ["bFQoRhcVH5DHUx"],
+                                "name": [{"value": "Abteilung 1.6", "language": "de"}],
                                 "website": [
                                     {
                                         "title": "Unit Homepage",
