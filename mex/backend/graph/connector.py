@@ -466,13 +466,13 @@ class GraphConnector(BaseConnector):
                         tx.commit()
                 yield
 
-    def _match_item_tx(
+    def _check_match_preconditions_tx(
         self,
         tx: Transaction,
         extracted_item: AnyExtractedModel,
         merged_item: AnyMergedModel,
     ) -> None:
-        """Run all required matching steps in a single transaction."""
+        """Raise an error when the preconditions for performing a match aren't met."""
         settings = BackendSettings.get()
         query_builder = QueryBuilder.get()
         check_match_preconditions_query = query_builder.check_match_preconditions()
@@ -489,6 +489,14 @@ class GraphConnector(BaseConnector):
             msg = f"Failed preconditions: {', '.join(failed)}"
             raise MatchingError(msg)
 
+    def _match_item_tx(
+        self,
+        tx: Transaction,
+        extracted_item: AnyExtractedModel,
+        merged_item: AnyMergedModel,
+    ) -> None:
+        """Run all required matching steps in a single transaction."""
+        self._check_match_preconditions_tx(tx, extracted_item, merged_item)
         raise NotImplementedError
 
     def match_item(
