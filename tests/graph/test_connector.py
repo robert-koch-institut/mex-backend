@@ -475,8 +475,8 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                         "stableTargetId": ["bFQoRhcVH5DHUH"],
                         "hadPrimarySource": ["bFQoRhcVH5DHUr"],
                         "contact": [
-                            "bFQoRhcVH5DHUz",
                             "bFQoRhcVH5DHUB",
+                            "bFQoRhcVH5DHUD",
                             "bFQoRhcVH5DHUx",
                         ],
                         "responsibleUnit": ["bFQoRhcVH5DHUx"],
@@ -973,12 +973,12 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                     {
                         "_components": [
                             {
+                                "identifierInPrimarySource": "cp-1",
                                 "email": ["info@contact-point.one"],
                                 "entityType": "ExtractedContactPoint",
-                                "hadPrimarySource": ["bFQoRhcVH5DHUr"],
                                 "identifier": "bFQoRhcVH5DHUA",
-                                "identifierInPrimarySource": "cp-1",
                                 "stableTargetId": ["bFQoRhcVH5DHUB"],
+                                "hadPrimarySource": ["bFQoRhcVH5DHUr"],
                             }
                         ],
                         "entityType": "MergedContactPoint",
@@ -987,7 +987,7 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 1,
             },
-            id="find-exact-matches",
+            id="find-exact",
         ),
         pytest.param(
             "contact point",
@@ -1029,7 +1029,7 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 2,
             },
-            id="find-exact",
+            id="find-fuzzy",
         ),
         pytest.param(
             "RKI",
@@ -1091,7 +1091,7 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 2,
             },
-            id="find-fuzzy",
+            id="find-Text",
         ),
         pytest.param(
             "Homepage",
@@ -1105,27 +1105,27 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                     {
                         "_components": [
                             {
-                                "abstract": [
-                                    {"value": "An active activity.", "language": "en"},
-                                    {"value": "Eng aktiv Aktivitéit."},
-                                ],
+                                "fundingProgram": [],
+                                "identifierInPrimarySource": "a-1",
+                                "start": ["2014-08-24"],
+                                "theme": ["https://mex.rki.de/item/theme-11"],
+                                "entityType": "ExtractedActivity",
                                 "activityType": [],
+                                "identifier": "bFQoRhcVH5DHUG",
+                                "end": [],
+                                "stableTargetId": ["bFQoRhcVH5DHUH"],
+                                "hadPrimarySource": ["bFQoRhcVH5DHUr"],
                                 "contact": [
                                     "bFQoRhcVH5DHUB",
                                     "bFQoRhcVH5DHUD",
                                     "bFQoRhcVH5DHUx",
                                 ],
-                                "end": [],
-                                "entityType": "ExtractedActivity",
-                                "fundingProgram": [],
-                                "hadPrimarySource": ["bFQoRhcVH5DHUr"],
-                                "identifier": "bFQoRhcVH5DHUG",
-                                "identifierInPrimarySource": "a-1",
                                 "responsibleUnit": ["bFQoRhcVH5DHUx"],
-                                "stableTargetId": ["bFQoRhcVH5DHUH"],
-                                "start": ["2014-08-24"],
-                                "theme": ["https://mex.rki.de/item/theme-11"],
                                 "title": [{"value": "Aktivität 1", "language": "de"}],
+                                "abstract": [
+                                    {"value": "An active activity.", "language": "en"},
+                                    {"value": "Eng aktiv Aktivitéit."},
+                                ],
                                 "website": [
                                     {
                                         "title": "Activity Homepage",
@@ -1140,14 +1140,14 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                     {
                         "_components": [
                             {
+                                "identifierInPrimarySource": "ou-1.6",
                                 "email": [],
                                 "entityType": "ExtractedOrganizationalUnit",
-                                "hadPrimarySource": ["bFQoRhcVH5DHUt"],
                                 "identifier": "bFQoRhcVH5DHUy",
-                                "identifierInPrimarySource": "ou-1.6",
-                                "name": [{"value": "Unit 1.6", "language": "en"}],
                                 "stableTargetId": ["bFQoRhcVH5DHUz"],
+                                "hadPrimarySource": ["bFQoRhcVH5DHUt"],
                                 "unitOf": ["bFQoRhcVH5DHUv"],
+                                "name": [{"value": "Unit 1.6", "language": "en"}],
                             },
                             {
                                 "email": [],
@@ -1169,8 +1169,13 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                             {
                                 "email": [],
                                 "entityType": "SubtractiveOrganizationalUnit",
-                                "name": [{"value": "Unit 1.6", "language": "en"}],
                                 "stableTargetId": ["bFQoRhcVH5DHUz"],
+                                "name": [
+                                    {
+                                        "language": "en",
+                                        "value": "Unit 1.6",
+                                    },
+                                ],
                             },
                         ],
                         "entityType": "MergedOrganizationalUnit",
@@ -1179,7 +1184,7 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 2,
             },
-            id="find-Text",
+            id="find-Link",
         ),
     ],
 )
