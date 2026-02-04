@@ -475,12 +475,11 @@ class GraphConnector(BaseConnector):
         """Run all required matching steps in a single transaction."""
         settings = BackendSettings.get()
         query_builder = QueryBuilder.get()
-        query = query_builder.check_match_preconditions()
+        check_match_preconditions_query = query_builder.check_match_preconditions()
 
-        # check preconditions for a successful item matching
         preconditions = Result(
             tx.run(
-                query.render(),
+                check_match_preconditions_query.render(),
                 extracted_identifier=str(extracted_item.identifier),
                 merged_identifier=str(merged_item.identifier),
                 blocked_types=[t.value for t in settings.non_matchable_types],
