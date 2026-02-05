@@ -1,3 +1,5 @@
+from collections import deque
+
 from mex.backend.extracted.helpers import get_extracted_item_from_graph
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.merged.helpers import get_merged_item_from_graph
@@ -17,10 +19,10 @@ def match_item_in_graph(
     merged_item = get_merged_item_from_graph(merged_identifier)
 
     # ensure that the old merged item has a rule set
-    if not (rule_set := get_rule_set_from_graph(merged_item.identifier)):
+    if not (rule_set := get_rule_set_from_graph(extracted_item.stableTargetId)):
         rule_set = RULE_SET_RESPONSE_CLASSES_BY_NAME[
-            ensure_postfix(merged_item.stemType, "RuleSetResponse")
-        ](stableTargetId=merged_item.identifier)
-        connector.ingest_items([rule_set])
+            ensure_postfix(extracted_item.stemType, "RuleSetResponse")
+        ](stableTargetId=extracted_item.stableTargetId)
+        deque(connector.ingest_items([rule_set]))
 
     connector.match_item(extracted_item, merged_item)
