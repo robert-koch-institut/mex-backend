@@ -24,9 +24,9 @@ OPTIONAL MATCH (extracted)-[:stableTargetId]->(old_merged:<<merged_labels|join("
 OPTIONAL MATCH (old_merged)<-[:stableTargetId]-(old_rules:<<rule_labels|join("|")>>)
 OPTIONAL MATCH (new_merged:<<merged_labels|join("|")>> {identifier: $merged_identifier})
 WITH
-   count(extracted) = 1 AS extracted_exists,
+   count(DISTINCT extracted) = 1 AS extracted_exists,
    count(old_rules) = 3 AS old_rules_exist,
-   count(new_merged) = 1 AS merged_exists,
+   count(DISTINCT new_merged) = 1 AS merged_exists,
    elementId(old_merged) <> elementId(new_merged) AS not_self_match,
    labels(old_merged) = labels(new_merged) AS same_merged_type,
    NOT ANY(label IN labels(new_merged) WHERE label IN $blocked_types) AS merged_type_allowed
