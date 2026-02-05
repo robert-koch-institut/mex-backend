@@ -204,6 +204,7 @@ def test_get_rule_set_not_found(
                     "name": [{"language": "de", "value": "Abteilung 1.6"}],
                     "parentUnit": "bFQoRhcVH5DHUx",
                     "shortName": [],
+                    "supersededBy": None,
                     "unitOf": [],
                     "website": [
                         {
@@ -248,6 +249,7 @@ def test_get_rule_set_not_found(
                     "name": [{"language": "de", "value": "Abteilung 1.7"}],
                     "parentUnit": "bFQoRhcVH5DHUx",
                     "shortName": [],
+                    "supersededBy": None,
                     "unitOf": [],
                     "website": [],
                 },

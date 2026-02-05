@@ -340,8 +340,8 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                         "geprisId": [],
                         "isniId": [],
                         "entityType": "ExtractedOrganization",
-                        "identifier": "bFQoRhcVH5DHUC",
-                        "stableTargetId": ["bFQoRhcVH5DHUv"],
+                        "identifier": "bFQoRhcVH5DHUE",
+                        "stableTargetId": ["bFQoRhcVH5DHUF"],
                         "hadPrimarySource": ["bFQoRhcVH5DHUt"],
                         "officialName": [
                             {"value": "RKI", "language": "de"},
@@ -366,8 +366,8 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                         "identifierInPrimarySource": "cp-1",
                         "email": ["info@contact-point.one"],
                         "entityType": "ExtractedContactPoint",
-                        "identifier": "bFQoRhcVH5DHUy",
-                        "stableTargetId": ["bFQoRhcVH5DHUz"],
+                        "identifier": "bFQoRhcVH5DHUA",
+                        "stableTargetId": ["bFQoRhcVH5DHUB"],
                         "hadPrimarySource": ["bFQoRhcVH5DHUr"],
                     }
                 ],
@@ -383,19 +383,19 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
             {
                 "items": [
                     {
-                        "identifierInPrimarySource": "cp-2",
-                        "email": ["help@contact-point.two"],
+                        "identifierInPrimarySource": "cp-1",
+                        "email": ["info@contact-point.one"],
                         "entityType": "ExtractedContactPoint",
                         "identifier": "bFQoRhcVH5DHUA",
                         "stableTargetId": ["bFQoRhcVH5DHUB"],
                         "hadPrimarySource": ["bFQoRhcVH5DHUr"],
                     },
                     {
-                        "identifierInPrimarySource": "cp-1",
-                        "email": ["info@contact-point.one"],
+                        "identifierInPrimarySource": "cp-2",
+                        "email": ["help@contact-point.two"],
                         "entityType": "ExtractedContactPoint",
-                        "identifier": "bFQoRhcVH5DHUy",
-                        "stableTargetId": ["bFQoRhcVH5DHUz"],
+                        "identifier": "bFQoRhcVH5DHUC",
+                        "stableTargetId": ["bFQoRhcVH5DHUD"],
                         "hadPrimarySource": ["bFQoRhcVH5DHUr"],
                     },
                 ],
@@ -419,8 +419,8 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                         "geprisId": [],
                         "isniId": [],
                         "entityType": "ExtractedOrganization",
-                        "identifier": "bFQoRhcVH5DHUC",
-                        "stableTargetId": ["bFQoRhcVH5DHUv"],
+                        "identifier": "bFQoRhcVH5DHUE",
+                        "stableTargetId": ["bFQoRhcVH5DHUF"],
                         "hadPrimarySource": ["bFQoRhcVH5DHUt"],
                         "officialName": [
                             {"value": "RKI", "language": "de"},
@@ -441,10 +441,6 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                         "hadPrimarySource": ["bFQoRhcVH5DHUr"],
                         "officialName": [
                             {"value": "RKI", "language": "de"},
-                            {
-                                "value": "Robert Koch Institut ist the best",
-                                "language": "de",
-                            },
                         ],
                     },
                 ],

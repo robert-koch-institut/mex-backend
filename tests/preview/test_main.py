@@ -188,6 +188,7 @@ def test_preview(
                         ],
                         "rorId": [],
                         "shortName": [],
+                        "supersededBy": None,
                         "viafId": [],
                         "wikidataId": [],
                     }
@@ -210,6 +211,7 @@ def test_preview(
                         "$type": "PreviewContactPoint",
                         "email": ["help@contact-point.two"],
                         "identifier": "bFQoRhcVH5DHUD",
+                        "supersededBy": None,
                     },
                 ],
                 "total": 2,
@@ -319,6 +321,7 @@ def test_preview(
                         "name": [{"language": "en", "value": "Unit 1"}],
                         "parentUnit": None,
                         "shortName": [],
+                        "supersededBy": None,
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [
                             {"language": None, "title": None, "url": "https://ou-1"}
