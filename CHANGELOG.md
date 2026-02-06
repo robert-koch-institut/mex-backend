@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - dropped support for hadPrimarySource search filter, use referenceField instead
+- remove unused skip_integration_test_in_ci fixture override
 
 ### Fixed
 
