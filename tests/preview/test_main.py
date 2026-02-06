@@ -257,13 +257,34 @@ def test_preview(
                         "supersededBy": None,
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [
-                            {"language": None, "title": None, "url": "https://ou-1"},
+                            {"language": None, "title": None, "url": "https://ou-1"}
                         ],
                     }
                 ],
                 "total": 1,
             },
-            id="identifier-filter",
+            id="identifier-filter-extracted-only",
+        ),
+        pytest.param(
+            "?identifier=StandaloneRule",
+            {
+                "items": [
+                    {
+                        "$type": "PreviewOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": ["1.7@rki.de"],
+                        "identifier": "StandaloneRule",
+                        "name": [{"language": "de", "value": "Abteilung 1.7"}],
+                        "parentUnit": "bFQoRhcVH5DHUx",
+                        "shortName": [],
+                        "supersededBy": None,
+                        "unitOf": [],
+                        "website": [],
+                    }
+                ],
+                "total": 1,
+            },
+            id="identifier-filter-rule-set-only",
         ),
         pytest.param(
             "?identifier=bFQoRhcVH5DHUz",
@@ -290,7 +311,7 @@ def test_preview(
                 ],
                 "total": 1,
             },
-            id="identifier-filter-composite",
+            id="identifier-filter-extracted-and-ruleset",
         ),
         pytest.param(
             "?referencedIdentifier=bFQoRhcVH5DHUt&referenceField=hadPrimarySource",
