@@ -62,11 +62,6 @@ def settings() -> BackendSettings:
     return settings
 
 
-@pytest.fixture(autouse=True)
-def skip_integration_test_in_ci(is_integration_test: bool) -> None:  # noqa: FBT001
-    """Overwrite fixture from plugin to not skip integration tests in ci."""
-
-
 @pytest.fixture
 def client() -> TestClient:
     """Return a fastAPI test client initialized with our app."""
