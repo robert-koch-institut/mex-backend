@@ -212,33 +212,55 @@ def test_search_merged_items_mocked(
                 ],
                 "total": 1,
             },
-            id="identifier-filter",
+            id="identifier-filter-extracted-only",
         ),
         pytest.param(
-            "?identifier=bFQoRhcVH5DHUF",
+            "?identifier=StandaloneRule",
             {
                 "items": [
                     {
-                        "$type": "MergedOrganization",
+                        "$type": "MergedOrganizationalUnit",
                         "alternativeName": [],
-                        "geprisId": [],
-                        "gndId": [],
-                        "identifier": "bFQoRhcVH5DHUF",
-                        "isniId": [],
-                        "officialName": [
-                            {"language": "de", "value": "RKI"},
-                            {"language": "en", "value": "Robert Koch Institute"},
-                        ],
-                        "rorId": [],
+                        "email": ["1.7@rki.de"],
+                        "identifier": "StandaloneRule",
+                        "name": [{"language": "de", "value": "Abteilung 1.7"}],
+                        "parentUnit": "bFQoRhcVH5DHUx",
                         "shortName": [],
                         "supersededBy": None,
-                        "viafId": [],
-                        "wikidataId": [],
+                        "unitOf": [],
+                        "website": [],
                     }
                 ],
                 "total": 1,
             },
-            id="identifier-filter-composite",
+            id="identifier-filter-rule-set-only",
+        ),
+        pytest.param(
+            "?identifier=bFQoRhcVH5DHUz",
+            {
+                "items": [
+                    {
+                        "$type": "MergedOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "identifier": "bFQoRhcVH5DHUz",
+                        "name": [{"language": "de", "value": "Abteilung 1.6"}],
+                        "parentUnit": "bFQoRhcVH5DHUx",
+                        "shortName": [],
+                        "supersededBy": None,
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [
+                            {
+                                "language": None,
+                                "title": "Unit Homepage",
+                                "url": "https://unit-1-6",
+                            }
+                        ],
+                    }
+                ],
+                "total": 1,
+            },
+            id="identifier-filter-extracted-and-ruleset",
         ),
         pytest.param(
             "?referencedIdentifier=bFQoRhcVH5DHUt&referenceField=hadPrimarySource",
