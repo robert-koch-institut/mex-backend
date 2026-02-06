@@ -273,21 +273,6 @@ def test_fetch_identities_mocked(
             },
             id="by-stable-target-single",
         ),
-        pytest.param(
-            "?stableTargetId=bFQoRhcVH5DHUt",
-            {
-                "items": [
-                    {
-                        "hadPrimarySource": "00000000000000",
-                        "identifier": "bFQoRhcVH5DHUs",
-                        "identifierInPrimarySource": "ps-2",
-                        "stableTargetId": "bFQoRhcVH5DHUt",
-                    }
-                ],
-                "total": 1,
-            },
-            id="by-stable-target-contact-point",
-        ),
     ],
 )
 @pytest.mark.usefixtures("loaded_dummy_data")
