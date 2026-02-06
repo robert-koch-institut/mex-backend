@@ -5,8 +5,8 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
 from starlette import status
 
-from mex.common.models import AnyExtractedModel, ExtractedOrganizationalUnit
-from tests.conftest import MockedGraph
+from mex.common.models import ExtractedOrganizationalUnit
+from tests.conftest import DummyData, MockedGraph
 
 
 @pytest.mark.usefixtures("mocked_valkey")
@@ -68,7 +68,7 @@ def test_search_extracted_items_mocked(
 @pytest.mark.parametrize(
     ("query_string", "expected"),
     [
-        (
+        pytest.param(
             "?limit=1",
             {
                 "items": [
@@ -90,48 +90,57 @@ def test_search_extracted_items_mocked(
                 ],
                 "total": 10,
             },
+            id="limit-1",
         ),
-        (
+        pytest.param(
             "?limit=1&skip=9",
             {
                 "items": [
                     {
-                        "$type": "ExtractedContactPoint",
-                        "email": ["info@contact-point.one"],
-                        "hadPrimarySource": "bFQoRhcVH5DHUr",
+                        "$type": "ExtractedOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "hadPrimarySource": "bFQoRhcVH5DHUt",
                         "identifier": "bFQoRhcVH5DHUy",
-                        "identifierInPrimarySource": "cp-1",
+                        "identifierInPrimarySource": "ou-1.6",
+                        "name": [{"language": "en", "value": "Unit 1.6"}],
+                        "parentUnit": None,
+                        "shortName": [],
                         "stableTargetId": "bFQoRhcVH5DHUz",
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [],
                     }
                 ],
                 "total": 10,
             },
+            id="skip-9",
         ),
-        (
+        pytest.param(
             "?entityType=ExtractedContactPoint",
             {
                 "items": [
                     {
                         "$type": "ExtractedContactPoint",
-                        "email": ["help@contact-point.two"],
+                        "email": ["info@contact-point.one"],
                         "hadPrimarySource": "bFQoRhcVH5DHUr",
                         "identifier": "bFQoRhcVH5DHUA",
-                        "identifierInPrimarySource": "cp-2",
+                        "identifierInPrimarySource": "cp-1",
                         "stableTargetId": "bFQoRhcVH5DHUB",
                     },
                     {
                         "$type": "ExtractedContactPoint",
-                        "email": ["info@contact-point.one"],
+                        "email": ["help@contact-point.two"],
                         "hadPrimarySource": "bFQoRhcVH5DHUr",
-                        "identifier": "bFQoRhcVH5DHUy",
-                        "identifierInPrimarySource": "cp-1",
-                        "stableTargetId": "bFQoRhcVH5DHUz",
+                        "identifier": "bFQoRhcVH5DHUC",
+                        "identifierInPrimarySource": "cp-2",
+                        "stableTargetId": "bFQoRhcVH5DHUD",
                     },
                 ],
                 "total": 2,
             },
+            id="entity-type-contact-points",
         ),
-        (
+        pytest.param(
             "?q=cool",
             {
                 "items": [
@@ -153,8 +162,9 @@ def test_search_extracted_items_mocked(
                 ],
                 "total": 1,
             },
+            id="full-text-search",
         ),
-        (
+        pytest.param(
             "?stableTargetId=bFQoRhcVH5DHUx",
             {
                 "items": [
@@ -165,31 +175,33 @@ def test_search_extracted_items_mocked(
                         "hadPrimarySource": "bFQoRhcVH5DHUt",
                         "identifier": "bFQoRhcVH5DHUw",
                         "identifierInPrimarySource": "ou-1",
-                        "name": [{"language": "en", "value": "Unit 1"}],
+                        "name": [{"value": "Unit 1", "language": "en"}],
                         "parentUnit": None,
                         "shortName": [],
                         "stableTargetId": "bFQoRhcVH5DHUx",
                         "unitOf": ["bFQoRhcVH5DHUv"],
-                        "website": [],
+                        "website": [
+                            {"language": None, "title": None, "url": "https://ou-1"}
+                        ],
                     }
                 ],
                 "total": 1,
             },
+            id="stable-target-id-filter",
         ),
-        ("?stableTargetId=thisIdDoesNotExist", {"items": [], "total": 0}),
-        ("?q=queryNotFound", {"items": [], "total": 0}),
-    ],
-    ids=[
-        "limit 1",
-        "skip 1",
-        "entity type contact points",
-        "full text search",
-        "stable target id filter",
-        "identifier not found",
-        "full text not found",
+        pytest.param(
+            "?stableTargetId=thisIdDoesNotExist",
+            {"items": [], "total": 0},
+            id="identifier-not-found",
+        ),
+        pytest.param(
+            "?q=queryNotFound",
+            {"items": [], "total": 0},
+            id="full-text-not-found",
+        ),
     ],
 )
-@pytest.mark.usefixtures("load_dummy_data")
+@pytest.mark.usefixtures("loaded_dummy_data")
 @pytest.mark.integration
 def test_search_extracted_items(
     client_with_api_key_read_permission: TestClient,
@@ -234,9 +246,9 @@ def test_search_extracted_items_invalid_reference_field_filter(
 @pytest.mark.integration
 def test_get_extracted_item(
     client_with_api_key_read_permission: TestClient,
-    load_dummy_data: dict[str, AnyExtractedModel],
+    loaded_dummy_data: DummyData,
 ) -> None:
-    organization_1 = load_dummy_data["organization_1"]
+    organization_1 = loaded_dummy_data["organization_1"]
     response = client_with_api_key_read_permission.get(
         f"/v0/extracted-item/{organization_1.identifier}"
     )

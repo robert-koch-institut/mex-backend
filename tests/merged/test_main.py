@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import Any
 from unittest.mock import Mock
 
 import pytest
@@ -8,14 +8,12 @@ from starlette import status
 from mex.backend.rules.helpers import update_and_get_rule_set
 from mex.common.merged.main import create_merged_item
 from mex.common.models import (
-    AnyExtractedModel,
     ExtractedOrganizationalUnit,
     OrganizationalUnitRuleSetRequest,
-    OrganizationalUnitRuleSetResponse,
     SubtractiveOrganizationalUnit,
 )
 from mex.common.types import Validation
-from tests.conftest import MockedGraph
+from tests.conftest import DummyData, DummyDataName, MockedGraph
 
 
 @pytest.mark.usefixtures("mocked_valkey")
@@ -105,7 +103,7 @@ def test_search_merged_items_mocked(
 @pytest.mark.parametrize(
     ("query_string", "expected"),
     [
-        (
+        pytest.param(
             "?limit=1",
             {
                 "items": [
@@ -123,44 +121,55 @@ def test_search_merged_items_mocked(
                         "version": None,
                     }
                 ],
-                "total": 9,
+                "total": 11,
             },
+            id="limit-1",
         ),
-        (
+        pytest.param(
             "?limit=1&skip=8",
             {
                 "items": [
                     {
-                        "email": ["info@contact-point.one"],
-                        "$type": "MergedContactPoint",
-                        "identifier": "bFQoRhcVH5DHUz",
+                        "$type": "MergedOrganization",
+                        "alternativeName": [],
+                        "geprisId": [],
+                        "gndId": [],
+                        "identifier": "bFQoRhcVH5DHUv",
+                        "isniId": [],
+                        "officialName": [{"language": "de", "value": "RKI"}],
+                        "rorId": [],
+                        "shortName": [],
                         "supersededBy": None,
+                        "viafId": [],
+                        "wikidataId": [],
                     }
                 ],
-                "total": 9,
+                "total": 11,
             },
+            id="skip-8",
         ),
-        (
+        pytest.param(
             "?entityType=MergedContactPoint",
             {
                 "items": [
                     {
                         "$type": "MergedContactPoint",
-                        "email": ["help@contact-point.two"],
+                        "email": ["info@contact-point.one"],
                         "identifier": "bFQoRhcVH5DHUB",
                         "supersededBy": None,
                     },
                     {
                         "$type": "MergedContactPoint",
-                        "email": ["info@contact-point.one"],
-                        "identifier": "bFQoRhcVH5DHUz",
+                        "email": ["help@contact-point.two"],
+                        "identifier": "bFQoRhcVH5DHUD",
                         "supersededBy": None,
                     },
                 ],
                 "total": 2,
             },
+            id="entity-type-contact-points",
         ),
-        (
+        pytest.param(
             "?q=cool",
             {
                 "items": [
@@ -180,8 +189,9 @@ def test_search_merged_items_mocked(
                 ],
                 "total": 1,
             },
+            id="full-text-search",
         ),
-        (
+        pytest.param(
             "?identifier=bFQoRhcVH5DHUx",
             {
                 "items": [
@@ -195,25 +205,46 @@ def test_search_merged_items_mocked(
                         "shortName": [],
                         "supersededBy": None,
                         "unitOf": ["bFQoRhcVH5DHUv"],
-                        "website": [],
-                    },
+                        "website": [
+                            {"language": None, "title": None, "url": "https://ou-1"}
+                        ],
+                    }
                 ],
                 "total": 1,
             },
+            id="identifier-filter-extracted-only",
         ),
-        (
-            "?identifier=bFQoRhcVH5DHUF",
+        pytest.param(
+            "?identifier=StandaloneRule",
+            {
+                "items": [
+                    {
+                        "$type": "MergedOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": ["1.7@rki.de"],
+                        "identifier": "StandaloneRule",
+                        "name": [{"language": "de", "value": "Abteilung 1.7"}],
+                        "parentUnit": "bFQoRhcVH5DHUx",
+                        "shortName": [],
+                        "supersededBy": None,
+                        "unitOf": [],
+                        "website": [],
+                    }
+                ],
+                "total": 1,
+            },
+            id="identifier-filter-rule-set-only",
+        ),
+        pytest.param(
+            "?identifier=bFQoRhcVH5DHUz",
             {
                 "items": [
                     {
                         "$type": "MergedOrganizationalUnit",
                         "alternativeName": [],
                         "email": [],
-                        "identifier": "bFQoRhcVH5DHUF",
-                        "name": [
-                            {"language": "en", "value": "Unit 1.6"},
-                            {"language": "en", "value": "Unit 1.7"},
-                        ],
+                        "identifier": "bFQoRhcVH5DHUz",
+                        "name": [{"language": "de", "value": "Abteilung 1.6"}],
                         "parentUnit": "bFQoRhcVH5DHUx",
                         "shortName": [],
                         "supersededBy": None,
@@ -222,77 +253,16 @@ def test_search_merged_items_mocked(
                             {
                                 "language": None,
                                 "title": "Unit Homepage",
-                                "url": "https://unit-1-7",
+                                "url": "https://unit-1-6",
                             }
                         ],
                     }
                 ],
                 "total": 1,
             },
+            id="identifier-filter-extracted-and-ruleset",
         ),
-        (
-            "?hadPrimarySource=bFQoRhcVH5DHUt",  # deprecated
-            {
-                "items": [
-                    {
-                        "$type": "MergedOrganization",
-                        "alternativeName": [],
-                        "geprisId": [],
-                        "gndId": [],
-                        "identifier": "bFQoRhcVH5DHUv",
-                        "isniId": [],
-                        "officialName": [
-                            {"language": "de", "value": "RKI"},
-                            {"language": "en", "value": "Robert Koch Institute"},
-                            {
-                                "language": "de",
-                                "value": "Robert Koch Institut ist the best",
-                            },
-                        ],
-                        "rorId": [],
-                        "shortName": [],
-                        "supersededBy": None,
-                        "viafId": [],
-                        "wikidataId": [],
-                    },
-                    {
-                        "$type": "MergedOrganizationalUnit",
-                        "alternativeName": [],
-                        "email": [],
-                        "identifier": "bFQoRhcVH5DHUF",
-                        "name": [
-                            {"language": "en", "value": "Unit 1.6"},
-                            {"language": "en", "value": "Unit 1.7"},
-                        ],
-                        "parentUnit": "bFQoRhcVH5DHUx",
-                        "shortName": [],
-                        "supersededBy": None,
-                        "unitOf": ["bFQoRhcVH5DHUv"],
-                        "website": [
-                            {
-                                "language": None,
-                                "title": "Unit Homepage",
-                                "url": "https://unit-1-7",
-                            }
-                        ],
-                    },
-                    {
-                        "$type": "MergedOrganizationalUnit",
-                        "alternativeName": [],
-                        "email": [],
-                        "identifier": "bFQoRhcVH5DHUx",
-                        "name": [{"language": "en", "value": "Unit 1"}],
-                        "parentUnit": None,
-                        "shortName": [],
-                        "supersededBy": None,
-                        "unitOf": ["bFQoRhcVH5DHUv"],
-                        "website": [],
-                    },
-                ],
-                "total": 3,
-            },
-        ),
-        (
+        pytest.param(
             "?referencedIdentifier=bFQoRhcVH5DHUt&referenceField=hadPrimarySource",
             {
                 "items": [
@@ -301,15 +271,11 @@ def test_search_merged_items_mocked(
                         "alternativeName": [],
                         "geprisId": [],
                         "gndId": [],
-                        "identifier": "bFQoRhcVH5DHUv",
+                        "identifier": "bFQoRhcVH5DHUF",
                         "isniId": [],
                         "officialName": [
                             {"language": "de", "value": "RKI"},
                             {"language": "en", "value": "Robert Koch Institute"},
-                            {
-                                "language": "de",
-                                "value": "Robert Koch Institut ist the best",
-                            },
                         ],
                         "rorId": [],
                         "shortName": [],
@@ -321,11 +287,22 @@ def test_search_merged_items_mocked(
                         "$type": "MergedOrganizationalUnit",
                         "alternativeName": [],
                         "email": [],
-                        "identifier": "bFQoRhcVH5DHUF",
-                        "name": [
-                            {"language": "en", "value": "Unit 1.6"},
-                            {"language": "en", "value": "Unit 1.7"},
+                        "identifier": "bFQoRhcVH5DHUx",
+                        "name": [{"language": "en", "value": "Unit 1"}],
+                        "parentUnit": None,
+                        "shortName": [],
+                        "supersededBy": None,
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [
+                            {"language": None, "title": None, "url": "https://ou-1"}
                         ],
+                    },
+                    {
+                        "$type": "MergedOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "identifier": "bFQoRhcVH5DHUz",
+                        "name": [{"language": "de", "value": "Abteilung 1.6"}],
                         "parentUnit": "bFQoRhcVH5DHUx",
                         "shortName": [],
                         "supersededBy": None,
@@ -334,43 +311,28 @@ def test_search_merged_items_mocked(
                             {
                                 "language": None,
                                 "title": "Unit Homepage",
-                                "url": "https://unit-1-7",
+                                "url": "https://unit-1-6",
                             }
                         ],
-                    },
-                    {
-                        "$type": "MergedOrganizationalUnit",
-                        "alternativeName": [],
-                        "email": [],
-                        "identifier": "bFQoRhcVH5DHUx",
-                        "name": [{"language": "en", "value": "Unit 1"}],
-                        "parentUnit": None,
-                        "shortName": [],
-                        "supersededBy": None,
-                        "unitOf": ["bFQoRhcVH5DHUv"],
-                        "website": [],
                     },
                 ],
                 "total": 3,
             },
+            id="referenced-id-filter",
         ),
-        ("?identifier=thisIdDoesNotExist", {"items": [], "total": 0}),
-        ("?q=queryNotFound", {"items": [], "total": 0}),
-    ],
-    ids=[
-        "limit 1",
-        "skip 1",
-        "entity type contact points",
-        "full text search",
-        "identifier filter",
-        "identifier filter with composite result",
-        "had primary source filter",
-        "generic id filter",
-        "identifier not found",
-        "full text not found",
+        pytest.param(
+            "?identifier=thisIdDoesNotExist",
+            {"items": [], "total": 0},
+            id="identifier-not-found",
+        ),
+        pytest.param(
+            "?q=queryNotFound",
+            {"items": [], "total": 0},
+            id="full-text-not-found",
+        ),
     ],
 )
-@pytest.mark.usefixtures("load_dummy_data", "load_dummy_rule_set")
+@pytest.mark.usefixtures("loaded_dummy_data")
 @pytest.mark.integration
 def test_search_merged_items(
     client_with_api_key_read_permission: TestClient,
@@ -385,43 +347,56 @@ def test_search_merged_items(
 @pytest.mark.integration
 def test_search_merged_items_skip_on_validation_error(
     client_with_api_key_read_permission: TestClient,
-    load_dummy_data: dict[str, AnyExtractedModel],
+    loaded_dummy_data: DummyData,
 ) -> None:
     response = client_with_api_key_read_permission.get(
         "/v0/merged-item?entityType=MergedOrganizationalUnit"
     )
     assert response.status_code == status.HTTP_200_OK, response.text
-    assert len(response.json()["items"]) == 2
+    assert len(response.json()["items"]) == 3
 
     # remove the name from org unit 2 to make it invalid
-    organizational_unit_2 = cast(
-        "ExtractedOrganizationalUnit", load_dummy_data["organizational_unit_2"]
-    )
+    unit_2 = loaded_dummy_data["unit_2"]
     update_and_get_rule_set(
-        stable_target_id=organizational_unit_2.stableTargetId,
+        stable_target_id=unit_2.stableTargetId,
         rule_set=OrganizationalUnitRuleSetRequest(
-            subtractive=SubtractiveOrganizationalUnit(name=organizational_unit_2.name)
+            subtractive=SubtractiveOrganizationalUnit(name=unit_2.name)
         ),
     )
     response = client_with_api_key_read_permission.get(
         "/v0/merged-item?entityType=MergedOrganizationalUnit"
     )
     assert response.status_code == status.HTTP_200_OK, response.text
-    # expect org unit 2 to be filtered out (only unit 1 remains)
-    assert response.json()["items"] == [
-        {
-            "parentUnit": None,
-            "name": [{"value": "Unit 1", "language": "en"}],
-            "alternativeName": [],
-            "email": [],
-            "shortName": [],
-            "supersededBy": None,
-            "unitOf": ["bFQoRhcVH5DHUv"],
-            "website": [],
-            "$type": "MergedOrganizationalUnit",
-            "identifier": "bFQoRhcVH5DHUx",
-        }
-    ]
+    # expect org unit 2 to be filtered out (only unit 1 and 3 remain)
+    assert response.json() == {
+        "items": [
+            {
+                "$type": "MergedOrganizationalUnit",
+                "alternativeName": [],
+                "email": ["1.7@rki.de"],
+                "identifier": "StandaloneRule",
+                "name": [{"language": "de", "value": "Abteilung 1.7"}],
+                "parentUnit": "bFQoRhcVH5DHUx",
+                "shortName": [],
+                "supersededBy": None,
+                "unitOf": [],
+                "website": [],
+            },
+            {
+                "$type": "MergedOrganizationalUnit",
+                "alternativeName": [],
+                "email": [],
+                "identifier": "bFQoRhcVH5DHUx",
+                "name": [{"language": "en", "value": "Unit 1"}],
+                "parentUnit": None,
+                "shortName": [],
+                "supersededBy": None,
+                "unitOf": ["bFQoRhcVH5DHUv"],
+                "website": [{"language": None, "title": None, "url": "https://ou-1"}],
+            },
+        ],
+        "total": 3,  # the total still contains the filtered-out items :/
+    }
 
 
 @pytest.mark.integration
@@ -441,13 +416,13 @@ def test_search_merged_items_in_graph_bad_request(
 @pytest.mark.integration
 def test_get_merged_item(
     client_with_api_key_read_permission: TestClient,
-    load_dummy_data: dict[str, AnyExtractedModel],
+    loaded_dummy_data: DummyData,
 ) -> None:
-    extracted_organization_1 = load_dummy_data["organization_1"]
-    extracted_organization_2 = load_dummy_data["organization_2"]
+    extracted_organization_1 = loaded_dummy_data["organization_1"]
+
     merged_organization = create_merged_item(
         identifier=extracted_organization_1.stableTargetId,
-        extracted_items=[extracted_organization_2, extracted_organization_1],
+        extracted_items=[extracted_organization_1],
         rule_set=None,
         validation=Validation.STRICT,
     )
@@ -471,32 +446,37 @@ def test_get_merged_item_not_found(
 @pytest.mark.parametrize(
     ("item_name", "url_params"),
     [
-        ("activity_1", ""),
-        ("activity_1", "include_rule_set=true"),
-        ("organizational_unit_2", "include_rule_set=true"),
-        ("standalone_rule_set", "include_rule_set=true"),
-    ],
-    ids=[
-        "item without rule set does not need parameter",
-        "item without rule set can have parameter",
-        "item with rule set needs parameter",
-        "rule-set-only item needs parameter",
+        pytest.param(
+            "activity_1",
+            "",
+            id="no-rule-set-no-param",
+        ),
+        pytest.param(
+            "activity_1",
+            "include_rule_set=true",
+            id="no-rule-set-with-param",
+        ),
+        pytest.param(
+            "unit_2",
+            "include_rule_set=true",
+            id="with-rule-set-needs-param",
+        ),
+        pytest.param(
+            "unit_3_standalone_rule_set",
+            "include_rule_set=true",
+            id="rule-set-only-needs-param",
+        ),
     ],
 )
-@pytest.mark.usefixtures("load_dummy_rule_set")
 @pytest.mark.integration
 def test_delete_merged_item(
     client_with_api_key_write_permission: TestClient,
-    load_dummy_data: dict[str, AnyExtractedModel],
-    load_standalone_dummy_rule_set: OrganizationalUnitRuleSetResponse,
-    item_name: str,
+    loaded_dummy_data: DummyData,
+    item_name: DummyDataName,
     url_params: str,
 ) -> None:
     # Get item for current test
-    item = {
-        **load_dummy_data,
-        "standalone_rule_set": load_standalone_dummy_rule_set,
-    }[item_name]
+    item = loaded_dummy_data[item_name]
 
     # Attempt to delete the item
     response = client_with_api_key_write_permission.delete(
@@ -520,50 +500,50 @@ def test_delete_merged_item(
         "status_code_after",
     ),
     [
-        (
-            "organizational_unit_2",
+        pytest.param(
+            "unit_2",
             "",
             status.HTTP_412_PRECONDITION_FAILED,
             status.HTTP_200_OK,
+            id="rule-set-without-param",
         ),
-        (
-            "organizational_unit_2",
+        pytest.param(
+            "unit_2",
             "include_rule_set=false",
             status.HTTP_412_PRECONDITION_FAILED,
             status.HTTP_200_OK,
+            id="rule-set-explicit-false",
         ),
-        (
+        pytest.param(
             "contact_point_1",
             "",
             status.HTTP_409_CONFLICT,
             status.HTTP_200_OK,
+            id="inbound-connections",
         ),
-        (
+        pytest.param(
             "not_a_real_item",
             "",
             status.HTTP_404_NOT_FOUND,
             status.HTTP_404_NOT_FOUND,
+            id="not-found",
         ),
     ],
-    ids=[
-        "item with rule set without parameter",
-        "item with rule set with explicit parameter false",
-        "item with inbound connections",
-        "non-existent items not found",
-    ],
 )
-@pytest.mark.usefixtures("load_dummy_rule_set")
 @pytest.mark.integration
 def test_delete_merged_item_fails(  # noqa: PLR0913
     client_with_api_key_write_permission: TestClient,
-    load_dummy_data: dict[str, AnyExtractedModel],
-    item_name: str,
+    loaded_dummy_data: DummyData,
+    item_name: DummyDataName,
     url_params: str,
     status_code_delete: int,
     status_code_after: int,
 ) -> None:
     # Get item for current test
-    item = load_dummy_data.get(item_name, Mock(stableTargetId="notARealIdentifier"))
+    try:
+        item = loaded_dummy_data[item_name]
+    except KeyError:
+        item = Mock(stableTargetId="notARealIdentifier")
 
     # Should fail when there are rules, but `include_rule_set` is not set to `true`
     response = client_with_api_key_write_permission.delete(

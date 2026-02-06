@@ -26,16 +26,26 @@ john_doe_response = {
 @pytest.mark.parametrize(
     ("search_string", "expected"),
     [
-        ("John Doe", {"items": [john_doe_response], "total": 1}),
-        ("Multiple Doe", {"items": [john_doe_response] * 10, "total": 10}),
-        ("John O'Doe", {"items": [john_doe_response], "total": 1}),
-        ("", {"items": [], "total": 0}),
-    ],
-    ids=[
-        "existing person by name",
-        "multiple results",
-        "special symbols",
-        "empty search string",
+        pytest.param(
+            "John Doe",
+            {"items": [john_doe_response], "total": 1},
+            id="existing-person",
+        ),
+        pytest.param(
+            "Multiple Doe",
+            {"items": [john_doe_response] * 10, "total": 10},
+            id="multiple-results",
+        ),
+        pytest.param(
+            "John O'Doe",
+            {"items": [john_doe_response], "total": 1},
+            id="special-symbols",
+        ),
+        pytest.param(
+            "",
+            {"items": [], "total": 0},
+            id="empty-search",
+        ),
     ],
 )
 @pytest.mark.usefixtures("mocked_orcid")
@@ -65,16 +75,17 @@ def test_search_persons_in_orcid_empty(
 @pytest.mark.parametrize(
     ("filters", "expected_output"),
     [
-        (
+        pytest.param(
             {"given-and-family-names": "'John Doe'"},
             "given-and-family-names:'John Doe'",
+            id="one-param",
         ),
-        (
+        pytest.param(
             {"given-names": "John", "family-name": "Doe"},
             "given-names:John AND family-name:Doe",
+            id="two-params",
         ),
     ],
-    ids=["One param", "two params"],
 )
 @pytest.mark.usefixtures("mocked_orcid")
 def test_build_query(filters: dict[str, Any], expected_output: str) -> None:
