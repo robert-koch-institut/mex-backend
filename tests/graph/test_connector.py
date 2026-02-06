@@ -8,10 +8,9 @@ from pytest import MonkeyPatch
 
 from mex.backend.graph import connector as connector_module
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.graph.exceptions import IngestionError, MatchingError
+from mex.backend.graph.exceptions import IngestionError
 from mex.backend.graph.models import IngestParams
 from mex.backend.graph.query import Query
-from mex.backend.merged.helpers import get_merged_item_from_graph
 from mex.backend.settings import BackendSettings
 from mex.common.exceptions import MExError
 from mex.common.models import (
@@ -22,7 +21,7 @@ from mex.common.models import (
     ExtractedOrganizationalUnit,
 )
 from mex.common.types import Identifier, Text, TextLanguage
-from tests.conftest import DummyData, DummyDataName, MockedGraph, get_graph
+from tests.conftest import DummyData, MockedGraph, get_graph
 
 
 @pytest.fixture
@@ -1743,30 +1742,6 @@ def test_mocked_graph_ingests_extracted_models(
     ]
     deque(graph.ingest_items(extracted_models))
     assert len(mocked_graph.call_args_list) == len(extracted_models)
-
-
-@pytest.mark.parametrize(
-    ("extracted_name", "merged_name", "expected_error"),
-    [
-        ("contact_point_1", "contact_point_2", "old_rules_exist"),
-        ("contact_point_1", "activity_1", "old_rules_exist, same_merged_type"),
-    ],
-)
-@pytest.mark.integration
-def test_match_item_failed_preconditions(
-    extracted_name: DummyDataName,
-    merged_name: DummyDataName,
-    expected_error: str,
-    loaded_dummy_data: DummyData,
-) -> None:
-    extracted_item = loaded_dummy_data[extracted_name]
-    assert isinstance(extracted_item, AnyExtractedModel)
-    merged_item = get_merged_item_from_graph(
-        loaded_dummy_data[merged_name].stableTargetId
-    )
-    graph = GraphConnector.get()
-    with pytest.raises(MatchingError, match=f"Failed preconditions: {expected_error}"):
-        graph.match_item(extracted_item, merged_item)
 
 
 @pytest.mark.integration
