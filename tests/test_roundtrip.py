@@ -1,7 +1,7 @@
 import pytest
 
 from mex.backend.extracted.helpers import search_extracted_items_in_graph
-from mex.backend.graph.models import MExPrimarySource
+from mex.backend.graph.models import MExEditorPrimarySource, MExPrimarySource
 from mex.common.models import AnyExtractedModel, PaginatedItemsContainer
 
 
@@ -10,7 +10,7 @@ def test_graph_ingest_and_query_roundtrip(
     load_dummy_data: dict[str, AnyExtractedModel],
 ) -> None:
     seeded_models = sorted(
-        [*load_dummy_data.values(), MExPrimarySource()],
+        [*load_dummy_data.values(), MExPrimarySource(), MExEditorPrimarySource()],
         key=lambda x: x.identifier,
     )
 

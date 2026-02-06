@@ -43,6 +43,38 @@ class MExPrimarySource(BasePrimarySource):
     stableTargetId: MergedPrimarySourceIdentifier = MEX_PRIMARY_SOURCE_STABLE_TARGET_ID
 
 
+MEX_EDITOR_PRIMARY_SOURCE_IDENTIFIER = ExtractedPrimarySourceIdentifier(
+    "00000000000003"
+)
+MEX_EDITOR_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE = "mex-editor"
+MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID = MergedPrimarySourceIdentifier(
+    "00000000000002"
+)
+BasePrimarySource.model_construct()
+
+
+class MExEditorPrimarySource(BasePrimarySource):
+    """Static metadata for the MEx Editor primary source.
+
+    An instance of this class will bypass the IdentityProvider. This way we can ensure
+    that the MEx Editor primary source receives static identifiers.
+    """
+
+    entityType: Annotated[
+        Literal["ExtractedPrimarySource"], Field(alias="$type", frozen=True)
+    ] = "ExtractedPrimarySource"
+    hadPrimarySource: MergedPrimarySourceIdentifier = (
+        MEX_PRIMARY_SOURCE_STABLE_TARGET_ID
+    )
+    identifier: ExtractedPrimarySourceIdentifier = MEX_EDITOR_PRIMARY_SOURCE_IDENTIFIER
+    identifierInPrimarySource: str = (
+        MEX_EDITOR_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE
+    )
+    stableTargetId: MergedPrimarySourceIdentifier = (
+        MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID
+    )
+
+
 class EdgeExporter(RecordExporter):
     """Transformer class that turns edges into a string of format `label {props}`.
 

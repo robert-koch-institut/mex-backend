@@ -9,7 +9,7 @@ from pytest import MonkeyPatch
 from mex.backend.graph import connector as connector_module
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import IngestionError
-from mex.backend.graph.models import IngestParams
+from mex.backend.graph.models import IngestParams, MExEditorPrimarySource
 from mex.backend.graph.query import Query
 from mex.backend.settings import BackendSettings
 from mex.common.exceptions import MExError
@@ -143,30 +143,52 @@ def test_mocked_graph_seed_indices(
 
 @pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
 def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
-    mocked_graph.return_value = [
-        {
-            "identifier": "00000000000001",
-            "stableTargetId": "00000000000000",
-            "entityType": "ExtractedPrimarySource",
-            "linkRels": [
-                {
-                    "nodeProps": {"identifier": "00000000000000"},
-                    "edgeLabel": "hadPrimarySource",
-                    "edgeProps": {"position": 0},
-                    "nodeLabels": ["MergedPrimarySource"],
-                }
-            ],
-            "createRels": [],
-            "nodeProps": {
-                "identifierInPrimarySource": "mex",
+    mocked_graph.side_effect = [
+        [
+            {
                 "identifier": "00000000000001",
-            },
-        }
+                "stableTargetId": "00000000000000",
+                "entityType": "ExtractedPrimarySource",
+                "linkRels": [
+                    {
+                        "nodeProps": {"identifier": "00000000000000"},
+                        "edgeLabel": "hadPrimarySource",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["MergedPrimarySource"],
+                    }
+                ],
+                "createRels": [],
+                "nodeProps": {
+                    "identifierInPrimarySource": "mex",
+                    "identifier": "00000000000001",
+                },
+            }
+        ],
+        [
+            {
+                "identifier": "00000000000003",
+                "stableTargetId": "00000000000002",
+                "entityType": "ExtractedPrimarySource",
+                "linkRels": [
+                    {
+                        "nodeProps": {"identifier": "00000000000000"},
+                        "edgeLabel": "hadPrimarySource",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["MergedPrimarySource"],
+                    }
+                ],
+                "createRels": [],
+                "nodeProps": {
+                    "identifierInPrimarySource": "mex-editor",
+                    "identifier": "00000000000003",
+                },
+            }
+        ],
     ]
     graph = GraphConnector.get()
     graph._seed_data()
 
-    assert mocked_graph.call_args_list[-1] == call(
+    assert mocked_graph.call_args_list[0] == call(
         call(
             "merge_item",
             params=IngestParams(
@@ -257,6 +279,7 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
             filter_by_identifier=False,
             filter_by_stable_target_id=True,
             filter_by_referenced_identifiers=False,
+            filter_rule_items=False,
             reference_field=None,
         ),
         {
@@ -287,15 +310,91 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
 
 
 @pytest.mark.parametrize(
-    ("query_string", "stable_target_id", "entity_type", "limit", "expected"),
+    ("query_parameters", "expected"),
     [
-        (None, "thisIdDoesNotExist", None, 10, {"items": [], "total": 0}),
-        ("this_search_term_is_not_findable", None, None, 10, {"items": [], "total": 0}),
-        (
-            None,
-            None,
-            None,
-            1,
+        pytest.param(
+            {"stable_target_id": "thisIdDoesNotExist"},
+            {"items": [], "total": 0},
+            id="id not found",
+        ),
+        pytest.param(
+            {"query_string": "this_search_term_is_not_findable"},
+            {"items": [], "total": 0},
+            id="search not found",
+        ),
+        pytest.param(
+            {
+                "referenced_identifiers": [MExEditorPrimarySource().stableTargetId],
+                "reference_field": "hadPrimarySource",
+            },
+            {"items": [], "total": 0},
+            id="no items with primary source mex-editor",
+        ),
+        pytest.param(
+            {
+                "referenced_identifiers": ["bFQoRhcVH5DHUt"],
+                "reference_field": "hadPrimarySource",
+                "limit": 1,
+            },
+            {
+                "items": [
+                    {
+                        "rorId": [],
+                        "gndId": [],
+                        "wikidataId": [],
+                        "identifierInPrimarySource": "robert-koch-institute",
+                        "viafId": [],
+                        "geprisId": [],
+                        "isniId": [],
+                        "entityType": "ExtractedOrganization",
+                        "identifier": "bFQoRhcVH5DHUC",
+                        "stableTargetId": ["bFQoRhcVH5DHUv"],
+                        "hadPrimarySource": ["bFQoRhcVH5DHUt"],
+                        "officialName": [
+                            {"value": "RKI", "language": "de"},
+                            {"value": "Robert Koch Institute", "language": "en"},
+                        ],
+                    },
+                ],
+                "total": 3,
+            },
+            id="get all extracted items connected to primary source x when filtering for primary source x",
+        ),
+        pytest.param(
+            {
+                "referenced_identifiers": [
+                    MExEditorPrimarySource().stableTargetId,
+                    "bFQoRhcVH5DHUt",
+                ],
+                "reference_field": "hadPrimarySource",
+                "limit": 1,
+            },
+            {
+                "items": [
+                    {
+                        "rorId": [],
+                        "gndId": [],
+                        "wikidataId": [],
+                        "identifierInPrimarySource": "robert-koch-institute",
+                        "viafId": [],
+                        "geprisId": [],
+                        "isniId": [],
+                        "entityType": "ExtractedOrganization",
+                        "identifier": "bFQoRhcVH5DHUC",
+                        "stableTargetId": ["bFQoRhcVH5DHUv"],
+                        "hadPrimarySource": ["bFQoRhcVH5DHUt"],
+                        "officialName": [
+                            {"value": "RKI", "language": "de"},
+                            {"value": "Robert Koch Institute", "language": "en"},
+                        ],
+                    },
+                ],
+                "total": 3,
+            },
+            id="get all extracted items connected to primary source x when filtering for primary source mex-editor and primary source x",
+        ),
+        pytest.param(
+            {"limit": 1},
             {
                 "items": [
                     {
@@ -306,14 +405,12 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                         "hadPrimarySource": ["00000000000000"],
                     }
                 ],
-                "total": 10,
+                "total": 11,
             },
+            id="no filters",
         ),
-        (
-            None,
-            None,
-            ["ExtractedOrganization"],
-            1,
+        pytest.param(
+            {"entity_type": ["ExtractedOrganization"], "limit": 1},
             {
                 "items": [
                     {
@@ -336,14 +433,13 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                 ],
                 "total": 2,
             },
+            id="entity type filter",
         ),
-        (
-            # find exact matches. without the quotes this might also match the second
-            # contact point's email `help@contact-point.two`
-            '"info@contact-point.one"',
-            None,
-            None,
-            10,
+        pytest.param(
+            {  # find exact matches. without the quotes this might also match the second
+                # contact point's email `help@contact-point.two`
+                "query_string": '"info@contact-point.one"',
+            },
             {
                 "items": [
                     {
@@ -357,12 +453,10 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                 ],
                 "total": 1,
             },
+            id="find exact",
         ),
-        (
-            "contact point",
-            None,
-            None,
-            10,
+        pytest.param(
+            {"query_string": "contact point"},
             {
                 "items": [
                     {
@@ -384,12 +478,10 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                 ],
                 "total": 2,
             },
+            id="find fuzzy",
         ),
-        (
-            "RKI",
-            None,
-            None,
-            10,
+        pytest.param(
+            {"query_string": "RKI"},
             {
                 "items": [
                     {
@@ -432,12 +524,10 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                 ],
                 "total": 2,
             },
+            id="find Text",
         ),
-        (
-            "Homepage",
-            None,
-            None,
-            10,
+        pytest.param(
+            {"query_string": "Homepage"},
             {
                 "items": [
                     {
@@ -469,39 +559,29 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                 ],
                 "total": 1,
             },
+            id="find Link",
         ),
     ],
-    ids=[
-        "id not found",
-        "search not found",
-        "no filters",
-        "entity type filter",
-        "find exact",
-        "find fuzzy",
-        "find Text",
-        "find Link",
-    ],
 )
-@pytest.mark.usefixtures("load_dummy_data")
+@pytest.mark.usefixtures("load_dummy_data", "load_dummy_rule_set")
 @pytest.mark.integration
 def test_fetch_extracted_items(
-    query_string: str | None,
-    stable_target_id: str | None,
-    entity_type: list[str] | None,
-    limit: int,
+    query_parameters: dict[str, Any],
     expected: dict[str, Any],
 ) -> None:
+    query_parameter_defaults = {
+        "query_string": None,
+        "identifier": None,
+        "stable_target_id": None,
+        "entity_type": None,
+        "referenced_identifiers": None,
+        "reference_field": None,
+        "skip": 0,
+        "limit": 10,
+    }
+    query_kwargs = query_parameter_defaults | query_parameters
     graph = GraphConnector.get()
-    result = graph.fetch_extracted_items(
-        query_string=query_string,
-        identifier=None,
-        stable_target_id=stable_target_id,
-        entity_type=entity_type,
-        referenced_identifiers=None,
-        reference_field=None,
-        skip=0,
-        limit=limit,
-    )
+    result = graph.fetch_extracted_items(**query_kwargs)
 
     assert result.one() == expected
 
@@ -542,6 +622,7 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
             filter_by_identifier=False,
             filter_by_stable_target_id=True,
             filter_by_referenced_identifiers=False,
+            filter_rule_items=False,
             reference_field=None,
         ),
         {
@@ -572,13 +653,67 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
 
 
 @pytest.mark.parametrize(
-    ("query_string", "stable_target_id", "expected"),
+    ("query_parameters", "expected"),
     [
-        (None, "thisIdDoesNotExist", {"items": [], "total": 0}),
-        ("this_search_term_is_not_findable", None, {"items": [], "total": 0}),
-        (
-            None,
-            None,
+        pytest.param(
+            {"stable_target_id": "thisIdDoesNotExist"},
+            {"items": [], "total": 0},
+            id="id not found",
+        ),
+        pytest.param(
+            {"query_string": "this_search_term_is_not_findable"},
+            {"items": [], "total": 0},
+            id="search not found",
+        ),
+        pytest.param(
+            {
+                "referenced_identifiers": [MExEditorPrimarySource().stableTargetId],
+                "reference_field": "hadPrimarySource",
+            },
+            {
+                "items": [
+                    {
+                        "email": [],
+                        "entityType": "AdditiveOrganizationalUnit",
+                        "name": [{"language": "en", "value": "Unit 1.7"}],
+                        "parentUnit": ["bFQoRhcVH5DHUx"],
+                        "stableTargetId": ["bFQoRhcVH5DHUF"],
+                        "website": [
+                            {"title": "Unit Homepage", "url": "https://unit-1-7"}
+                        ],
+                    }
+                ],
+                "total": 3,
+            },
+            id="get all rules when filtering for primary source mex-editor",
+        ),
+        pytest.param(
+            {
+                "referenced_identifiers": [
+                    MExEditorPrimarySource().stableTargetId,
+                    "thisIdDoesNotExist",
+                ],
+                "reference_field": "hadPrimarySource",
+            },
+            {
+                "items": [
+                    {
+                        "email": [],
+                        "entityType": "AdditiveOrganizationalUnit",
+                        "name": [{"language": "en", "value": "Unit 1.7"}],
+                        "parentUnit": ["bFQoRhcVH5DHUx"],
+                        "stableTargetId": ["bFQoRhcVH5DHUF"],
+                        "website": [
+                            {"title": "Unit Homepage", "url": "https://unit-1-7"}
+                        ],
+                    }
+                ],
+                "total": 3,
+            },
+            id="get all rules when filtering for primary source mex-editor and another primary source",
+        ),
+        pytest.param(
+            {},
             {
                 "items": [
                     {
@@ -594,10 +729,10 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
                 ],
                 "total": 3,
             },
+            id="no filters",
         ),
-        (
-            '"Unit 1.7"',
-            None,
+        pytest.param(
+            {"query_string": '"Unit 1.7"'},
             {
                 "items": [
                     {
@@ -613,34 +748,29 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
                 ],
                 "total": 1,
             },
+            id="find Link",
         ),
-    ],
-    ids=[
-        "id not found",
-        "search not found",
-        "no filters",
-        "find Link",
     ],
 )
 @pytest.mark.usefixtures("load_dummy_data", "load_dummy_rule_set")
 @pytest.mark.integration
 def test_fetch_rule_items(
-    query_string: str | None,
-    stable_target_id: str | None,
+    query_parameters: dict[str, Any],
     expected: dict[str, Any],
 ) -> None:
+    query_parameter_defaults = {
+        "query_string": None,
+        "identifier": None,
+        "stable_target_id": None,
+        "entity_type": None,
+        "referenced_identifiers": None,
+        "reference_field": None,
+        "skip": 0,
+        "limit": 1,
+    }
+    query_kwargs = query_parameter_defaults | query_parameters
     graph = GraphConnector.get()
-
-    result = graph.fetch_rule_items(
-        query_string=query_string,
-        identifier=None,
-        stable_target_id=stable_target_id,
-        entity_type=None,
-        referenced_identifiers=None,
-        reference_field=None,
-        skip=0,
-        limit=1,
-    )
+    result = graph.fetch_rule_items(**query_kwargs)
 
     assert result.one() == expected
 
@@ -721,6 +851,7 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
             filter_by_query_string=True,
             filter_by_identifier=True,
             filter_by_referenced_identifiers=True,
+            filter_items_with_rules=False,
             reference_field="hadPrimarySource",
         ),
         {
@@ -776,40 +907,28 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
 
 @pytest.mark.parametrize(
     (
-        "query_string",
-        "identifier",
-        "entity_type",
-        "referenced_identifiers",
-        "reference_field",
-        "limit",
+        "query_parameters",
         "expected",
     ),
     [
-        (
-            None,
-            "thisIdDoesNotExist",
-            None,
-            None,
-            None,
-            10,
+        pytest.param(
+            {
+                "identifier": "thisIdDoesNotExist",
+            },
             {"items": [], "total": 0},
+            id="id not found",
         ),
-        (
-            "this_search_term_is_not_findable",
-            None,
-            None,
-            None,
-            None,
-            10,
+        pytest.param(
+            {
+                "query_string": "this_search_term_is_not_findable",
+            },
             {"items": [], "total": 0},
+            id="search not found",
         ),
-        (
-            None,
-            None,
-            None,
-            None,
-            None,
-            1,
+        pytest.param(
+            {
+                "limit": 1,
+            },
             {
                 "items": [
                     {
@@ -826,16 +945,15 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                         "identifier": "00000000000000",
                     }
                 ],
-                "total": 9,
+                "total": 10,
             },
+            id="no filters",
         ),
-        (
-            None,
-            None,
-            ["MergedOrganization"],
-            None,
-            None,
-            1,
+        pytest.param(
+            {
+                "entity_type": ["MergedOrganization"],
+                "limit": 1,
+            },
             {
                 "items": [
                     {
@@ -887,14 +1005,14 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 1,
             },
+            id="entity type filter",
         ),
-        (
-            None,
-            None,
-            None,
-            ["bFQoRhcVH5DHUt"],
-            "hadPrimarySource",
-            1,
+        pytest.param(
+            {
+                "referenced_identifiers": ["bFQoRhcVH5DHUt"],
+                "reference_field": "hadPrimarySource",
+                "limit": 1,
+            },
             {
                 "items": [
                     {
@@ -939,14 +1057,97 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 3,
             },
+            id="had primary source filter",
         ),
-        (
-            "Unit",
-            None,
-            None,
-            ["bFQoRhcVH5DHUt"],
-            "hadPrimarySource",
-            1,
+        pytest.param(
+            {
+                "referenced_identifiers": [MExEditorPrimarySource().stableTargetId],
+                "reference_field": "hadPrimarySource",
+                "limit": 1,
+            },
+            {
+                "items": [
+                    {
+                        "_components": [
+                            {
+                                "email": [],
+                                "entityType": "ExtractedOrganizationalUnit",
+                                "hadPrimarySource": ["bFQoRhcVH5DHUt"],
+                                "identifier": "bFQoRhcVH5DHUE",
+                                "identifierInPrimarySource": "ou-1.6",
+                                "name": [{"language": "en", "value": "Unit 1.6"}],
+                                "parentUnit": ["bFQoRhcVH5DHUx"],
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                                "unitOf": ["bFQoRhcVH5DHUv"],
+                            },
+                            {
+                                "email": [],
+                                "entityType": "AdditiveOrganizationalUnit",
+                                "name": [{"language": "en", "value": "Unit 1.7"}],
+                                "parentUnit": ["bFQoRhcVH5DHUx"],
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                                "website": [
+                                    {
+                                        "title": "Unit Homepage",
+                                        "url": "https://unit-1-7",
+                                    }
+                                ],
+                            },
+                            {
+                                "entityType": "PreventiveOrganizationalUnit",
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                            },
+                            {
+                                "email": [],
+                                "entityType": "SubtractiveOrganizationalUnit",
+                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                            },
+                        ],
+                        "entityType": "MergedOrganizationalUnit",
+                        "identifier": "bFQoRhcVH5DHUF",
+                    }
+                ],
+                "total": 1,
+            },
+            id="had primary source mex-editor filter",
+        ),
+        pytest.param(
+            {
+                "referenced_identifiers": [
+                    MExEditorPrimarySource().stableTargetId,
+                    "bFQoRhcVH5DHUr",
+                ],
+                "reference_field": "hadPrimarySource",
+                "limit": 1,
+            },
+            {
+                "items": [
+                    {
+                        "_components": [
+                            {
+                                "email": ["help@contact-point.two"],
+                                "entityType": "ExtractedContactPoint",
+                                "hadPrimarySource": ["bFQoRhcVH5DHUr"],
+                                "identifier": "bFQoRhcVH5DHUA",
+                                "identifierInPrimarySource": "cp-2",
+                                "stableTargetId": ["bFQoRhcVH5DHUB"],
+                            }
+                        ],
+                        "entityType": "MergedContactPoint",
+                        "identifier": "bFQoRhcVH5DHUB",
+                    }
+                ],
+                "total": 5,
+            },
+            id="filter for had primary sources mex-editor and primary source x returns 4 from x and 1 from editor",
+        ),
+        pytest.param(
+            {
+                "query_string": "Unit",
+                "referenced_identifiers": ["bFQoRhcVH5DHUt"],
+                "reference_field": "hadPrimarySource",
+                "limit": 1,
+            },
             {
                 "items": [
                     {
@@ -991,16 +1192,14 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 2,
             },
+            id="had primary source filter and filter by query",
         ),
-        (
-            # find exact matches. without the quotes this might also match the second
-            # contact point's email `help@contact-point.two`
-            '"info@contact-point.one"',
-            None,
-            None,
-            None,
-            None,
-            10,
+        pytest.param(
+            {
+                # find exact matches. without the quotes this might also match the second
+                # contact point's email `help@contact-point.two`
+                "query_string": '"info@contact-point.one"',
+            },
             {
                 "items": [
                     {
@@ -1020,14 +1219,12 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 1,
             },
+            id="find exact",
         ),
-        (
-            "contact point",
-            None,
-            None,
-            None,
-            None,
-            10,
+        pytest.param(
+            {
+                "query_string": "contact point",
+            },
             {
                 "items": [
                     {
@@ -1061,14 +1258,12 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 2,
             },
+            id="find fuzzy",
         ),
-        (
-            "RKI",
-            None,
-            None,
-            None,
-            None,
-            10,
+        pytest.param(
+            {
+                "query_string": "RKI",
+            },
             {
                 "items": [
                     {
@@ -1120,14 +1315,12 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 1,
             },
+            id="find Text",
         ),
-        (
-            "Homepage",
-            None,
-            None,
-            None,
-            None,
-            10,
+        pytest.param(
+            {
+                "query_string": "Homepage",
+            },
             {
                 "items": [
                     {
@@ -1207,43 +1400,29 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                 ],
                 "total": 2,
             },
+            id="find Link",
         ),
-    ],
-    ids=[
-        "id not found",
-        "search not found",
-        "no filters",
-        "entity type filter",
-        "had primary source filter",
-        "had primary source filter and filter by query",
-        "find exact",
-        "find fuzzy",
-        "find Text",
-        "find Link",
     ],
 )
 @pytest.mark.usefixtures("load_dummy_data", "load_dummy_rule_set")
 @pytest.mark.integration
-def test_fetch_merged_items(  # noqa: PLR0913
-    query_string: str | None,
-    identifier: str | None,
-    entity_type: list[str] | None,
-    referenced_identifiers: list[str] | None,
-    reference_field: str | None,
-    limit: int,
+def test_fetch_merged_items(
+    query_parameters: dict[str, Any],
     expected: dict[str, Any],
 ) -> None:
+    query_parameter_defaults = {
+        "query_string": None,
+        "identifier": None,
+        "entity_type": None,
+        "referenced_identifiers": None,
+        "reference_field": None,
+        "skip": 0,
+        "limit": 10,
+    }
+    query_kwargs = query_parameter_defaults | query_parameters
     graph = GraphConnector.get()
 
-    result = graph.fetch_merged_items(
-        query_string=query_string,
-        identifier=identifier,
-        entity_type=entity_type,
-        referenced_identifiers=referenced_identifiers,
-        reference_field=reference_field,
-        skip=0,
-        limit=limit,
-    )
+    result = graph.fetch_merged_items(**query_kwargs)
 
     assert result.one() == expected
 
