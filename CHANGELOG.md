@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - change response rendering from stdlib json to orjson with sorted keys and indent
 - use pytest.param to keep test ids and test parameter sets close together
 - clean up dummy and artificial test data in conftest
+- updated template to https://github.com/robert-koch-institut/mex-template/commit/81bc5b
 
 ### Deprecated
 
