@@ -7,7 +7,9 @@ from tests.conftest import DummyData
 
 
 @pytest.mark.integration
-def test_get_extracted_item_from_graph(loaded_dummy_data: DummyData) -> None:
+def test_get_extracted_item_from_graph(
+    loaded_dummy_data: DummyData,
+) -> None:
     organization_1 = loaded_dummy_data["organization_1"]
     assert get_extracted_item_from_graph(organization_1.identifier) == organization_1
 

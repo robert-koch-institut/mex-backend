@@ -1339,7 +1339,10 @@ def test_mocked_run_ingest_in_transaction_rule_set(
     graph = GraphConnector.get()
 
     with graph.driver.session() as session, session.begin_transaction() as tx:
-        graph._run_ingest_in_transaction(tx, dummy_data["unit_2_rule_set"])
+        graph._run_ingest_in_transaction(
+            tx,
+            dummy_data["unit_2_rule_set"],
+        )
 
     assert (
         mocked_graph.call_args_list

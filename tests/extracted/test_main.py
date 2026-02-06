@@ -5,9 +5,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
 from starlette import status
 
-from mex.common.models import (
-    ExtractedOrganizationalUnit,
-)
+from mex.common.models import ExtractedOrganizationalUnit
 from tests.conftest import DummyData, MockedGraph
 
 
@@ -171,20 +169,20 @@ def test_search_extracted_items_mocked(
             {
                 "items": [
                     {
-                        "hadPrimarySource": "bFQoRhcVH5DHUt",
-                        "identifierInPrimarySource": "ou-1",
-                        "parentUnit": None,
-                        "name": [{"value": "Unit 1", "language": "en"}],
+                        "$type": "ExtractedOrganizationalUnit",
                         "alternativeName": [],
                         "email": [],
+                        "hadPrimarySource": "bFQoRhcVH5DHUt",
+                        "identifier": "bFQoRhcVH5DHUw",
+                        "identifierInPrimarySource": "ou-1",
+                        "name": [{"value": "Unit 1", "language": "en"}],
+                        "parentUnit": None,
                         "shortName": [],
+                        "stableTargetId": "bFQoRhcVH5DHUx",
                         "unitOf": ["bFQoRhcVH5DHUv"],
                         "website": [
                             {"language": None, "title": None, "url": "https://ou-1"}
                         ],
-                        "$type": "ExtractedOrganizationalUnit",
-                        "identifier": "bFQoRhcVH5DHUw",
-                        "stableTargetId": "bFQoRhcVH5DHUx",
                     }
                 ],
                 "total": 1,
