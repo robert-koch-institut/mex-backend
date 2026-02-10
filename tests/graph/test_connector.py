@@ -612,15 +612,19 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
             id="no-filters",
         ),
         pytest.param(
-            '"Unit 1.6"',
+            '"Unit Homepage"',
             None,
             {
                 "items": [
                     {
                         "email": [],
-                        "entityType": "SubtractiveOrganizationalUnit",
+                        "entityType": "AdditiveOrganizationalUnit",
                         "stableTargetId": ["bFQoRhcVH5DHUz"],
-                        "name": [{"value": "Unit 1.6", "language": "en"}],
+                        "parentUnit": ["bFQoRhcVH5DHUx"],
+                        "name": [{"value": "Abteilung 1.6", "language": "de"}],
+                        "website": [
+                            {"title": "Unit Homepage", "url": "https://unit-1-6"}
+                        ],
                     }
                 ],
                 "total": 1,
