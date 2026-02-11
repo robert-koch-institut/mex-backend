@@ -8,7 +8,7 @@ from starlette import status
 @pytest.mark.parametrize(
     ("stable_target_id", "json_body", "expected"),
     [
-        (
+        pytest.param(
             "bFQoRhcVH5DHUH",
             {
                 "$type": "ActivityRuleSetRequest",
@@ -20,19 +20,24 @@ from starlette import status
             },
             {
                 "$type": "MergedActivity",
-                "contact": ["bFQoRhcVH5DHUz", "bFQoRhcVH5DHUB", "bFQoRhcVH5DHUx"],
-                "responsibleUnit": ["bFQoRhcVH5DHUx"],
-                "title": [
-                    {"value": "Aktivität 1", "language": "de"},
-                    {"value": "A new beginning", "language": "en"},
-                ],
                 "abstract": [
-                    {"value": "An active activity.", "language": "en"},
-                    {"value": "Eng aktiv Aktivitéit.", "language": None},
+                    {"language": "en", "value": "An active activity."},
+                    {"language": None, "value": "Eng aktiv Aktivitéit."},
                 ],
-                "start": ["2014-08-24"],
+                "contact": [
+                    "bFQoRhcVH5DHUB",
+                    "bFQoRhcVH5DHUD",
+                    "bFQoRhcVH5DHUx",
+                ],
                 "end": ["2025"],
+                "identifier": "bFQoRhcVH5DHUH",
+                "responsibleUnit": ["bFQoRhcVH5DHUx"],
+                "start": ["2014-08-24"],
                 "theme": ["https://mex.rki.de/item/theme-11"],
+                "title": [
+                    {"language": "de", "value": "Aktivität 1"},
+                    {"language": "en", "value": "A new beginning"},
+                ],
                 "website": [
                     {
                         "language": None,
@@ -40,10 +45,10 @@ from starlette import status
                         "url": "https://activity-1",
                     }
                 ],
-                "identifier": "bFQoRhcVH5DHUH",
             },
+            id="additive",
         ),
-        (
+        pytest.param(
             "bFQoRhcVH5DHUH",
             {
                 "$type": "ActivityRuleSetRequest",
@@ -57,7 +62,7 @@ from starlette import status
                 },
             },
             {
-                "contact": ["bFQoRhcVH5DHUz", "bFQoRhcVH5DHUB"],
+                "contact": ["bFQoRhcVH5DHUB", "bFQoRhcVH5DHUD"],
                 "responsibleUnit": ["bFQoRhcVH5DHUx"],
                 "title": [{"value": "Aktivität 1", "language": "de"}],
                 "abstract": [{"value": "An active activity.", "language": "en"}],
@@ -73,8 +78,9 @@ from starlette import status
                 "$type": "MergedActivity",
                 "identifier": "bFQoRhcVH5DHUH",
             },
+            id="subtractive",
         ),
-        (
+        pytest.param(
             "bFQoRhcVH5DHUH",
             {
                 "$type": "ActivityRuleSetRequest",
@@ -85,7 +91,7 @@ from starlette import status
                 },
             },
             {
-                "contact": ["bFQoRhcVH5DHUz", "bFQoRhcVH5DHUB", "bFQoRhcVH5DHUx"],
+                "contact": ["bFQoRhcVH5DHUB", "bFQoRhcVH5DHUD", "bFQoRhcVH5DHUx"],
                 "responsibleUnit": ["bFQoRhcVH5DHUx"],
                 "title": [{"value": "Aktivität 1", "language": "de"}],
                 "abstract": [
@@ -103,8 +109,9 @@ from starlette import status
                 "$type": "MergedActivity",
                 "identifier": "bFQoRhcVH5DHUH",
             },
+            id="preventive",
         ),
-        (
+        pytest.param(
             "unknownStableTargetId",
             {
                 "$type": "ContactPointRuleSetRequest",
@@ -120,17 +127,12 @@ from starlette import status
                 "email": ["test@test.local"],
                 "identifier": "unknownStableTargetId",
             },
+            id="unknown-id",
         ),
-    ],
-    ids=[
-        "additive",
-        "subtractive",
-        "preventive",
-        "unknown-id",
     ],
 )
 @pytest.mark.integration
-@pytest.mark.usefixtures("load_dummy_data")
+@pytest.mark.usefixtures("loaded_dummy_data")
 def test_preview(
     stable_target_id: str,
     client_with_api_key_read_permission: TestClient,
@@ -148,7 +150,7 @@ def test_preview(
 @pytest.mark.parametrize(
     ("query_string", "expected"),
     [
-        (
+        pytest.param(
             "?limit=1",
             {
                 "items": [
@@ -166,44 +168,57 @@ def test_preview(
                         "version": None,
                     }
                 ],
-                "total": 9,
+                "total": 11,
             },
+            id="limit-1",
         ),
-        (
+        pytest.param(
             "?limit=1&skip=8",
             {
                 "items": [
                     {
-                        "email": ["info@contact-point.one"],
-                        "$type": "PreviewContactPoint",
-                        "identifier": "bFQoRhcVH5DHUz",
+                        "$type": "PreviewOrganization",
+                        "alternativeName": [],
+                        "geprisId": [],
+                        "gndId": [],
+                        "identifier": "bFQoRhcVH5DHUv",
+                        "isniId": [],
+                        "officialName": [
+                            {"language": "de", "value": "RKI"},
+                        ],
+                        "rorId": [],
+                        "shortName": [],
                         "supersededBy": None,
+                        "viafId": [],
+                        "wikidataId": [],
                     }
                 ],
-                "total": 9,
+                "total": 11,
             },
+            id="skip-8",
         ),
-        (
+        pytest.param(
             "?entityType=MergedContactPoint",
             {
                 "items": [
                     {
                         "$type": "PreviewContactPoint",
-                        "email": ["help@contact-point.two"],
+                        "email": ["info@contact-point.one"],
                         "identifier": "bFQoRhcVH5DHUB",
                         "supersededBy": None,
                     },
                     {
                         "$type": "PreviewContactPoint",
-                        "email": ["info@contact-point.one"],
-                        "identifier": "bFQoRhcVH5DHUz",
+                        "email": ["help@contact-point.two"],
+                        "identifier": "bFQoRhcVH5DHUD",
                         "supersededBy": None,
                     },
                 ],
                 "total": 2,
             },
+            id="entity-type-contact-points",
         ),
-        (
+        pytest.param(
             "?q=cool",
             {
                 "items": [
@@ -223,8 +238,9 @@ def test_preview(
                 ],
                 "total": 1,
             },
+            id="full-text-search",
         ),
-        (
+        pytest.param(
             "?identifier=bFQoRhcVH5DHUx",
             {
                 "items": [
@@ -233,30 +249,53 @@ def test_preview(
                         "alternativeName": [],
                         "email": [],
                         "identifier": "bFQoRhcVH5DHUx",
-                        "name": [{"language": "en", "value": "Unit 1"}],
+                        "name": [
+                            {"language": "en", "value": "Unit 1"},
+                        ],
                         "parentUnit": None,
                         "shortName": [],
                         "supersededBy": None,
                         "unitOf": ["bFQoRhcVH5DHUv"],
-                        "website": [],
-                    },
+                        "website": [
+                            {"language": None, "title": None, "url": "https://ou-1"}
+                        ],
+                    }
                 ],
                 "total": 1,
             },
+            id="identifier-filter-extracted-only",
         ),
-        (
-            "?identifier=bFQoRhcVH5DHUF",
+        pytest.param(
+            "?identifier=StandaloneRule",
+            {
+                "items": [
+                    {
+                        "$type": "PreviewOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": ["1.7@rki.de"],
+                        "identifier": "StandaloneRule",
+                        "name": [{"language": "de", "value": "Abteilung 1.7"}],
+                        "parentUnit": "bFQoRhcVH5DHUx",
+                        "shortName": [],
+                        "supersededBy": None,
+                        "unitOf": [],
+                        "website": [],
+                    }
+                ],
+                "total": 1,
+            },
+            id="identifier-filter-rule-set-only",
+        ),
+        pytest.param(
+            "?identifier=bFQoRhcVH5DHUz",
             {
                 "items": [
                     {
                         "$type": "PreviewOrganizationalUnit",
                         "alternativeName": [],
                         "email": [],
-                        "identifier": "bFQoRhcVH5DHUF",
-                        "name": [
-                            {"language": "en", "value": "Unit 1.6"},
-                            {"language": "en", "value": "Unit 1.7"},
-                        ],
+                        "identifier": "bFQoRhcVH5DHUz",
+                        "name": [{"language": "de", "value": "Abteilung 1.6"}],
                         "parentUnit": "bFQoRhcVH5DHUx",
                         "shortName": [],
                         "supersededBy": None,
@@ -265,77 +304,16 @@ def test_preview(
                             {
                                 "language": None,
                                 "title": "Unit Homepage",
-                                "url": "https://unit-1-7",
+                                "url": "https://unit-1-6",
                             }
                         ],
                     }
                 ],
                 "total": 1,
             },
+            id="identifier-filter-extracted-and-ruleset",
         ),
-        (
-            "?hadPrimarySource=bFQoRhcVH5DHUt",  # deprecated
-            {
-                "items": [
-                    {
-                        "$type": "PreviewOrganization",
-                        "alternativeName": [],
-                        "geprisId": [],
-                        "gndId": [],
-                        "identifier": "bFQoRhcVH5DHUv",
-                        "isniId": [],
-                        "officialName": [
-                            {"language": "de", "value": "RKI"},
-                            {"language": "en", "value": "Robert Koch Institute"},
-                            {
-                                "language": "de",
-                                "value": "Robert Koch Institut ist the best",
-                            },
-                        ],
-                        "rorId": [],
-                        "shortName": [],
-                        "supersededBy": None,
-                        "viafId": [],
-                        "wikidataId": [],
-                    },
-                    {
-                        "$type": "PreviewOrganizationalUnit",
-                        "alternativeName": [],
-                        "email": [],
-                        "identifier": "bFQoRhcVH5DHUF",
-                        "name": [
-                            {"language": "en", "value": "Unit 1.6"},
-                            {"language": "en", "value": "Unit 1.7"},
-                        ],
-                        "parentUnit": "bFQoRhcVH5DHUx",
-                        "shortName": [],
-                        "supersededBy": None,
-                        "unitOf": ["bFQoRhcVH5DHUv"],
-                        "website": [
-                            {
-                                "language": None,
-                                "title": "Unit Homepage",
-                                "url": "https://unit-1-7",
-                            }
-                        ],
-                    },
-                    {
-                        "$type": "PreviewOrganizationalUnit",
-                        "alternativeName": [],
-                        "email": [],
-                        "identifier": "bFQoRhcVH5DHUx",
-                        "name": [{"language": "en", "value": "Unit 1"}],
-                        "parentUnit": None,
-                        "shortName": [],
-                        "supersededBy": None,
-                        "unitOf": ["bFQoRhcVH5DHUv"],
-                        "website": [],
-                    },
-                ],
-                "total": 3,
-            },
-        ),
-        (
+        pytest.param(
             "?referencedIdentifier=bFQoRhcVH5DHUt&referenceField=hadPrimarySource",
             {
                 "items": [
@@ -344,15 +322,11 @@ def test_preview(
                         "alternativeName": [],
                         "geprisId": [],
                         "gndId": [],
-                        "identifier": "bFQoRhcVH5DHUv",
+                        "identifier": "bFQoRhcVH5DHUF",
                         "isniId": [],
                         "officialName": [
                             {"language": "de", "value": "RKI"},
                             {"language": "en", "value": "Robert Koch Institute"},
-                            {
-                                "language": "de",
-                                "value": "Robert Koch Institut ist the best",
-                            },
                         ],
                         "rorId": [],
                         "shortName": [],
@@ -364,11 +338,22 @@ def test_preview(
                         "$type": "PreviewOrganizationalUnit",
                         "alternativeName": [],
                         "email": [],
-                        "identifier": "bFQoRhcVH5DHUF",
-                        "name": [
-                            {"language": "en", "value": "Unit 1.6"},
-                            {"language": "en", "value": "Unit 1.7"},
+                        "identifier": "bFQoRhcVH5DHUx",
+                        "name": [{"language": "en", "value": "Unit 1"}],
+                        "parentUnit": None,
+                        "shortName": [],
+                        "supersededBy": None,
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [
+                            {"language": None, "title": None, "url": "https://ou-1"}
                         ],
+                    },
+                    {
+                        "$type": "PreviewOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "identifier": "bFQoRhcVH5DHUz",
+                        "name": [{"language": "de", "value": "Abteilung 1.6"}],
                         "parentUnit": "bFQoRhcVH5DHUx",
                         "shortName": [],
                         "supersededBy": None,
@@ -377,43 +362,28 @@ def test_preview(
                             {
                                 "language": None,
                                 "title": "Unit Homepage",
-                                "url": "https://unit-1-7",
+                                "url": "https://unit-1-6",
                             }
                         ],
-                    },
-                    {
-                        "$type": "PreviewOrganizationalUnit",
-                        "alternativeName": [],
-                        "email": [],
-                        "identifier": "bFQoRhcVH5DHUx",
-                        "name": [{"language": "en", "value": "Unit 1"}],
-                        "parentUnit": None,
-                        "shortName": [],
-                        "supersededBy": None,
-                        "unitOf": ["bFQoRhcVH5DHUv"],
-                        "website": [],
                     },
                 ],
                 "total": 3,
             },
+            id="referenced-id-filter",
         ),
-        ("?identifier=thisIdDoesNotExist", {"items": [], "total": 0}),
-        ("?q=queryNotFound", {"items": [], "total": 0}),
-    ],
-    ids=[
-        "limit 1",
-        "skip 1",
-        "entity type contact points",
-        "full text search",
-        "identifier filter",
-        "identifier filter with composite result",
-        "had primary source filter",
-        "generic id filter",
-        "identifier not found",
-        "full text not found",
+        pytest.param(
+            "?identifier=thisIdDoesNotExist",
+            {"items": [], "total": 0},
+            id="identifier-not-found",
+        ),
+        pytest.param(
+            "?q=queryNotFound",
+            {"items": [], "total": 0},
+            id="full-text-not-found",
+        ),
     ],
 )
-@pytest.mark.usefixtures("load_dummy_data", "load_dummy_rule_set")
+@pytest.mark.usefixtures("loaded_dummy_data")
 @pytest.mark.integration
 def test_search_preview_items(
     client_with_api_key_read_permission: TestClient,
