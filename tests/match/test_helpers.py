@@ -48,5 +48,5 @@ def test_match_item_in_graph_error(
     activity_1 = loaded_dummy_data["activity_1"]
     contact_point_2 = loaded_dummy_data["contact_point_2"]
 
-    with pytest.raises(BackendError, match="Failed preconditions"):
+    with pytest.raises(BackendError, match="Failed: same_merged_type"):
         match_item_in_graph(activity_1.identifier, contact_point_2.stableTargetId)
