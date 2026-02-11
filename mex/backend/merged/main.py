@@ -29,18 +29,12 @@ def search_merged_items(  # noqa: PLR0913
     q: Annotated[str, Query(max_length=100)] = "",
     identifier: Annotated[Identifier | None, Query()] = None,
     entityType: Annotated[Sequence[MergedType], Query(max_length=len(MergedType))] = [],
-    hadPrimarySource: Annotated[
-        Sequence[Identifier] | None, Query(deprecated=True)
-    ] = None,
     referencedIdentifier: Annotated[Sequence[Identifier] | None, Query()] = None,
     referenceField: Annotated[ReferenceFieldName | None, Query()] = None,
     skip: Annotated[int, Query(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> PaginatedItemsContainer[AnyMergedModel]:
     """Search for merged items by query text or by type and identifier."""
-    if hadPrimarySource:
-        referencedIdentifier = hadPrimarySource  # noqa: N806
-        referenceField = ReferenceFieldName("hadPrimarySource")  # noqa: N806
     if bool(referencedIdentifier) != bool(referenceField):
         msg = "Must provide referencedIdentifier AND referenceField or neither."
         raise HTTPException(status.HTTP_400_BAD_REQUEST, msg)
