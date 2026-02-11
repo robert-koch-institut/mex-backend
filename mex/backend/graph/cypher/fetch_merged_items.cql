@@ -73,11 +73,11 @@ CALL () {
 }
 CALL () {
     <<-self.match_clause()>>
-    ORDER BY merged_node.identifier, head(labels(merged_node)) ASC
+    ORDER BY merged_node.identifier ASC
     SKIP $skip
     LIMIT $limit
     OPTIONAL MATCH (extracted_or_rule_node)-[:stableTargetId]->(merged_node)
-    ORDER BY extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
+    ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
     WITH
         extracted_or_rule_node,
         merged_node,
