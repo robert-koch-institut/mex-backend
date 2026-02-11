@@ -1766,14 +1766,13 @@ def test_connector_flush_fails(monkeypatch: MonkeyPatch) -> None:
 
 @pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
 def test_mocked_graph_delete_item(mocked_graph: MockedGraph) -> None:
-    mocked_graph.return_value = [
-        {
-            "deleted_merged_count": 1,
-            "deleted_extracted_count": 2,
-            "deleted_rule_count": 1,
-            "deleted_nested_count": 3,
-        }
-    ]
+    deletion_summary = {
+        "deleted_merged_count": 1,
+        "deleted_extracted_count": 2,
+        "deleted_rule_count": 1,
+        "deleted_nested_count": 3,
+    }
+    mocked_graph.return_value = [deletion_summary]
     graph = GraphConnector.get()
     result = graph.delete_item(Identifier.generate(99))
 
@@ -1782,12 +1781,27 @@ def test_mocked_graph_delete_item(mocked_graph: MockedGraph) -> None:
         {"identifier": str(Identifier.generate(99))},
     )
 
-    assert result.one() == {
-        "deleted_merged_count": 1,
-        "deleted_extracted_count": 2,
-        "deleted_rule_count": 1,
-        "deleted_nested_count": 3,
+    assert result.one() == deletion_summary
+
+
+@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+def test_mocked_graph_delete_rule_set(mocked_graph: MockedGraph) -> None:
+    deletion_summary = {
+        "deleted_merged_count": 0,
+        "deleted_extracted_count": 0,
+        "deleted_rule_count": 2,
+        "deleted_nested_count": 5,
     }
+    mocked_graph.return_value = [deletion_summary]
+    graph = GraphConnector.get()
+    result = graph.delete_rule_set(Identifier.generate(99))
+
+    assert mocked_graph.call_args_list[-1] == call(
+        call("delete_rule_set"),
+        {"stable_target_id": str(Identifier.generate(99))},
+    )
+
+    assert result.one() == deletion_summary
 
 
 @pytest.mark.integration
