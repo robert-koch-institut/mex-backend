@@ -1,6 +1,9 @@
 <# Check preconditions for matching an extracted item to a new merged item.
 
-This query validates that the conditions for matching an extracted item to a different merged item are met.
+This query validates that the conditions for matching an extracted item to
+a different merged item are met before the actual matching operation is performed.
+Passed preconditions return `true`, failed preconditions `false` and unverifiable
+preconditions returns `null`.
 
 Globals:
     extracted_labels: List of all extracted class labels
@@ -15,9 +18,9 @@ Returns:
     extracted_exists: Boolean indicating if the extracted item exists
     old_rules_exist: Boolean indicating if the old merged item has complete rules
     merged_exists: Boolean indicating if the target merged item exists
-    not_self_match: Boolean indicating this is not a noop self-match
-    same_merged_type: Boolean indicating the items have the same stem types
-    merged_type_allowed: Boolean indicating the extracted type is not blocked
+    not_self_match: Optional boolean indicating this is not a noop self-match
+    same_merged_type: Optional boolean indicating the items have the same stem types
+    merged_type_allowed: Optional boolean indicating the extracted type is not blocked
 -#>
 OPTIONAL MATCH (extracted:<<extracted_labels|join("|")>> {identifier: $extracted_identifier})
 OPTIONAL MATCH (extracted)-[:stableTargetId]->(old_merged:<<merged_labels|join("|")>>)

@@ -485,9 +485,16 @@ class GraphConnector(BaseConnector):
                 blocked_types=[t.value for t in settings.non_matchable_types],
             )
         )
-        if failed := sorted(k for k, v in preconditions.one().items() if not v):
-            msg = f"Failed preconditions: {', '.join(failed)}"
-            raise MatchingError(msg)
+        results = preconditions.one()
+        failed = sorted(k for k, v in results.items() if v is False)
+        unverifiable = sorted(k for k, v in results.items() if v is None)
+        if failed or unverifiable:
+            parts = []
+            if failed:
+                parts.append(f"Failed: {', '.join(failed)}")
+            if unverifiable:
+                parts.append(f"Unverifiable: {', '.join(unverifiable)}")
+            raise MatchingError(". ".join(parts))
 
     def _match_item_tx(
         self,

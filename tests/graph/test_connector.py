@@ -8,11 +8,13 @@ from pytest import MonkeyPatch
 
 from mex.backend.graph import connector as connector_module
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.graph.exceptions import IngestionError
+from mex.backend.graph.exceptions import IngestionError, MatchingError
 from mex.backend.graph.models import IngestParams
 from mex.backend.graph.query import Query
 from mex.backend.settings import BackendSettings
+from mex.backend.types import MergedType
 from mex.common.exceptions import MExError
+from mex.common.merged.main import create_merged_item
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
@@ -20,7 +22,7 @@ from mex.common.models import (
     ExtractedOrganization,
     ExtractedOrganizationalUnit,
 )
-from mex.common.types import Identifier, Text, TextLanguage
+from mex.common.types import Identifier, Text, TextLanguage, Validation
 from tests.conftest import DummyData, MockedGraph, get_graph
 
 
@@ -1752,16 +1754,96 @@ def test_mocked_graph_ingests_extracted_models(
 
 
 @pytest.mark.integration
-def test_connector_flush_fails(monkeypatch: MonkeyPatch) -> None:
-    settings = BackendSettings.get()
-
-    monkeypatch.setattr(settings, "debug", False)
+@pytest.mark.usefixtures("loaded_dummy_data")
+def test_graph_match_item_preconditions_pass(loaded_dummy_data: DummyData) -> None:
     graph = GraphConnector.get()
+    extracted = loaded_dummy_data["unit_2"]
+    merged = create_merged_item(
+        loaded_dummy_data["unit_1"].stableTargetId,
+        [loaded_dummy_data["unit_1"]],
+        None,
+        Validation.STRICT,
+    )
 
+    with pytest.raises(NotImplementedError):
+        graph.match_item(extracted, merged)
+
+
+@pytest.mark.parametrize(
+    ("extracted_identifier", "merged_identifier", "expected_failed"),
+    [
+        pytest.param(
+            "fake",
+            "bFQoRhcVH5DHUx",  # unit_1.stableTargetId
+            "Failed: extracted_exists, old_rules_exist. "
+            "Unverifiable: not_self_match, same_merged_type",
+            id="extracted item does not exist",
+        ),
+        pytest.param(
+            "bFQoRhcVH5DHUw",  # unit_1.identifier
+            "bFQoRhcVH5DHUz",  # unit_2.stableTargetId
+            "Failed: old_rules_exist",
+            id="old rule-set does not exist",
+        ),
+        pytest.param(
+            "bFQoRhcVH5DHUy",  # unit_2.identifier
+            "fake",
+            "Failed: merged_exists. "
+            "Unverifiable: merged_type_allowed, not_self_match, same_merged_type",
+            id="merged item does not exist",
+        ),
+        pytest.param(
+            "fake1",
+            "fake2",
+            "Failed: extracted_exists, merged_exists, old_rules_exist. "
+            "Unverifiable: merged_type_allowed, not_self_match, same_merged_type",
+            id="nothing exists",
+        ),
+        pytest.param(
+            "bFQoRhcVH5DHUy",  # unit_2.identifier
+            "bFQoRhcVH5DHUz",  # unit_2.stableTargetId
+            "Failed: not_self_match",
+            id="attempted self-match",
+        ),
+        pytest.param(
+            "bFQoRhcVH5DHUy",  # unit_2.identifier
+            "bFQoRhcVH5DHUv",  # organization_1.stableTargetId
+            "Failed: same_merged_type",
+            id="entity types do not match",
+        ),
+        pytest.param(
+            "bFQoRhcVH5DHUy",  # unit_2.identifier
+            "bFQoRhcVH5DHUx",  # unit_1.stableTargetId
+            "Failed: merged_type_allowed",
+            id="entity type not allowed",
+        ),
+    ],
+)
+@pytest.mark.integration
+@pytest.mark.usefixtures("loaded_dummy_data")
+def test_graph_match_item_preconditions_failed(
+    monkeypatch: MonkeyPatch,
+    extracted_identifier: Identifier,
+    merged_identifier: Identifier,
+    expected_failed: str,
+) -> None:
+    if expected_failed == "Failed: merged_type_allowed":
+        monkeypatch.setattr(
+            BackendSettings.get(),
+            "non_matchable_types",
+            [MergedType("MergedOrganizationalUnit")],
+        )
+    graph = GraphConnector.get()
+    extracted = Mock(
+        identifier=extracted_identifier,
+        stableTargetId=Identifier.generate(seed=0),
+    )
+    merged = Mock(identifier=merged_identifier)
     with pytest.raises(
-        MExError, match="database flush was attempted outside of debug mode"
+        MatchingError,
+        match=re.escape(expected_failed),
     ):
-        graph.flush()
+        graph.match_item(extracted, merged)
 
 
 @pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
@@ -1815,3 +1897,16 @@ def test_connector_flush(monkeypatch: MonkeyPatch) -> None:
     graph.flush()
 
     assert len(get_graph()) == 0
+
+
+@pytest.mark.integration
+def test_connector_flush_fails(monkeypatch: MonkeyPatch) -> None:
+    settings = BackendSettings.get()
+
+    monkeypatch.setattr(settings, "debug", False)
+    graph = GraphConnector.get()
+
+    with pytest.raises(
+        MExError, match="database flush was attempted outside of debug mode"
+    ):
+        graph.flush()
