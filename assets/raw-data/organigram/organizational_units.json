@@ -33,6 +33,33 @@
     {
         "alternativeName": [
             {
+                "value": "FG99"
+            }
+        ],
+        "email": [
+            "fg@example.com"
+        ],
+        "identifier": "fg99",
+        "name": [
+            {
+                "language": "de",
+                "value": "Fachgebiet 99"
+            },
+            {
+                "language": "en",
+                "value": "Group 99"
+            }
+        ],
+        "shortName": [
+            {
+                "language": "de",
+                "value": "FG 99"
+            }
+        ]
+    },
+    {
+        "alternativeName": [
+            {
                 "value": "PRNT Abteilung"
             },
             {
@@ -58,33 +85,6 @@
             {
                 "language": "de",
                 "value": "PRNT"
-            }
-        ]
-    },
-    {
-        "alternativeName": [
-            {
-                "value": "FG99"
-            }
-        ],
-        "email": [
-            "fg@example.com"
-        ],
-        "identifier": "fg99",
-        "name": [
-            {
-                "language": "de",
-                "value": "Fachgebiet 99"
-            },
-            {
-                "language": "en",
-                "value": "Group 99"
-            }
-        ],
-        "shortName": [
-            {
-                "language": "de",
-                "value": "FG 99"
             }
         ]
     }
