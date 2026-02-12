@@ -9,7 +9,10 @@ from pytest import MonkeyPatch
 from mex.backend.graph import connector as connector_module
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import IngestionError
-from mex.backend.graph.models import IngestParams, MExEditorPrimarySource
+from mex.backend.graph.models import (
+    MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    IngestParams,
+)
 from mex.backend.graph.query import Query
 from mex.backend.settings import BackendSettings
 from mex.common.exceptions import MExError
@@ -323,7 +326,7 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
         ),
         pytest.param(
             {
-                "referenced_identifiers": [MExEditorPrimarySource().stableTargetId],
+                "referenced_identifiers": [MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID],
                 "reference_field": "hadPrimarySource",
             },
             {"items": [], "total": 0},
@@ -362,7 +365,7 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
         pytest.param(
             {
                 "referenced_identifiers": [
-                    MExEditorPrimarySource().stableTargetId,
+                    MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
                     "bFQoRhcVH5DHUt",
                 ],
                 "reference_field": "hadPrimarySource",
@@ -662,7 +665,7 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
         ),
         pytest.param(
             {
-                "referenced_identifiers": [MExEditorPrimarySource().stableTargetId],
+                "referenced_identifiers": [MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID],
                 "reference_field": "hadPrimarySource",
             },
             {
@@ -682,7 +685,7 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
         pytest.param(
             {
                 "referenced_identifiers": [
-                    MExEditorPrimarySource().stableTargetId,
+                    MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
                     "thisIdDoesNotExist",
                 ],
                 "reference_field": "hadPrimarySource",
@@ -1014,7 +1017,7 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
         ),
         pytest.param(
             {
-                "referenced_identifiers": [MExEditorPrimarySource().stableTargetId],
+                "referenced_identifiers": [MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID],
                 "reference_field": "hadPrimarySource",
                 "limit": 1,
             },
@@ -1050,7 +1053,7 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
         pytest.param(
             {
                 "referenced_identifiers": [
-                    MExEditorPrimarySource().stableTargetId,
+                    MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
                     "bFQoRhcVH5DHUr",
                 ],
                 "reference_field": "hadPrimarySource",

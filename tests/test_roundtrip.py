@@ -3,9 +3,9 @@ from typing import cast
 import pytest
 
 from mex.backend.graph.models import (
+    MEX_EDITOR_PRIMARY_SOURCE,
     MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
-    MExEditorPrimarySource,
-    MExPrimarySource,
+    MEX_PRIMARY_SOURCE,
 )
 from mex.backend.merged.helpers import search_merged_items_in_graph
 from mex.common.merged.main import create_merged_item
@@ -62,13 +62,13 @@ def test_graph_ingest_and_query_roundtrip(
         *merged_dummy_data.values(),
         create_merged_item(
             MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-            [cast("ExtractedPrimarySource", MExPrimarySource())],
+            [cast("ExtractedPrimarySource", MEX_PRIMARY_SOURCE)],
             None,
             Validation.STRICT,
         ),
         create_merged_item(
             MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
-            [cast("ExtractedPrimarySource", MExEditorPrimarySource())],
+            [cast("ExtractedPrimarySource", MEX_EDITOR_PRIMARY_SOURCE)],
             None,
             Validation.STRICT,
         ),

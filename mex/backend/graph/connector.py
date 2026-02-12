@@ -19,9 +19,11 @@ from mex.backend.fields import (
 )
 from mex.backend.graph.exceptions import DeletionFailedError, IngestionError
 from mex.backend.graph.models import (
+    MEX_EDITOR_PRIMARY_SOURCE,
+    MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    MEX_PRIMARY_SOURCE,
+    ExtractedPrimarySourceWithHardcodedIdentifiers,
     IngestData,
-    MExEditorPrimarySource,
-    MExPrimarySource,
     Result,
 )
 from mex.backend.graph.query import Query, QueryBuilder
@@ -135,7 +137,7 @@ class GraphConnector(BaseConnector):
 
     def _seed_data(self) -> None:
         """Ensure the primary source `mex` is seeded and linked to itself."""
-        deque(self.ingest_items([MExPrimarySource(), MExEditorPrimarySource()]))
+        deque(self.ingest_items([MEX_PRIMARY_SOURCE, MEX_EDITOR_PRIMARY_SOURCE]))
         logger.info("seeded primary sources 'mex' and 'mex-editor'")
 
     def close(self) -> None:
@@ -195,13 +197,13 @@ class GraphConnector(BaseConnector):
         if (
             reference_field == "hadPrimarySource"
             and referenced_identifiers is not None
-            and MExEditorPrimarySource().stableTargetId in referenced_identifiers
+            and MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID in referenced_identifiers
         ):
             filter_rule_items = True
             referenced_identifiers = [
                 id_
                 for id_ in referenced_identifiers
-                if id_ != MExEditorPrimarySource().stableTargetId
+                if id_ != MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID
             ] or None
         query_builder = QueryBuilder.get()
         query = query_builder.fetch_extracted_or_rule_items(
@@ -332,13 +334,13 @@ class GraphConnector(BaseConnector):
         if (
             reference_field == "hadPrimarySource"
             and referenced_identifiers is not None
-            and MExEditorPrimarySource().stableTargetId in referenced_identifiers
+            and MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID in referenced_identifiers
         ):
             filter_items_with_rules = True
             referenced_identifiers = [
                 id_
                 for id_ in referenced_identifiers
-                if id_ != MExEditorPrimarySource().stableTargetId
+                if id_ != MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID
             ] or None
         query_builder = QueryBuilder.get()
         query = query_builder.fetch_merged_items(
@@ -430,16 +432,14 @@ class GraphConnector(BaseConnector):
         tx: Transaction,
         model: AnyExtractedModel
         | AnyRuleSetResponse
-        | MExPrimarySource
-        | MExEditorPrimarySource,
+        | ExtractedPrimarySourceWithHardcodedIdentifiers,
     ) -> None:
         """Ingest a single item in a database transaction."""
         query_builder = QueryBuilder.get()
         if isinstance(model, AnyRuleSetResponse):
             items_to_ingest: list[
                 AnyExtractedModel
-                | MExPrimarySource
-                | MExEditorPrimarySource
+                | ExtractedPrimarySourceWithHardcodedIdentifiers
                 | AnyRuleModel
             ] = [
                 model.additive,
@@ -471,8 +471,7 @@ class GraphConnector(BaseConnector):
         models: Iterable[
             AnyExtractedModel
             | AnyRuleSetResponse
-            | MExPrimarySource
-            | MExEditorPrimarySource
+            | ExtractedPrimarySourceWithHardcodedIdentifiers
         ],
     ) -> Generator[None]:
         """Ingest a list of extracted models or rule set responses into the graph."""
