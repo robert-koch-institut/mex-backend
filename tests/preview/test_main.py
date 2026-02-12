@@ -168,12 +168,12 @@ def test_preview(
                         "version": None,
                     }
                 ],
-                "total": 11,
+                "total": 12,
             },
             id="limit-1",
         ),
         pytest.param(
-            "?limit=1&skip=8",
+            "?limit=1&skip=9",
             {
                 "items": [
                     {
@@ -193,7 +193,7 @@ def test_preview(
                         "wikidataId": [],
                     }
                 ],
-                "total": 11,
+                "total": 12,
             },
             id="skip-8",
         ),

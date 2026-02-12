@@ -5,7 +5,11 @@ from neo4j.exceptions import Neo4jError
 from pydantic_core import ErrorDetails
 
 from mex.backend.fields import REFERENCED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME
-from mex.backend.graph.models import GraphRel, IngestData, MExPrimarySource
+from mex.backend.graph.models import (
+    ExtractedPrimarySourceWithHardcodedIdentifiers,
+    GraphRel,
+    IngestData,
+)
 from mex.common.fields import (
     FINAL_FIELDS_BY_CLASS_NAME,
     LINK_FIELDS_BY_CLASS_NAME,
@@ -42,7 +46,9 @@ def expand_references_in_search_result(
 
 
 def transform_model_into_ingest_data(
-    model: AnyExtractedModel | MExPrimarySource | AnyRuleModel,
+    model: AnyExtractedModel
+    | ExtractedPrimarySourceWithHardcodedIdentifiers
+    | AnyRuleModel,
     stable_target_id: str,
 ) -> IngestData:
     """Transform the given model into an ingestion instruction.
@@ -210,7 +216,7 @@ def validate_ingested_data(
 def get_error_details_from_neo4j_error(
     input_: AnyExtractedModel
     | AnyRuleSetResponse
-    | MExPrimarySource
+    | ExtractedPrimarySourceWithHardcodedIdentifiers
     | AnyPrimitiveType,
     error: Neo4jError,
 ) -> list[ErrorDetails]:

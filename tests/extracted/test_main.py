@@ -88,12 +88,12 @@ def test_search_extracted_items_mocked(
                         "version": None,
                     }
                 ],
-                "total": 10,
+                "total": 11,
             },
             id="limit-1",
         ),
         pytest.param(
-            "?limit=1&skip=9",
+            "?limit=1&skip=10",
             {
                 "items": [
                     {
@@ -111,9 +111,9 @@ def test_search_extracted_items_mocked(
                         "website": [],
                     }
                 ],
-                "total": 10,
+                "total": 11,
             },
-            id="skip-9",
+            id="skip-10",
         ),
         pytest.param(
             "?entityType=ExtractedContactPoint",

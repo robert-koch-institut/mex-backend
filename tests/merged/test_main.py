@@ -121,12 +121,12 @@ def test_search_merged_items_mocked(
                         "version": None,
                     }
                 ],
-                "total": 11,
+                "total": 12,
             },
             id="limit-1",
         ),
         pytest.param(
-            "?limit=1&skip=8",
+            "?limit=1&skip=9",
             {
                 "items": [
                     {
@@ -144,9 +144,9 @@ def test_search_merged_items_mocked(
                         "wikidataId": [],
                     }
                 ],
-                "total": 11,
+                "total": 12,
             },
-            id="skip-8",
+            id="skip-9",
         ),
         pytest.param(
             "?entityType=MergedContactPoint",
