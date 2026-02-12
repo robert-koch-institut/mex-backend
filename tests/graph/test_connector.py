@@ -346,8 +346,8 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                         "geprisId": [],
                         "isniId": [],
                         "entityType": "ExtractedOrganization",
-                        "identifier": "bFQoRhcVH5DHUC",
-                        "stableTargetId": ["bFQoRhcVH5DHUv"],
+                        "identifier": "bFQoRhcVH5DHUE",
+                        "stableTargetId": ["bFQoRhcVH5DHUF"],
                         "hadPrimarySource": ["bFQoRhcVH5DHUt"],
                         "officialName": [
                             {"value": "RKI", "language": "de"},
@@ -379,8 +379,8 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                         "geprisId": [],
                         "isniId": [],
                         "entityType": "ExtractedOrganization",
-                        "identifier": "bFQoRhcVH5DHUC",
-                        "stableTargetId": ["bFQoRhcVH5DHUv"],
+                        "identifier": "bFQoRhcVH5DHUE",
+                        "stableTargetId": ["bFQoRhcVH5DHUF"],
                         "hadPrimarySource": ["bFQoRhcVH5DHUt"],
                         "officialName": [
                             {"value": "RKI", "language": "de"},
@@ -404,7 +404,7 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                         "hadPrimarySource": ["00000000000000"],
                     }
                 ],
-                "total": 10,
+                "total": 11,
             },
             id="no-filters",
         ),
@@ -668,17 +668,14 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
             {
                 "items": [
                     {
-                        "email": [],
+                        "email": ["1.7@rki.de"],
                         "entityType": "AdditiveOrganizationalUnit",
-                        "name": [{"language": "en", "value": "Unit 1.7"}],
+                        "name": [{"language": "de", "value": "Abteilung 1.7"}],
                         "parentUnit": ["bFQoRhcVH5DHUx"],
-                        "stableTargetId": ["bFQoRhcVH5DHUF"],
-                        "website": [
-                            {"title": "Unit Homepage", "url": "https://unit-1-7"}
-                        ],
+                        "stableTargetId": ["StandaloneRule"],
                     }
                 ],
-                "total": 3,
+                "total": 6,
             },
             id="get-all-rules-when-filtering-for-primary-source-mex-editor",
         ),
@@ -693,17 +690,14 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
             {
                 "items": [
                     {
-                        "email": [],
+                        "email": ["1.7@rki.de"],
                         "entityType": "AdditiveOrganizationalUnit",
-                        "name": [{"language": "en", "value": "Unit 1.7"}],
+                        "name": [{"language": "de", "value": "Abteilung 1.7"}],
                         "parentUnit": ["bFQoRhcVH5DHUx"],
-                        "stableTargetId": ["bFQoRhcVH5DHUF"],
-                        "website": [
-                            {"title": "Unit Homepage", "url": "https://unit-1-7"}
-                        ],
+                        "stableTargetId": ["StandaloneRule"],
                     }
                 ],
-                "total": 3,
+                "total": 6,
             },
             id="get-all-rules-when-filtering-for-primary-source-mex-editor-and-another-primary-source",
         ),
@@ -712,14 +706,11 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
             {
                 "items": [
                     {
-                        "email": [],
+                        "email": ["1.7@rki.de"],
                         "entityType": "AdditiveOrganizationalUnit",
-                        "stableTargetId": ["bFQoRhcVH5DHUz"],
+                        "name": [{"language": "de", "value": "Abteilung 1.7"}],
                         "parentUnit": ["bFQoRhcVH5DHUx"],
-                        "name": [{"value": "Abteilung 1.6", "language": "de"}],
-                        "website": [
-                            {"title": "Unit Homepage", "url": "https://unit-1-6"}
-                        ],
+                        "stableTargetId": ["StandaloneRule"],
                     }
                 ],
                 "total": 6,
@@ -940,7 +931,7 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                         "identifier": "00000000000000",
                     }
                 ],
-                "total": 11,
+                "total": 12,
             },
             id="no-filters",
         ),
@@ -1032,44 +1023,27 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                     {
                         "_components": [
                             {
-                                "email": [],
-                                "entityType": "ExtractedOrganizationalUnit",
-                                "hadPrimarySource": ["bFQoRhcVH5DHUt"],
-                                "identifier": "bFQoRhcVH5DHUE",
-                                "identifierInPrimarySource": "ou-1.6",
-                                "name": [{"language": "en", "value": "Unit 1.6"}],
-                                "parentUnit": ["bFQoRhcVH5DHUx"],
-                                "stableTargetId": ["bFQoRhcVH5DHUF"],
-                                "unitOf": ["bFQoRhcVH5DHUv"],
-                            },
-                            {
-                                "email": [],
+                                "email": ["1.7@rki.de"],
                                 "entityType": "AdditiveOrganizationalUnit",
-                                "name": [{"language": "en", "value": "Unit 1.7"}],
+                                "name": [{"language": "de", "value": "Abteilung 1.7"}],
                                 "parentUnit": ["bFQoRhcVH5DHUx"],
-                                "stableTargetId": ["bFQoRhcVH5DHUF"],
-                                "website": [
-                                    {
-                                        "title": "Unit Homepage",
-                                        "url": "https://unit-1-7",
-                                    }
-                                ],
+                                "stableTargetId": ["StandaloneRule"],
                             },
                             {
                                 "entityType": "PreventiveOrganizationalUnit",
-                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                                "stableTargetId": ["StandaloneRule"],
                             },
                             {
                                 "email": [],
                                 "entityType": "SubtractiveOrganizationalUnit",
-                                "stableTargetId": ["bFQoRhcVH5DHUF"],
+                                "stableTargetId": ["StandaloneRule"],
                             },
                         ],
                         "entityType": "MergedOrganizationalUnit",
-                        "identifier": "bFQoRhcVH5DHUF",
+                        "identifier": "StandaloneRule",
                     }
                 ],
-                "total": 1,
+                "total": 2,
             },
             id="primary-source-mex-editor-filter",
         ),
@@ -1087,21 +1061,29 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                     {
                         "_components": [
                             {
-                                "email": ["help@contact-point.two"],
-                                "entityType": "ExtractedContactPoint",
-                                "hadPrimarySource": ["bFQoRhcVH5DHUr"],
-                                "identifier": "bFQoRhcVH5DHUA",
-                                "identifierInPrimarySource": "cp-2",
-                                "stableTargetId": ["bFQoRhcVH5DHUB"],
-                            }
+                                "email": ["1.7@rki.de"],
+                                "entityType": "AdditiveOrganizationalUnit",
+                                "name": [{"language": "de", "value": "Abteilung 1.7"}],
+                                "parentUnit": ["bFQoRhcVH5DHUx"],
+                                "stableTargetId": ["StandaloneRule"],
+                            },
+                            {
+                                "entityType": "PreventiveOrganizationalUnit",
+                                "stableTargetId": ["StandaloneRule"],
+                            },
+                            {
+                                "email": [],
+                                "entityType": "SubtractiveOrganizationalUnit",
+                                "stableTargetId": ["StandaloneRule"],
+                            },
                         ],
-                        "entityType": "MergedContactPoint",
-                        "identifier": "bFQoRhcVH5DHUB",
+                        "entityType": "MergedOrganizationalUnit",
+                        "identifier": "StandaloneRule",
                     }
                 ],
-                "total": 5,
+                "total": 6,
             },
-            id="filter-for-had-primary-sources-mex-editor-and-primary-source-x-returns-4-from-x-and-1-from-editor",
+            id="filter-for-had-primary-sources-mex-editor-and-primary-source-x-returns-4-from-x-and-2-from-editor",
         ),
         pytest.param(
             {

@@ -141,7 +141,7 @@ YIELD currentStatus;"""
             referenced_node_to_filter_by.identifier IN $referenced_identifiers
         RETURN extracted_or_rule_node AS filtered_node
     }
-    WITH filtered_node as extracted_or_rule_node
+    WITH filtered_node as extracted_or_rule_node, merged_node
     RETURN COUNT(extracted_or_rule_node) AS total
 }
 CALL () {
@@ -168,8 +168,8 @@ CALL () {
             referenced_node_to_filter_by.identifier IN $referenced_identifiers
         RETURN extracted_or_rule_node AS filtered_node
     }
-    WITH filtered_node as extracted_or_rule_node
-    ORDER BY extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
+    WITH filtered_node as extracted_or_rule_node, merged_node
+    ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
     SKIP $skip
     LIMIT $limit
     WITH
@@ -202,7 +202,7 @@ CALL () {
     OPTIONAL MATCH (extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
     WHERE
         ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
-    ORDER BY extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
+    ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
     SKIP $skip
     LIMIT $limit
     WITH

@@ -73,14 +73,14 @@ CALL () {
         <%- endif %>
         RETURN extracted_or_rule_node AS filtered_node
     }
-    WITH filtered_node as extracted_or_rule_node
+    WITH filtered_node as extracted_or_rule_node, merged_node
     <%- endif %>
 <%- endblock %>
     RETURN COUNT(extracted_or_rule_node) AS total
 }
 CALL () {
     <<-self.match_clause()>>
-    ORDER BY extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
+    ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
     SKIP $skip
     LIMIT $limit
     WITH
