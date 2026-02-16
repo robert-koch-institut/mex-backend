@@ -22,7 +22,7 @@ from mex.common.models import (
 from mex.common.types import Text
 from tests.conftest import DummyData, get_graph
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from fastapi.testclient import TestClient
 
 

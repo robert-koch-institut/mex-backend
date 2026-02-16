@@ -5,7 +5,7 @@ from starlette import status
 
 from mex.common.orcid.connector import OrcidConnector
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from fastapi.testclient import TestClient
 
 john_doe_response = {

@@ -6,7 +6,7 @@ from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import InconsistentGraphError, NoResultFoundError
 from mex.common.models import AnyExtractedModel, PaginatedItemsContainer
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Sequence
 
     from mex.common.types import Identifier

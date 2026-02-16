@@ -10,7 +10,7 @@ from mex.common.models import ExtractedPrimarySource
 from mex.common.types import Identifier, TextLanguage
 from tests.conftest import get_graph
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from fastapi.testclient import TestClient
 
 

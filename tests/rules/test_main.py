@@ -5,7 +5,7 @@ from starlette import status
 
 from tests.conftest import DummyData, DummyDataName, get_graph
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from fastapi.testclient import TestClient
 
 

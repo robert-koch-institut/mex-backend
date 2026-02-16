@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any
 import pytest
 from starlette import status
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from fastapi.testclient import TestClient
 
 

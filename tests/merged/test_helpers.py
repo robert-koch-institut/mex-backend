@@ -12,7 +12,7 @@ from mex.backend.merged.helpers import (
 from mex.common.merged.main import create_merged_item
 from mex.common.types import Identifier, TextLanguage, Validation
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from tests.conftest import DummyData, MockedGraph
 
 

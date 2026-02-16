@@ -15,7 +15,7 @@ from mex.common.models import (
 )
 from mex.common.types import Validation
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from tests.conftest import DummyData
 
 

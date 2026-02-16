@@ -30,7 +30,7 @@ from mex.common.cli import entrypoint
 from mex.common.connector import CONNECTOR_STORE
 from mex.common.logging import logger
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import AsyncIterator, Callable
 
 startup_tasks: list[Callable[[], Any]] = [

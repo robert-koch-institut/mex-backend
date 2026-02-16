@@ -16,7 +16,7 @@ from mex.common.models import AnyExtractedModel, AnyRuleModel, AnyRuleSetRespons
 from mex.common.transform import to_key_and_values
 from mex.common.types import AnyPrimitiveType, Link, Text
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from neo4j.exceptions import Neo4jError
 
 

@@ -6,7 +6,7 @@ from mex.backend.exceptions import BackendError
 from mex.backend.extracted.helpers import get_extracted_item_from_graph
 from mex.common.types import Identifier
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from tests.conftest import DummyData
 
 

@@ -6,7 +6,7 @@ from starlette import status
 
 from mex.common.models import ExtractedOrganizationalUnit
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from fastapi.testclient import TestClient
 
     from tests.conftest import DummyData, MockedGraph

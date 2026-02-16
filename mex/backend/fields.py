@@ -17,7 +17,7 @@ from mex.common.models import (
 from mex.common.types import MERGED_IDENTIFIER_CLASSES, NESTED_MODEL_CLASSES_BY_NAME
 from mex.common.utils import contains_any_types, get_all_fields
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Mapping
 
 # fields that should be indexed as searchable fields

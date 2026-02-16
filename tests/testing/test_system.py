@@ -6,7 +6,7 @@ from starlette import status
 
 from mex.backend.settings import BackendSettings
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from fastapi.testclient import TestClient
 
 

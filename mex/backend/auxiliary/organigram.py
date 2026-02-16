@@ -10,7 +10,7 @@ from mex.common.organigram.transform import (
     transform_organigram_units_to_organizational_units,
 )
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from mex.common.models import ExtractedOrganizationalUnit
 
 

@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 from mex.common.models import MergedPerson
 from mex.common.types import MergedPersonIdentifier
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from fastapi.testclient import TestClient
 
 

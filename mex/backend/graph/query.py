@@ -37,7 +37,7 @@ from mex.common.transform import (
 )
 from mex.common.types import NESTED_MODEL_CLASSES_BY_NAME
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
 
 # TODO(ND): move this to mex-common

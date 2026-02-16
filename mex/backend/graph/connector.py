@@ -39,7 +39,7 @@ from mex.common.models import (
     AnyRuleSetResponse,
 )
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Generator, Iterable, Sequence
 
     from mex.common.types import Identifier

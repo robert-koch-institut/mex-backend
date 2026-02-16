@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from mex.backend.extracted.helpers import search_extracted_items_in_graph
 from mex.common.identity import get_provider
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from mex.common.models import AnyExtractedModel
     from mex.common.types import MergedPrimarySourceIdentifier
 

@@ -9,7 +9,7 @@ from starlette.responses import Response
 from mex.common.exceptions import MExError
 from mex.common.logging import logger
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from starlette.requests import Request
 
 

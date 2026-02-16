@@ -5,7 +5,7 @@ from starlette import status
 
 from mex.common.models import MEX_PRIMARY_SOURCE_STABLE_TARGET_ID
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from fastapi.testclient import TestClient
 
 
