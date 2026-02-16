@@ -8,7 +8,7 @@ from tests.conftest import get_graph
 
 
 @pytest.mark.usefixtures("mocked_wikidata")
-def test_extracted_organizational_unit() -> None:
+def test_extracted_organizational_units() -> None:
     expected_result = [
         ExtractedOrganizationalUnit(
             hadPrimarySource="dsnYIq1AxYMLcTbSIBvDSs",
@@ -29,6 +29,20 @@ def test_extracted_organizational_unit() -> None:
         ),
         ExtractedOrganizationalUnit(
             hadPrimarySource="dsnYIq1AxYMLcTbSIBvDSs",
+            identifierInPrimarySource="fg99",
+            name=[
+                Text(value="Fachgebiet 99", language=TextLanguage.DE),
+                Text(value="Group 99", language=TextLanguage.EN),
+            ],
+            alternativeName=[Text(value="FG99", language=TextLanguage.DE)],
+            email=["fg@example.com"],
+            shortName=[Text(value="FG 99", language=TextLanguage.DE)],
+            unitOf=["ga6xh6pgMwgq7DC7r6Wjqg"],
+            identifier="hCwNEsnCvG9kFf9qDVHxSM",
+            stableTargetId="cjna2jitPngp6yIV63cdi9",
+        ),
+        ExtractedOrganizationalUnit(
+            hadPrimarySource="dsnYIq1AxYMLcTbSIBvDSs",
             identifierInPrimarySource="parent-unit",
             name=[
                 Text(value="Abteilung", language=TextLanguage.DE),
@@ -43,20 +57,6 @@ def test_extracted_organizational_unit() -> None:
             unitOf=["ga6xh6pgMwgq7DC7r6Wjqg"],
             identifier="hB7EDcR0F24d0JbfwvJ2ub",
             stableTargetId="hIiJpZXVppHvoyeP0QtAoS",
-        ),
-        ExtractedOrganizationalUnit(
-            hadPrimarySource="dsnYIq1AxYMLcTbSIBvDSs",
-            identifierInPrimarySource="fg99",
-            name=[
-                Text(value="Fachgebiet 99", language=TextLanguage.DE),
-                Text(value="Group 99", language=TextLanguage.EN),
-            ],
-            alternativeName=[Text(value="FG99", language=TextLanguage.DE)],
-            email=["fg@example.com"],
-            shortName=[Text(value="FG 99", language=TextLanguage.DE)],
-            unitOf=["ga6xh6pgMwgq7DC7r6Wjqg"],
-            identifier="hCwNEsnCvG9kFf9qDVHxSM",
-            stableTargetId="cjna2jitPngp6yIV63cdi9",
         ),
     ]
     result = extracted_organizational_units()
