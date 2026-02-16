@@ -239,7 +239,6 @@ def test_fetch_extracted_or_rule_items(
         filter_by_identifier=enable_filters,
         filter_by_stable_target_id=enable_filters,
         filter_by_referenced_identifiers=enable_filters,
-        filter_rule_items=enable_filters,
         reference_field="hadPrimarySource",
     )
     assert query.render() == expected

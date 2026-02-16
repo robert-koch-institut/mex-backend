@@ -53,8 +53,9 @@ CALL () {
         <%- endif %>
     <%- if filter_by_referenced_identifiers %>
     OPTIONAL MATCH (extracted_or_rule_node)-[:<<reference_field>>]->(referenced_node_to_filter_by:<<merged_labels|join("|")>>)
-// WITH is before WHERE, because WHERE is otherwise applied to the query and results in
-// (referenced_node_to_filter_by IS NULL = True) for all extracted_or_rule_node
+<#- WITH is before WHERE, because WHERE is otherwise applied to the query and results in
+   (referenced_node_to_filter_by IS NULL = True) for all extracted_or_rule_node
+#>
     WITH merged_node, extracted_or_rule_node, referenced_node_to_filter_by
     WHERE
         (

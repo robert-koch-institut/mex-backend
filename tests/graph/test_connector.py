@@ -281,7 +281,6 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
             filter_by_identifier=False,
             filter_by_stable_target_id=True,
             filter_by_referenced_identifiers=False,
-            filter_rule_items=False,
             reference_field=None,
         ),
         {
@@ -620,7 +619,6 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
             filter_by_identifier=False,
             filter_by_stable_target_id=True,
             filter_by_referenced_identifiers=False,
-            filter_rule_items=False,
             reference_field=None,
         ),
         {
