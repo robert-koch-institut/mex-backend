@@ -17,12 +17,14 @@ from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     BasePrimarySource,
 )
+from mex.common.types import (
+    AnyPrimitiveType,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
 
     from mex.common.types import (
-        AnyPrimitiveType,
         ExtractedPrimarySourceIdentifier,
         MergedPrimarySourceIdentifier,
     )
