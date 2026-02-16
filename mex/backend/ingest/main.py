@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 
 from fastapi import APIRouter, Body, Request
 from pydantic import Field
@@ -6,9 +6,7 @@ from starlette import status
 
 from mex.backend.graph.connector import GraphConnector
 from mex.common.logging import logger
-
-if TYPE_CHECKING:
-    from mex.common.models import AnyExtractedModel, AnyRuleSetResponse
+from mex.common.models import AnyExtractedModel, AnyRuleSetResponse
 
 router = APIRouter()
 

@@ -1,9 +1,11 @@
 from unittest.mock import MagicMock, Mock
 
 import pytest
+from neo4j import NotificationSeverity
 from neo4j import Record as Neo4jRecord
 from neo4j import Result as Neo4jResult
 from neo4j import ResultSummary as Neo4jResultSummary
+from pytest import MonkeyPatch
 
 from mex.backend.graph.exceptions import MultipleResultsFoundError, NoResultFoundError
 from mex.backend.graph.models import Result
@@ -112,3 +114,32 @@ def test_result_one_or_none(
 
 def test_get_update_counters(multiple_results: Mock) -> None:
     assert Result(multiple_results).get_update_counters() == {"nodes_created": 73}
+
+
+def test_log_notifications(
+    single_result: Mock, summary: Mock, monkeypatch: MonkeyPatch
+) -> None:
+    warning_status = Mock(is_notification=True, severity=NotificationSeverity.WARNING)
+    info_status = Mock(is_notification=True, severity=NotificationSeverity.INFORMATION)
+    debug_status = Mock(is_notification=True, severity="OTHER")
+    non_notification = Mock(is_notification=False)
+    summary.gql_status_objects = [
+        warning_status,
+        info_status,
+        debug_status,
+        non_notification,
+    ]
+
+    mock_warning = MagicMock()
+    mock_info = MagicMock()
+    mock_debug = MagicMock()
+    monkeypatch.setattr("mex.backend.graph.models.logger.warning", mock_warning)
+    monkeypatch.setattr("mex.backend.graph.models.logger.info", mock_info)
+    monkeypatch.setattr("mex.backend.graph.models.logger.debug", mock_debug)
+
+    result = Result(single_result)
+    result.log_notifications()
+
+    mock_warning.assert_called_once_with("%r", warning_status)
+    mock_info.assert_called_once_with("%r", info_status)
+    mock_debug.assert_called_once_with("%r", debug_status)

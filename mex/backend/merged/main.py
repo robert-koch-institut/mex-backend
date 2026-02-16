@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING, Annotated
+from collections.abc import Sequence
+from typing import Annotated
 
 from fastapi import APIRouter, Path, Query
 from fastapi.exceptions import HTTPException
@@ -19,9 +20,6 @@ from mex.common.models import (
     PaginatedItemsContainer,
 )
 from mex.common.types import Identifier, Validation
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
 
 router = APIRouter()
 

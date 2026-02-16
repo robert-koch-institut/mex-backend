@@ -95,14 +95,16 @@ class Result:
 
     def log_notifications(self) -> None:
         """Log neo4j notifications."""
-        for notification in self._summary.summary_notifications:
-            severity = notification.severity_level
+        for status in self._summary.gql_status_objects:
+            if not status.is_notification:
+                continue
+            severity = status.severity
             if severity == NotificationSeverity.WARNING:
-                logger.warning("%r", notification)
+                logger.warning("%r", status)
             elif severity == NotificationSeverity.INFORMATION:
-                logger.info("%r", notification)
+                logger.info("%r", status)
             else:
-                logger.debug("%r", notification)
+                logger.debug("%r", status)
 
     def all(self) -> list[dict[str, Any]]:
         """Return all records as a list."""

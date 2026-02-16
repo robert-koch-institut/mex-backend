@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Annotated, cast
+from typing import Annotated, cast
 
 from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
@@ -8,10 +8,8 @@ from mex.backend.merged.main import get_merged_item
 from mex.backend.security import has_write_access_ldap
 from mex.common.identity import get_provider
 from mex.common.ldap.connector import LDAPConnector
+from mex.common.models import MergedPerson
 from mex.common.types import MergedPrimarySourceIdentifier
-
-if TYPE_CHECKING:
-    from mex.common.models import MergedPerson
 
 router = APIRouter()
 

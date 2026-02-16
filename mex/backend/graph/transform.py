@@ -39,7 +39,7 @@ def expand_references_in_search_result(
     """
     # TODO(ND): try to re-write directly in the cypher query, if we can use `apoc`
     sorted_refs = sorted(refs, key=lambda ref: (ref["label"], ref["position"]))
-    groups = groupby(sorted_refs, lambda ref: (ref["label"]))
+    groups = groupby(sorted_refs, lambda ref: ref["label"])
     return {label: [ref["value"] for ref in group] for label, group in groups}
 
 

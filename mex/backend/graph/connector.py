@@ -6,7 +6,7 @@ from neo4j import (
     WRITE_ACCESS,
     Driver,
     GraphDatabase,
-    NotificationDisabledCategory,
+    NotificationDisabledClassification,
     Transaction,
 )
 from neo4j.exceptions import ConstraintError, Neo4jError
@@ -66,9 +66,9 @@ class GraphConnector(BaseConnector):
                 settings.graph_password.get_secret_value(),
             ),
             database=settings.graph_db,
-            notifications_disabled_categories=[
+            notifications_disabled_classifications=[
                 # mute warnings about labels used in queries but missing in graph
-                NotificationDisabledCategory.UNRECOGNIZED,
+                NotificationDisabledClassification.UNRECOGNIZED,
             ],
             telemetry_disabled=True,
             max_connection_pool_size=settings.backend_api_parallelization,
