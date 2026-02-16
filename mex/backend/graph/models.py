@@ -19,15 +19,12 @@ from mex.common.models import (
 )
 from mex.common.types import (
     AnyPrimitiveType,
+    ExtractedPrimarySourceIdentifier,
+    MergedPrimarySourceIdentifier,
 )
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
-
-    from mex.common.types import (
-        ExtractedPrimarySourceIdentifier,
-        MergedPrimarySourceIdentifier,
-    )
 
 
 class MExPrimarySource(BasePrimarySource):
