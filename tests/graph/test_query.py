@@ -132,16 +132,18 @@ YIELD currentStatus;"""
         ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
         AND extracted_or_rule_node.identifier = $identifier
         AND merged_node.identifier = $stable_target_id
-    CALL (extracted_or_rule_node) {
-        MATCH (extracted_or_rule_node:AdditivePerson|AdditiveVariable|AdditiveDistribution)
-        RETURN extracted_or_rule_node AS filtered_node
-    UNION
-        MATCH (extracted_or_rule_node)-[:hadPrimarySource]->(referenced_node_to_filter_by)
-        WHERE
-            referenced_node_to_filter_by.identifier IN $referenced_identifiers
-        RETURN extracted_or_rule_node AS filtered_node
-    }
-    WITH filtered_node as extracted_or_rule_node, merged_node
+    OPTIONAL MATCH (extracted_or_rule_node)-[:hadPrimarySource]->(referenced_node_to_filter_by:MergedPerson|MergedVariable|MergedDistribution)
+    WITH merged_node, extracted_or_rule_node, referenced_node_to_filter_by
+    WHERE
+        (
+            (referenced_node_to_filter_by.identifier IN $referenced_identifiers)
+            OR
+            (
+                referenced_node_to_filter_by IS NULL
+                AND
+                any(identifier IN $referenced_identifiers WHERE identifier IS NULL)
+            )
+        )
     RETURN COUNT(extracted_or_rule_node) AS total
 }
 CALL () {
@@ -159,16 +161,18 @@ CALL () {
         ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
         AND extracted_or_rule_node.identifier = $identifier
         AND merged_node.identifier = $stable_target_id
-    CALL (extracted_or_rule_node) {
-        MATCH (extracted_or_rule_node:AdditivePerson|AdditiveVariable|AdditiveDistribution)
-        RETURN extracted_or_rule_node AS filtered_node
-    UNION
-        MATCH (extracted_or_rule_node)-[:hadPrimarySource]->(referenced_node_to_filter_by)
-        WHERE
-            referenced_node_to_filter_by.identifier IN $referenced_identifiers
-        RETURN extracted_or_rule_node AS filtered_node
-    }
-    WITH filtered_node as extracted_or_rule_node, merged_node
+    OPTIONAL MATCH (extracted_or_rule_node)-[:hadPrimarySource]->(referenced_node_to_filter_by:MergedPerson|MergedVariable|MergedDistribution)
+    WITH merged_node, extracted_or_rule_node, referenced_node_to_filter_by
+    WHERE
+        (
+            (referenced_node_to_filter_by.identifier IN $referenced_identifiers)
+            OR
+            (
+                referenced_node_to_filter_by IS NULL
+                AND
+                any(identifier IN $referenced_identifiers WHERE identifier IS NULL)
+            )
+        )
     ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
     SKIP $skip
     LIMIT $limit
