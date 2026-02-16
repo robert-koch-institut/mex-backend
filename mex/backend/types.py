@@ -48,8 +48,8 @@ class DynamicStrEnum(EnumMeta):
     """Metaclass to dynamically populate an enumeration from a list of strings."""
 
     def __new__(
-        cls: type["DynamicStrEnum"], name: str, bases: tuple[type], dct: _EnumDict
-    ) -> "DynamicStrEnum":
+        cls: type[DynamicStrEnum], name: str, bases: tuple[type], dct: _EnumDict
+    ) -> DynamicStrEnum:
         """Create a new enum by adding an entry for each name in the source."""
         for value in dct.pop("__names__"):
             dct[dromedary_to_snake(value).upper()] = value

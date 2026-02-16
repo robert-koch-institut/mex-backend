@@ -1,7 +1,11 @@
+from typing import TYPE_CHECKING
+
 from mex.backend.extracted.helpers import search_extracted_items_in_graph
 from mex.common.identity import get_provider
-from mex.common.models import AnyExtractedModel
-from mex.common.types import MergedPrimarySourceIdentifier
+
+if TYPE_CHECKING:
+    from mex.common.models import AnyExtractedModel
+    from mex.common.types import MergedPrimarySourceIdentifier
 
 
 def fetch_extracted_item_by_source_identifiers(

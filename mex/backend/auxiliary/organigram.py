@@ -1,15 +1,17 @@
 from collections import deque
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from mex.backend.auxiliary.primary_source import extracted_primary_source_organigram
 from mex.backend.auxiliary.wikidata import extracted_organization_rki
 from mex.backend.extracted.helpers import search_extracted_items_in_graph
 from mex.backend.graph.connector import GraphConnector
-from mex.common.models import ExtractedOrganizationalUnit
 from mex.common.organigram.extract import extract_organigram_units
 from mex.common.organigram.transform import (
     transform_organigram_units_to_organizational_units,
 )
+
+if TYPE_CHECKING:
+    from mex.common.models import ExtractedOrganizationalUnit
 
 
 def extracted_organizational_units() -> list[ExtractedOrganizationalUnit]:

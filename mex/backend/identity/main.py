@@ -1,11 +1,13 @@
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 from fastapi import APIRouter, Body, Query
 
 from mex.backend.identity.provider import GraphIdentityProvider
 from mex.common.identity.models import Identity
 from mex.common.models import PaginatedItemsContainer
-from mex.common.types import Identifier, MergedPrimarySourceIdentifier
+
+if TYPE_CHECKING:
+    from mex.common.types import Identifier, MergedPrimarySourceIdentifier
 
 router = APIRouter()
 

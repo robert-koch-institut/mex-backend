@@ -1,6 +1,5 @@
-from collections.abc import Callable, Iterator
 from functools import cache
-from typing import Annotated, Any, Literal, cast
+from typing import TYPE_CHECKING, Annotated, Any, Literal, cast
 
 from neo4j import NotificationSeverity
 from neo4j import Result as Neo4jResult
@@ -18,11 +17,15 @@ from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     BasePrimarySource,
 )
-from mex.common.types import (
-    AnyPrimitiveType,
-    ExtractedPrimarySourceIdentifier,
-    MergedPrimarySourceIdentifier,
-)
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator
+
+    from mex.common.types import (
+        AnyPrimitiveType,
+        ExtractedPrimarySourceIdentifier,
+        MergedPrimarySourceIdentifier,
+    )
 
 
 class MExPrimarySource(BasePrimarySource):

@@ -1,11 +1,15 @@
-from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 from pydantic_core import ValidationError
 
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import InconsistentGraphError, NoResultFoundError
 from mex.common.models import AnyExtractedModel, PaginatedItemsContainer
-from mex.common.types import Identifier
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from mex.common.types import Identifier
 
 
 def search_extracted_items_in_graph(  # noqa: PLR0913

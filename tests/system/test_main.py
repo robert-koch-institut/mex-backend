@@ -1,7 +1,11 @@
-from fastapi.testclient import TestClient
+from typing import TYPE_CHECKING
+
 from starlette import status
 
 from mex.common.testing import Joker
+
+if TYPE_CHECKING:
+    from fastapi.testclient import TestClient
 
 
 def test_openapi(client: TestClient) -> None:

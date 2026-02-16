@@ -1,6 +1,5 @@
-from collections.abc import Mapping
 from itertools import chain
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 from mex.common.fields import (
     ALL_MODEL_CLASSES_BY_NAME,
@@ -17,6 +16,9 @@ from mex.common.models import (
 )
 from mex.common.types import MERGED_IDENTIFIER_CLASSES, NESTED_MODEL_CLASSES_BY_NAME
 from mex.common.utils import contains_any_types, get_all_fields
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 # fields that should be indexed as searchable fields
 SEARCHABLE_FIELDS = sorted(

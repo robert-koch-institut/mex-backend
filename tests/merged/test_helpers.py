@@ -1,4 +1,4 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
 from pytest import LogCaptureFixture
@@ -11,7 +11,9 @@ from mex.backend.merged.helpers import (
 )
 from mex.common.merged.main import create_merged_item
 from mex.common.types import Identifier, TextLanguage, Validation
-from tests.conftest import DummyData, MockedGraph
+
+if TYPE_CHECKING:
+    from tests.conftest import DummyData, MockedGraph
 
 
 @pytest.mark.usefixtures("loaded_dummy_data")

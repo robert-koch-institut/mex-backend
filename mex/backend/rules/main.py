@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 from fastapi import APIRouter, Body, HTTPException, Path
 from starlette import status
@@ -10,8 +10,10 @@ from mex.backend.rules.helpers import (
     get_rule_set_from_graph,
     update_and_get_rule_set,
 )
-from mex.common.models import AnyRuleSetRequest, AnyRuleSetResponse
-from mex.common.types import Identifier
+
+if TYPE_CHECKING:
+    from mex.common.models import AnyRuleSetRequest, AnyRuleSetResponse
+    from mex.common.types import Identifier
 
 router = APIRouter()
 

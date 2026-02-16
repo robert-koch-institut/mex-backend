@@ -1,6 +1,5 @@
-from collections.abc import Callable
 from functools import cache
-from typing import Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any
 
 from jinja2 import (
     Environment,
@@ -37,6 +36,9 @@ from mex.common.transform import (
     snake_to_dromedary,
 )
 from mex.common.types import NESTED_MODEL_CLASSES_BY_NAME
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # TODO(ND): move this to mex-common
 EXTRACTED_AND_RULE_MODEL_CLASSES_BY_NAME = {

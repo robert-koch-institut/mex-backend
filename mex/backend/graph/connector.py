@@ -1,6 +1,5 @@
 from collections import deque
-from collections.abc import Generator, Iterable, Sequence
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from neo4j import (
     READ_ACCESS,
@@ -39,7 +38,11 @@ from mex.common.models import (
     AnyRuleModel,
     AnyRuleSetResponse,
 )
-from mex.common.types import Identifier
+
+if TYPE_CHECKING:
+    from collections.abc import Generator, Iterable, Sequence
+
+    from mex.common.types import Identifier
 
 
 class GraphConnector(BaseConnector):

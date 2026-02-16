@@ -1,5 +1,6 @@
+from typing import TYPE_CHECKING
+
 import pytest
-from fastapi.testclient import TestClient
 from starlette import status
 
 from mex.backend.auxiliary.primary_source import extracted_primary_source_ldap
@@ -8,6 +9,9 @@ from mex.backend.extracted.helpers import search_extracted_items_in_graph
 from mex.common.models import ExtractedPrimarySource
 from mex.common.types import Identifier, TextLanguage
 from tests.conftest import get_graph
+
+if TYPE_CHECKING:
+    from fastapi.testclient import TestClient
 
 
 @pytest.mark.usefixtures("mocked_ldap", "mocked_wikidata")

@@ -1,7 +1,6 @@
 from itertools import groupby
-from typing import Any, TypedDict, cast
+from typing import TYPE_CHECKING, Any, TypedDict, cast
 
-from neo4j.exceptions import Neo4jError
 from pydantic_core import ErrorDetails
 
 from mex.backend.fields import REFERENCED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME
@@ -16,6 +15,9 @@ from mex.common.fields import (
 from mex.common.models import AnyExtractedModel, AnyRuleModel, AnyRuleSetResponse
 from mex.common.transform import to_key_and_values
 from mex.common.types import AnyPrimitiveType, Link, Text
+
+if TYPE_CHECKING:
+    from neo4j.exceptions import Neo4jError
 
 
 class _SearchResultReference(TypedDict):

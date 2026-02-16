@@ -1,5 +1,4 @@
-from collections.abc import Sequence
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 from fastapi import APIRouter, Path, Query
 from fastapi.exceptions import HTTPException
@@ -11,8 +10,12 @@ from mex.backend.extracted.helpers import (
 )
 from mex.backend.graph.exceptions import NoResultFoundError
 from mex.backend.types import ExtractedType, ReferenceFieldName
-from mex.common.models import AnyExtractedModel, PaginatedItemsContainer
-from mex.common.types import Identifier
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from mex.common.models import AnyExtractedModel, PaginatedItemsContainer
+    from mex.common.types import Identifier
 
 router = APIRouter()
 

@@ -1,9 +1,13 @@
+from typing import TYPE_CHECKING
+
 import pytest
 
 from mex.backend.exceptions import BackendError
 from mex.backend.extracted.helpers import get_extracted_item_from_graph
 from mex.common.types import Identifier
-from tests.conftest import DummyData
+
+if TYPE_CHECKING:
+    from tests.conftest import DummyData
 
 
 @pytest.mark.integration

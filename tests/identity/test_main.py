@@ -1,7 +1,6 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
-from fastapi.testclient import TestClient
 from starlette import status
 
 from mex.common.models import (
@@ -9,7 +8,11 @@ from mex.common.models import (
     MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
 )
-from tests.conftest import MockedGraph
+
+if TYPE_CHECKING:
+    from fastapi.testclient import TestClient
+
+    from tests.conftest import MockedGraph
 
 
 @pytest.mark.parametrize(
