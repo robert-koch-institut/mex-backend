@@ -26,6 +26,7 @@ DELETE outbound
 DETACH DELETE rule
 
 RETURN
-    merged,
+    0 as deleted_merged_count,
+    0 as deleted_extracted_count,
     count(DISTINCT rule) AS deleted_rule_count,
     count(DISTINCT nested) AS deleted_nested_count;
