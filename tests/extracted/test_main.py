@@ -5,6 +5,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
 from starlette import status
 
+from mex.backend.graph.models import MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID
 from mex.common.models import ExtractedOrganizationalUnit
 from tests.conftest import DummyData, MockedGraph
 
@@ -188,6 +189,11 @@ def test_search_extracted_items_mocked(
                 "total": 1,
             },
             id="stable-target-id-filter",
+        ),
+        pytest.param(
+            f"?referencedIdentifier={MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID}&referenceField=hadPrimarySource",
+            {"items": [], "total": 0},
+            id="had-primary-source-mex-editor-filter",
         ),
         pytest.param(
             "?stableTargetId=thisIdDoesNotExist",

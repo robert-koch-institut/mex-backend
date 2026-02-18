@@ -4,6 +4,8 @@ import pytest
 from fastapi.testclient import TestClient
 from starlette import status
 
+from mex.backend.graph.models import MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID
+
 
 @pytest.mark.parametrize(
     ("stable_target_id", "json_body", "expected"),
@@ -370,6 +372,45 @@ def test_preview(
                 "total": 3,
             },
             id="referenced-id-filter",
+        ),
+        pytest.param(
+            f"?referencedIdentifier={MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID}&referenceField=hadPrimarySource",
+            {
+                "items": [
+                    {
+                        "$type": "PreviewOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": ["1.7@rki.de"],
+                        "identifier": "StandaloneRule",
+                        "name": [{"language": "de", "value": "Abteilung 1.7"}],
+                        "parentUnit": "bFQoRhcVH5DHUx",
+                        "shortName": [],
+                        "supersededBy": None,
+                        "unitOf": [],
+                        "website": [],
+                    },
+                    {
+                        "$type": "PreviewOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "identifier": "bFQoRhcVH5DHUz",
+                        "name": [{"language": "de", "value": "Abteilung 1.6"}],
+                        "parentUnit": "bFQoRhcVH5DHUx",
+                        "shortName": [],
+                        "supersededBy": None,
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [
+                            {
+                                "language": None,
+                                "title": "Unit Homepage",
+                                "url": "https://unit-1-6",
+                            }
+                        ],
+                    },
+                ],
+                "total": 2,
+            },
+            id="had-primary-source-mex-editor-filter",
         ),
         pytest.param(
             "?identifier=thisIdDoesNotExist",
