@@ -1,14 +1,21 @@
+from collections.abc import Generator, Iterable, Sequence
+from typing import Any
+
 import pytest
+from pytest import MonkeyPatch
 
 from mex.backend.auxiliary.organigram import extracted_organizational_units
 from mex.backend.extracted.helpers import search_extracted_items_in_graph
+from mex.backend.graph.connector import GraphConnector
+from mex.backend.graph.models import Result
+from mex.common.logging import logger
 from mex.common.models import ExtractedOrganizationalUnit
 from mex.common.types import Text, TextLanguage
 from tests.conftest import get_graph
 
 
 @pytest.mark.usefixtures("mocked_wikidata")
-def test_extracted_organizational_units() -> None:
+def test_extracted_organizational_units(monkeypatch: MonkeyPatch) -> None:
     expected_result = [
         ExtractedOrganizationalUnit(
             hadPrimarySource="dsnYIq1AxYMLcTbSIBvDSs",
@@ -59,6 +66,39 @@ def test_extracted_organizational_units() -> None:
             stableTargetId="hIiJpZXVppHvoyeP0QtAoS",
         ),
     ]
+
+    result_iter = iter([[], expected_result])
+
+    class MockedResult(Result):
+        def __init__(self, models: Sequence[Any]) -> None:
+            self._models = models
+
+        def one(self) -> dict[str, Any]:
+            return {"items": self._models, "total": len(self._models)}
+
+    monkeypatch.setattr(GraphConnector, "__init__", lambda self: None)
+    monkeypatch.setattr(GraphConnector, "close", lambda self: None)
+
+    def mocked_ingest_items(
+        _: GraphConnector, models: Iterable[Any]
+    ) -> Generator[None]:
+        for _ in models:
+            yield None
+
+    monkeypatch.setattr(GraphConnector, "ingest_items", mocked_ingest_items)
+
+    def mocked_fetch_extracted_items(
+        _: GraphConnector, *args: list[Any], **kwargs: dict[str, Any]
+    ) -> MockedResult:
+        logger.info(
+            "mocked fetch_extracted_items called with arg: %s, kwargs: %s", args, kwargs
+        )
+        return MockedResult(next(result_iter))
+
+    monkeypatch.setattr(
+        GraphConnector, "fetch_extracted_items", mocked_fetch_extracted_items
+    )
+
     result = extracted_organizational_units()
     assert result == expected_result
 

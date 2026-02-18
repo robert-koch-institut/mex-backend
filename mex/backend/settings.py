@@ -27,7 +27,7 @@ class BackendSettings(BaseSettings):
         validation_alias="MEX_BACKEND_ROOT_PATH",
     )
     graph_url: str = Field(
-        "neo4j://localhost:7687",
+        "neo4j",
         description="URL for connecting to the graph database.",
         validation_alias="MEX_GRAPH_URL",
     )
