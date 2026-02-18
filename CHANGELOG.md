@@ -32,9 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- update python to 3.14
 - update neo4j in compose to 2025.12
 - updated template to https://github.com/robert-koch-institut/mex-template/commit/33ca3a
-- update python to 3.13
 - update fastapi to 0.128
 - update mex-model, mex-common, mex-artificial
 - updated template to https://github.com/robert-koch-institut/mex-template/commit/ad26e4
