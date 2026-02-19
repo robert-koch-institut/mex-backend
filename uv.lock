@@ -419,12 +419,6 @@ wheels = [
 ]
 
 [[package]]
-name = "libvalkey"
-version = "4.0.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/38/49/57857ba9d02ba4df3bc1e71044f599c82ea590e928328e6b512dbf720228/libvalkey-4.0.1.tar.gz", hash = "sha256:fe60ef535bc826fc35f4019228a0a46bdce8b41fd6013a7591e822a8a17c3170", size = 109005, upload-time = "2024-11-26T14:35:38.504Z" }
-
-[[package]]
 name = "markdown-it-py"
 version = "4.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -518,7 +512,7 @@ dependencies = [
     { name = "pydantic" },
     { name = "starlette" },
     { name = "uvicorn", extra = ["standard"] },
-    { name = "valkey", extra = ["libvalkey"] },
+    { name = "valkey" },
 ]
 
 [package.dev-dependencies]
@@ -543,13 +537,13 @@ requires-dist = [
     { name = "backoff", specifier = ">=2.2,<3" },
     { name = "fastapi", specifier = ">=0.128,<1" },
     { name = "jinja2", specifier = ">=3.1,<4" },
-    { name = "mex-common", specifier = ">=1.15,<1.16" },
+    { name = "mex-common", specifier = ">=1.16,<1.17" },
     { name = "neo4j", specifier = ">=6.1,<7" },
     { name = "orjson", specifier = ">=3.11,<4" },
     { name = "pydantic", specifier = ">=2,<3" },
     { name = "starlette", specifier = ">=0.49,<1" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.40,<1" },
-    { name = "valkey", extras = ["libvalkey"], specifier = ">=6.1,<7" },
+    { name = "valkey", specifier = ">=6.1,<7" },
 ]
 
 [package.metadata.requires-dev]
@@ -571,7 +565,7 @@ dev = [
 
 [[package]]
 name = "mex-common"
-version = "1.15.0"
+version = "1.16.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "backoff" },
@@ -589,9 +583,9 @@ dependencies = [
     { name = "requests" },
     { name = "tabulate" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/11/1e/6d9f63c34a5044c0634bd4a6d211a4c35428432230e5e018fae1d2ef34ec/mex_common-1.15.0.tar.gz", hash = "sha256:44efb55af1f1e04ed2545581fd81bd9d5825d0811f758f448901ef148f9753d6", size = 87944, upload-time = "2026-02-18T16:04:05.541Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4a/62/8cc0da0a4940f09105897a71edc780d6f0947396e71a4dfe8d1214eec0a9/mex_common-1.16.0.tar.gz", hash = "sha256:4e89e34b206bfb42a1c47092791d430e3b48131a281e2bf86b306698e224a76b", size = 89482, upload-time = "2026-02-19T12:29:29.638Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3c/83/a42750feeba07769f4fae6a0fd66ab36dc98a3431910efe1110b1480feaa/mex_common-1.15.0-py3-none-any.whl", hash = "sha256:67c69381ce598a04a761ac2fe5159b67fd0f0e485b7889ba3202808d8488fdd4", size = 135399, upload-time = "2026-02-18T16:04:02.952Z" },
+    { url = "https://files.pythonhosted.org/packages/05/b8/f9fc6258045d2f4f794cd25f0ec2e22da3c375cbb540c2e3bad29d8af57f/mex_common-1.16.0-py3-none-any.whl", hash = "sha256:d0d535d3f920403c4fc41cef2f8a8ce29497a2cf9ff98df662167088f6328dbd", size = 137092, upload-time = "2026-02-19T12:29:27.815Z" },
 ]
 
 [[package]]
@@ -1376,16 +1370,11 @@ wheels = [
 
 [[package]]
 name = "valkey"
-version = "6.1.1"
+version = "6.1.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/c3/ee/7fd930fc712275084722ddd464a0ea296abdb997d2da396320507968daeb/valkey-6.1.1.tar.gz", hash = "sha256:5880792990c6c2b5eb604a5ed5f98f300880b6dd92d123819b66ed54bb259731", size = 4601372, upload-time = "2025-08-11T06:41:10.63Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/38/d4/04b6a234e584e21ccb63b895ca9dfb4e759e4c139c1ab3f9484982ee6491/valkey-6.1.0.tar.gz", hash = "sha256:a652df15ed89c41935ffae6dfd09c56f4a9ab80b592e5ed9204d538e2ddad6d3", size = 4600944, upload-time = "2025-02-11T17:20:46.706Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d0/a2/252afa4da08c714460f49e943070f86a02931f99f886182765194002fe33/valkey-6.1.1-py3-none-any.whl", hash = "sha256:e2691541c6e1503b53c714ad9a35551ac9b7c0bbac93865f063dbc859a46de92", size = 259474, upload-time = "2025-08-11T06:41:08.769Z" },
-]
-
-[package.optional-dependencies]
-libvalkey = [
-    { name = "libvalkey" },
+    { url = "https://files.pythonhosted.org/packages/79/b0/c4d47032bbda89cff7af99c0b096db9b9453b9f0c1e24cf027aa616be389/valkey-6.1.0-py3-none-any.whl", hash = "sha256:cfe769edae894f74ac946eff1e93f7d7f466032c3030ba7e9d089a742459ac9c", size = 259302, upload-time = "2025-02-11T17:20:42.96Z" },
 ]
 
 [[package]]

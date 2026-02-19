@@ -11,11 +11,6 @@ from neo4j import (
 )
 from neo4j.exceptions import ConstraintError, Neo4jError
 
-from mex.backend.fields import (
-    ALL_REFERENCE_FIELD_NAMES,
-    SEARCHABLE_CLASSES,
-    SEARCHABLE_FIELDS,
-)
 from mex.backend.graph.exceptions import DeletionFailedError, IngestionError
 from mex.backend.graph.models import IngestData, MExPrimarySource, Result
 from mex.backend.graph.query import Query, QueryBuilder
@@ -28,7 +23,12 @@ from mex.backend.graph.transform import (
 from mex.backend.settings import BackendSettings
 from mex.common.connector import BaseConnector
 from mex.common.exceptions import MExError
-from mex.common.fields import ALL_MODEL_CLASSES_BY_NAME
+from mex.common.fields import (
+    ALL_MODEL_CLASSES_BY_NAME,
+    ALL_REFERENCE_FIELD_NAMES,
+    SEARCHABLE_CLASSES,
+    SEARCHABLE_FIELDS,
+)
 from mex.common.logging import logger
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,

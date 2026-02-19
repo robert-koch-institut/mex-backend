@@ -1,19 +1,19 @@
 from itertools import groupby
-from typing import TYPE_CHECKING, Any, TypedDict, cast
+from typing import TYPE_CHECKING, TypedDict, cast
 
 from pydantic_core import ErrorDetails
 
-from mex.backend.fields import REFERENCED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME
 from mex.backend.graph.models import GraphRel, IngestData, MExPrimarySource
 from mex.common.fields import (
     FINAL_FIELDS_BY_CLASS_NAME,
     LINK_FIELDS_BY_CLASS_NAME,
     MUTABLE_FIELDS_BY_CLASS_NAME,
     REFERENCE_FIELDS_BY_CLASS_NAME,
+    REFERENCED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME,
     TEXT_FIELDS_BY_CLASS_NAME,
 )
 from mex.common.models import AnyExtractedModel, AnyRuleModel, AnyRuleSetResponse
-from mex.common.transform import to_key_and_values
+from mex.common.transform import clean_dict, to_key_and_values
 from mex.common.types import AnyPrimitiveType, Link, Text
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -113,21 +113,6 @@ def transform_model_into_ingest_data(
         linkRels=link_rels,
         createRels=create_rels,
     )
-
-
-# TODO(ND): move this to mex-common
-def clean_dict(obj: Any) -> Any:  # noqa: ANN401
-    """Clean `None` and `[]` from dicts."""
-    if isinstance(obj, dict):
-        cleaned = {}
-        for k, v in obj.items():
-            cleaned_value = clean_dict(v)
-            if cleaned_value not in (None, []):
-                cleaned[k] = cleaned_value
-        return cleaned
-    if isinstance(obj, list):
-        return [clean_dict(item) for item in obj]
-    return obj
 
 
 def get_graph_rel_id(rel: GraphRel) -> tuple[str, int]:

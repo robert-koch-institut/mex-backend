@@ -10,16 +10,14 @@ from jinja2 import (
 )
 from pydantic import StringConstraints, validate_call
 
-from mex.backend.fields import (
-    NESTED_ENTITY_TYPES_BY_CLASS_NAME,
-    REFERENCED_ENTITY_TYPES_BY_CLASS_NAME,
-)
 from mex.backend.graph.models import IngestParams
 from mex.backend.settings import BackendSettings
 from mex.common.connector import BaseConnector
 from mex.common.fields import (
     LINK_FIELDS_BY_CLASS_NAME,
+    NESTED_ENTITY_TYPES_BY_CLASS_NAME,
     REFERENCE_FIELDS_BY_CLASS_NAME,
+    REFERENCED_ENTITY_TYPES_BY_CLASS_NAME,
     TEXT_FIELDS_BY_CLASS_NAME,
 )
 from mex.common.models import (

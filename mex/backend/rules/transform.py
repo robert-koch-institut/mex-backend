@@ -1,8 +1,8 @@
 from typing import Any
 
-from mex.backend.fields import RULE_CLASS_LOOKUP_BY_FIELD_NAME
 from mex.backend.graph.exceptions import InconsistentGraphError
 from mex.common.models import (
+    RULE_MODEL_CLASSES_BY_TYPE_BY_NAME,
     RULE_SET_RESPONSE_CLASSES_BY_NAME,
     AnyRuleModel,
     AnyRuleSetResponse,
@@ -19,12 +19,15 @@ def transform_raw_rules_to_rule_set_response(
     response: dict[str, Any] = {}
     model: type[AnyRuleModel] | None
 
-    if (num_raw_rules := len(raw_rules)) != len(RULE_CLASS_LOOKUP_BY_FIELD_NAME):
+    if (num_raw_rules := len(raw_rules)) != len(RULE_MODEL_CLASSES_BY_TYPE_BY_NAME):
         msg = f"inconsistent number of rules found: {num_raw_rules}"
         raise InconsistentGraphError(msg)
 
     for rule in raw_rules:
-        for field_name, model_class_lookup in RULE_CLASS_LOOKUP_BY_FIELD_NAME.items():
+        for (
+            field_name,
+            model_class_lookup,
+        ) in RULE_MODEL_CLASSES_BY_TYPE_BY_NAME.items():
             if model := model_class_lookup.get(str(rule.get("entityType"))):
                 response[field_name] = rule
                 stem_types.append(model.stemType)
