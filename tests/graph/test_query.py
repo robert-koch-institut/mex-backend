@@ -324,7 +324,7 @@ CALL () {
     WITH
         merged_node,
         collect(
-            extracted_or_rule_node{.*, entityType: head(labels(extracted_or_rule_node)), _refs: refs}
+            DISTINCT extracted_or_rule_node{.*, entityType: head(labels(extracted_or_rule_node)), _refs: refs}
         ) AS components
     WITH
         collect(
@@ -368,7 +368,7 @@ CALL () {
     WITH
         merged_node,
         collect(
-            extracted_or_rule_node{.*, entityType: head(labels(extracted_or_rule_node)), _refs: refs}
+            DISTINCT extracted_or_rule_node{.*, entityType: head(labels(extracted_or_rule_node)), _refs: refs}
         ) AS components
     WITH
         collect(
