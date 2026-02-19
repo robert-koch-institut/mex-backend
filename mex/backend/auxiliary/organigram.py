@@ -33,4 +33,10 @@ def extracted_organizational_units() -> list[ExtractedOrganizationalUnit]:
     )
     connector = GraphConnector.get()
     deque(connector.ingest_items(extracted_units))
-    return extracted_units
+    unit_container = search_extracted_items_in_graph(
+        entity_type=["ExtractedOrganizationalUnit"],
+        referenced_identifiers=[organigram_primary_source.stableTargetId],
+        reference_field="hadPrimarySource",
+        limit=len(organigram_units),
+    )
+    return cast("list[ExtractedOrganizationalUnit]", unit_container.items)

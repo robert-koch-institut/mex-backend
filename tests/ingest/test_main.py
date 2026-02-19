@@ -91,6 +91,12 @@ def test_ingest_extracted(
             "end": "00000000000000",
         },
         {
+            "end": "00000000000000",
+            "label": "hadPrimarySource",
+            "position": 0,
+            "start": "00000000000003",
+        },
+        {
             "position": 0,
             "start": "bFQoRhcVH5DHUq",
             "label": "hadPrimarySource",
@@ -107,6 +113,12 @@ def test_ingest_extracted(
             "start": "00000000000001",
             "label": "stableTargetId",
             "end": "00000000000000",
+        },
+        {
+            "end": "00000000000002",
+            "label": "stableTargetId",
+            "position": 0,
+            "start": "00000000000003",
         },
         {
             "position": 0,
@@ -365,6 +377,12 @@ def test_ingest_extracted(
             "label": "ExtractedPrimarySource",
             "identifier": "00000000000001",
         },
+        {"identifier": "00000000000002", "label": "MergedPrimarySource"},
+        {
+            "identifier": "00000000000003",
+            "identifierInPrimarySource": "mex-editor",
+            "label": "ExtractedPrimarySource",
+        },
         {"label": "MergedOrganizationalUnit", "identifier": "StandaloneRule"},
         {"label": "MergedContactPoint", "identifier": "bFQoRhcVH5DHUB"},
         {"label": "MergedContactPoint", "identifier": "bFQoRhcVH5DHUD"},
@@ -492,6 +510,12 @@ def test_ingest_rule_set(
             "end": "00000000000000",
         },
         {
+            "end": "00000000000000",
+            "label": "hadPrimarySource",
+            "position": 0,
+            "start": "00000000000003",
+        },
+        {
             "position": 0,
             "start": "bFQoRhcVH5DHUq",
             "label": "hadPrimarySource",
@@ -508,6 +532,12 @@ def test_ingest_rule_set(
             "start": "00000000000001",
             "label": "stableTargetId",
             "end": "00000000000000",
+        },
+        {
+            "end": "00000000000002",
+            "label": "stableTargetId",
+            "position": 0,
+            "start": "00000000000003",
         },
         {
             "position": 0,
@@ -791,6 +821,12 @@ def test_ingest_rule_set(
             "label": "ExtractedPrimarySource",
             "identifier": "00000000000001",
         },
+        {"identifier": "00000000000002", "label": "MergedPrimarySource"},
+        {
+            "identifier": "00000000000003",
+            "identifierInPrimarySource": "mex-editor",
+            "label": "ExtractedPrimarySource",
+        },
         {"label": "MergedOrganizationalUnit", "identifier": "StandaloneRule"},
         {"label": "MergedContactPoint", "identifier": "bFQoRhcVH5DHUB"},
         {"label": "MergedContactPoint", "identifier": "bFQoRhcVH5DHUD"},
@@ -887,7 +923,7 @@ def test_ingest_artificial_data(
     assert response.status_code == status.HTTP_204_NO_CONTENT, response.text
 
     response = client_with_api_key_write_permission.get(
-        "/v0/merged-item", params={"skip": "32", "limit": "1"}
+        "/v0/merged-item", params={"skip": "33", "limit": "1"}
     )
     assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == {
@@ -911,7 +947,7 @@ def test_ingest_artificial_data(
                 "supersededBy": None,
             }
         ],
-        "total": 42,
+        "total": 43,
     }
 
 
