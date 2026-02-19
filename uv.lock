@@ -543,7 +543,7 @@ requires-dist = [
     { name = "backoff", specifier = ">=2.2,<3" },
     { name = "fastapi", specifier = ">=0.128,<1" },
     { name = "jinja2", specifier = ">=3.1,<4" },
-    { name = "mex-common", specifier = ">=1.14,<1.15" },
+    { name = "mex-common", specifier = ">=1.15,<1.16" },
     { name = "neo4j", specifier = ">=6.1,<7" },
     { name = "orjson", specifier = ">=3.11,<4" },
     { name = "pydantic", specifier = ">=2,<3" },
@@ -571,7 +571,7 @@ dev = [
 
 [[package]]
 name = "mex-common"
-version = "1.14.0"
+version = "1.15.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "backoff" },
@@ -589,9 +589,9 @@ dependencies = [
     { name = "requests" },
     { name = "tabulate" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/86/61/ad619f977f80e9897844599c36d167ddc597bc8a74901aae967e58ac90b5/mex_common-1.14.0.tar.gz", hash = "sha256:1ceacfd233d6557f318c39f9aed60f64bdde7c6d9fee24183fb3be5bfe03dcaa", size = 87907, upload-time = "2026-02-13T11:27:51.614Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/11/1e/6d9f63c34a5044c0634bd4a6d211a4c35428432230e5e018fae1d2ef34ec/mex_common-1.15.0.tar.gz", hash = "sha256:44efb55af1f1e04ed2545581fd81bd9d5825d0811f758f448901ef148f9753d6", size = 87944, upload-time = "2026-02-18T16:04:05.541Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/71/10/f8475670f70dc1b0f5f7119575a65d5df8e4b6660c8784fc847f627b69c5/mex_common-1.14.0-py3-none-any.whl", hash = "sha256:b6c556ae0982888d441ca75810c3874ea3533dfa628defa3eddbdc9ec2ff1e65", size = 135338, upload-time = "2026-02-13T11:27:50.078Z" },
+    { url = "https://files.pythonhosted.org/packages/3c/83/a42750feeba07769f4fae6a0fd66ab36dc98a3431910efe1110b1480feaa/mex_common-1.15.0-py3-none-any.whl", hash = "sha256:67c69381ce598a04a761ac2fe5159b67fd0f0e485b7889ba3202808d8488fdd4", size = 135399, upload-time = "2026-02-18T16:04:02.952Z" },
 ]
 
 [[package]]
