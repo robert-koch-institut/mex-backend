@@ -1,22 +1,16 @@
 from collections import deque
-from collections.abc import Generator, Iterable, Sequence
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from neo4j import (
     READ_ACCESS,
     WRITE_ACCESS,
     Driver,
     GraphDatabase,
-    NotificationDisabledCategory,
+    NotificationDisabledClassification,
     Transaction,
 )
 from neo4j.exceptions import ConstraintError, Neo4jError
 
-from mex.backend.fields import (
-    ALL_REFERENCE_FIELD_NAMES,
-    SEARCHABLE_CLASSES,
-    SEARCHABLE_FIELDS,
-)
 from mex.backend.graph.exceptions import DeletionFailedError, IngestionError
 from mex.backend.graph.models import IngestData, MExPrimarySource, Result
 from mex.backend.graph.query import Query, QueryBuilder
@@ -29,7 +23,12 @@ from mex.backend.graph.transform import (
 from mex.backend.settings import BackendSettings
 from mex.common.connector import BaseConnector
 from mex.common.exceptions import MExError
-from mex.common.fields import ALL_MODEL_CLASSES_BY_NAME
+from mex.common.fields import (
+    ALL_MODEL_CLASSES_BY_NAME,
+    ALL_REFERENCE_FIELD_NAMES,
+    SEARCHABLE_CLASSES,
+    SEARCHABLE_FIELDS,
+)
 from mex.common.logging import logger
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
@@ -39,7 +38,11 @@ from mex.common.models import (
     AnyRuleModel,
     AnyRuleSetResponse,
 )
-from mex.common.types import Identifier
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Generator, Iterable, Sequence
+
+    from mex.common.types import Identifier
 
 
 class GraphConnector(BaseConnector):
@@ -63,9 +66,9 @@ class GraphConnector(BaseConnector):
                 settings.graph_password.get_secret_value(),
             ),
             database=settings.graph_db,
-            notifications_disabled_categories=[
+            notifications_disabled_classifications=[
                 # mute warnings about labels used in queries but missing in graph
-                NotificationDisabledCategory.UNRECOGNIZED,
+                NotificationDisabledClassification.UNRECOGNIZED,
             ],
             telemetry_disabled=True,
             max_connection_pool_size=settings.backend_api_parallelization,

@@ -133,7 +133,7 @@ class MockedGraph:
             to_eager_result=MagicMock(
                 return_value=(
                     [Mock(items=v.items) for v in value],
-                    Mock(counters=SummaryCounters({}), summary_notifications=[]),
+                    Mock(counters=SummaryCounters({}), gql_status_objects=[]),
                     None,
                 ),
             ),
@@ -150,7 +150,7 @@ class MockedGraph:
                 to_eager_result=MagicMock(
                     return_value=(
                         [Mock(items=v.items) for v in value],
-                        Mock(counters=SummaryCounters({}), summary_notifications=[]),
+                        Mock(counters=SummaryCounters({}), gql_status_objects=[]),
                         None,
                     ),
                 ),

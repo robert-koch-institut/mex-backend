@@ -1,6 +1,5 @@
-from collections.abc import Callable
 from functools import cache
-from typing import Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any
 
 from jinja2 import (
     Environment,
@@ -11,16 +10,14 @@ from jinja2 import (
 )
 from pydantic import StringConstraints, validate_call
 
-from mex.backend.fields import (
-    NESTED_ENTITY_TYPES_BY_CLASS_NAME,
-    REFERENCED_ENTITY_TYPES_BY_CLASS_NAME,
-)
 from mex.backend.graph.models import IngestParams
 from mex.backend.settings import BackendSettings
 from mex.common.connector import BaseConnector
 from mex.common.fields import (
     LINK_FIELDS_BY_CLASS_NAME,
+    NESTED_ENTITY_TYPES_BY_CLASS_NAME,
     REFERENCE_FIELDS_BY_CLASS_NAME,
+    REFERENCED_ENTITY_TYPES_BY_CLASS_NAME,
     TEXT_FIELDS_BY_CLASS_NAME,
 )
 from mex.common.models import (
@@ -37,6 +34,9 @@ from mex.common.transform import (
     snake_to_dromedary,
 )
 from mex.common.types import NESTED_MODEL_CLASSES_BY_NAME
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Callable
 
 # TODO(ND): move this to mex-common
 EXTRACTED_AND_RULE_MODEL_CLASSES_BY_NAME = {

@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Body, Query
 
 from mex.backend.identity.provider import GraphIdentityProvider
-from mex.common.identity.models import Identity
+from mex.common.identity import Identity
 from mex.common.models import PaginatedItemsContainer
 from mex.common.types import Identifier, MergedPrimarySourceIdentifier
 

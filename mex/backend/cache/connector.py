@@ -1,12 +1,14 @@
 import json
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
-from pydantic import BaseModel, SecretStr
 from valkey import Valkey
 
 from mex.backend.settings import BackendSettings
 from mex.common.connector import BaseConnector
 from mex.common.transform import MExEncoder
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pydantic import BaseModel, SecretStr
 
 
 class ValkeyCache:

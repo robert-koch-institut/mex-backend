@@ -1,7 +1,7 @@
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
 import pytest
-from fastapi.testclient import TestClient
 from pytest import MonkeyPatch
 from starlette import status
 
@@ -21,6 +21,9 @@ from mex.common.models import (
 )
 from mex.common.types import Text
 from tests.conftest import DummyData, get_graph
+
+if TYPE_CHECKING:  # pragma: no cover
+    from fastapi.testclient import TestClient
 
 
 @pytest.mark.integration
@@ -922,7 +925,7 @@ def test_ingest_malformed(
         "/v0/ingest",
         json={"items": ["FAIL!"]},
     )
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY, response.text
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT, response.text
     assert response.json() == {
         "detail": [
             {
@@ -974,7 +977,7 @@ def test_ingest_constraint_violation(
     )
 
     # then we expect the backend to reject the request
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY, response.text
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT, response.text
     assert "Cannot set computed fields to custom values!" in response.text
 
     # and expect the database to still contain the first version

@@ -1,15 +1,15 @@
 from typing import TYPE_CHECKING, cast
 
 import pytest
-from fastapi.testclient import TestClient
 from neo4j import GraphDatabase
 from starlette import status
 
-from mex.backend.settings import BackendSettings
-
 if TYPE_CHECKING:  # pragma: no cover
     from fastapi import FastAPI
+    from fastapi.testclient import TestClient
     from starlette.routing import Route
+
+    from mex.backend.settings import BackendSettings
 
 
 def test_all_endpoints_require_authorization(entrypoint_app: TestClient) -> None:

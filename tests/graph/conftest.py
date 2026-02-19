@@ -1,10 +1,12 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import call
 
 import pytest
 
 from mex.backend.graph.models import IngestParams
-from tests.conftest import DummyData
+
+if TYPE_CHECKING:  # pragma: no cover
+    from tests.conftest import DummyData
 
 
 @pytest.fixture
