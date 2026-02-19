@@ -11,14 +11,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [1.5.0] - 2026-02-19
+
+### Changes
+
 - upgrade mex-common to 1.16.0
 - upgrade python to 3.14
 - change response rendering from stdlib json to orjson with sorted keys and indent
 - use pytest.param to keep test ids and test parameter sets close together
 - clean up dummy and artificial test data in conftest
 - updated template to https://github.com/robert-koch-institut/mex-template/commit/81bc5b
-
-### Deprecated
 
 ### Removed
 
@@ -28,8 +38,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - collect distinct rule items inside the merged item query
-
-### Security
 
 ## [1.4.0] - 2026-02-02
 
