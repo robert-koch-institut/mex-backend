@@ -13,6 +13,9 @@ from mex.backend.graph.exceptions import MultipleResultsFoundError, NoResultFoun
 from mex.backend.logging import LOGGING_LINE_LENGTH
 from mex.common.logging import logger
 from mex.common.models import (
+    MEX_EDITOR_PRIMARY_SOURCE_IDENTIFIER,
+    MEX_EDITOR_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
+    MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
     MEX_PRIMARY_SOURCE_IDENTIFIER,
     MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -46,13 +49,6 @@ MEX_PRIMARY_SOURCE = ExtractedPrimarySourceWithHardcodedIdentifiers(
     identifier=MEX_PRIMARY_SOURCE_IDENTIFIER,
     identifierInPrimarySource=MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
     stableTargetId=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-)
-MEX_EDITOR_PRIMARY_SOURCE_IDENTIFIER = ExtractedPrimarySourceIdentifier(
-    "00000000000003"
-)
-MEX_EDITOR_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE = "mex-editor"
-MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID = MergedPrimarySourceIdentifier(
-    "00000000000002"
 )
 MEX_EDITOR_PRIMARY_SOURCE = ExtractedPrimarySourceWithHardcodedIdentifiers(
     hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,

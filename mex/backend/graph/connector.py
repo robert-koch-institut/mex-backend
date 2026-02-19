@@ -20,7 +20,6 @@ from mex.backend.fields import (
 from mex.backend.graph.exceptions import DeletionFailedError, IngestionError
 from mex.backend.graph.models import (
     MEX_EDITOR_PRIMARY_SOURCE,
-    MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
     MEX_PRIMARY_SOURCE,
     ExtractedPrimarySourceWithHardcodedIdentifiers,
     IngestData,
@@ -41,6 +40,7 @@ from mex.common.logging import logger
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
+    MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
     RULE_MODEL_CLASSES_BY_NAME,
     AnyExtractedModel,
     AnyRuleModel,

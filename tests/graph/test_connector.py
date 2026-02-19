@@ -10,7 +10,6 @@ from mex.backend.graph import connector as connector_module
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import IngestionError
 from mex.backend.graph.models import (
-    MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
     IngestParams,
 )
 from mex.backend.graph.query import Query
@@ -19,6 +18,7 @@ from mex.common.exceptions import MExError
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
+    MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
     AnyExtractedModel,
     ExtractedOrganization,
     ExtractedOrganizationalUnit,

@@ -4,12 +4,12 @@ import pytest
 
 from mex.backend.graph.models import (
     MEX_EDITOR_PRIMARY_SOURCE,
-    MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
     MEX_PRIMARY_SOURCE,
 )
 from mex.backend.merged.helpers import search_merged_items_in_graph
 from mex.common.merged.main import create_merged_item
 from mex.common.models import (
+    MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     AnyExtractedModel,
     AnyMergedModel,

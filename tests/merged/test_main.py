@@ -5,10 +5,10 @@ import pytest
 from fastapi.testclient import TestClient
 from starlette import status
 
-from mex.backend.graph.models import MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID
 from mex.backend.rules.helpers import update_and_get_rule_set
 from mex.common.merged.main import create_merged_item
 from mex.common.models import (
+    MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
     ExtractedOrganizationalUnit,
     OrganizationalUnitRuleSetRequest,
     SubtractiveOrganizationalUnit,

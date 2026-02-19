@@ -4,7 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 from starlette import status
 
-from mex.backend.graph.models import MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID
+from mex.common.models import MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID
 
 
 @pytest.mark.parametrize(
