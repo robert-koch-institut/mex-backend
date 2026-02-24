@@ -9,10 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- automatically ingest primary source for mex-editor into database
-- querying for items that reference the mex-editor primary source in their
-  hadPrimarySource field returns rule items
-
 ### Changes
 
 ### Deprecated
@@ -22,6 +18,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [1.6.0] - 2026-02-24
+
+### Added
+
+- automatically ingest primary source for mex-editor into database
+- querying for items that reference the mex-editor primary source in their
+  hadPrimarySource field returns rule items
 
 ## [1.5.0] - 2026-02-19
 
