@@ -1,4 +1,4 @@
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import pytest
 
@@ -18,7 +18,9 @@ from mex.common.models import (
     PaginatedItemsContainer,
 )
 from mex.common.types import Validation
-from tests.conftest import DummyData
+
+if TYPE_CHECKING:  # pragma: no cover
+    from tests.conftest import DummyData
 
 
 @pytest.fixture

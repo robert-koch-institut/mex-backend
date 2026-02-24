@@ -1,6 +1,5 @@
-from collections.abc import Callable, Iterator
 from functools import cache
-from typing import Annotated, Any, Literal, cast
+from typing import TYPE_CHECKING, Annotated, Any, Literal, cast
 
 from neo4j import NotificationSeverity
 from neo4j import Result as Neo4jResult
@@ -27,6 +26,9 @@ from mex.common.types import (
     ExtractedPrimarySourceIdentifier,
     MergedPrimarySourceIdentifier,
 )
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Callable, Iterator
 
 
 class ExtractedPrimarySourceWithHardcodedIdentifiers(BasePrimarySource, ExtractedData):
@@ -108,14 +110,16 @@ class Result:
 
     def log_notifications(self) -> None:
         """Log neo4j notifications."""
-        for notification in self._summary.summary_notifications:
-            severity = notification.severity_level
+        for status in self._summary.gql_status_objects:
+            if not status.is_notification:
+                continue
+            severity = status.severity
             if severity == NotificationSeverity.WARNING:
-                logger.warning("%r", notification)
+                logger.warning("%r", status)
             elif severity == NotificationSeverity.INFORMATION:
-                logger.info("%r", notification)
+                logger.info("%r", status)
             else:
-                logger.debug("%r", notification)
+                logger.debug("%r", status)
 
     def all(self) -> list[dict[str, Any]]:
         """Return all records as a list."""

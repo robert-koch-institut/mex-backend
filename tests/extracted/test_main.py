@@ -1,15 +1,18 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
 from fastapi.encoders import jsonable_encoder
-from fastapi.testclient import TestClient
 from starlette import status
 
 from mex.common.models import (
     MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
     ExtractedOrganizationalUnit,
 )
-from tests.conftest import DummyData, MockedGraph
+
+if TYPE_CHECKING:  # pragma: no cover
+    from fastapi.testclient import TestClient
+
+    from tests.conftest import DummyData, MockedGraph
 
 
 @pytest.mark.usefixtures("mocked_valkey")

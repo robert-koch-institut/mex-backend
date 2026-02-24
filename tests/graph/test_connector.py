@@ -86,7 +86,9 @@ def test_mocked_graph_seed_indices(
     mocked_graph: MockedGraph, monkeypatch: MonkeyPatch
 ) -> None:
     monkeypatch.setattr(
-        connector_module, "SEARCHABLE_CLASSES", ["ExtractedThis", "ExtractedThat"]
+        connector_module,
+        "SEARCHABLE_CLASSES",
+        ["ExtractedThis", "ExtractedThat"],
     )
     monkeypatch.setattr(
         connector_module,

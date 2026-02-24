@@ -1,8 +1,7 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import Mock
 
 import pytest
-from fastapi.testclient import TestClient
 from starlette import status
 
 from mex.backend.rules.helpers import update_and_get_rule_set
@@ -14,7 +13,11 @@ from mex.common.models import (
     SubtractiveOrganizationalUnit,
 )
 from mex.common.types import Validation
-from tests.conftest import DummyData, DummyDataName, MockedGraph
+
+if TYPE_CHECKING:  # pragma: no cover
+    from fastapi.testclient import TestClient
+
+    from tests.conftest import DummyData, DummyDataName, MockedGraph
 
 
 @pytest.mark.usefixtures("mocked_valkey")
