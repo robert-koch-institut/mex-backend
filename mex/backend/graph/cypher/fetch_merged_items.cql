@@ -4,11 +4,13 @@ Globals:
     extracted_or_rule_labels: List of all extracted and rule class labels
     merged_labels: List of all merged class labels
     nested_labels: List of labels for all nestable objects
+    rule_labels: List of all rule class labels
 
 Jinja:
     filter_by_query_string: Whether the final query should accept a full text query string
     filter_by_identifier: Whether the final query should filter by the merged identifier
     filter_by_referenced_identifiers: Whether to filter for references to items with specific identifiers
+    filter_items_with_rules: Whether to filter for merged items that contain rule items
     reference_field: Name of the relationship holding referenced identifiers to use for filtering
 
 Args:
@@ -44,17 +46,28 @@ CALL () {
 <%- else %>
     OPTIONAL MATCH (merged_node:<<merged_labels|join("|")>>)
 <%- endif %>
-    <%- if filter_by_referenced_identifiers %>
-    MATCH (merged_node)<-[:stableTargetId]-()-[:<<reference_field>>]->(referenced_node_to_filter_by)
-    <%- endif %>
     WHERE
         ANY(label IN labels(merged_node) WHERE label IN $labels)
         <%- if filter_by_identifier %>
         AND merged_node.identifier = $identifier
         <%- endif %>
-        <%- if filter_by_referenced_identifiers %>
-        AND referenced_node_to_filter_by.identifier IN $referenced_identifiers
+    <%- if filter_by_referenced_identifiers or filter_items_with_rules %>
+    MATCH (merged_node)
+    WHERE
+        <%- if filter_items_with_rules %>
+        EXISTS {(merged_node)<-[:stableTargetId]-(:<<rule_labels|join("|")>>)}
         <%- endif %>
+        <%- if filter_by_referenced_identifiers and filter_items_with_rules %>
+        OR
+        <%- endif %>
+        <%- if filter_by_referenced_identifiers %>
+        EXISTS {
+            MATCH (merged_node)<-[:stableTargetId]-()-[:<<reference_field>>]->(referenced_node_to_filter_by)
+            WHERE
+                referenced_node_to_filter_by.identifier IN $referenced_identifiers
+        }
+        <%- endif %>
+    <%- endif %>
 <%- endblock %>
     RETURN COUNT(merged_node) AS total
 }

@@ -43,9 +43,6 @@ CALL () {
 <%- else %>
     OPTIONAL MATCH (extracted_or_rule_node:<<extracted_or_rule_labels|join("|")>>)-[:stableTargetId]->(merged_node:<<merged_labels|join("|")>>)
 <%- endif %>
-    <%- if filter_by_referenced_identifiers %>
-    MATCH (extracted_or_rule_node)-[:<<reference_field>>]->(referenced_node_to_filter_by)
-    <%- endif %>
     WHERE
         ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
         <%- if filter_by_identifier %>
@@ -54,15 +51,29 @@ CALL () {
         <%- if filter_by_stable_target_id %>
         AND merged_node.identifier = $stable_target_id
         <%- endif %>
-        <%- if filter_by_referenced_identifiers %>
-        AND referenced_node_to_filter_by.identifier IN $referenced_identifiers
-        <%- endif %>
+    <%- if filter_by_referenced_identifiers %>
+    OPTIONAL MATCH (extracted_or_rule_node)-[:<<reference_field>>]->(referenced_node_to_filter_by:<<merged_labels|join("|")>>)
+<#- WITH is before WHERE, because WHERE is otherwise applied to the query and results in
+   (referenced_node_to_filter_by IS NULL = True) for all extracted_or_rule_node
+#>
+    WITH merged_node, extracted_or_rule_node, referenced_node_to_filter_by
+    WHERE
+        (
+            (referenced_node_to_filter_by.identifier IN $referenced_identifiers)
+            OR
+            (
+                referenced_node_to_filter_by IS NULL
+                AND
+                any(identifier IN $referenced_identifiers WHERE identifier IS NULL)
+            )
+        )
+    <%- endif %>
 <%- endblock %>
     RETURN COUNT(extracted_or_rule_node) AS total
 }
 CALL () {
     <<-self.match_clause()>>
-    ORDER BY extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
+    ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
     SKIP $skip
     LIMIT $limit
     WITH

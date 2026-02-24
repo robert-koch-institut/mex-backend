@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- automatically ingest primary source for mex-editor into database
+- querying for items that reference the mex-editor primary source in their
+  hadPrimarySource field returns rule items
+
 ### Changes
 
 ### Deprecated

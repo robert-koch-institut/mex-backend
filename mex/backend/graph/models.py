@@ -12,10 +12,14 @@ from mex.backend.graph.exceptions import MultipleResultsFoundError, NoResultFoun
 from mex.backend.logging import LOGGING_LINE_LENGTH
 from mex.common.logging import logger
 from mex.common.models import (
+    MEX_EDITOR_PRIMARY_SOURCE_IDENTIFIER,
+    MEX_EDITOR_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
+    MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
     MEX_PRIMARY_SOURCE_IDENTIFIER,
     MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     BasePrimarySource,
+    ExtractedData,
 )
 from mex.common.types import (
     AnyPrimitiveType,
@@ -27,22 +31,33 @@ if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable, Iterator
 
 
-class MExPrimarySource(BasePrimarySource):
-    """Static metadata for the MEx primary source itself.
+class ExtractedPrimarySourceWithHardcodedIdentifiers(BasePrimarySource, ExtractedData):
+    """Static metadata set describing a primary source.
 
     An instance of this class will bypass the IdentityProvider. This way we can ensure
-    that the MEx primary source receives static identifiers.
+    the primary source receives static identifiers. We use this for the MEx maintained
+    primary sources, e.g. for the mex and mex-editor primary source.
     """
 
     entityType: Annotated[
         Literal["ExtractedPrimarySource"], Field(alias="$type", frozen=True)
     ] = "ExtractedPrimarySource"
-    hadPrimarySource: MergedPrimarySourceIdentifier = (
-        MEX_PRIMARY_SOURCE_STABLE_TARGET_ID
-    )
-    identifier: ExtractedPrimarySourceIdentifier = MEX_PRIMARY_SOURCE_IDENTIFIER
-    identifierInPrimarySource: str = MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE
-    stableTargetId: MergedPrimarySourceIdentifier = MEX_PRIMARY_SOURCE_STABLE_TARGET_ID
+    identifier: ExtractedPrimarySourceIdentifier
+    stableTargetId: MergedPrimarySourceIdentifier
+
+
+MEX_PRIMARY_SOURCE = ExtractedPrimarySourceWithHardcodedIdentifiers(
+    hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    identifier=MEX_PRIMARY_SOURCE_IDENTIFIER,
+    identifierInPrimarySource=MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
+    stableTargetId=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+)
+MEX_EDITOR_PRIMARY_SOURCE = ExtractedPrimarySourceWithHardcodedIdentifiers(
+    hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    identifier=MEX_EDITOR_PRIMARY_SOURCE_IDENTIFIER,
+    identifierInPrimarySource=MEX_EDITOR_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
+    stableTargetId=MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
+)
 
 
 class EdgeExporter(RecordExporter):

@@ -3,6 +3,8 @@ from typing import TYPE_CHECKING, Any
 import pytest
 from starlette import status
 
+from mex.common.models import MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID
+
 if TYPE_CHECKING:  # pragma: no cover
     from fastapi.testclient import TestClient
 
@@ -170,12 +172,12 @@ def test_preview(
                         "version": None,
                     }
                 ],
-                "total": 11,
+                "total": 12,
             },
             id="limit-1",
         ),
         pytest.param(
-            "?limit=1&skip=8",
+            "?limit=1&skip=9",
             {
                 "items": [
                     {
@@ -195,7 +197,7 @@ def test_preview(
                         "wikidataId": [],
                     }
                 ],
-                "total": 11,
+                "total": 12,
             },
             id="skip-8",
         ),
@@ -372,6 +374,45 @@ def test_preview(
                 "total": 3,
             },
             id="referenced-id-filter",
+        ),
+        pytest.param(
+            f"?referencedIdentifier={MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID}&referenceField=hadPrimarySource",
+            {
+                "items": [
+                    {
+                        "$type": "PreviewOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": ["1.7@rki.de"],
+                        "identifier": "StandaloneRule",
+                        "name": [{"language": "de", "value": "Abteilung 1.7"}],
+                        "parentUnit": "bFQoRhcVH5DHUx",
+                        "shortName": [],
+                        "supersededBy": None,
+                        "unitOf": [],
+                        "website": [],
+                    },
+                    {
+                        "$type": "PreviewOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "identifier": "bFQoRhcVH5DHUz",
+                        "name": [{"language": "de", "value": "Abteilung 1.6"}],
+                        "parentUnit": "bFQoRhcVH5DHUx",
+                        "shortName": [],
+                        "supersededBy": None,
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [
+                            {
+                                "language": None,
+                                "title": "Unit Homepage",
+                                "url": "https://unit-1-6",
+                            }
+                        ],
+                    },
+                ],
+                "total": 2,
+            },
+            id="had-primary-source-mex-editor-filter",
         ),
         pytest.param(
             "?identifier=thisIdDoesNotExist",
