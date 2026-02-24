@@ -3,7 +3,7 @@
 This query validates that the conditions for matching an extracted item to
 a different merged item are met before the actual matching operation is performed.
 Passed preconditions return `true`, failed preconditions `false` and unverifiable
-preconditions returns `null`.
+preconditions return `null`.
 
 Globals:
     extracted_labels: List of all extracted class labels
