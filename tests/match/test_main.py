@@ -1,8 +1,12 @@
+from typing import TYPE_CHECKING
+
 import pytest
 from starlette import status
-from starlette.testclient import TestClient
 
-from tests.conftest import DummyData
+if TYPE_CHECKING:  # pragma: no cover
+    from starlette.testclient import TestClient
+
+    from tests.conftest import DummyData
 
 
 @pytest.mark.integration

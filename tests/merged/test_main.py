@@ -1,19 +1,23 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import Mock
 
 import pytest
-from fastapi.testclient import TestClient
 from starlette import status
 
 from mex.backend.rules.helpers import update_and_get_rule_set
 from mex.common.merged.main import create_merged_item
 from mex.common.models import (
+    MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
     ExtractedOrganizationalUnit,
     OrganizationalUnitRuleSetRequest,
     SubtractiveOrganizationalUnit,
 )
 from mex.common.types import Validation
-from tests.conftest import DummyData, DummyDataName, MockedGraph
+
+if TYPE_CHECKING:  # pragma: no cover
+    from fastapi.testclient import TestClient
+
+    from tests.conftest import DummyData, DummyDataName, MockedGraph
 
 
 @pytest.mark.usefixtures("mocked_valkey")
@@ -121,12 +125,12 @@ def test_search_merged_items_mocked(
                         "version": None,
                     }
                 ],
-                "total": 11,
+                "total": 12,
             },
             id="limit-1",
         ),
         pytest.param(
-            "?limit=1&skip=8",
+            "?limit=1&skip=9",
             {
                 "items": [
                     {
@@ -144,9 +148,9 @@ def test_search_merged_items_mocked(
                         "wikidataId": [],
                     }
                 ],
-                "total": 11,
+                "total": 12,
             },
-            id="skip-8",
+            id="skip-9",
         ),
         pytest.param(
             "?entityType=MergedContactPoint",
@@ -319,6 +323,45 @@ def test_search_merged_items_mocked(
                 "total": 3,
             },
             id="referenced-id-filter",
+        ),
+        pytest.param(
+            f"?referencedIdentifier={MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID}&referenceField=hadPrimarySource",
+            {
+                "items": [
+                    {
+                        "$type": "MergedOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": ["1.7@rki.de"],
+                        "identifier": "StandaloneRule",
+                        "name": [{"language": "de", "value": "Abteilung 1.7"}],
+                        "parentUnit": "bFQoRhcVH5DHUx",
+                        "shortName": [],
+                        "supersededBy": None,
+                        "unitOf": [],
+                        "website": [],
+                    },
+                    {
+                        "$type": "MergedOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "identifier": "bFQoRhcVH5DHUz",
+                        "name": [{"language": "de", "value": "Abteilung 1.6"}],
+                        "parentUnit": "bFQoRhcVH5DHUx",
+                        "shortName": [],
+                        "supersededBy": None,
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [
+                            {
+                                "language": None,
+                                "title": "Unit Homepage",
+                                "url": "https://unit-1-6",
+                            }
+                        ],
+                    },
+                ],
+                "total": 2,
+            },
+            id="had-primary-source-mex-editor-filter",
         ),
         pytest.param(
             "?identifier=thisIdDoesNotExist",

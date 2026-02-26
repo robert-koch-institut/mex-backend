@@ -1,6 +1,5 @@
-from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import uvicorn
 from fastapi import APIRouter, Depends, FastAPI
@@ -31,6 +30,9 @@ from mex.backend.system.main import router as system_router
 from mex.common.cli import entrypoint
 from mex.common.connector import CONNECTOR_STORE
 from mex.common.logging import logger
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import AsyncIterator, Callable
 
 startup_tasks: list[Callable[[], Any]] = [
     BackendSettings.get,

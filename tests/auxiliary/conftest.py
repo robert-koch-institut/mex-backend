@@ -171,7 +171,7 @@ def mocked_orcid(
     ) -> OrcidSearchResponse:
         if given_and_family_names in {"John Doe", "John O'Doe"}:
             return OrcidSearchResponse(num_found=1, result=[orcid_person_raw])
-        if given_and_family_names in {"Multiple Doe"}:
+        if given_and_family_names == "Multiple Doe":
             return OrcidSearchResponse.model_validate(orcid_multiple_matches)
         return OrcidSearchResponse(num_found=0, result=[])
 

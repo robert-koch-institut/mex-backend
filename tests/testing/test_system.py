@@ -1,9 +1,13 @@
+from typing import TYPE_CHECKING
+
 import pytest
-from fastapi.testclient import TestClient
 from pytest import MonkeyPatch
 from starlette import status
 
 from mex.backend.settings import BackendSettings
+
+if TYPE_CHECKING:  # pragma: no cover
+    from fastapi.testclient import TestClient
 
 
 @pytest.mark.integration

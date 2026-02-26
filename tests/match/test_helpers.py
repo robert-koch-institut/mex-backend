@@ -1,9 +1,13 @@
+from typing import TYPE_CHECKING
+
 import pytest
 
 from mex.backend.exceptions import BackendError
 from mex.backend.match.helpers import match_item_in_graph
 from mex.backend.rules.helpers import get_rule_set_from_graph
-from tests.conftest import DummyData
+
+if TYPE_CHECKING:  # pragma: no cover
+    from tests.conftest import DummyData
 
 
 @pytest.mark.integration

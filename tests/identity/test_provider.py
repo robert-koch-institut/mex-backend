@@ -1,4 +1,4 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
@@ -14,7 +14,9 @@ from mex.common.types import (
     MergedOrganizationalUnitIdentifier,
     MergedPrimarySourceIdentifier,
 )
-from tests.conftest import MockedGraph
+
+if TYPE_CHECKING:  # pragma: no cover
+    from tests.conftest import MockedGraph
 
 
 @pytest.mark.parametrize(

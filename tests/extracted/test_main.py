@@ -1,12 +1,18 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
 from fastapi.encoders import jsonable_encoder
-from fastapi.testclient import TestClient
 from starlette import status
 
-from mex.common.models import ExtractedOrganizationalUnit
-from tests.conftest import DummyData, MockedGraph
+from mex.common.models import (
+    MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    ExtractedOrganizationalUnit,
+)
+
+if TYPE_CHECKING:  # pragma: no cover
+    from fastapi.testclient import TestClient
+
+    from tests.conftest import DummyData, MockedGraph
 
 
 @pytest.mark.usefixtures("mocked_valkey")
@@ -88,12 +94,12 @@ def test_search_extracted_items_mocked(
                         "version": None,
                     }
                 ],
-                "total": 10,
+                "total": 11,
             },
             id="limit-1",
         ),
         pytest.param(
-            "?limit=1&skip=9",
+            "?limit=1&skip=10",
             {
                 "items": [
                     {
@@ -111,9 +117,9 @@ def test_search_extracted_items_mocked(
                         "website": [],
                     }
                 ],
-                "total": 10,
+                "total": 11,
             },
-            id="skip-9",
+            id="skip-10",
         ),
         pytest.param(
             "?entityType=ExtractedContactPoint",
@@ -188,6 +194,11 @@ def test_search_extracted_items_mocked(
                 "total": 1,
             },
             id="stable-target-id-filter",
+        ),
+        pytest.param(
+            f"?referencedIdentifier={MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID}&referenceField=hadPrimarySource",
+            {"items": [], "total": 0},
+            id="had-primary-source-mex-editor-filter",
         ),
         pytest.param(
             "?stableTargetId=thisIdDoesNotExist",

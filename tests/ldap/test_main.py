@@ -1,9 +1,11 @@
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
-
-from fastapi.testclient import TestClient
 
 from mex.common.models import MergedPerson
 from mex.common.types import MergedPersonIdentifier
+
+if TYPE_CHECKING:  # pragma: no cover
+    from fastapi.testclient import TestClient
 
 
 def test_get_merged_person_from_login(

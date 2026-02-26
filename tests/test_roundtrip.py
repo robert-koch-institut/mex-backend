@@ -1,11 +1,15 @@
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import pytest
 
-from mex.backend.graph.models import MExPrimarySource
+from mex.backend.graph.models import (
+    MEX_EDITOR_PRIMARY_SOURCE,
+    MEX_PRIMARY_SOURCE,
+)
 from mex.backend.merged.helpers import search_merged_items_in_graph
 from mex.common.merged.main import create_merged_item
 from mex.common.models import (
+    MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     AnyExtractedModel,
     AnyMergedModel,
@@ -14,7 +18,9 @@ from mex.common.models import (
     PaginatedItemsContainer,
 )
 from mex.common.types import Validation
-from tests.conftest import DummyData
+
+if TYPE_CHECKING:  # pragma: no cover
+    from tests.conftest import DummyData
 
 
 @pytest.fixture
@@ -58,7 +64,13 @@ def test_graph_ingest_and_query_roundtrip(
         *merged_dummy_data.values(),
         create_merged_item(
             MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-            [cast("ExtractedPrimarySource", MExPrimarySource())],
+            [cast("ExtractedPrimarySource", MEX_PRIMARY_SOURCE)],
+            None,
+            Validation.STRICT,
+        ),
+        create_merged_item(
+            MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
+            [cast("ExtractedPrimarySource", MEX_EDITOR_PRIMARY_SOURCE)],
             None,
             Validation.STRICT,
         ),

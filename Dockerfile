@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM python:3.13 AS builder
+FROM python:3.14 AS builder
 
 WORKDIR /build
 
@@ -18,7 +18,7 @@ RUN pip wheel --no-cache-dir --wheel-dir /build/wheels -r requirements.lock
 RUN pip wheel --no-cache-dir --wheel-dir /build/wheels --no-deps .
 
 
-FROM python:3.13-slim
+FROM python:3.14-slim
 
 LABEL org.opencontainers.image.authors="mex@rki.de"
 LABEL org.opencontainers.image.description="Backend server for the RKI metadata exchange."
