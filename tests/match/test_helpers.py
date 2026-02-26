@@ -38,7 +38,7 @@ def test_match_unit_2_to_unit_1_keeps_existing_rule_set(
         match_item_in_graph(unit_2.identifier, unit_1.stableTargetId)
 
     rule_set_after = get_rule_set_from_graph(unit_2.stableTargetId)
-    assert rule_set_after == unit_2_rule_set
+    assert rule_set_after == rule_set_before 
 
 
 @pytest.mark.integration
