@@ -515,7 +515,7 @@ WITH
    count(DISTINCT new_merged) = 1 AS merged_exists,
    elementId(old_merged) <> elementId(new_merged) AS not_self_match,
    labels(old_merged) = labels(new_merged) AS same_merged_type,
-   NOT ANY(label IN labels(new_merged) WHERE label IN $blocked_types) AS merged_type_allowed
+   NOT ANY(label IN labels(new_merged) WHERE label IN $blocked_types) AS matching_of_type_is_allowed
 RETURN *;"""
     )
 

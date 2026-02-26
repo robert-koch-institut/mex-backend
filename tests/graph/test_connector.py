@@ -1939,7 +1939,7 @@ def test_graph_match_item_preconditions_pass(loaded_dummy_data: DummyData) -> No
             "fake",
             "Matching precondition check failed. "
             "Violated: merged_exists. "
-            "Unverifiable: merged_type_allowed, not_self_match, same_merged_type",
+            "Unverifiable: matching_of_type_is_allowed, not_self_match, same_merged_type",
             id="merged item does not exist",
         ),
         pytest.param(
@@ -1947,7 +1947,7 @@ def test_graph_match_item_preconditions_pass(loaded_dummy_data: DummyData) -> No
             "fake2",
             "Matching precondition check failed. "
             "Violated: extracted_exists, merged_exists, old_rules_exist. "
-            "Unverifiable: merged_type_allowed, not_self_match, same_merged_type",
+            "Unverifiable: matching_of_type_is_allowed, not_self_match, same_merged_type",
             id="nothing exists",
         ),
         pytest.param(
@@ -1965,7 +1965,7 @@ def test_graph_match_item_preconditions_pass(loaded_dummy_data: DummyData) -> No
         pytest.param(
             "bFQoRhcVH5DHUy",  # unit_2.identifier
             "bFQoRhcVH5DHUx",  # unit_1.stableTargetId
-            "Matching precondition check failed. Violated: merged_type_allowed",
+            "Matching precondition check failed. Violated: matching_of_type_is_allowed",
             id="entity type not allowed",
         ),
     ],
