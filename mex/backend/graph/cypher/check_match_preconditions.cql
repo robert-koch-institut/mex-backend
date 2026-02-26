@@ -8,7 +8,8 @@ preconditions return `null`.
 Globals:
     extracted_labels: List of all extracted class labels
     merged_labels: List of all merged class labels
-
+    rule_labels: List of all rule class labels
+    
 Args:
     extracted_identifier: Identifier of the extracted item to be matched
     merged_identifier: Identifier of the new target merged item
