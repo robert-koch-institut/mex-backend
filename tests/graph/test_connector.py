@@ -1836,7 +1836,7 @@ def test_graph_match_item_preconditions_failed(
     graph = GraphConnector.get()
     extracted = Mock(
         identifier=extracted_identifier,
-        stableTargetId=Identifier.generate(seed=0),
+        stableTargetId=Identifier("onlyForTxMetadata"),
     )
     merged = Mock(identifier=merged_identifier)
     with pytest.raises(
