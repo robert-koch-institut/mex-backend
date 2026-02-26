@@ -529,19 +529,20 @@ class GraphConnector(BaseConnector):
             )
         )
         results = preconditions.one()
-        failed = sorted(
+        violated = sorted(
             condition for condition, is_met in results.items() if is_met is False
         )
         unverifiable = sorted(
             condition for condition, is_met in results.items() if is_met is None
         )
-        if failed or unverifiable:
+        if violated or unverifiable:
             parts = []
-            if failed:
-                parts.append(f"Failed: {', '.join(failed)}")
+            if violated:
+                parts.append(f"Violated: {', '.join(violated)}")
             if unverifiable:
                 parts.append(f"Unverifiable: {', '.join(unverifiable)}")
-            raise MatchingError(". ".join(parts))
+            msg = f"Matching precondition check failed. {'. '.join(parts)}"
+            raise MatchingError(msg)
 
     def _match_item_tx(
         self,

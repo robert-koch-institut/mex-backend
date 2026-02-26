@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from mex.backend.exceptions import BackendError
+from mex.backend.graph.exceptions import MatchingError
 from mex.backend.match.helpers import match_item_in_graph
 from mex.backend.rules.helpers import get_rule_set_from_graph
 
@@ -52,5 +52,5 @@ def test_match_item_in_graph_error(
     activity_1 = loaded_dummy_data["activity_1"]
     contact_point_2 = loaded_dummy_data["contact_point_2"]
 
-    with pytest.raises(BackendError, match="Failed: same_merged_type"):
+    with pytest.raises(MatchingError, match="Violated: same_merged_type"):
         match_item_in_graph(activity_1.identifier, contact_point_2.stableTargetId)

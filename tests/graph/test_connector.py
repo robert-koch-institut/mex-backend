@@ -4,7 +4,7 @@ from typing import Any
 from unittest.mock import Mock, call
 
 import pytest
-from pytest import MonkeyPatch
+from pytest import FixtureRequest, MonkeyPatch
 
 from mex.backend.graph import connector as connector_module
 from mex.backend.graph.connector import GraphConnector
@@ -1923,46 +1923,49 @@ def test_graph_match_item_preconditions_pass(loaded_dummy_data: DummyData) -> No
         pytest.param(
             "fake",
             "bFQoRhcVH5DHUx",  # unit_1.stableTargetId
-            "Failed: extracted_exists, old_rules_exist. "
+            "Matching precondition check failed. "
+            "Violated: extracted_exists, old_rules_exist. "
             "Unverifiable: not_self_match, same_merged_type",
             id="extracted item does not exist",
         ),
         pytest.param(
             "bFQoRhcVH5DHUw",  # unit_1.identifier
             "bFQoRhcVH5DHUz",  # unit_2.stableTargetId
-            "Failed: old_rules_exist",
+            "Matching precondition check failed. Violated: old_rules_exist",
             id="old rule-set does not exist",
         ),
         pytest.param(
             "bFQoRhcVH5DHUy",  # unit_2.identifier
             "fake",
-            "Failed: merged_exists. "
+            "Matching precondition check failed. "
+            "Violated: merged_exists. "
             "Unverifiable: merged_type_allowed, not_self_match, same_merged_type",
             id="merged item does not exist",
         ),
         pytest.param(
             "fake1",
             "fake2",
-            "Failed: extracted_exists, merged_exists, old_rules_exist. "
+            "Matching precondition check failed. "
+            "Violated: extracted_exists, merged_exists, old_rules_exist. "
             "Unverifiable: merged_type_allowed, not_self_match, same_merged_type",
             id="nothing exists",
         ),
         pytest.param(
             "bFQoRhcVH5DHUy",  # unit_2.identifier
             "bFQoRhcVH5DHUz",  # unit_2.stableTargetId
-            "Failed: not_self_match",
+            "Matching precondition check failed. Violated: not_self_match",
             id="attempted self-match",
         ),
         pytest.param(
             "bFQoRhcVH5DHUy",  # unit_2.identifier
             "bFQoRhcVH5DHUv",  # organization_1.stableTargetId
-            "Failed: same_merged_type",
+            "Matching precondition check failed. Violated: same_merged_type",
             id="entity types do not match",
         ),
         pytest.param(
             "bFQoRhcVH5DHUy",  # unit_2.identifier
             "bFQoRhcVH5DHUx",  # unit_1.stableTargetId
-            "Failed: merged_type_allowed",
+            "Matching precondition check failed. Violated: merged_type_allowed",
             id="entity type not allowed",
         ),
     ],
@@ -1974,8 +1977,9 @@ def test_graph_match_item_preconditions_failed(
     extracted_identifier: Identifier,
     merged_identifier: Identifier,
     expected_failed: str,
+    request: FixtureRequest,
 ) -> None:
-    if expected_failed == "Failed: merged_type_allowed":
+    if "entity type not allowed" in request.node.name:
         monkeypatch.setattr(
             BackendSettings.get(),
             "non_matchable_types",
