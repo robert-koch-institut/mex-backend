@@ -6,7 +6,7 @@ from tests.conftest import DummyData
 
 
 @pytest.mark.integration
-def test_get_merged_item(
+def test_match_item(
     client_with_api_key_write_permission: TestClient,
     loaded_dummy_data: DummyData,
 ) -> None:
