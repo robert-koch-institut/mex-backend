@@ -21,7 +21,7 @@ Returns:
     merged_exists: Boolean indicating if the target merged item exists
     not_self_match: Optional boolean indicating this is not a noop self-match
     same_merged_type: Optional boolean indicating the items have the same stem types
-    merged_type_allowed: Optional boolean indicating the extracted type is not blocked
+    matching_of_type_is_allowed: Optional boolean indicating if matching is allowed for the type of the merged items
 -#>
 OPTIONAL MATCH (extracted:<<extracted_labels|join("|")>> {identifier: $extracted_identifier})
 OPTIONAL MATCH (extracted)-[:stableTargetId]->(old_merged:<<merged_labels|join("|")>>)
