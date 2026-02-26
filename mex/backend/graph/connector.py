@@ -486,8 +486,12 @@ class GraphConnector(BaseConnector):
             )
         )
         results = preconditions.one()
-        violated = (sorted(condition for condition, is_met in results.items() if is_met is False)
-        unverifiable = sorted(condition for condition, is_met in results.items() if is_met is None)
+        failed = sorted(
+            condition for condition, is_met in results.items() if is_met is False
+        )
+        unverifiable = sorted(
+            condition for condition, is_met in results.items() if is_met is None
+        )
         if failed or unverifiable:
             parts = []
             if failed:
