@@ -11,7 +11,11 @@ from neo4j import (
 )
 from neo4j.exceptions import ConstraintError, Neo4jError
 
-from mex.backend.graph.exceptions import DeletionFailedError, IngestionError
+from mex.backend.graph.exceptions import (
+    DeletionFailedError,
+    IngestionError,
+    MatchingError,
+)
 from mex.backend.graph.models import (
     MEX_EDITOR_PRIMARY_SOURCE,
     MEX_PRIMARY_SOURCE,
@@ -42,6 +46,7 @@ from mex.common.models import (
     MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
     RULE_MODEL_CLASSES_BY_NAME,
     AnyExtractedModel,
+    AnyMergedModel,
     AnyRuleModel,
     AnyRuleSetResponse,
 )
@@ -503,6 +508,77 @@ class GraphConnector(BaseConnector):
                     else:
                         tx.commit()
                 yield
+
+    def _check_match_preconditions_tx(
+        self,
+        tx: Transaction,
+        extracted_item: AnyExtractedModel,
+        merged_item: AnyMergedModel,
+    ) -> None:
+        """Raise an error when the preconditions for performing a match aren't met."""
+        settings = BackendSettings.get()
+        query_builder = QueryBuilder.get()
+        check_match_preconditions_query = query_builder.check_match_preconditions()
+
+        preconditions = Result(
+            tx.run(
+                check_match_preconditions_query.render(),
+                extracted_identifier=str(extracted_item.identifier),
+                merged_identifier=str(merged_item.identifier),
+                blocked_types=[t.value for t in settings.non_matchable_types],
+            )
+        )
+        results = preconditions.one()
+        violated = sorted(
+            condition for condition, is_met in results.items() if is_met is False
+        )
+        unverifiable = sorted(
+            condition for condition, is_met in results.items() if is_met is None
+        )
+        if violated or unverifiable:
+            parts = []
+            if violated:
+                parts.append(f"Violated: {', '.join(violated)}")
+            if unverifiable:
+                parts.append(f"Unverifiable: {', '.join(unverifiable)}")
+            msg = f"Matching precondition check failed. {'. '.join(parts)}"
+            raise MatchingError(msg)
+
+    def _match_item_tx(
+        self,
+        tx: Transaction,
+        extracted_item: AnyExtractedModel,
+        merged_item: AnyMergedModel,
+    ) -> None:
+        """Run all required matching steps in a single transaction."""
+        self._check_match_preconditions_tx(tx, extracted_item, merged_item)
+        raise NotImplementedError
+
+    def match_item(
+        self,
+        extracted_item: AnyExtractedModel,
+        merged_item: AnyMergedModel,
+    ) -> None:
+        """Match an extracted item to a new merged item and clean up afterwards."""
+        settings = BackendSettings.get()
+        with (
+            self.driver.session(default_access_mode=WRITE_ACCESS) as session,
+            session.begin_transaction(
+                timeout=settings.graph_tx_timeout,
+                metadata={
+                    "extracted_identifier": extracted_item.identifier,
+                    "old_merged_identifier": extracted_item.stableTargetId,
+                    "new_merged_identifier": merged_item.identifier,
+                },
+            ) as tx,
+        ):
+            try:
+                self._match_item_tx(tx, extracted_item, merged_item)
+            except:
+                tx.rollback()
+                raise
+            else:
+                tx.commit()
 
     def delete_item(self, identifier: str) -> Result:
         """Delete a merged item including all extracted items and rule-sets."""

@@ -47,5 +47,9 @@ class IngestionError(GraphError):
     """Error for ingestion failures with underlying details."""
 
 
+class MatchingError(GraphError):
+    """Exception raised for errors during the matching process."""
+
+
 class DeletionFailedError(GraphError):
     """Exception raised when the the specified item could not be deleted."""

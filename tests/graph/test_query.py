@@ -493,9 +493,30 @@ DELETE outbound
 DETACH DELETE rule
 
 RETURN
-    merged,
+    0 as deleted_merged_count,
+    0 as deleted_extracted_count,
     count(DISTINCT rule) AS deleted_rule_count,
     count(DISTINCT nested) AS deleted_nested_count;"""
+    )
+
+
+def test_check_match_preconditions(query_builder: QueryBuilder) -> None:
+    query = query_builder.check_match_preconditions()
+    assert (
+        query.render()
+        == """\
+OPTIONAL MATCH (extracted:ExtractedPerson|ExtractedVariable|ExtractedDistribution {identifier: $extracted_identifier})
+OPTIONAL MATCH (extracted)-[:stableTargetId]->(old_merged:MergedPerson|MergedVariable|MergedDistribution)
+OPTIONAL MATCH (old_merged)<-[:stableTargetId]-(old_rules:AdditivePerson|AdditiveVariable|AdditiveDistribution)
+OPTIONAL MATCH (new_merged:MergedPerson|MergedVariable|MergedDistribution {identifier: $merged_identifier})
+WITH
+   count(DISTINCT extracted) = 1 AS extracted_exists,
+   count(old_rules) = 3 AS old_rules_exist,
+   count(DISTINCT new_merged) = 1 AS merged_exists,
+   elementId(old_merged) <> elementId(new_merged) AS not_self_match,
+   labels(old_merged) = labels(new_merged) AS same_merged_type,
+   NOT ANY(label IN labels(new_merged) WHERE label IN $blocked_types) AS matching_of_type_is_allowed
+RETURN *;"""
     )
 
 
