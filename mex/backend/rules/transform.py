@@ -1,4 +1,4 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from mex.backend.graph.exceptions import InconsistentGraphError
 from mex.common.models import (
@@ -9,9 +9,12 @@ from mex.common.models import (
 )
 from mex.common.transform import ensure_postfix
 
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Sequence
+
 
 def transform_raw_rules_to_rule_set_response(
-    raw_rules: list[dict[str, Any]],
+    raw_rules: Sequence[dict[str, Any]],
 ) -> AnyRuleSetResponse:
     """Transform a set of plain rules into a rule set response."""
     stem_types: list[str] = []

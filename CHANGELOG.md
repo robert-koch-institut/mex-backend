@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - prepare matching functionality with endpoint, helper and precondition check
+- added supersededBy to allowed reference filter fields
 
 ### Changes
 

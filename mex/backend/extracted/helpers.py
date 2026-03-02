@@ -17,7 +17,7 @@ def search_extracted_items_in_graph(  # noqa: PLR0913
     query_string: str | None = None,
     stable_target_id: Identifier | None = None,
     entity_type: Sequence[str] | None = None,
-    referenced_identifiers: list[str] | None = None,
+    referenced_identifiers: Sequence[str] | None = None,
     reference_field: str | None = None,
     skip: int = 0,
     limit: int = 100,

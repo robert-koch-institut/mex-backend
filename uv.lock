@@ -537,11 +537,11 @@ requires-dist = [
     { name = "backoff", specifier = ">=2.2,<3" },
     { name = "fastapi", specifier = ">=0.128,<1" },
     { name = "jinja2", specifier = ">=3.1,<4" },
-    { name = "mex-common", specifier = ">=1.16,<1.17" },
+    { name = "mex-common", specifier = ">=1.16.1,<1.17" },
     { name = "neo4j", specifier = ">=6.1,<7" },
     { name = "orjson", specifier = ">=3.11,<4" },
     { name = "pydantic", specifier = ">=2,<3" },
-    { name = "starlette", specifier = ">=0.49,<1" },
+    { name = "starlette", specifier = ">=0.50,<1" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.40,<1" },
     { name = "valkey", specifier = ">=6.1,<7" },
 ]
@@ -565,7 +565,7 @@ dev = [
 
 [[package]]
 name = "mex-common"
-version = "1.16.0"
+version = "1.16.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "backoff" },
@@ -583,9 +583,9 @@ dependencies = [
     { name = "requests" },
     { name = "tabulate" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4a/62/8cc0da0a4940f09105897a71edc780d6f0947396e71a4dfe8d1214eec0a9/mex_common-1.16.0.tar.gz", hash = "sha256:4e89e34b206bfb42a1c47092791d430e3b48131a281e2bf86b306698e224a76b", size = 89482, upload-time = "2026-02-19T12:29:29.638Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/72/82/dcf832a81d2621d64013d932b26a4b91b8060aed2ca3cddf0a651348b239/mex_common-1.16.1.tar.gz", hash = "sha256:1138c432d4a0e671c7362cbca69248ff10cef0f2f36c3e30fd21969a2375b667", size = 89490, upload-time = "2026-03-02T11:35:35.575Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/05/b8/f9fc6258045d2f4f794cd25f0ec2e22da3c375cbb540c2e3bad29d8af57f/mex_common-1.16.0-py3-none-any.whl", hash = "sha256:d0d535d3f920403c4fc41cef2f8a8ce29497a2cf9ff98df662167088f6328dbd", size = 137092, upload-time = "2026-02-19T12:29:27.815Z" },
+    { url = "https://files.pythonhosted.org/packages/e6/bc/de47f7d7fc201a60bbd3144203d52af7669385c4b6268b211e43f8a640c6/mex_common-1.16.1-py3-none-any.whl", hash = "sha256:929a584993cb04a32e3a81bfef2ac13208f5b742f45c47c7b573424f9287a7b3", size = 137115, upload-time = "2026-03-02T11:35:33.955Z" },
 ]
 
 [[package]]
@@ -894,16 +894,16 @@ wheels = [
 
 [[package]]
 name = "pydantic-settings"
-version = "2.12.0"
+version = "2.13.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
     { name = "python-dotenv" },
     { name = "typing-inspection" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/43/4b/ac7e0aae12027748076d72a8764ff1c9d82ca75a7a52622e67ed3f765c54/pydantic_settings-2.12.0.tar.gz", hash = "sha256:005538ef951e3c2a68e1c08b292b5f2e71490def8589d4221b95dab00dafcfd0", size = 194184, upload-time = "2025-11-10T14:25:47.013Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/52/6d/fffca34caecc4a3f97bda81b2098da5e8ab7efc9a66e819074a11955d87e/pydantic_settings-2.13.1.tar.gz", hash = "sha256:b4c11847b15237fb0171e1462bf540e294affb9b86db4d9aa5c01730bdbe4025", size = 223826, upload-time = "2026-02-19T13:45:08.055Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c1/60/5d4751ba3f4a40a6891f24eec885f51afd78d208498268c734e256fb13c4/pydantic_settings-2.12.0-py3-none-any.whl", hash = "sha256:fddb9fd99a5b18da837b29710391e945b1e30c135477f484084ee513adb93809", size = 51880, upload-time = "2025-11-10T14:25:45.546Z" },
+    { url = "https://files.pythonhosted.org/packages/00/4b/ccc026168948fec4f7555b9164c724cf4125eac006e176541483d2c959be/pydantic_settings-2.13.1-py3-none-any.whl", hash = "sha256:d56fd801823dbeae7f0975e1f8c8e25c258eb75d278ea7abb5d9cebb01b56237", size = 58929, upload-time = "2026-02-19T13:45:06.034Z" },
 ]
 
 [[package]]

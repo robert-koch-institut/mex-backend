@@ -4,6 +4,7 @@ import pytest
 from starlette import status
 
 from mex.common.models import MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID
+from mex.common.transform import clean_dict
 
 if TYPE_CHECKING:  # pragma: no cover
     from fastapi.testclient import TestClient
@@ -147,8 +148,7 @@ def test_preview(
         f"/v0/preview-item/{stable_target_id}", json=json_body
     )
     assert response.status_code == status.HTTP_200_OK, response.text
-    cleaned_response = {k: v for k, v in response.json().items() if v}
-    assert cleaned_response == expected
+    assert clean_dict(response.json()) == expected
 
 
 @pytest.mark.parametrize(

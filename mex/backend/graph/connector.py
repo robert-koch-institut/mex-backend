@@ -408,7 +408,7 @@ class GraphConnector(BaseConnector):
     def exists_item(
         self,
         identifier: Identifier,
-        entity_types: list[str],
+        entity_types: Sequence[str],
     ) -> bool:
         """Validate whether an item with the given identifier and entity type exists.
 
