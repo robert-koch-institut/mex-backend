@@ -21,6 +21,7 @@ from mex.common.fields import (
     TEXT_FIELDS_BY_CLASS_NAME,
 )
 from mex.common.models import (
+    EXTRACTED_AND_RULE_MODEL_CLASSES_BY_NAME,
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
     RULE_MODEL_CLASSES_BY_NAME,
@@ -36,13 +37,7 @@ from mex.common.transform import (
 from mex.common.types import NESTED_MODEL_CLASSES_BY_NAME
 
 if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Callable
-
-# TODO(ND): move this to mex-common
-EXTRACTED_AND_RULE_MODEL_CLASSES_BY_NAME = {
-    **EXTRACTED_MODEL_CLASSES_BY_NAME,
-    **RULE_MODEL_CLASSES_BY_NAME,
-}
+    from collections.abc import Callable, Mapping
 
 
 @validate_call
@@ -56,7 +51,9 @@ def render_constraints(
 class Query:
     """Wrapper for queries that can be rendered."""
 
-    def __init__(self, name: str, template: Template, kwargs: dict[str, Any]) -> None:
+    def __init__(
+        self, name: str, template: Template, kwargs: Mapping[str, Any]
+    ) -> None:
         """Create a new query instance."""
         self.name = name
         self.template = template

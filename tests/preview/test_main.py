@@ -19,7 +19,9 @@ if TYPE_CHECKING:  # pragma: no cover
                 "additive": {
                     "$type": "AdditiveActivity",
                     "end": ["2025"],
-                    "title": [{"value": "A new beginning", "language": "en"}],
+                    "title": [
+                        {"value": "A new beginning", "language": "en"},
+                    ],
                 },
             },
             {
@@ -28,15 +30,28 @@ if TYPE_CHECKING:  # pragma: no cover
                     {"language": "en", "value": "An active activity."},
                     {"language": None, "value": "Eng aktiv Aktivitéit."},
                 ],
+                "activityType": [],
+                "alternativeTitle": [],
                 "contact": [
                     "bFQoRhcVH5DHUB",
                     "bFQoRhcVH5DHUD",
                     "bFQoRhcVH5DHUx",
                 ],
+                "documentation": [],
                 "end": ["2025"],
+                "externalAssociate": [],
+                "funderOrCommissioner": [],
+                "fundingProgram": [],
                 "identifier": "bFQoRhcVH5DHUH",
+                "involvedPerson": [],
+                "involvedUnit": [],
+                "isPartOfActivity": [],
+                "publication": [],
                 "responsibleUnit": ["bFQoRhcVH5DHUx"],
+                "shortName": [],
                 "start": ["2014-08-24"],
+                "succeeds": [],
+                "supersededBy": None,
                 "theme": ["https://mex.rki.de/item/theme-11"],
                 "title": [
                     {"language": "de", "value": "Aktivität 1"},
@@ -66,12 +81,32 @@ if TYPE_CHECKING:  # pragma: no cover
                 },
             },
             {
+                "$type": "MergedActivity",
+                "abstract": [
+                    {"value": "An active activity.", "language": "en"},
+                ],
+                "activityType": [],
+                "alternativeTitle": [],
                 "contact": ["bFQoRhcVH5DHUB", "bFQoRhcVH5DHUD"],
+                "documentation": [],
+                "end": [],
+                "externalAssociate": [],
+                "funderOrCommissioner": [],
+                "fundingProgram": [],
+                "identifier": "bFQoRhcVH5DHUH",
+                "involvedPerson": [],
+                "involvedUnit": [],
+                "isPartOfActivity": [],
+                "publication": [],
                 "responsibleUnit": ["bFQoRhcVH5DHUx"],
-                "title": [{"value": "Aktivität 1", "language": "de"}],
-                "abstract": [{"value": "An active activity.", "language": "en"}],
+                "shortName": [],
                 "start": ["2014-08-24"],
+                "succeeds": [],
+                "supersededBy": None,
                 "theme": ["https://mex.rki.de/item/theme-11"],
+                "title": [
+                    {"value": "Aktivität 1", "language": "de"},
+                ],
                 "website": [
                     {
                         "language": None,
@@ -79,8 +114,6 @@ if TYPE_CHECKING:  # pragma: no cover
                         "url": "https://activity-1",
                     }
                 ],
-                "$type": "MergedActivity",
-                "identifier": "bFQoRhcVH5DHUH",
             },
             id="subtractive",
         ),
@@ -95,14 +128,33 @@ if TYPE_CHECKING:  # pragma: no cover
                 },
             },
             {
-                "contact": ["bFQoRhcVH5DHUB", "bFQoRhcVH5DHUD", "bFQoRhcVH5DHUx"],
-                "responsibleUnit": ["bFQoRhcVH5DHUx"],
-                "title": [{"value": "Aktivität 1", "language": "de"}],
+                "$type": "MergedActivity",
                 "abstract": [
                     {"value": "An active activity.", "language": "en"},
                     {"value": "Eng aktiv Aktivitéit.", "language": None},
                 ],
+                "activityType": [],
+                "alternativeTitle": [],
+                "contact": ["bFQoRhcVH5DHUB", "bFQoRhcVH5DHUD", "bFQoRhcVH5DHUx"],
+                "documentation": [],
+                "end": [],
+                "externalAssociate": [],
+                "funderOrCommissioner": [],
+                "fundingProgram": [],
+                "identifier": "bFQoRhcVH5DHUH",
+                "involvedPerson": [],
+                "involvedUnit": [],
+                "isPartOfActivity": [],
+                "publication": [],
+                "responsibleUnit": ["bFQoRhcVH5DHUx"],
+                "shortName": [],
                 "start": ["2014-08-24"],
+                "succeeds": [],
+                "supersededBy": None,
+                "theme": [],
+                "title": [
+                    {"value": "Aktivität 1", "language": "de"},
+                ],
                 "website": [
                     {
                         "language": None,
@@ -110,8 +162,6 @@ if TYPE_CHECKING:  # pragma: no cover
                         "url": "https://activity-1",
                     }
                 ],
-                "$type": "MergedActivity",
-                "identifier": "bFQoRhcVH5DHUH",
             },
             id="preventive",
         ),
@@ -130,6 +180,7 @@ if TYPE_CHECKING:  # pragma: no cover
                 "$type": "MergedContactPoint",
                 "email": ["test@test.local"],
                 "identifier": "unknownStableTargetId",
+                "supersededBy": None,
             },
             id="unknown-id",
         ),
@@ -147,8 +198,7 @@ def test_preview(
         f"/v0/preview-item/{stable_target_id}", json=json_body
     )
     assert response.status_code == status.HTTP_200_OK, response.text
-    cleaned_response = {k: v for k, v in response.json().items() if v}
-    assert cleaned_response == expected
+    assert response.json() == expected
 
 
 @pytest.mark.parametrize(

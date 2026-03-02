@@ -1,4 +1,4 @@
-from typing import Any, Literal, overload
+from typing import TYPE_CHECKING, Any, Literal, overload
 
 from pydantic import ValidationError
 
@@ -20,6 +20,9 @@ from mex.common.models import (
     PaginatedItemsContainer,
 )
 from mex.common.types import Identifier, Validation
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Sequence
 
 
 @overload
@@ -83,7 +86,7 @@ def merge_search_result_item(
             rule_set=rule_set,
             validation=validation,
         )
-    except (MergingError, ValidationError):
+    except MergingError, ValidationError:
         if validation == Validation.STRICT:
             raise
     return None
@@ -94,8 +97,8 @@ def search_merged_items_in_graph(
     *,
     query_string: str | None = None,
     identifier: str | None = None,
-    entity_type: list[str] | None = None,
-    referenced_identifiers: list[str] | None = None,
+    entity_type: Sequence[str] | None = None,
+    referenced_identifiers: Sequence[str] | None = None,
     reference_field: str | None = None,
     skip: int = 0,
     limit: int = 100,
@@ -108,8 +111,8 @@ def search_merged_items_in_graph(
     *,
     query_string: str | None = None,
     identifier: str | None = None,
-    entity_type: list[str] | None = None,
-    referenced_identifiers: list[str] | None = None,
+    entity_type: Sequence[str] | None = None,
+    referenced_identifiers: Sequence[str] | None = None,
     reference_field: str | None = None,
     skip: int = 0,
     limit: int = 100,
@@ -122,8 +125,8 @@ def search_merged_items_in_graph(
     *,
     query_string: str | None = None,
     identifier: str | None = None,
-    entity_type: list[str] | None = None,
-    referenced_identifiers: list[str] | None = None,
+    entity_type: Sequence[str] | None = None,
+    referenced_identifiers: Sequence[str] | None = None,
     reference_field: str | None = None,
     skip: int = 0,
     limit: int = 100,
@@ -135,8 +138,8 @@ def search_merged_items_in_graph(  # noqa: PLR0913
     *,
     query_string: str | None = None,
     identifier: str | None = None,
-    entity_type: list[str] | None = None,
-    referenced_identifiers: list[str] | None = None,
+    entity_type: Sequence[str] | None = None,
+    referenced_identifiers: Sequence[str] | None = None,
     reference_field: str | None = None,
     skip: int = 0,
     limit: int = 100,
