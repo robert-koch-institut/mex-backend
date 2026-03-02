@@ -9,12 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- prepare matching functionality with endpoint, helper and precondition check
-- added supersededBy to allowed reference filter fields
-
 ### Changes
-
-- updated delete-rule-set internal return payload, to match that of delete-item
 
 ### Deprecated
 
@@ -23,6 +18,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [1.7.0] - 2026-03-02
+
+### Added
+
+- prepare matching functionality with endpoint, helper and precondition check
+- added supersededBy to allowed reference filter fields
+
+### Changes
+
+- updated delete-rule-set internal return payload, to match that of delete-item
 
 ## [1.6.0] - 2026-02-24
 
