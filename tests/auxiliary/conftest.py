@@ -10,10 +10,11 @@ from pytest import MonkeyPatch
 from requests import Response
 
 from mex.common.ldap.connector import LDAPConnector
-from mex.common.ldap.models import LDAPFunctionalAccount, LDAPPerson
+from mex.common.ldap.models import LDAPFunctionalAccount, LDAPPerson, AnyLDAPActor
 from mex.common.orcid.connector import OrcidConnector
 from mex.common.orcid.models import OrcidRecord, OrcidSearchResponse
 from mex.common.wikidata.connector import WikidataAPIConnector
+from mex.common.models import PaginatedItemsContainer
 
 TEST_DATA_DIR = Path(__file__).parent / "test_data"
 
@@ -88,19 +89,33 @@ def mocked_ldap(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(LDAPConnector, "__init__", __init__)
 
     monkeypatch.setattr(
-        LDAPConnector, "get_persons", MagicMock(return_value=test_persons_ldap)
+        LDAPConnector,
+        "get_persons",
+        MagicMock(
+            return_value=PaginatedItemsContainer[LDAPPerson](
+                items=test_persons_ldap, total=len(test_persons_ldap)
+            )
+        ),
     )
     monkeypatch.setattr(
         LDAPConnector,
         "get_functional_accounts",
-        MagicMock(return_value=test_accounts_ldap),
+        MagicMock(
+            return_value=PaginatedItemsContainer[LDAPFunctionalAccount](
+                items=test_accounts_ldap, total=len(test_accounts_ldap)
+            )
+        ),
+    )
+    persons_functional_accounts = sorted(
+        test_persons_ldap + test_accounts_ldap, key=lambda x: x.objectGUID
     )
     monkeypatch.setattr(
         LDAPConnector,
         "get_persons_or_functional_accounts",
         MagicMock(
-            return_value=sorted(
-                test_persons_ldap + test_accounts_ldap, key=lambda x: x.objectGUID
+            return_value=PaginatedItemsContainer[AnyLDAPActor](
+                items=persons_functional_accounts,
+                total=len(persons_functional_accounts),
             ),
         ),
     )
