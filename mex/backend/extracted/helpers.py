@@ -9,6 +9,7 @@ from mex.common.models import AnyExtractedModel, PaginatedItemsContainer
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Sequence
 
+    from mex.backend.models import ReferenceFieldFilter
     from mex.common.types import Identifier
 
 
@@ -17,8 +18,7 @@ def search_extracted_items_in_graph(  # noqa: PLR0913
     query_string: str | None = None,
     stable_target_id: Identifier | None = None,
     entity_type: Sequence[str] | None = None,
-    referenced_identifiers: Sequence[str] | None = None,
-    reference_field: str | None = None,
+    reference_filters: Sequence[ReferenceFieldFilter] | None = None,
     skip: int = 0,
     limit: int = 100,
 ) -> PaginatedItemsContainer[AnyExtractedModel]:
@@ -28,8 +28,7 @@ def search_extracted_items_in_graph(  # noqa: PLR0913
         query_string: Full text search query term
         stable_target_id: Optional stable target ID filter
         entity_type: Optional entity type filter
-        referenced_identifiers: Optional merged item identifiers filter
-        reference_field: Optional field name to filter for
+        reference_filters: Optional reference field filters
         skip: How many items to skip for pagination
         limit: How many items to return at most
 
@@ -45,8 +44,7 @@ def search_extracted_items_in_graph(  # noqa: PLR0913
         identifier=None,
         stable_target_id=stable_target_id,
         entity_type=entity_type,
-        referenced_identifiers=referenced_identifiers,
-        reference_field=reference_field,
+        reference_filters=reference_filters,
         skip=skip,
         limit=limit,
     )

@@ -139,7 +139,10 @@ select = ["ALL"]
 "reflex" = "rx"
 
 [tool.ruff.lint.flake8-type-checking]
-runtime-evaluated-base-classes = ["pydantic.BaseModel"]
+runtime-evaluated-base-classes = [
+    "pydantic.BaseModel",
+    "mex.common.models.BaseModel"
+]
 runtime-evaluated-decorators = [
     "fastapi.APIRouter.delete",
     "fastapi.APIRouter.get",

@@ -16,9 +16,9 @@ from mex.artificial.helpers import create_artificial_items_and_rule_sets
 from mex.backend.cache.connector import CacheConnector, LocalCache, ValkeyCache
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.main import app
+from mex.backend.models import APIKeyDatabase, APIUserDatabase
 from mex.backend.settings import BackendSettings
 from mex.backend.testing.main import app as testing_app
-from mex.backend.types import APIKeyDatabase, APIUserDatabase
 from mex.common.connector import CONNECTOR_STORE
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
