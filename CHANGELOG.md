@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- /ldap has offset param (allow pagination)
+
 ### Deprecated
 
 ### Removed
