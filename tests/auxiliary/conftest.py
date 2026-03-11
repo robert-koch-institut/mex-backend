@@ -10,11 +10,11 @@ from pytest import MonkeyPatch
 from requests import Response
 
 from mex.common.ldap.connector import LDAPConnector
-from mex.common.ldap.models import LDAPFunctionalAccount, LDAPPerson, AnyLDAPActor
+from mex.common.ldap.models import AnyLDAPActor, LDAPFunctionalAccount, LDAPPerson
+from mex.common.models import PaginatedItemsContainer
 from mex.common.orcid.connector import OrcidConnector
 from mex.common.orcid.models import OrcidRecord, OrcidSearchResponse
 from mex.common.wikidata.connector import WikidataAPIConnector
-from mex.common.models import PaginatedItemsContainer
 
 TEST_DATA_DIR = Path(__file__).parent / "test_data"
 
@@ -87,7 +87,6 @@ def mocked_ldap(monkeypatch: MonkeyPatch) -> None:
         self._connection.extend.standard.paged_search = MagicMock(side_effect=[])
 
     monkeypatch.setattr(LDAPConnector, "__init__", __init__)
-
     monkeypatch.setattr(
         LDAPConnector,
         "get_persons",
@@ -107,7 +106,7 @@ def mocked_ldap(monkeypatch: MonkeyPatch) -> None:
         ),
     )
     persons_functional_accounts = sorted(
-        test_persons_ldap + test_accounts_ldap, key=lambda x: x.objectGUID
+        [*test_persons_ldap, *test_accounts_ldap], key=lambda x: x.objectGUID
     )
     monkeypatch.setattr(
         LDAPConnector,
