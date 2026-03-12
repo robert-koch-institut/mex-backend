@@ -21,8 +21,8 @@ class APIUserDatabase(BaseModel):
     write: dict[str, APIUserPassword] = {}
 
 
-class ReferenceFieldFilter(BaseModel):
-    """Reference field filter definition."""
+class ReferenceFilter(BaseModel):
+    """Reference filter definition with a field and list of identifiers."""
 
     field: ReferenceFieldName
-    identifiers: Annotated[list[Identifier], Field(min_length=1, max_length=100)]
+    identifiers: Annotated[list[Identifier | None], Field(min_length=1, max_length=100)]

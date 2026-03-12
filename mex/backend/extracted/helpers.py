@@ -9,7 +9,7 @@ from mex.common.models import AnyExtractedModel, PaginatedItemsContainer
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Sequence
 
-    from mex.backend.models import ReferenceFieldFilter
+    from mex.backend.models import ReferenceFilter
     from mex.common.types import Identifier
 
 
@@ -18,7 +18,7 @@ def search_extracted_items_in_graph(  # noqa: PLR0913
     query_string: str | None = None,
     stable_target_id: Identifier | None = None,
     entity_type: Sequence[str] | None = None,
-    reference_filters: Sequence[ReferenceFieldFilter] | None = None,
+    reference_filters: Sequence[ReferenceFilter] | None = None,
     skip: int = 0,
     limit: int = 100,
 ) -> PaginatedItemsContainer[AnyExtractedModel]:
@@ -90,8 +90,7 @@ def get_extracted_item_from_graph(identifier: Identifier) -> AnyExtractedModel:
         identifier=str(identifier),
         stable_target_id=None,
         entity_type=None,
-        referenced_identifiers=None,
-        reference_field=None,
+        reference_filters=None,
         skip=0,
         limit=1,
     )
