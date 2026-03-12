@@ -62,7 +62,7 @@ CALL () {
         <%- endif %>
         <%- if filter_by_referenced_identifiers %>
         EXISTS {
-            MATCH (merged_node)<-[:stableTargetId]-()-[:<<reference_field>>]->(referenced_node_to_filter_by)
+            MATCH (merged_node)<-[:stableTargetId]-(:<<extracted_or_rule_labels|join("|")>>)-[:<<reference_field>>]->(referenced_node_to_filter_by)
             WHERE
                 referenced_node_to_filter_by.identifier IN $referenced_identifiers
         }

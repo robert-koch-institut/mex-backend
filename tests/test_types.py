@@ -1,10 +1,9 @@
 import secrets
 from enum import Enum
 
+from mex.backend.models import APIKeyDatabase, APIUserDatabase
 from mex.backend.types import (
     APIKey,
-    APIKeyDatabase,
-    APIUserDatabase,
     APIUserPassword,
     DynamicStrEnum,
 )
