@@ -15,7 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- drop orjson response rendering because fastapi 0.130+ uses rust anyway
+
 ### Fixed
+
+- disable strict content-type header check, as introduced by fastapi 0.132+
 
 ### Security
 
