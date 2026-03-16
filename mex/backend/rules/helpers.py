@@ -41,8 +41,7 @@ def create_and_get_rule_set(
         identifier=None,
         stable_target_id=stable_target_id,
         entity_type=rule_types,
-        referenced_identifiers=None,
-        reference_field=None,
+        reference_filters=None,
         skip=0,
         limit=3,
     )
@@ -59,8 +58,7 @@ def get_rule_set_from_graph(
         identifier=None,
         stable_target_id=stable_target_id,
         entity_type=None,
-        referenced_identifiers=None,
-        reference_field=None,
+        reference_filters=None,
         skip=0,
         limit=3,
     )

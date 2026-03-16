@@ -12,7 +12,7 @@ from mex.backend.merged.helpers import (
     get_merged_item_from_graph,
     search_merged_items_in_graph,
 )
-from mex.backend.models import ReferenceFieldFilter
+from mex.backend.models import ReferenceFilter
 from mex.backend.rules.helpers import get_rule_set_from_graph
 from mex.backend.types import MergedType, ReferenceFieldName
 from mex.common.models import (
@@ -30,19 +30,21 @@ def search_merged_items(  # noqa: PLR0913
     q: Annotated[str, Query(max_length=100)] = "",
     identifier: Annotated[Identifier, Query()] | None = None,
     entityType: Annotated[Sequence[MergedType], Query(max_length=len(MergedType))] = [],
-    referencedIdentifier: Annotated[Sequence[Identifier], Query(max_length=100)]
+    referencedIdentifier: Annotated[
+        Sequence[Identifier], Query(max_length=100, deprecated=True)
+    ]
     | None = None,
-    referenceField: Annotated[ReferenceFieldName, Query()] | None = None,
+    referenceField: Annotated[ReferenceFieldName, Query(deprecated=True)] | None = None,
     skip: Annotated[int, Query(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> PaginatedItemsContainer[AnyMergedModel]:
     """Search for merged items by query text or by type and identifier."""
-    reference_filters: Sequence[ReferenceFieldFilter] | None
+    reference_filters: Sequence[ReferenceFilter] | None
     if not referencedIdentifier and not referenceField:
         reference_filters = None
     elif referencedIdentifier and referenceField:
         reference_filters = [
-            ReferenceFieldFilter(field=referenceField, identifiers=referencedIdentifier)
+            ReferenceFilter(field=referenceField, identifiers=referencedIdentifier)
         ]
     else:
         msg = "Must provide referencedIdentifier AND referenceField or neither."
@@ -63,7 +65,7 @@ def search_merged_items_advanced(  # noqa: PLR0913
     q: Annotated[str, Body(max_length=100)] = "",
     identifier: Annotated[Identifier, Body()] | None = None,
     entityType: Annotated[Sequence[MergedType], Body(max_length=len(MergedType))] = [],
-    referenceFilters: Annotated[Sequence[ReferenceFieldFilter], Body(max_length=100)]
+    referenceFilters: Annotated[Sequence[ReferenceFilter], Body(max_length=100)]
     | None = None,
     skip: Annotated[int, Body(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Body(ge=1, le=100)] = 10,

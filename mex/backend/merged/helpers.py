@@ -24,7 +24,7 @@ from mex.common.types import Identifier, Validation
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Sequence
 
-    from mex.backend.models import ReferenceFieldFilter
+    from mex.backend.models import ReferenceFilter
 
 
 @overload
@@ -100,7 +100,7 @@ def search_merged_items_in_graph(
     query_string: str | None = None,
     identifier: str | None = None,
     entity_type: Sequence[str] | None = None,
-    reference_filters: Sequence[ReferenceFieldFilter] | None = None,
+    reference_filters: Sequence[ReferenceFilter] | None = None,
     skip: int = 0,
     limit: int = 100,
     validation: Literal[Validation.LENIENT] = Validation.LENIENT,
@@ -113,7 +113,7 @@ def search_merged_items_in_graph(
     query_string: str | None = None,
     identifier: str | None = None,
     entity_type: Sequence[str] | None = None,
-    reference_filters: Sequence[ReferenceFieldFilter] | None = None,
+    reference_filters: Sequence[ReferenceFilter] | None = None,
     skip: int = 0,
     limit: int = 100,
     validation: Literal[Validation.STRICT] = Validation.STRICT,
@@ -126,7 +126,7 @@ def search_merged_items_in_graph(
     query_string: str | None = None,
     identifier: str | None = None,
     entity_type: Sequence[str] | None = None,
-    reference_filters: Sequence[ReferenceFieldFilter] | None = None,
+    reference_filters: Sequence[ReferenceFilter] | None = None,
     skip: int = 0,
     limit: int = 100,
     validation: Literal[Validation.IGNORE] = Validation.IGNORE,
@@ -138,7 +138,7 @@ def search_merged_items_in_graph(  # noqa: PLR0913
     query_string: str | None = None,
     identifier: str | None = None,
     entity_type: Sequence[str] | None = None,
-    reference_filters: Sequence[ReferenceFieldFilter] | None = None,
+    reference_filters: Sequence[ReferenceFilter] | None = None,
     skip: int = 0,
     limit: int = 100,
     validation: Literal[
