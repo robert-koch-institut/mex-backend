@@ -45,11 +45,7 @@ def search_persons_or_contact_points_in_ldap(
             extracted_organization_rki(),
         )
     )
-    items = sorted(
-        extracted_persons_or_contact_points,
-        key=lambda x: x.identifierInPrimarySource,
-    )
     return PaginatedItemsContainer[ExtractedPerson | ExtractedContactPoint](
-        items=items,
-        total=len(items),
+        items=extracted_persons_or_contact_points,
+        total=len(extracted_persons_or_contact_points),
     )
