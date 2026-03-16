@@ -42,7 +42,7 @@ services:
     ports:
       - 636:636
     volumes:
-      - ./assets/ldap/:/bootstrap/
+      - ./assets/raw-data/ldap/:/bootstrap/
     healthcheck:
       test: ["CMD", "ldapsearch", "-x", "-o", "tls_reqcert=never", "-H", "ldaps://localhost:636", "-b", "dc=ldapmock,dc=local", "-D", "cn=admin,dc=ldapmock,dc=local", "-w", "adminpass"]
       interval: 10s
