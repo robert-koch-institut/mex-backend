@@ -18,7 +18,7 @@ if TYPE_CHECKING:  # pragma: no cover
 def test_search_persons_in_ldap_mocked(
     client_with_api_key_read_permission: TestClient,
 ) -> None:
-    response = client_with_api_key_read_permission.get("/v0/ldap", params={"q": "test"})
+    response = client_with_api_key_read_permission.get("/v0/ldap", params={"q": "*"})
     rki_organization = extracted_organization_rki()
     assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == {
@@ -37,7 +37,7 @@ def test_search_persons_in_ldap_mocked(
                 "affiliation": [rki_organization.stableTargetId],
                 "email": [],
                 "familyName": ["Mueller"],
-                "fullName": [],
+                "fullName": ["Moritz Mueller"],
                 "givenName": ["Moritz"],
                 "isniId": [],
                 "memberOf": ["cjna2jitPngp6yIV63cdi9"],
@@ -52,7 +52,7 @@ def test_search_persons_in_ldap_mocked(
                 "affiliation": [rki_organization.stableTargetId],
                 "email": [],
                 "familyName": ["Mueller"],
-                "fullName": [],
+                "fullName": ["Max Mueller"],
                 "givenName": ["Max"],
                 "isniId": [],
                 "memberOf": ["cjna2jitPngp6yIV63cdi9"],
@@ -75,7 +75,7 @@ def test_search_persons_in_ldap_mocked(
                 "affiliation": [rki_organization.stableTargetId],
                 "email": [],
                 "familyName": ["Example"],
-                "fullName": [],
+                "fullName": ["Moritz Example"],
                 "givenName": ["Moritz"],
                 "isniId": [],
                 "memberOf": ["cjna2jitPngp6yIV63cdi9"],
