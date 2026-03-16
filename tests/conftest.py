@@ -18,7 +18,7 @@ from mex.backend.graph.connector import GraphConnector
 from mex.backend.main import app
 from mex.backend.settings import BackendSettings
 from mex.backend.testing.main import app as testing_app
-from mex.backend.types import APIKeyDatabase, APIUserDatabase
+from mex.backend.types import APIKeyDatabase
 from mex.common.connector import CONNECTOR_STORE
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -54,9 +54,6 @@ def settings() -> BackendSettings:
     settings.backend_api_key_database = APIKeyDatabase(
         read="read_key", write="write_key"
     )
-    settings.backend_user_database = APIUserDatabase(
-        read={"Reader": "read_password"}, write={"Writer": "write_password"}
-    )
     return settings
 
 
@@ -78,15 +75,6 @@ def client_with_api_key_write_permission(client: TestClient) -> TestClient:
 def client_with_api_key_read_permission(client: TestClient) -> TestClient:
     """Return a fastAPI test client with read permission granted by API key."""
     client.headers.update({"X-API-Key": "read_key"})
-    return client
-
-
-@pytest.fixture
-def client_with_basic_auth_read_permission(client: TestClient) -> TestClient:
-    """Return a fastAPI test client with read permission granted by basic auth."""
-    client.headers.update(
-        {"Authorization": f"Basic {b64encode(b'Reader:read_password').decode()}"}
-    )
     return client
 
 

@@ -1,0 +1,84 @@
+# Max Mueller
+dn: uid=MaxM,dc=ldapmock,dc=local
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: customPerson
+objectCategory: Person
+cn: Max Mueller
+displayName: Max Mueller
+sn: Mueller
+givenName: Max
+employeeID: abc
+sAMAccountName: MaxM
+objectGUID: 00000000-0000-4000-8000-0000000001b0
+department: FG99
+uid: MaxM
+
+# Moritz Example
+dn: uid=MoritzE,dc=ldapmock,dc=local
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: customPerson
+objectCategory: Person
+cn: Moritz Example
+displayName: Moritz Example
+sn: Example
+givenName: Moritz
+employeeID: def
+sAMAccountName: MoritzE
+objectGUID: 00000000-0000-4000-8000-000000000315
+department: FG99
+uid: MoritzE
+
+# Moritz Mueller
+dn: uid=MoritzM,dc=ldapmock,dc=local
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: customPerson
+objectCategory: Person
+cn: Moritz Mueller
+displayName: Moritz Mueller
+sn: Mueller
+givenName: Moritz
+employeeID: ghi
+sAMAccountName: MoritzM
+objectGUID: 00000000-0000-4000-8000-000000000141
+department: FG99
+uid: MoritzM
+
+# Funktion Organizational Unit
+dn: OU=Funktion,dc=ldapmock,dc=local
+objectClass: top
+objectClass: organizationalUnit
+ou: Funktion
+
+# help@account.test
+dn: uid=helpAccount,OU=Funktion,dc=ldapmock,dc=local
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: customPerson
+objectCategory: Person
+sn: helpAccount
+cn: helpAccount
+ou: Funktion
+objectGUID: 00000000-0000-4000-8000-00000000007b
+mail: help@account.test
+uid: helpAccount
+
+# info@mail.provider
+dn: uid=infoMail,OU=Funktion,dc=ldapmock,dc=local
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: customPerson
+objectCategory: Person
+sn: infoMail
+cn: infoMail
+ou: Funktion
+objectGUID: 00000000-0000-4000-8000-00000000021f
+mail: info@mail.provider
+uid: infoMail
