@@ -15,7 +15,7 @@ services:
       timeout: 5s
       retries: 5
   neo4j:
-    image: neo4j:2026.01-community
+    image: neo4j:2026.02-community
     environment:
       - NEO4J_AUTH=neo4j/password
       - NEO4J_dbms_usage__report_enabled=false
