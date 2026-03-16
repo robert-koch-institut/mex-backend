@@ -1,5 +1,4 @@
 import json
-from base64 import b64encode
 from collections import deque
 from functools import partial
 from itertools import count
@@ -18,7 +17,7 @@ from mex.backend.graph.connector import GraphConnector
 from mex.backend.main import app
 from mex.backend.settings import BackendSettings
 from mex.backend.testing.main import app as testing_app
-from mex.backend.types import APIKeyDatabase
+from mex.backend.types import APIKeyDatabase, OIDCGroupsDatabase
 from mex.common.connector import CONNECTOR_STORE
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -54,6 +53,10 @@ def settings() -> BackendSettings:
     settings.backend_api_key_database = APIKeyDatabase(
         read="read_key", write="write_key"
     )
+    settings.oidc_groups_database = OIDCGroupsDatabase(
+        read=["Abteilung_21", "Fachgebiet_99"],
+        write=["Abteilung_21"],
+    )
     return settings
 
 
@@ -79,11 +82,9 @@ def client_with_api_key_read_permission(client: TestClient) -> TestClient:
 
 
 @pytest.fixture
-def client_with_basic_auth_write_permission(client: TestClient) -> TestClient:
-    """Return a fastAPI test client with write permission granted by basic auth."""
-    client.headers.update(
-        {"Authorization": f"Basic {b64encode(b'Writer:write_password').decode()}"}
-    )
+def client_with_bearer_write_permission(client: TestClient) -> TestClient:
+    """Return a fastAPI test client with write permission granted by Bearer token."""
+    client.headers.update({"Authorization": "Bearer Writer"})
     return client
 
 

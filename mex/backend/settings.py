@@ -1,6 +1,6 @@
-from pydantic import Field, SecretStr
+from pydantic import AnyHttpUrl, Field, SecretStr
 
-from mex.backend.types import APIKeyDatabase, MergedType
+from mex.backend.types import APIKeyDatabase, MergedType, OIDCGroupsDatabase
 from mex.common.settings import BaseSettings
 
 
@@ -76,4 +76,27 @@ class BackendSettings(BaseSettings):
         None,
         description="Fully qualified URL of a valkey cache server.",
         validation_alias="MEX_BACKEND_VALKEY_URL",
+    )
+    oidc_issuer_url: AnyHttpUrl = Field(
+        AnyHttpUrl("http://localhost:5556/dex"),
+        description="OIDC issuer URL. JWKS fetched from {url}/.well-known/jwks.json.",
+        validation_alias="MEX_OIDC_ISSUER_URL",
+    )
+    oidc_client_id: str = Field(
+        "mex-backend",
+        description="Expected 'aud' claim in OIDC JWTs (must match Dex client id).",
+        validation_alias="MEX_OIDC_CLIENT_ID",
+    )
+    oidc_algorithms: list[str] = Field(
+        ["RS256"],
+        description="Allowed JWT signing algorithms.",
+        validation_alias="MEX_OIDC_ALGORITHMS",
+    )
+    oidc_groups_database: OIDCGroupsDatabase = Field(
+        OIDCGroupsDatabase(),
+        description=(
+            "Mapping of OIDC group names to access levels. "
+            "Users in 'write' groups implicitly have read access too."
+        ),
+        validation_alias="MEX_BACKEND_OIDC_GROUPS_DATABASE",
     )

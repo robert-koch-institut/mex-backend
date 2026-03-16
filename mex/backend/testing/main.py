@@ -21,8 +21,10 @@ from mex.backend.rules.main import router as rules_router
 from mex.backend.security import has_read_access, has_write_access
 from mex.backend.settings import BackendSettings
 from mex.backend.system.main import router as system_router
-from mex.backend.testing.ldap import router as ldap_login_router
+from mex.backend.testing.ldap import router as testing_ldap_router
+from mex.backend.testing.security import has_read_access_mocked, has_write_access_mocked
 from mex.backend.testing.system import router as testing_system_router
+from mex.backend.testing.user import router as testing_user_router
 from mex.common.cli import entrypoint
 
 app = FastAPI(
@@ -41,6 +43,9 @@ app = FastAPI(
     lifespan=lifespan,
     version="v0",
 )
+app.dependency_overrides[has_read_access] = has_read_access_mocked
+app.dependency_overrides[has_write_access] = has_write_access_mocked
+
 router = APIRouter(prefix="/v0")
 router.include_router(extracted_router, dependencies=[Depends(has_read_access)])
 router.include_router(identity_router, dependencies=[Depends(has_write_access)])
@@ -50,7 +55,8 @@ router.include_router(orcid_router, dependencies=[Depends(has_read_access)])
 router.include_router(preview_router, dependencies=[Depends(has_read_access)])
 router.include_router(rules_router, dependencies=[Depends(has_write_access)])
 router.include_router(wikidata_router, dependencies=[Depends(has_read_access)])
-router.include_router(ldap_login_router)
+router.include_router(testing_ldap_router)
+router.include_router(testing_user_router, prefix="/user")
 
 router.include_router(system_router)
 router.include_router(testing_system_router)

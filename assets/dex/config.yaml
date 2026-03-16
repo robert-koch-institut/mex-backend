@@ -1,0 +1,49 @@
+issuer: http://localhost:5556/dex
+
+storage:
+  type: memory
+
+web:
+  http: 0.0.0.0:5556
+  allowedOrigins:
+    - http://localhost:4200   # Angular dev server
+
+oauth2:
+  skipApprovalScreen: true
+  responseTypes:
+    - code                    # Authorization Code + PKCE (Angular / browser clients)
+
+connectors:
+  - type: ldap
+    id: ldap
+    name: LDAP
+    config:
+      host: slapd:636
+      insecureSkipVerify: true
+      bindDN: cn=admin,dc=ldapmock,dc=local
+      bindPW: adminpass
+      usernamePrompt: Username
+      userSearch:
+        baseDN: dc=ldapmock,dc=local
+        filter: "(objectClass=person)"
+        username: uid
+        idAttr: objectGUID
+        emailAttr: mail
+        nameAttr: cn
+        preferredUsernameAttr: sAMAccountName
+      groupSearch:
+        baseDN: dc=ldapmock,dc=local
+        filter: "(objectClass=groupOfNames)"
+        userMatchers:
+          - userAttr: DN
+            groupAttr: member
+        nameAttr: cn
+
+staticClients:
+  - id: mex-backend
+    secret: mex-backend-secret
+    name: MEx Backend
+    public: true          # enables PKCE (no client_secret needed in browser) + ROPC for tests
+    redirectURIs:
+      - http://localhost:8080/callback
+      - http://localhost:4200/callback    # Angular dev server
