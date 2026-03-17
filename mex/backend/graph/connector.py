@@ -31,7 +31,6 @@ from mex.backend.graph.transform import (
     validate_ingested_data,
 )
 from mex.backend.settings import BackendSettings
-from mex.backend.types import ReferenceFieldName
 from mex.common.connector import BaseConnector
 from mex.common.exceptions import MExError
 from mex.common.fields import (
@@ -56,6 +55,9 @@ if TYPE_CHECKING:  # pragma: no cover
 
     from mex.backend.models import ReferenceFilter
     from mex.common.types import Identifier
+
+
+NO_REFERENCE_SENTINEL = "__NO_REF__"
 
 
 class GraphConnector(BaseConnector):
@@ -177,7 +179,6 @@ class GraphConnector(BaseConnector):
         self,
         query_string: str | None,
         identifier: str | None,
-        stable_target_id: str | None,
         entity_type: Sequence[str],
         reference_filters: Sequence[ReferenceFilter] | None,
         skip: int,
@@ -188,7 +189,6 @@ class GraphConnector(BaseConnector):
         Args:
             query_string: Optional full text search query term
             identifier: Optional identifier filter
-            stable_target_id: Optional stable target ID filter
             entity_type: List of allowed entity types
             reference_filters: Optional reference field filters
             skip: How many items to skip for pagination
@@ -198,21 +198,25 @@ class GraphConnector(BaseConnector):
             Graph result instance
         """
         reference_filter_list = reference_filters or []
-        for reference_filter in reference_filter_list:
-            if (
-                reference_filter.field == ReferenceFieldName("hadPrimarySource")
-                and MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID
-                in reference_filter.identifiers
-            ):
-                reference_filter.identifiers = [
-                    None if id_ == MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID else id_
-                    for id_ in reference_filter.identifiers
-                ]
+        raw_reference_filters = [
+            {
+                "field": reference_filter.field,
+                "identifiers": [
+                    NO_REFERENCE_SENTINEL
+                    if (
+                        identifier == MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID
+                        and reference_filter.field == "hadPrimarySource"
+                    )
+                    else str(identifier)
+                    for identifier in reference_filter.identifiers
+                ],
+            }
+            for reference_filter in reference_filter_list
+        ]
         query_builder = QueryBuilder.get()
         query = query_builder.fetch_extracted_or_rule_items(
             filter_by_query_string=bool(query_string),
             filter_by_identifier=bool(identifier),
-            filter_by_stable_target_id=bool(stable_target_id),
             filter_by_references=bool(reference_filter_list),
             reference_fields=[f.field for f in reference_filter_list],
         )
@@ -220,9 +224,9 @@ class GraphConnector(BaseConnector):
             query,
             query_string=query_string,
             identifier=identifier,
-            stable_target_id=stable_target_id,
             labels=entity_type,
-            reference_filters=reference_filter_list,
+            reference_filters=raw_reference_filters,
+            reference_fields=[str(f.field) for f in reference_filter_list],
             skip=skip,
             limit=limit,
         )
@@ -235,7 +239,6 @@ class GraphConnector(BaseConnector):
         self,
         query_string: str | None,
         identifier: str | None,
-        stable_target_id: str | None,
         entity_type: Sequence[str] | None,
         reference_filters: Sequence[ReferenceFilter] | None,
         skip: int,
@@ -246,7 +249,6 @@ class GraphConnector(BaseConnector):
         Args:
             query_string: Optional full text search query term
             identifier: Optional identifier filter
-            stable_target_id: Optional stable target ID filter
             entity_type: Optional entity type filter
             reference_filters: Optional reference field filters
             skip: How many items to skip for pagination
@@ -258,7 +260,6 @@ class GraphConnector(BaseConnector):
         return self._fetch_extracted_or_rule_items(
             query_string=query_string,
             identifier=identifier,
-            stable_target_id=stable_target_id,
             entity_type=entity_type or list(EXTRACTED_MODEL_CLASSES_BY_NAME),
             reference_filters=reference_filters,
             skip=skip,
@@ -269,7 +270,6 @@ class GraphConnector(BaseConnector):
         self,
         query_string: str | None,
         identifier: str | None,
-        stable_target_id: str | None,
         entity_type: Sequence[str] | None,
         reference_filters: Sequence[ReferenceFilter] | None,
         skip: int,
@@ -280,7 +280,6 @@ class GraphConnector(BaseConnector):
         Args:
             query_string: Optional full text search query term
             identifier: Optional identifier filter
-            stable_target_id: Optional stable target ID filter
             entity_type: Optional entity type filter
             reference_filters: Optional reference field filters
             skip: How many items to skip for pagination
@@ -292,7 +291,6 @@ class GraphConnector(BaseConnector):
         return self._fetch_extracted_or_rule_items(
             query_string=query_string,
             identifier=identifier,
-            stable_target_id=stable_target_id,
             entity_type=entity_type or list(RULE_MODEL_CLASSES_BY_NAME),
             reference_filters=reference_filters,
             skip=skip,
@@ -321,37 +319,41 @@ class GraphConnector(BaseConnector):
         Returns:
             Graph result instance
         """
-        filter_items_with_rules = False
-        reference_filter_list = reference_filters or []
-        for reference_filter in reference_filter_list:
-            if (
-                reference_filter.field == ReferenceFieldName("hadPrimarySource")
-                and MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID
-                in reference_filter.identifiers
-            ):
-                filter_items_with_rules = True
-                reference_filter.identifiers = [
-                    id_
-                    for id_ in reference_filter.identifiers
-                    if id_ != MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID
-                ]
+        filter_list = reference_filters or []
+        raw_reference_filters = [
+            {
+                "field": reference_filter.field,
+                "identifiers": [
+                    NO_REFERENCE_SENTINEL
+                    if (
+                        identifier == MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID
+                        and reference_filter.field == "hadPrimarySource"
+                    )
+                    else str(identifier)
+                    for identifier in reference_filter.identifiers
+                ],
+            }
+            for reference_filter in filter_list
+        ]
+
         query_builder = QueryBuilder.get()
         query = query_builder.fetch_merged_items(
             filter_by_query_string=bool(query_string),
             filter_by_identifier=bool(identifier),
-            filter_by_references=bool(reference_filter_list),
-            filter_items_with_rules=filter_items_with_rules,
-            reference_fields=[f.field for f in reference_filter_list],
+            filter_by_references=bool(filter_list),
+            reference_fields=[f.field for f in filter_list],
         )
         result = self.commit(
             query,
             query_string=query_string,
             identifier=identifier,
             labels=entity_type or list(MERGED_MODEL_CLASSES_BY_NAME),
-            reference_filters=reference_filter_list,
+            reference_filters=raw_reference_filters,
+            reference_fields=[str(f.field) for f in filter_list],
             skip=skip,
             limit=limit,
         )
+
         for query_result in result.all():
             for item in query_result["items"]:
                 for component in item["_components"]:

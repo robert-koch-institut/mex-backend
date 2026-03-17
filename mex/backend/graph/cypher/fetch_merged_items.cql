@@ -9,15 +9,14 @@ Globals:
 Jinja:
     filter_by_query_string: Whether the final query should accept a full text query string
     filter_by_identifier: Whether the final query should filter by the merged identifier
-    filter_by_referenced_identifiers: Whether to filter for references to items with specific identifiers
-    filter_items_with_rules: Whether to filter for merged items that contain rule items
-    reference_field: Name of the relationship holding referenced identifiers to use for filtering
+    filter_by_references: Whether to filter for references to items with specific identifiers
+    reference_fields: Name of the relationship holding referenced identifiers to use for filtering
 
 Args:
     query_string: Full text query string
     labels: Labels to filter items by
     identifier: Identifier to filter items by
-    referenced_identifiers: Identifiers referenced by `reference_field`
+    reference_filters: List of reference filters
     skip: Skip these many nodes for pagination
     limit: Limit pagination to this many items
 
@@ -51,23 +50,24 @@ CALL () {
         <%- if filter_by_identifier %>
         AND merged_node.identifier = $identifier
         <%- endif %>
-    <%- if filter_by_referenced_identifiers or filter_items_with_rules %>
-    MATCH (merged_node)
-    WHERE
-        <%- if filter_items_with_rules %>
-        EXISTS {(merged_node)<-[:stableTargetId]-(:<<rule_labels|join("|")>>)}
-        <%- endif %>
-        <%- if filter_by_referenced_identifiers and filter_items_with_rules %>
-        OR
-        <%- endif %>
-        <%- if filter_by_referenced_identifiers %>
-        EXISTS {
-            MATCH (merged_node)<-[:stableTargetId]-(:<<extracted_or_rule_labels|join("|")>>)-[:<<reference_field>>]->(referenced_node_to_filter_by)
-            WHERE
-                referenced_node_to_filter_by.identifier IN $referenced_identifiers
+        <%- if filter_by_references %>
+        AND EXISTS {
+            MATCH (merged_node)<-[:stableTargetId]-(component:<<extracted_or_rule_labels|join("|")>>)
+            OPTIONAL MATCH (component)-[reference:<<reference_fields|join("|")>>]->(ref_target:<<merged_labels|join("|")>>)
+            WITH component,
+                collect(CASE WHEN reference IS NOT NULL THEN type(reference) END) AS found_fields,
+                collect(CASE WHEN reference IS NOT NULL
+                    THEN {field: type(reference), identifier: ref_target.identifier} END
+                ) AS existing_refs
+            WITH
+                existing_refs +
+                [f IN $reference_fields WHERE NOT f IN found_fields | {field: f, identifier: "__NO_REF__"}]
+                AS ref_matches
+            WHERE ALL(rf IN $reference_filters WHERE
+                ANY(m IN ref_matches WHERE m.field = rf.field AND m.identifier IN rf.identifiers)
+            )
         }
         <%- endif %>
-    <%- endif %>
 <%- endblock %>
     RETURN COUNT(merged_node) AS total
 }

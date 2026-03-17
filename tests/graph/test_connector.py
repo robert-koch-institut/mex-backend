@@ -269,9 +269,13 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
     result = graph.fetch_extracted_items(
         query_string="my-query",
         identifier=None,
-        stable_target_id=Identifier.generate(99),
         entity_type=["ExtractedFoo", "ExtractedBar", "ExtractedBatz"],
-        reference_filters=None,
+        reference_filters=[
+            ReferenceFilter(
+                field=ReferenceFieldName("stableTargetId"),
+                identifiers=[Identifier.generate(99)],
+            )
+        ],
         skip=10,
         limit=100,
     )
@@ -281,9 +285,8 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
             "fetch_extracted_or_rule_items",
             filter_by_query_string=True,
             filter_by_identifier=False,
-            filter_by_stable_target_id=True,
-            filter_by_references=False,
-            reference_fields=[],
+            filter_by_references=True,
+            reference_fields=["stableTargetId"],
         ),
         {
             "labels": [
@@ -293,10 +296,15 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
             ],
             "limit": 100,
             "query_string": "my-query",
-            "reference_filters": [],
+            "reference_filters": [
+                {
+                    "field": "stableTargetId",
+                    "identifiers": [str(Identifier.generate(99))],
+                }
+            ],
+            "reference_fields": ["stableTargetId"],
             "skip": 10,
             "identifier": None,
-            "stable_target_id": "bFQoRhcVH5DHV1",
         },
     )
 
@@ -316,7 +324,14 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
     ("query_parameters", "expected"),
     [
         pytest.param(
-            {"stable_target_id": "thisIdDoesNotExist"},
+            {
+                "reference_filters": [
+                    ReferenceFilter(
+                        field=ReferenceFieldName("stableTargetId"),
+                        identifiers=["thisIdDoesNotExist"],
+                    )
+                ],
+            },
             {"items": [], "total": 0},
             id="id-not-found",
         ),
@@ -583,7 +598,6 @@ def test_fetch_extracted_items(
     query_parameter_defaults = {
         "query_string": None,
         "identifier": None,
-        "stable_target_id": None,
         "entity_type": None,
         "reference_filters": None,
         "skip": 0,
@@ -617,9 +631,13 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
     result = graph.fetch_rule_items(
         query_string="my-query",
         identifier=None,
-        stable_target_id=Identifier.generate(99),
         entity_type=["AdditiveFoo", "SubtractiveBar", "PreventiveBatz"],
-        reference_filters=None,
+        reference_filters=[
+            ReferenceFilter(
+                field=ReferenceFieldName("stableTargetId"),
+                identifiers=[Identifier.generate(99)],
+            )
+        ],
         skip=10,
         limit=100,
     )
@@ -629,9 +647,8 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
             "fetch_extracted_or_rule_items",
             filter_by_query_string=True,
             filter_by_identifier=False,
-            filter_by_stable_target_id=True,
-            filter_by_references=False,
-            reference_fields=[],
+            filter_by_references=True,
+            reference_fields=["stableTargetId"],
         ),
         {
             "labels": [
@@ -641,10 +658,15 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
             ],
             "limit": 100,
             "query_string": "my-query",
-            "reference_filters": [],
+            "reference_filters": [
+                {
+                    "field": "stableTargetId",
+                    "identifiers": [str(Identifier.generate(99))],
+                }
+            ],
+            "reference_fields": ["stableTargetId"],
             "skip": 10,
             "identifier": None,
-            "stable_target_id": "bFQoRhcVH5DHV1",
         },
     )
 
@@ -664,7 +686,14 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
     ("query_parameters", "expected"),
     [
         pytest.param(
-            {"stable_target_id": "thisIdDoesNotExist"},
+            {
+                "reference_filters": [
+                    ReferenceFilter(
+                        field=ReferenceFieldName("stableTargetId"),
+                        identifiers=["thisIdDoesNotExist"],
+                    )
+                ],
+            },
             {"items": [], "total": 0},
             id="id-not-found",
         ),
@@ -768,7 +797,6 @@ def test_fetch_rule_items(
     query_parameter_defaults = {
         "query_string": None,
         "identifier": None,
-        "stable_target_id": None,
         "entity_type": None,
         "reference_filters": None,
         "skip": 0,
@@ -788,9 +816,13 @@ def test_fetch_rule_items_empty() -> None:
     result = graph.fetch_rule_items(
         query_string=None,
         identifier=None,
-        stable_target_id="thisIdDoesNotExist",
         entity_type=None,
-        reference_filters=None,
+        reference_filters=[
+            ReferenceFilter(
+                field=ReferenceFieldName("stableTargetId"),
+                identifiers=["thisIdDoesNotExist"],
+            )
+        ],
         skip=0,
         limit=1,
     )
@@ -860,7 +892,6 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
             filter_by_query_string=True,
             filter_by_identifier=True,
             filter_by_references=True,
-            filter_items_with_rules=False,
             reference_fields=["hadPrimarySource"],
         ),
         {
@@ -872,11 +903,12 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
             "limit": 100,
             "query_string": "my-query",
             "reference_filters": [
-                ReferenceFilter(
-                    field=ReferenceFieldName("hadPrimarySource"),
-                    identifiers=[Identifier.generate(100)],
-                )
+                {
+                    "field": "hadPrimarySource",
+                    "identifiers": [str(Identifier.generate(100))],
+                }
             ],
+            "reference_fields": ["hadPrimarySource"],
             "skip": 10,
             "identifier": "bFQoRhcVH5DHV1",
         },

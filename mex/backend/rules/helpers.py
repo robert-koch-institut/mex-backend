@@ -2,7 +2,9 @@ from collections import deque
 
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import NoResultFoundError
+from mex.backend.models import ReferenceFilter
 from mex.backend.rules.transform import transform_raw_rules_to_rule_set_response
+from mex.backend.types import ReferenceFieldName
 from mex.common.logging import logger
 from mex.common.models import (
     RULE_SET_RESPONSE_CLASSES_BY_NAME,
@@ -31,21 +33,12 @@ def create_and_get_rule_set(
         stableTargetId=stable_target_id,
     )
     deque(connector.ingest_items([rule_set_response]))
-    rule_types = [
-        rule_set.additive.entityType,
-        rule_set.subtractive.entityType,
-        rule_set.preventive.entityType,
-    ]
-    graph_result = connector.fetch_rule_items(
-        query_string=None,
-        identifier=None,
-        stable_target_id=stable_target_id,
-        entity_type=rule_types,
-        reference_filters=None,
-        skip=0,
-        limit=3,
-    )
-    return transform_raw_rules_to_rule_set_response(graph_result.one()["items"])
+
+    if fetched_rule_set := get_rule_set_from_graph(stable_target_id):
+        return fetched_rule_set
+
+    msg = f"rule-set was not found after it was just inserted: {stable_target_id}"
+    raise RuntimeError(msg)
 
 
 def get_rule_set_from_graph(
@@ -56,9 +49,13 @@ def get_rule_set_from_graph(
     graph_result = connector.fetch_rule_items(
         query_string=None,
         identifier=None,
-        stable_target_id=stable_target_id,
         entity_type=None,
-        reference_filters=None,
+        reference_filters=[
+            ReferenceFilter(
+                field=ReferenceFieldName("stableTargetId"),
+                identifiers=[stable_target_id],
+            )
+        ],
         skip=0,
         limit=3,
     )

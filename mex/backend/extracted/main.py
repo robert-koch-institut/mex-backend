@@ -21,43 +21,48 @@ router = APIRouter()
 @router.get("/extracted-item", tags=["editor"])
 def search_extracted_items(  # noqa: PLR0913
     q: Annotated[str, Query(max_length=100)] = "",
-    stableTargetId: Annotated[Identifier, Query()] | None = None,
+    stableTargetId: Annotated[Identifier, Query(deprecated=True)] | None = None,
     entityType: Annotated[
         Sequence[ExtractedType], Query(max_length=len(ExtractedType))
     ] = [],
     referencedIdentifier: Annotated[
-        Sequence[Identifier], Query(max_length=100, deprecated=True)
-    ]
-    | None = None,
-    referenceField: Annotated[ReferenceFieldName, Query(deprecated=True)] | None = None,
+        Sequence[Identifier] | None, Query(max_length=100, deprecated=True)
+    ] = None,
+    referenceField: Annotated[ReferenceFieldName | None, Query(deprecated=True)] = None,
     skip: Annotated[int, Query(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> PaginatedItemsContainer[AnyExtractedModel]:
     """Search for extracted items by query text or by type and id."""
-    reference_filters: Sequence[ReferenceFilter] | None
-    if not referencedIdentifier and not referenceField:
-        reference_filters = None
-    elif referencedIdentifier and referenceField:
+    if referencedIdentifier and referenceField:
         reference_filters = [
             ReferenceFilter(field=referenceField, identifiers=referencedIdentifier)
         ]
+    elif not referencedIdentifier and not referenceField:
+        reference_filters = []
     else:
         msg = "Must provide referencedIdentifier AND referenceField or neither."
         raise HTTPException(status.HTTP_400_BAD_REQUEST, msg)
+
+    if stableTargetId:
+        stable_target_id_filter = ReferenceFilter(
+            field=ReferenceFieldName("stableTargetId"),
+            identifiers=[stableTargetId],
+        )
+        if stable_target_id_filter not in reference_filters:
+            reference_filters.append(stable_target_id_filter)
+
     return search_extracted_items_in_graph(
         query_string=q,
-        stable_target_id=stableTargetId,
         entity_type=[str(t.value) for t in entityType or ExtractedType],
-        reference_filters=reference_filters,
+        reference_filters=reference_filters or None,
         skip=skip,
         limit=limit,
     )
 
 
 @router.post("/extracted-item-search", tags=["editor"])
-def search_extracted_items_advanced(  # noqa: PLR0913
+def search_extracted_items_advanced(
     q: Annotated[str, Query(max_length=100)] = "",
-    stableTargetId: Annotated[Identifier, Query()] | None = None,
     entityType: Annotated[
         Sequence[ExtractedType], Query(max_length=len(ExtractedType))
     ] = [],
@@ -69,7 +74,6 @@ def search_extracted_items_advanced(  # noqa: PLR0913
     """Search for extracted items with advanced search filters."""
     return search_extracted_items_in_graph(
         query_string=q,
-        stable_target_id=stableTargetId,
         entity_type=[str(t.value) for t in entityType or ExtractedType],
         reference_filters=referenceFilters,
         skip=skip,

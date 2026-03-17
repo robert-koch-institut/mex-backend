@@ -31,10 +31,9 @@ def search_merged_items(  # noqa: PLR0913
     identifier: Annotated[Identifier, Query()] | None = None,
     entityType: Annotated[Sequence[MergedType], Query(max_length=len(MergedType))] = [],
     referencedIdentifier: Annotated[
-        Sequence[Identifier], Query(max_length=100, deprecated=True)
-    ]
-    | None = None,
-    referenceField: Annotated[ReferenceFieldName, Query(deprecated=True)] | None = None,
+        Sequence[Identifier] | None, Query(max_length=100, deprecated=True)
+    ] = None,
+    referenceField: Annotated[ReferenceFieldName | None, Query(deprecated=True)] = None,
     skip: Annotated[int, Query(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> PaginatedItemsContainer[AnyMergedModel]:
