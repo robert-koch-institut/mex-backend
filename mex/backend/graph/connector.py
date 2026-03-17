@@ -11,6 +11,7 @@ from neo4j import (
 )
 from neo4j.exceptions import ConstraintError, Neo4jError
 
+from mex.backend.graph.constants import NO_REFERENCE_SENTINEL
 from mex.backend.graph.exceptions import (
     DeletionFailedError,
     IngestionError,
@@ -55,9 +56,6 @@ if TYPE_CHECKING:  # pragma: no cover
 
     from mex.backend.models import ReferenceFilter
     from mex.common.types import Identifier
-
-
-NO_REFERENCE_SENTINEL = "__NO_REF__"
 
 
 class GraphConnector(BaseConnector):

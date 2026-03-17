@@ -61,7 +61,7 @@ CALL () {
                 ) AS existing_refs
             WITH
                 existing_refs +
-                [f IN $reference_fields WHERE NOT f IN found_fields | {field: f, identifier: "__NO_REF__"}]
+                [f IN $reference_fields WHERE NOT f IN found_fields | {field: f, identifier: <<no_reference>>}]
                 AS ref_matches
             WHERE ALL(rf IN $reference_filters WHERE
                 ANY(m IN ref_matches WHERE m.field = rf.field AND m.identifier IN rf.identifiers)
