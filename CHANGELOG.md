@@ -9,9 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- new POST endpoints for advanced search of extracted, preview and merged items
+- new reference filters syntax that allows chaining multiple filters with AND condition
+
 ### Changes
 
 ### Deprecated
+
+- deprecate `stableTargetId`, `referenceField` and `referencedIdentifier` filter params
 
 ### Removed
 
