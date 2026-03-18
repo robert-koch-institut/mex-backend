@@ -50,7 +50,7 @@ CALL () {
         AND extracted_or_rule_node.identifier = $identifier
         <%- endif %>
     <%- if filter_by_references %>
-    <<check_reference_filters("extracted_or_rule_node", "merged_node, extracted_or_rule_node", "merged_node, extracted_or_rule_node")|indent(4)>>
+    <<check_reference_filters()|indent(4)>>
     <%- endif %>
 <%- endblock %>
     RETURN COUNT(extracted_or_rule_node) AS total

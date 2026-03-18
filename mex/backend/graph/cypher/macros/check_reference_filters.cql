@@ -7,23 +7,21 @@ Globals:
     any_merged_label: List of all merged class labels
     no_reference: Sentinel value for missing references
 
-Context:
+Jinja:
     reference_fields: List of relationship names to check
-
-Macro args:
-    source_node: Name of the node variable to match references from
-    group_vars: Comma-separated variables for the first WITH clause
-    carry_vars: Comma-separated variables to carry through the second WITH clause,
-                empty string omits extra variables
 -#>
-<% macro check_reference_filters(source_node, group_vars, carry_vars="") -%>
-OPTIONAL MATCH (<<source_node>>)-[reference:<<reference_fields|join("|")>>]->(ref_target:<<any_merged_label>>)
-WITH <<group_vars>>,
+<% macro check_reference_filters() -%>
+OPTIONAL MATCH (<<extracted_or_rule_node>>)-[reference:<<reference_fields|join("|")>>]->(ref_target:<<any_merged_label>>)
+WITH
+    merged_node,
+    extracted_or_rule_node,
     collect(CASE WHEN reference IS NOT NULL THEN type(reference) END) AS found_fields,
     collect(CASE WHEN reference IS NOT NULL
         THEN {field: type(reference), identifier: ref_target.identifier} END
     ) AS existing_refs
-WITH<% if carry_vars %> <<carry_vars>>,<% endif %>
+WITH
+    merged_node,
+    extracted_or_rule_node,
     existing_refs +
     [f IN $reference_fields WHERE NOT f IN found_fields | {field: f, identifier: "<<no_reference>>"}]
     AS ref_matches

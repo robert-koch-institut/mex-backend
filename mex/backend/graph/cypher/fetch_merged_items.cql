@@ -54,8 +54,8 @@ CALL () {
         <%- endif %>
         <%- if filter_by_references %>
         AND EXISTS {
-            MATCH (merged_node)<-[:stableTargetId]-(component:<<any_extracted_or_rule_label>>)
-            <<check_reference_filters("component", "component")|indent(12)>>
+            MATCH (merged_node)<-[:stableTargetId]-(extracted_or_rule_node:<<any_extracted_or_rule_label>>)
+            <<check_reference_filters()|indent(12)>>
         }
         <%- endif %>
 <%- endblock %>
