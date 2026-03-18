@@ -45,7 +45,7 @@ CALL () {
     }
     WITH DISTINCT extracted_or_rule_node, merged_node
 <%- else %>
-    OPTIONAL MATCH (merged_node:<<any_merged_label>>)
+    OPTIONAL MATCH (extracted_or_rule_node:<<any_extracted_or_rule_label>>)-[:stableTargetId]->(merged_node:<<any_merged_label>>)
 <%- endif %>
     WHERE
         ANY(label IN labels(merged_node) WHERE label IN $labels)
@@ -53,20 +53,15 @@ CALL () {
         AND merged_node.identifier = $identifier
         <%- endif %>
         <%- if filter_by_references %>
-        AND EXISTS {
-            MATCH (merged_node)<-[:stableTargetId]-(extracted_or_rule_node:<<any_extracted_or_rule_label>>)
-            <<check_reference_filters()|indent(12)>>
-        }
+        AND EXISTS {<<check_reference_filters()>>}
         <%- endif %>
 <%- endblock %>
     RETURN COUNT(merged_node) AS total
 }
 CALL () {
     <<-self.match_clause()>>
-    ORDER BY merged_node.identifier ASC
     SKIP $skip
     LIMIT $limit
-    OPTIONAL MATCH (extracted_or_rule_node)-[:stableTargetId]->(merged_node)
     ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
     WITH
         extracted_or_rule_node,

@@ -49,9 +49,9 @@ CALL () {
         <%- if filter_by_identifier %>
         AND extracted_or_rule_node.identifier = $identifier
         <%- endif %>
-    <%- if filter_by_references %>
-    <<check_reference_filters()|indent(4)>>
-    <%- endif %>
+        <%- if filter_by_references %>
+        AND EXISTS {<<check_reference_filters()>>}
+        <%- endif %>
 <%- endblock %>
     RETURN COUNT(extracted_or_rule_node) AS total
 }

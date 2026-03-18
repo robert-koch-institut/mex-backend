@@ -11,7 +11,7 @@ Jinja:
     reference_fields: List of relationship names to check
 -#>
 <% macro check_reference_filters() -%>
-OPTIONAL MATCH (<<extracted_or_rule_node>>)-[reference:<<reference_fields|join("|")>>]->(ref_target:<<any_merged_label>>)
+OPTIONAL MATCH (extracted_or_rule_node)-[reference:<<reference_fields|join("|")>>]->(ref_target:<<any_merged_label>>)
 WITH
     merged_node,
     extracted_or_rule_node,
