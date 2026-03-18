@@ -1,5 +1,5 @@
 <% macro check_reference_filters(source_node, group_vars, carry_vars="") -%>
-OPTIONAL MATCH (<<source_node>>)-[reference:<<reference_fields|join("|")>>]->(ref_target:<<merged_labels|join("|")>>)
+OPTIONAL MATCH (<<source_node>>)-[reference:<<reference_fields|join("|")>>]->(ref_target:<<any_merged_label>>)
 WITH <<group_vars>>,
     collect(CASE WHEN reference IS NOT NULL THEN type(reference) END) AS found_fields,
     collect(CASE WHEN reference IS NOT NULL

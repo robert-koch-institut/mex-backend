@@ -21,12 +21,12 @@ Returns:
     deleted_nested_count: Number of nested items deleted
 -#>
 
-MATCH (merged:<<merged_labels|join("|")>> {identifier: $identifier})
-OPTIONAL MATCH (merged)<-[:stableTargetId]-(extracted:<<extracted_labels|join("|")>>)
-OPTIONAL MATCH (merged)<-[:stableTargetId]-(rule:<<rule_labels|join("|")>>)
+MATCH (merged:<<any_merged_label>> {identifier: $identifier})
+OPTIONAL MATCH (merged)<-[:stableTargetId]-(extracted:<<any_extracted_label>>)
+OPTIONAL MATCH (merged)<-[:stableTargetId]-(rule:<<any_rule_label>>)
 OPTIONAL MATCH (merged)-[outbound]->()
-OPTIONAL MATCH (extracted)-[]->(extracted_nested:<<nested_labels|join("|")>>)
-OPTIONAL MATCH (rule)-[]->(rule_nested:<<nested_labels|join("|")>>)
+OPTIONAL MATCH (extracted)-[]->(extracted_nested:<<any_nested_label>>)
+OPTIONAL MATCH (rule)-[]->(rule_nested:<<any_nested_label>>)
 
 DETACH DELETE extracted_nested, rule_nested
 DETACH DELETE extracted, rule

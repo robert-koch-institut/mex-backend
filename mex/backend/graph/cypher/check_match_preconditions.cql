@@ -23,10 +23,10 @@ Returns:
     same_merged_type: Optional boolean indicating the items have the same stem types
     matching_of_type_is_allowed: Optional boolean indicating if matching is allowed for the type of the merged items
 -#>
-OPTIONAL MATCH (extracted:<<extracted_labels|join("|")>> {identifier: $extracted_identifier})
-OPTIONAL MATCH (extracted)-[:stableTargetId]->(old_merged:<<merged_labels|join("|")>>)
-OPTIONAL MATCH (old_merged)<-[:stableTargetId]-(old_rules:<<rule_labels|join("|")>>)
-OPTIONAL MATCH (new_merged:<<merged_labels|join("|")>> {identifier: $merged_identifier})
+OPTIONAL MATCH (extracted:<<any_extracted_label>> {identifier: $extracted_identifier})
+OPTIONAL MATCH (extracted)-[:stableTargetId]->(old_merged:<<any_merged_label>>)
+OPTIONAL MATCH (old_merged)<-[:stableTargetId]-(old_rules:<<any_rule_label>>)
+OPTIONAL MATCH (new_merged:<<any_merged_label>> {identifier: $merged_identifier})
 WITH
    count(DISTINCT extracted) = 1 AS extracted_exists,
    count(old_rules) = 3 AS old_rules_exist,

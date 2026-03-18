@@ -20,7 +20,7 @@ Args:
 Returns:
     List of identity objects.
 -#>
-MATCH (n:<<extracted_labels|join("|")>>)-[:stableTargetId]->(merged:<<merged_labels|join("|")>>)
+MATCH (n:<<any_extracted_label>>)-[:stableTargetId]->(merged:<<any_merged_label>>)
 MATCH (n)-[:hadPrimarySource]->(primary_source:MergedPrimarySource)
 <%- if filter_by_had_primary_source or filter_by_identifier_in_primary_source or filter_by_stable_target_id %>
 WHERE
