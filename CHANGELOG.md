@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- simplified search queries using jinja macros that are individually testable
 - use neo4j and valkey from docker compose instead of re-configuring in testing.yml
 
 ### Deprecated
