@@ -9,15 +9,19 @@ Globals:
 
 Jinja:
     reference_fields: List of relationship names to check
+
+Args:
+    extracted_or_rule_node: The node whose outgoing references to check
+    merged_node: The merged node associated with the extracted or rule node
 -#>
 <% macro check_reference_filters() -%>
-OPTIONAL MATCH (extracted_or_rule_node)-[reference:<<reference_fields|join("|")>>]->(ref_target:<<any_merged_label>>)
+OPTIONAL MATCH (extracted_or_rule_node)-[reference:<<reference_fields|join("|")>>]->(referenced_merged_node:<<any_merged_label>>)
 WITH
     merged_node,
     extracted_or_rule_node,
     collect(CASE WHEN reference IS NOT NULL THEN type(reference) END) AS found_fields,
     collect(CASE WHEN reference IS NOT NULL
-        THEN {field: type(reference), identifier: ref_target.identifier} END
+        THEN {field: type(reference), identifier: referenced_merged_node.identifier} END
     ) AS existing_refs
 WITH
     merged_node,

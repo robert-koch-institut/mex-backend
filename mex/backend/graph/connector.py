@@ -32,6 +32,7 @@ from mex.backend.graph.transform import (
     validate_ingested_data,
 )
 from mex.backend.settings import BackendSettings
+from mex.backend.types import ReferenceFieldName
 from mex.common.connector import BaseConnector
 from mex.common.exceptions import MExError
 from mex.common.fields import (
@@ -203,7 +204,8 @@ class GraphConnector(BaseConnector):
                     NO_REFERENCE_SENTINEL
                     if (
                         identifier == MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID
-                        and reference_filter.field == "hadPrimarySource"
+                        and reference_filter.field
+                        == ReferenceFieldName("hadPrimarySource")
                     )
                     else str(identifier)
                     for identifier in reference_filter.identifiers
@@ -325,7 +327,8 @@ class GraphConnector(BaseConnector):
                     NO_REFERENCE_SENTINEL
                     if (
                         identifier == MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID
-                        and reference_filter.field == "hadPrimarySource"
+                        and reference_filter.field
+                        == ReferenceFieldName("hadPrimarySource")
                     )
                     else str(identifier)
                     for identifier in reference_filter.identifiers

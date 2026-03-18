@@ -29,24 +29,13 @@ Returns:
             _refs: Values of nested objects as well as referenced identifiers
             *nodeProps: All other properties of the node
 -#>
+<% from "macros/match_or_search_nodes.cql" import match_or_search_nodes with context -%>
 <% from "macros/check_reference_filters.cql" import check_reference_filters with context -%>
+<% from "macros/collect_references_and_nested.cql" import collect_references_and_nested with context -%>
 
 CALL () {
 <%- block match_clause -%>
-<%- if filter_by_query_string %>
-    OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
-    YIELD node AS hit, score
-    CALL (hit) {
-        MATCH (hit:<<any_extracted_or_rule_label>>)-[:stableTargetId]->(merged_node:<<any_merged_label>>)
-        RETURN hit as extracted_or_rule_node, merged_node
-    UNION
-        MATCH (hit:<<any_nested_label>>)<-[]-(extracted_or_rule_node:<<any_extracted_or_rule_label>>)-[:stableTargetId]->(merged_node:<<any_merged_label>>)
-        RETURN extracted_or_rule_node, merged_node
-    }
-    WITH DISTINCT extracted_or_rule_node, merged_node
-<%- else %>
-    OPTIONAL MATCH (extracted_or_rule_node:<<any_extracted_or_rule_label>>)-[:stableTargetId]->(merged_node:<<any_merged_label>>)
-<%- endif %>
+    <<-match_or_search_nodes()>>
     WHERE
         ANY(label IN labels(merged_node) WHERE label IN $labels)
         <%- if filter_by_identifier %>
@@ -60,19 +49,13 @@ CALL () {
 }
 CALL () {
     <<-self.match_clause()>>
+    ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
     SKIP $skip
     LIMIT $limit
-    ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
     WITH
         extracted_or_rule_node,
         merged_node,
-        [
-            (extracted_or_rule_node)-[r]->(referenced_merged_node:<<any_merged_label>>) |
-            {value: referenced_merged_node.identifier, position:r.position, label: type(r)}
-        ] + [
-            (extracted_or_rule_node)-[r]->(referenced_nested_node:<<any_nested_label>>) |
-            {value: properties(referenced_nested_node), position:r.position , label: type(r)}
-        ] AS refs
+        <<collect_references_and_nested()>> AS refs
     WITH
         merged_node,
         collect(
