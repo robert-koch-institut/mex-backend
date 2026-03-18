@@ -1,8 +1,8 @@
 <# Fetch only identity-related fields for the given set of filters.
 
 Globals:
-    extracted_labels: List of all extracted class labels
-    merged_labels: List of all merged class labels
+    any_extracted_label: List of all extracted class labels
+    any_merged_label: List of all merged class labels
 
 Jinja:
     filter_by_had_primary_source: Whether the final query should filter by identifiers

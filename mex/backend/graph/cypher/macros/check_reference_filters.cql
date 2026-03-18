@@ -1,3 +1,21 @@
+<# Filter nodes by their outgoing references matching specific identifiers.
+
+For each reference field, collect existing references and fill in a sentinel for
+missing fields, then assert all reference filters are satisfied.
+
+Globals:
+    any_merged_label: List of all merged class labels
+    no_reference: Sentinel value for missing references
+
+Context:
+    reference_fields: List of relationship names to check
+
+Macro args:
+    source_node: Name of the node variable to match references from
+    group_vars: Comma-separated variables for the first WITH clause
+    carry_vars: Comma-separated variables to carry through the second WITH clause,
+                empty string omits extra variables
+-#>
 <% macro check_reference_filters(source_node, group_vars, carry_vars="") -%>
 OPTIONAL MATCH (<<source_node>>)-[reference:<<reference_fields|join("|")>>]->(ref_target:<<any_merged_label>>)
 WITH <<group_vars>>,
