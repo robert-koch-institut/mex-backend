@@ -4,13 +4,12 @@ Globals:
     extracted_or_rule_labels: List of all extracted and rule class labels
     merged_labels: List of all merged class labels
     nested_labels: List of labels for all nestable objects
-    rule_labels: List of all rule class labels
 
 Jinja:
     filter_by_query_string: Whether the final query should accept a full text query string
-    filter_by_identifier: Whether the final query should filter by the merged identifier
+    filter_by_identifier: Whether the final query should filter by item identifiers
     filter_by_references: Whether to filter for references to items with specific identifiers
-    reference_fields: Name of the relationship holding referenced identifiers to use for filtering
+    reference_fields: List of relationship names holding referenced identifiers to use for filtering
 
 Args:
     query_string: Full text query string
@@ -25,10 +24,13 @@ Returns:
     items: List of merged items, each item has the following attributes:
         entityType: the type of the merged item
         identifier: the identifier of the merged item
-        _components: The rule and / or extracted items with the stableTargetId of this
-            merged item. Each component has an extra attribute `_refs` that contains the
-            values of nested objects as well as the identifiers of referenced items.
+        _components: List of extracted or rule items
+            entityType: Label of the node
+            _refs: Values of nested objects as well as referenced identifiers
+            *nodeProps: All other properties of the node
 -#>
+<% from "macros/check_reference_filters.cql" import check_reference_filters with context -%>
+
 CALL () {
 <%- block match_clause -%>
 <%- if filter_by_query_string %>
@@ -41,7 +43,7 @@ CALL () {
         MATCH (hit:<<nested_labels|join("|")>>)<-[]-(extracted_or_rule_node:<<extracted_or_rule_labels|join("|")>>)-[:stableTargetId]->(merged_node:<<merged_labels|join("|")>>)
         RETURN extracted_or_rule_node, merged_node
     }
-    WITH DISTINCT merged_node AS merged_node
+    WITH DISTINCT extracted_or_rule_node, merged_node
 <%- else %>
     OPTIONAL MATCH (merged_node:<<merged_labels|join("|")>>)
 <%- endif %>
@@ -53,19 +55,7 @@ CALL () {
         <%- if filter_by_references %>
         AND EXISTS {
             MATCH (merged_node)<-[:stableTargetId]-(component:<<extracted_or_rule_labels|join("|")>>)
-            OPTIONAL MATCH (component)-[reference:<<reference_fields|join("|")>>]->(ref_target:<<merged_labels|join("|")>>)
-            WITH component,
-                collect(CASE WHEN reference IS NOT NULL THEN type(reference) END) AS found_fields,
-                collect(CASE WHEN reference IS NOT NULL
-                    THEN {field: type(reference), identifier: ref_target.identifier} END
-                ) AS existing_refs
-            WITH
-                existing_refs +
-                [f IN $reference_fields WHERE NOT f IN found_fields | {field: f, identifier: <<no_reference>>}]
-                AS ref_matches
-            WHERE ALL(rf IN $reference_filters WHERE
-                ANY(m IN ref_matches WHERE m.field = rf.field AND m.identifier IN rf.identifiers)
-            )
+            <<check_reference_filters("component", "component")|indent(12)>>
         }
         <%- endif %>
 <%- endblock %>

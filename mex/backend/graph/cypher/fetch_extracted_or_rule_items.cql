@@ -1,13 +1,13 @@
 <# Fetch extracted or rule items including their nested objects and referenced identifiers.
 
 Globals:
-    extracted_or_rule_labels: List of all extracted or rule labels
+    extracted_or_rule_labels: List of all extracted and rule class labels
     merged_labels: List of all merged class labels
     nested_labels: List of labels for all nestable objects
 
 Jinja:
     filter_by_query_string: Whether the final query should accept a full text query string
-    filter_by_identifier: Whether the final query should filter by identifiers
+    filter_by_identifier: Whether the final query should filter by item identifiers
     filter_by_references: Whether to filter for references to items with specific identifiers
     reference_fields: List of relationship names holding referenced identifiers to use for filtering
 
@@ -15,16 +15,19 @@ Args:
     query_string: Full text query string
     labels: Labels to filter items by
     identifier: Identifier to filter items by
-    reference_filters: List of reference filters with field and identifiers
+    reference_filters: List of reference filters
     skip: Skip these many nodes for pagination
     limit: Limit pagination to this many items
 
 Returns:
     total: Count of all items found by this query
-    items: List of extracted items, each item has an extra attribute `_refs` that
-           contains the values of nested objects as well as the identifiers of
-           referenced items
+    items: List of extracted or rule items
+        entityType: Label of the node
+        _refs: Values of nested objects as well as referenced identifiers
+        *nodeProps: All other properties of the node
 -#>
+<% from "macros/check_reference_filters.cql" import check_reference_filters with context -%>
+
 CALL () {
 <%- block match_clause -%>
 <%- if filter_by_query_string %>
@@ -47,19 +50,7 @@ CALL () {
         AND extracted_or_rule_node.identifier = $identifier
         <%- endif %>
     <%- if filter_by_references %>
-    OPTIONAL MATCH (extracted_or_rule_node)-[reference:<<reference_fields|join("|")>>]->(ref_target:<<merged_labels|join("|")>>)
-    WITH merged_node, extracted_or_rule_node,
-        collect(CASE WHEN reference IS NOT NULL THEN type(reference) END) AS found_fields,
-        collect(CASE WHEN reference IS NOT NULL
-            THEN {field: type(reference), identifier: ref_target.identifier} END
-        ) AS existing_refs
-    WITH merged_node, extracted_or_rule_node,
-        existing_refs +
-        [f IN $reference_fields WHERE NOT f IN found_fields | {field: f, identifier: <<no_reference>>}]
-        AS ref_matches
-    WHERE ALL(rf IN $reference_filters WHERE
-        ANY(m IN ref_matches WHERE m.field = rf.field AND m.identifier IN rf.identifiers)
-    )
+    <<check_reference_filters("extracted_or_rule_node", "merged_node, extracted_or_rule_node", "merged_node, extracted_or_rule_node")|indent(4)>>
     <%- endif %>
 <%- endblock %>
     RETURN COUNT(extracted_or_rule_node) AS total
