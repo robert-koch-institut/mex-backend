@@ -1,9 +1,8 @@
 from typing import Annotated
 
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from mex.backend.types import APIKey, APIUserPassword, ReferenceFieldName
-from mex.common.models import BaseModel
 from mex.common.types import Identifier
 
 

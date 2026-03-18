@@ -199,7 +199,7 @@ class GraphConnector(BaseConnector):
         reference_filter_list = reference_filters or []
         raw_reference_filters = [
             {
-                "field": reference_filter.field,
+                "field": reference_filter.field.value,
                 "identifiers": [
                     NO_REFERENCE_SENTINEL
                     if (
@@ -213,12 +213,14 @@ class GraphConnector(BaseConnector):
             }
             for reference_filter in reference_filter_list
         ]
+        raw_reference_fields = [f.field.value for f in reference_filter_list]
+
         query_builder = QueryBuilder.get()
         query = query_builder.fetch_extracted_or_rule_items(
             filter_by_query_string=bool(query_string),
             filter_by_identifier=bool(identifier),
             filter_by_references=bool(reference_filter_list),
-            reference_fields=[f.field for f in reference_filter_list],
+            reference_fields=raw_reference_fields,
         )
         result = self.commit(
             query,
@@ -226,7 +228,7 @@ class GraphConnector(BaseConnector):
             identifier=identifier,
             labels=entity_type,
             reference_filters=raw_reference_filters,
-            reference_fields=[str(f.field) for f in reference_filter_list],
+            reference_fields=raw_reference_fields,
             skip=skip,
             limit=limit,
         )
@@ -319,10 +321,10 @@ class GraphConnector(BaseConnector):
         Returns:
             Graph result instance
         """
-        filter_list = reference_filters or []
+        reference_filter_list = reference_filters or []
         raw_reference_filters = [
             {
-                "field": reference_filter.field,
+                "field": reference_filter.field.value,
                 "identifiers": [
                     NO_REFERENCE_SENTINEL
                     if (
@@ -334,15 +336,16 @@ class GraphConnector(BaseConnector):
                     for identifier in reference_filter.identifiers
                 ],
             }
-            for reference_filter in filter_list
+            for reference_filter in reference_filter_list
         ]
+        raw_reference_fields = [f.field.value for f in reference_filter_list]
 
         query_builder = QueryBuilder.get()
         query = query_builder.fetch_merged_items(
             filter_by_query_string=bool(query_string),
             filter_by_identifier=bool(identifier),
-            filter_by_references=bool(filter_list),
-            reference_fields=[f.field for f in filter_list],
+            filter_by_references=bool(reference_filter_list),
+            reference_fields=raw_reference_fields,
         )
         result = self.commit(
             query,
@@ -350,7 +353,7 @@ class GraphConnector(BaseConnector):
             identifier=identifier,
             labels=entity_type or list(MERGED_MODEL_CLASSES_BY_NAME),
             reference_filters=raw_reference_filters,
-            reference_fields=[str(f.field) for f in filter_list],
+            reference_fields=raw_reference_fields,
             skip=skip,
             limit=limit,
         )

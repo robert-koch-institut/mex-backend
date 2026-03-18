@@ -35,7 +35,7 @@ Returns:
 
 CALL () {
 <%- block match_clause -%>
-    <<-match_or_search_nodes()>>
+    <<match_or_search_nodes()>>
     WHERE
         ANY(label IN labels(merged_node) WHERE label IN $labels)
         <%- if filter_by_identifier %>
@@ -48,14 +48,17 @@ CALL () {
     RETURN COUNT(DISTINCT merged_node) AS total
 }
 CALL () {
-    <<-self.match_clause()>>
-    ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
+    <<self.match_clause()>>
+    WITH DISTINCT merged_node
+    ORDER BY merged_node.identifier ASC
     SKIP $skip
     LIMIT $limit
+    MATCH (extracted_or_rule_node:<<any_extracted_or_rule_label>>)-[:stableTargetId]->(merged_node)
     WITH
         extracted_or_rule_node,
         merged_node,
         <<collect_references_and_nested()>> AS refs
+    ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
     WITH
         merged_node,
         collect(

@@ -52,7 +52,7 @@ def settings() -> BackendSettings:
     """Load the settings for this pytest session."""
     settings = BackendSettings.get()
     settings.backend_api_key_database = APIKeyDatabase(
-        read="read_key", write="write_key"
+        read=["read_key"], write=["write_key"]
     )
     settings.backend_user_database = APIUserDatabase(
         read={"Reader": "read_password"}, write={"Writer": "write_password"}
