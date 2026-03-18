@@ -139,7 +139,7 @@ WITH
 WHERE ALL(rf IN $reference_filters WHERE
     ANY(m IN ref_matches WHERE m.field = rf.field AND m.identifier IN rf.identifiers)
 )}
-    RETURN COUNT(extracted_or_rule_node) AS total
+    RETURN COUNT(DISTINCT extracted_or_rule_node) AS total
 }
 CALL () {OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
 YIELD node AS hit, score
@@ -197,7 +197,7 @@ RETURN items, total;""",
             r"""CALL () {OPTIONAL MATCH (extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
     WHERE
         ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
-    RETURN COUNT(extracted_or_rule_node) AS total
+    RETURN COUNT(DISTINCT extracted_or_rule_node) AS total
 }
 CALL () {OPTIONAL MATCH (extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
     WHERE
@@ -281,7 +281,7 @@ WITH
 WHERE ALL(rf IN $reference_filters WHERE
     ANY(m IN ref_matches WHERE m.field = rf.field AND m.identifier IN rf.identifiers)
 )}
-    RETURN COUNT(merged_node) AS total
+    RETURN COUNT(DISTINCT merged_node) AS total
 }
 CALL () {OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
 YIELD node AS hit, score
@@ -347,7 +347,7 @@ RETURN items, total;""",
             r"""CALL () {OPTIONAL MATCH (extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
     WHERE
         ANY(label IN labels(merged_node) WHERE label IN $labels)
-    RETURN COUNT(merged_node) AS total
+    RETURN COUNT(DISTINCT merged_node) AS total
 }
 CALL () {OPTIONAL MATCH (extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
     WHERE

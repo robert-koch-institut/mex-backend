@@ -354,7 +354,6 @@ class GraphConnector(BaseConnector):
             skip=skip,
             limit=limit,
         )
-
         for query_result in result.all():
             for item in query_result["items"]:
                 for component in item["_components"]:

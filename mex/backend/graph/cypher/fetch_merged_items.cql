@@ -45,7 +45,7 @@ CALL () {
         AND EXISTS {<<check_reference_filters()>>}
         <%- endif %>
 <%- endblock %>
-    RETURN COUNT(merged_node) AS total
+    RETURN COUNT(DISTINCT merged_node) AS total
 }
 CALL () {
     <<-self.match_clause()>>

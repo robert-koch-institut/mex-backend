@@ -42,7 +42,7 @@ CALL () {
         AND EXISTS {<<check_reference_filters()>>}
         <%- endif %>
 <%- endblock %>
-    RETURN COUNT(extracted_or_rule_node) AS total
+    RETURN COUNT(DISTINCT extracted_or_rule_node) AS total
 }
 CALL () {
     <<-self.match_clause()>>
