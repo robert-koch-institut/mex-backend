@@ -387,6 +387,50 @@ def test_search_merged_items(
     assert response.json() == expected
 
 
+@pytest.mark.parametrize(
+    ("payload", "expected"),
+    [
+        pytest.param(
+            {
+                "referenceFilters": [
+                    {"field": "hadPrimarySource", "identifiers": ["00000000000002"]}
+                ]
+            },
+            {
+                "items": [
+                    {
+                        "$type": "MergedOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": ["1.7@rki.de"],
+                        "identifier": "StandaloneRule",
+                        "name": [{"language": "de", "value": "Abteilung 1.7"}],
+                        "parentUnit": "bFQoRhcVH5DHUx",
+                        "shortName": [],
+                        "supersededBy": None,
+                        "unitOf": [],
+                        "website": [],
+                    },
+                ],
+                "total": 1,
+            },
+            id="search-standalone-rule",
+        ),
+    ],
+)
+@pytest.mark.usefixtures("loaded_dummy_data")
+@pytest.mark.integration
+def test_search_merged_items_advanced(
+    client_with_api_key_read_permission: TestClient,
+    payload: dict[str, Any],
+    expected: dict[str, Any],
+) -> None:
+    response = client_with_api_key_read_permission.post(
+        "/v0/merged-item-search", json=payload
+    )
+    assert response.status_code == status.HTTP_200_OK, response.text
+    assert response.json() == expected
+
+
 @pytest.mark.integration
 def test_search_merged_items_skip_on_validation_error(
     client_with_api_key_read_permission: TestClient,

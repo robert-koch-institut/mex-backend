@@ -21,9 +21,9 @@ from mex.common.types import Identifier, Validation
 router = APIRouter()
 
 
-@router.post("/preview-item/{stableTargetId}", tags=["editor"])
+@router.post("/preview-item/{identifier}", tags=["editor"])
 def preview_item(
-    stableTargetId: Annotated[Identifier, Path()],
+    identifier: Annotated[Identifier, Path()],
     ruleSet: Annotated[AnyRuleSetRequest, Body(discriminator="entityType")],
 ) -> AnyMergedModel:
     """Preview the merging result when the given rule would be applied."""
@@ -32,11 +32,11 @@ def preview_item(
     #           cardinality validation failed for some fields.
     #           We need to include any validation error alongside the preview though.
     extracted_items = get_extracted_items_from_graph(
-        stable_target_id=stableTargetId,
+        stable_target_id=identifier,
         entity_type=[ensure_prefix(ruleSet.stemType, "Extracted")],
     )
     return create_merged_item(
-        identifier=stableTargetId,
+        identifier=identifier,
         extracted_items=extracted_items,
         rule_set=ruleSet,
         validation=Validation.STRICT,
@@ -83,13 +83,13 @@ def search_preview_items(  # noqa: PLR0913
 
 @router.post("/preview-item-search", tags=["editor"])
 def search_preview_items_advanced(  # noqa: PLR0913
-    q: Annotated[str, Query(max_length=100)] = "",
-    identifier: Annotated[Identifier | None, Query()] = None,
-    entityType: Annotated[Sequence[MergedType], Query(max_length=len(MergedType))] = [],
+    q: Annotated[str, Body(max_length=100)] = "",
+    identifier: Annotated[Identifier | None, Body()] = None,
+    entityType: Annotated[Sequence[MergedType], Body(max_length=len(MergedType))] = [],
     referenceFilters: Annotated[Sequence[ReferenceFilter], Body(max_length=100)]
     | None = None,
-    skip: Annotated[int, Query(ge=0, le=10e10)] = 0,
-    limit: Annotated[int, Query(ge=1, le=100)] = 10,
+    skip: Annotated[int, Body(ge=0, le=10e10)] = 0,
+    limit: Annotated[int, Body(ge=1, le=100)] = 10,
 ) -> PaginatedItemsContainer[AnyPreviewModel]:
     """Search for merged item previews with advanced search filters.
 

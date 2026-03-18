@@ -62,14 +62,14 @@ def search_extracted_items(  # noqa: PLR0913
 
 @router.post("/extracted-item-search", tags=["editor"])
 def search_extracted_items_advanced(
-    q: Annotated[str, Query(max_length=100)] = "",
+    q: Annotated[str, Body(max_length=100)] = "",
     entityType: Annotated[
-        Sequence[ExtractedType], Query(max_length=len(ExtractedType))
+        Sequence[ExtractedType], Body(max_length=len(ExtractedType))
     ] = [],
     referenceFilters: Annotated[Sequence[ReferenceFilter], Body(max_length=100)]
     | None = None,
-    skip: Annotated[int, Query(ge=0, le=10e10)] = 0,
-    limit: Annotated[int, Query(ge=1, le=100)] = 10,
+    skip: Annotated[int, Body(ge=0, le=10e10)] = 0,
+    limit: Annotated[int, Body(ge=1, le=100)] = 10,
 ) -> PaginatedItemsContainer[AnyExtractedModel]:
     """Search for extracted items with advanced search filters."""
     return search_extracted_items_in_graph(

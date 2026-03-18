@@ -207,6 +207,7 @@ class GraphConnector(BaseConnector):
                         and reference_filter.field
                         == ReferenceFieldName("hadPrimarySource")
                     )
+                    or identifier is None
                     else str(identifier)
                     for identifier in reference_filter.identifiers
                 ],
@@ -332,6 +333,7 @@ class GraphConnector(BaseConnector):
                         and reference_filter.field
                         == ReferenceFieldName("hadPrimarySource")
                     )
+                    or identifier is None
                     else str(identifier)
                     for identifier in reference_filter.identifiers
                 ],

@@ -62,7 +62,7 @@ def search_merged_items(  # noqa: PLR0913
 @router.post("/merged-item-search", tags=["editor"])
 def search_merged_items_advanced(  # noqa: PLR0913
     q: Annotated[str, Body(max_length=100)] = "",
-    identifier: Annotated[Identifier, Body()] | None = None,
+    identifier: Annotated[Identifier | None, Body()] = None,
     entityType: Annotated[Sequence[MergedType], Body(max_length=len(MergedType))] = [],
     referenceFilters: Annotated[Sequence[ReferenceFilter], Body(max_length=100)]
     | None = None,
