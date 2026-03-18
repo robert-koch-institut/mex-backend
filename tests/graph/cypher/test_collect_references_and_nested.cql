@@ -2,4 +2,5 @@
 
 MATCH (extracted_or_rule_node:<<any_extracted_or_rule_label>>)
 WHERE extracted_or_rule_node.identifier = $identifier
+ORDER BY extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
 RETURN <<collect_references_and_nested()>> AS refs;

@@ -31,7 +31,7 @@ Returns:
 <% from "macros/collect_references_and_nested.cql" import collect_references_and_nested with context -%>
 
 CALL () {
-<%- block match_clause -%>
+    <% block match_clause -%>
     <<match_or_search_nodes()>>
     WHERE
         ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
@@ -41,7 +41,7 @@ CALL () {
         <%- if filter_by_references %>
         AND EXISTS {<<check_reference_filters()>>}
         <%- endif %>
-<%- endblock %>
+    <%- endblock %>
     RETURN COUNT(DISTINCT extracted_or_rule_node) AS total
 }
 CALL () {

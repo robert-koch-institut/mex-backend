@@ -109,7 +109,8 @@ YIELD currentStatus;"""
     [
         pytest.param(
             True,
-            r"""CALL () {OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
+            r"""CALL () {
+    OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
 YIELD node AS hit, score
 CALL (hit) {
     MATCH (hit:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
@@ -141,7 +142,8 @@ WHERE ALL(rf IN $reference_filters WHERE
 )}
     RETURN COUNT(DISTINCT extracted_or_rule_node) AS total
 }
-CALL () {OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
+CALL () {
+    OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
 YIELD node AS hit, score
 CALL (hit) {
     MATCH (hit:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
@@ -194,12 +196,14 @@ RETURN items, total;""",
         ),
         pytest.param(
             False,
-            r"""CALL () {OPTIONAL MATCH (extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
+            r"""CALL () {
+    OPTIONAL MATCH (extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
     WHERE
         ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
     RETURN COUNT(DISTINCT extracted_or_rule_node) AS total
 }
-CALL () {OPTIONAL MATCH (extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
+CALL () {
+    OPTIONAL MATCH (extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
     WHERE
         ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
     ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
@@ -251,7 +255,8 @@ def test_fetch_extracted_or_rule_items(
             True,
             True,
             True,
-            r"""CALL () {OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
+            r"""CALL () {
+    OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
 YIELD node AS hit, score
 CALL (hit) {
     MATCH (hit:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
@@ -283,7 +288,8 @@ WHERE ALL(rf IN $reference_filters WHERE
 )}
     RETURN COUNT(DISTINCT merged_node) AS total
 }
-CALL () {OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
+CALL () {
+    OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
 YIELD node AS hit, score
 CALL (hit) {
     MATCH (hit:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
@@ -313,9 +319,11 @@ WITH
 WHERE ALL(rf IN $reference_filters WHERE
     ANY(m IN ref_matches WHERE m.field = rf.field AND m.identifier IN rf.identifiers)
 )}
-    ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
+    WITH DISTINCT merged_node
+    ORDER BY merged_node.identifier ASC
     SKIP $skip
     LIMIT $limit
+    MATCH (extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node)
     WITH
         extracted_or_rule_node,
         merged_node,
@@ -326,6 +334,7 @@ WHERE ALL(rf IN $reference_filters WHERE
     (extracted_or_rule_node)-[r]->(referenced_nested_node:Link|Text|Location) |
     {value: properties(referenced_nested_node), position:r.position , label: type(r)}
 ] AS refs
+    ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
     WITH
         merged_node,
         collect(
@@ -344,17 +353,21 @@ RETURN items, total;""",
             False,
             False,
             False,
-            r"""CALL () {OPTIONAL MATCH (extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
+            r"""CALL () {
+    OPTIONAL MATCH (extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
     WHERE
         ANY(label IN labels(merged_node) WHERE label IN $labels)
     RETURN COUNT(DISTINCT merged_node) AS total
 }
-CALL () {OPTIONAL MATCH (extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
+CALL () {
+    OPTIONAL MATCH (extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
     WHERE
         ANY(label IN labels(merged_node) WHERE label IN $labels)
-    ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
+    WITH DISTINCT merged_node
+    ORDER BY merged_node.identifier ASC
     SKIP $skip
     LIMIT $limit
+    MATCH (extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node)
     WITH
         extracted_or_rule_node,
         merged_node,
@@ -365,6 +378,7 @@ CALL () {OPTIONAL MATCH (extracted_or_rule_node:ExtractedPerson|ExtractedVariabl
     (extracted_or_rule_node)-[r]->(referenced_nested_node:Link|Text|Location) |
     {value: properties(referenced_nested_node), position:r.position , label: type(r)}
 ] AS refs
+    ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
     WITH
         merged_node,
         collect(
