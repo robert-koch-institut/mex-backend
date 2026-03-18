@@ -27,18 +27,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
-    services:
-      neo4j:
-        image: neo4j:2026.02-community
-        env:
-          NEO4J_AUTH: neo4j/password
-        ports:
-          - 7687:7687
-      valkey:
-        image: valkey/valkey:9.0.3
-        ports:
-          - 6379:6379
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6
@@ -70,6 +58,9 @@ jobs:
         with:
           python-version: 3.14
 
+      - name: Start containers
+        run: docker compose up --wait neo4j valkey slapd
+
       - name: Install requirements
         run: make install
 
@@ -77,4 +68,10 @@ jobs:
         env:
           MEX_GRAPH_URL: neo4j://localhost:7687
           MEX_BACKEND_VALKEY_URL: valkey://localhost:6379
+          MEX_LDAP_URL: ldap://cn=admin,dc=ldapmock,dc=local:adminpass@localhost:636
+          MEX_LDAP_SEARCH_BASE: dc=ldapmock,dc=local
         run: make test
+
+      - name: Cleanup containers
+        if: always()
+        run: docker compose down neo4j valkey slapd

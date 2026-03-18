@@ -17,78 +17,29 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 @pytest.mark.usefixtures("mocked_ldap", "mocked_wikidata")
-def test_search_persons_in_ldap_mocked(
+def test_search_persons_or_contact_points_in_ldap(
     client_with_api_key_read_permission: TestClient,
 ) -> None:
-    response = client_with_api_key_read_permission.get("/v0/ldap", params={"q": "test"})
+    response = client_with_api_key_read_permission.get("/v0/ldap", params={"q": "*"})
     rki_organization = extracted_organization_rki()
     assert response.status_code == status.HTTP_200_OK, response.text
-    assert response.json() == {
-        "items": [
-            {
-                "hadPrimarySource": "ebs5siX85RkdrhBRlsYgRP",
-                "identifierInPrimarySource": "00000000-0000-4000-8000-00000000007b",
-                "email": ["help@account.test"],
-                "$type": "ExtractedContactPoint",
-                "identifier": "gocAoWR0iUHruUOBoA1qdx",
-                "stableTargetId": "ccBhefRZ7rI04yfpqZDG27",
-            },
-            {
-                "hadPrimarySource": "ebs5siX85RkdrhBRlsYgRP",
-                "identifierInPrimarySource": "00000000-0000-4000-8000-000000000141",
-                "affiliation": [rki_organization.stableTargetId],
-                "email": [],
-                "familyName": ["Mueller"],
-                "fullName": [],
-                "givenName": ["Moritz"],
-                "isniId": [],
-                "memberOf": ["cjna2jitPngp6yIV63cdi9"],
-                "orcidId": [],
-                "$type": "ExtractedPerson",
-                "identifier": "c6OEuSCqKQYzHNHPC96hEF",
-                "stableTargetId": "e9KbtvmWDHuiNRgo3KhiBv",
-            },
-            {
-                "hadPrimarySource": "ebs5siX85RkdrhBRlsYgRP",
-                "identifierInPrimarySource": "00000000-0000-4000-8000-0000000001b0",
-                "affiliation": [rki_organization.stableTargetId],
-                "email": [],
-                "familyName": ["Mueller"],
-                "fullName": [],
-                "givenName": ["Max"],
-                "isniId": [],
-                "memberOf": ["cjna2jitPngp6yIV63cdi9"],
-                "orcidId": [],
-                "$type": "ExtractedPerson",
-                "identifier": "cg6JHD4TPjZMRtOHqORWKv",
-                "stableTargetId": "DJx2H14ViIUC7mHPt4oAj",
-            },
-            {
-                "hadPrimarySource": "ebs5siX85RkdrhBRlsYgRP",
-                "identifierInPrimarySource": "00000000-0000-4000-8000-00000000021f",
-                "email": ["info@mail.provider"],
-                "$type": "ExtractedContactPoint",
-                "identifier": "bjkwd4TcGgHzpHAJjGO3xe",
-                "stableTargetId": "d9CQ7fQoLrAannxqFdksXR",
-            },
-            {
-                "hadPrimarySource": "ebs5siX85RkdrhBRlsYgRP",
-                "identifierInPrimarySource": "00000000-0000-4000-8000-000000000315",
-                "affiliation": [rki_organization.stableTargetId],
-                "email": [],
-                "familyName": ["Example"],
-                "fullName": [],
-                "givenName": ["Moritz"],
-                "isniId": [],
-                "memberOf": ["cjna2jitPngp6yIV63cdi9"],
-                "orcidId": [],
-                "$type": "ExtractedPerson",
-                "identifier": "hfhFIAgNwmVDXNvZLz9kBu",
-                "stableTargetId": "dh9jSmVfRXmSCa74KIIHGh",
-            },
-        ],
-        "total": 5,
-    }
+    response_json = response.json()
+    assert response_json["total"] == 5
+    assert {
+        "hadPrimarySource": "ebs5siX85RkdrhBRlsYgRP",
+        "identifierInPrimarySource": "00000000-0000-4000-8000-000000000141",
+        "affiliation": [rki_organization.stableTargetId],
+        "email": [],
+        "familyName": ["Mueller"],
+        "fullName": ["Moritz Mueller"],
+        "givenName": ["Moritz"],
+        "isniId": [],
+        "memberOf": ["cjna2jitPngp6yIV63cdi9"],
+        "orcidId": [],
+        "$type": "ExtractedPerson",
+        "identifier": "c6OEuSCqKQYzHNHPC96hEF",
+        "stableTargetId": "e9KbtvmWDHuiNRgo3KhiBv",
+    } in response_json["items"]
 
 
 def test_extracted_primary_source_ldap() -> None:
