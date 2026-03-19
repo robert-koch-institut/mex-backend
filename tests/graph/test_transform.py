@@ -88,7 +88,7 @@ def _make_ingest_data(**overrides: object) -> IngestData:
         "createRels": [],
     }
     defaults.update(overrides)
-    return IngestData(**defaults)  # type: ignore[arg-type]
+    return IngestData(**defaults)
 
 
 def test_validate_ingested_data_happy_path() -> None:

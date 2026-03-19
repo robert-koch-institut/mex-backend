@@ -8,6 +8,7 @@ from pytest import FixtureRequest, MonkeyPatch
 
 from mex.backend.graph import connector as connector_module
 from mex.backend.graph.connector import GraphConnector
+from mex.backend.graph.constants import NO_REFERENCE_SENTINEL
 from mex.backend.graph.exceptions import IngestionError, MatchingError
 from mex.backend.graph.models import IngestParams
 from mex.backend.graph.query import Query
@@ -318,6 +319,51 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
         ],
         "total": 1,
     }
+
+
+@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
+    mocked_graph: MockedGraph,
+) -> None:
+    mocked_graph.return_value = [{"items": [], "total": 0}]
+    graph = GraphConnector.get()
+    graph.fetch_extracted_items(
+        query_string=None,
+        identifier=None,
+        entity_type=["ExtractedOrganization"],
+        reference_filters=[
+            ReferenceFilter(
+                field=ReferenceFieldName("hadPrimarySource"),
+                identifiers=[None],
+            )
+        ],
+        skip=0,
+        limit=10,
+    )
+
+    assert mocked_graph.call_args_list[-1] == call(
+        call(
+            "fetch_extracted_or_rule_items",
+            filter_by_query_string=False,
+            filter_by_identifier=False,
+            filter_by_references=True,
+            reference_fields=["hadPrimarySource"],
+        ),
+        {
+            "query_string": None,
+            "identifier": None,
+            "labels": ["ExtractedOrganization"],
+            "limit": 10,
+            "reference_filters": [
+                {
+                    "field": "hadPrimarySource",
+                    "identifiers": [NO_REFERENCE_SENTINEL],
+                }
+            ],
+            "reference_fields": ["hadPrimarySource"],
+            "skip": 0,
+        },
+    )
 
 
 @pytest.mark.parametrize(
