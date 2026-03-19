@@ -1107,7 +1107,7 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
                         field=ReferenceFieldName("hadPrimarySource"),
                         identifiers=[
                             MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
-                            "bFQoRhcVH5DHUr",
+                            "bFQoRhcVH5DHUr",  # ps-1
                         ],
                     )
                 ],
@@ -1138,9 +1138,9 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
                         "identifier": "StandaloneRule",
                     }
                 ],
-                "total": 6,
+                "total": 6,  # returns 4 from ps-1 and 2 from mex-editor
             },
-            id="filter-for-had-primary-sources-mex-editor-and-primary-source-x-returns-4-from-x-and-2-from-editor",
+            id="filter-for-had-primary-sources-mex-editor-and-primary-source-ps-1",
         ),
         pytest.param(
             {
