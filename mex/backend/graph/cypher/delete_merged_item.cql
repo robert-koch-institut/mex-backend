@@ -6,10 +6,10 @@ referenced by other items), Neo4j will throw an error when trying to delete the 
 item. Therefore referenced merged item can not be deleted by this endpoint.
 
 Globals:
-    merged_labels: List of all merged class labels
-    rule_labels: List of all rule class labels
-    extracted_labels: List of all extracted class labels
-    nested_labels: List of labels for all nestable objects
+    any_merged_label: List of all merged class labels
+    any_rule_label: List of all rule class labels
+    any_extracted_label: List of all extracted class labels
+    any_nested_label: List of labels for all nestable objects
 
 Args:
     identifier: Identifier of the merged item to be deleted
@@ -21,12 +21,12 @@ Returns:
     deleted_nested_count: Number of nested items deleted
 -#>
 
-MATCH (merged:<<merged_labels|join("|")>> {identifier: $identifier})
-OPTIONAL MATCH (merged)<-[:stableTargetId]-(extracted:<<extracted_labels|join("|")>>)
-OPTIONAL MATCH (merged)<-[:stableTargetId]-(rule:<<rule_labels|join("|")>>)
+MATCH (merged:<<any_merged_label>> {identifier: $identifier})
+OPTIONAL MATCH (merged)<-[:stableTargetId]-(extracted:<<any_extracted_label>>)
+OPTIONAL MATCH (merged)<-[:stableTargetId]-(rule:<<any_rule_label>>)
 OPTIONAL MATCH (merged)-[outbound]->()
-OPTIONAL MATCH (extracted)-[]->(extracted_nested:<<nested_labels|join("|")>>)
-OPTIONAL MATCH (rule)-[]->(rule_nested:<<nested_labels|join("|")>>)
+OPTIONAL MATCH (extracted)-[]->(extracted_nested:<<any_nested_label>>)
+OPTIONAL MATCH (rule)-[]->(rule_nested:<<any_nested_label>>)
 
 DETACH DELETE extracted_nested, rule_nested
 DETACH DELETE extracted, rule

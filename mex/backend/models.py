@@ -1,9 +1,6 @@
-from typing import Annotated
+from pydantic import BaseModel
 
-from pydantic import BaseModel, Field
-
-from mex.backend.types import APIKey, APIUserPassword, ReferenceFieldName
-from mex.common.types import Identifier
+from mex.backend.types import APIKey, APIUserPassword
 
 
 class APIKeyDatabase(BaseModel):
@@ -18,10 +15,3 @@ class APIUserDatabase(BaseModel):
 
     read: dict[str, APIUserPassword] = {}
     write: dict[str, APIUserPassword] = {}
-
-
-class ReferenceFilter(BaseModel):
-    """Reference filter definition with a field and list of identifiers."""
-
-    field: ReferenceFieldName
-    identifiers: Annotated[list[Identifier | None], Field(min_length=1, max_length=100)]

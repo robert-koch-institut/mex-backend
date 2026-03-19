@@ -15,9 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- clean up query builder global and ingest-param names
 - use neo4j and valkey from docker compose instead of re-configuring in testing.yml
 
 ### Deprecated
+
+- deprecate `stableTargetId`, `referenceField` and `referencedIdentifier` filter params
 
 ### Removed
 
