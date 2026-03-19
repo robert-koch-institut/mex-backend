@@ -136,8 +136,8 @@ class QueryBuilder(BaseConnector):
         params = IngestParams(
             merged_label=merged_label,
             node_label=entity_type,
-            all_referenced_labels=ref_types_for_class,
-            all_nested_labels=nested_types_for_class,
+            used_referenced_labels=ref_types_for_class,
+            used_nested_labels=nested_types_for_class,
             detach_node_edges=ref_fields,
             delete_node_edges=[*text_fields, *link_fields],
             has_link_rels=bool(ref_types_for_class),

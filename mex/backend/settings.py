@@ -1,6 +1,7 @@
 from pydantic import Field, SecretStr
 
-from mex.backend.types import APIKeyDatabase, APIUserDatabase, MergedType
+from mex.backend.models import APIKeyDatabase, APIUserDatabase
+from mex.backend.types import MergedType
 from mex.common.settings import BaseSettings
 
 

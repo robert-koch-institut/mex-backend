@@ -1,6 +1,13 @@
+from unittest.mock import Mock
+
+import pytest
+
+from mex.backend.graph.models import GraphRel, IngestData
 from mex.backend.graph.transform import (
     _SearchResultReference,
     expand_references_in_search_result,
+    get_error_details_from_neo4j_error,
+    validate_ingested_data,
 )
 
 
@@ -68,3 +75,131 @@ def test_expand_references_in_search_result() -> None:
         "title": [{"language": "de", "value": "Aktivität 1"}],
         "website": [{"title": "Activity Homepage", "url": "https://activity-1"}],
     }
+
+
+def _make_ingest_data(**overrides: object) -> IngestData:
+    """Create an IngestData with sensible defaults, applying overrides."""
+    defaults: dict[str, object] = {
+        "stableTargetId": "stid-1",
+        "identifier": "id-1",
+        "entityType": "ExtractedActivity",
+        "nodeProps": {"title": "t"},
+        "linkRels": [],
+        "createRels": [],
+    }
+    defaults.update(overrides)
+    return IngestData(**defaults)
+
+
+def test_validate_ingested_data_happy_path() -> None:
+    data = _make_ingest_data()
+    assert validate_ingested_data(data, data) == []
+
+
+@pytest.mark.parametrize(
+    "field",
+    ["stableTargetId", "identifier", "entityType", "nodeProps"],
+)
+def test_validate_ingested_data_field_mismatch(field: str) -> None:
+    data_in = _make_ingest_data()
+    different_values = {
+        "stableTargetId": "stid-other",
+        "identifier": "id-other",
+        "entityType": "ExtractedOther",
+        "nodeProps": {"title": "other"},
+    }
+    data_out = _make_ingest_data(**{field: different_values[field]})
+
+    errors = validate_ingested_data(data_in, data_out)
+    assert len(errors) == 1
+    assert errors[0]["loc"] == (field,)
+    assert errors[0]["msg"] == "ingested data did not match expectation"
+
+
+def test_validate_ingested_data_unexpected_relation() -> None:
+    data_in = _make_ingest_data()
+    extra_rel = GraphRel(
+        edgeLabel="hadPrimarySource",
+        edgeProps={"position": 0},
+        nodeLabels=["MergedPrimarySource"],
+        nodeProps={"identifier": "ps-1"},
+    )
+    data_out = _make_ingest_data(linkRels=[extra_rel])
+
+    errors = validate_ingested_data(data_in, data_out)
+    assert len(errors) == 1
+    assert errors[0]["msg"] == "ingestion would have created unexpected relation"
+
+
+def test_validate_ingested_data_missing_expected_relation() -> None:
+    expected_rel = GraphRel(
+        edgeLabel="hadPrimarySource",
+        edgeProps={"position": 0},
+        nodeLabels=["MergedPrimarySource"],
+        nodeProps={"identifier": "ps-1"},
+    )
+    data_in = _make_ingest_data(linkRels=[expected_rel])
+    data_out = _make_ingest_data()
+
+    errors = validate_ingested_data(data_in, data_out)
+    assert len(errors) == 1
+    assert errors[0]["msg"] == "ingestion failed to create expected relation"
+
+
+def test_validate_ingested_data_mismatched_node_labels() -> None:
+    rel_in = GraphRel(
+        edgeLabel="title",
+        edgeProps={"position": 0},
+        nodeLabels=["Text"],
+        nodeProps={"value": "t"},
+    )
+    rel_out = GraphRel(
+        edgeLabel="title",
+        edgeProps={"position": 0},
+        nodeLabels=["Link"],
+        nodeProps={"value": "t"},
+    )
+    data_in = _make_ingest_data(createRels=[rel_in])
+    data_out = _make_ingest_data(createRels=[rel_out])
+
+    errors = validate_ingested_data(data_in, data_out)
+    assert len(errors) == 1
+    assert errors[0]["msg"] == "referenced node has unexpected labels"
+    assert errors[0]["loc"] == ("createRels", "title", 0, "nodeLabels")
+
+
+def test_validate_ingested_data_mismatched_node_props() -> None:
+    rel_in = GraphRel(
+        edgeLabel="title",
+        edgeProps={"position": 0},
+        nodeLabels=["Text"],
+        nodeProps={"value": "expected"},
+    )
+    rel_out = GraphRel(
+        edgeLabel="title",
+        edgeProps={"position": 0},
+        nodeLabels=["Text"],
+        nodeProps={"value": "actual"},
+    )
+    data_in = _make_ingest_data(createRels=[rel_in])
+    data_out = _make_ingest_data(createRels=[rel_out])
+
+    errors = validate_ingested_data(data_in, data_out)
+    assert len(errors) == 1
+    assert errors[0]["msg"] == "referenced node has unexpected properties"
+    assert errors[0]["loc"] == ("createRels", "title", 0, "nodeProps")
+
+
+def test_get_error_details_from_neo4j_error() -> None:
+    error = Mock()
+    error.code = "Neo.ClientError.Schema.ConstraintValidationFailed"
+    error.message = "Node already exists"
+    error.metadata = {"some": "info"}
+
+    result = get_error_details_from_neo4j_error("some-input", error)
+
+    assert len(result) == 1
+    assert result[0]["type"] == "Neo.ClientError.Schema.ConstraintValidationFailed"
+    assert result[0]["msg"] == "Node already exists"
+    assert result[0]["input"] == "some-input"
+    assert result[0]["ctx"] == {"meta": {"some": "info"}}

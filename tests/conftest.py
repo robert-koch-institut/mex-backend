@@ -16,9 +16,9 @@ from mex.artificial.helpers import create_artificial_items_and_rule_sets
 from mex.backend.cache.connector import CacheConnector, LocalCache, ValkeyCache
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.main import app
+from mex.backend.models import APIKeyDatabase, APIUserDatabase
 from mex.backend.settings import BackendSettings
 from mex.backend.testing.main import app as testing_app
-from mex.backend.types import APIKeyDatabase, APIUserDatabase
 from mex.common.connector import CONNECTOR_STORE
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -52,7 +52,7 @@ def settings() -> BackendSettings:
     """Load the settings for this pytest session."""
     settings = BackendSettings.get()
     settings.backend_api_key_database = APIKeyDatabase(
-        read="read_key", write="write_key"
+        read=["read_key"], write=["write_key"]
     )
     settings.backend_user_database = APIUserDatabase(
         read={"Reader": "read_password"}, write={"Writer": "write_password"}

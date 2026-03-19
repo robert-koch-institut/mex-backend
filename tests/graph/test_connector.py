@@ -198,13 +198,13 @@ def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
             params=IngestParams(
                 merged_label="MergedPrimarySource",
                 node_label="ExtractedPrimarySource",
-                all_referenced_labels=[
+                used_referenced_labels=[
                     "MergedContactPoint",
                     "MergedOrganizationalUnit",
                     "MergedPerson",
                     "MergedPrimarySource",
                 ],
-                all_nested_labels=["Link", "Text"],
+                used_nested_labels=["Link", "Text"],
                 detach_node_edges=["contact", "hadPrimarySource", "unitInCharge"],
                 delete_node_edges=[
                     "alternativeTitle",
