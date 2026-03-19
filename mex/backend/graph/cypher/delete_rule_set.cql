@@ -1,7 +1,7 @@
 <# Delete a rule-set (all 3 rules) by stableTargetId.
 
-Deletes all additive, subtractive, and preventive rules connected to the given
-stableTargetId, along with their nested items (text/link) and outbound connections.
+Deletes all additive, subtractive, preventive, and publishing rules connected to the
+given stableTargetId, along with their nested items (text/link) and outbound connections
 
 Globals:
     merged_labels: List of all merged class labels
