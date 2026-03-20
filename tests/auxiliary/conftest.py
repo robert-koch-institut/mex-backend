@@ -11,7 +11,7 @@ from pytest import MonkeyPatch
 from requests import Response
 
 from mex.common.ldap.connector import LDAPConnector
-from mex.common.ldap.models import LDAPFunctionalAccount, LDAPPerson
+from mex.common.ldap.models import AnyLDAPActor, LDAPFunctionalAccount, LDAPPerson
 from mex.common.models import PaginatedItemsContainer
 from mex.common.orcid.connector import OrcidConnector
 from mex.common.orcid.models import OrcidRecord, OrcidSearchResponse
@@ -121,7 +121,7 @@ def mocked_ldap(request: pytest.FixtureRequest, monkeypatch: MonkeyPatch) -> Non
             LDAPConnector,
             "get_persons_or_functional_accounts",
             MagicMock(
-                return_value=PaginatedItemsContainer[LDAPFunctionalAccount](
+                return_value=PaginatedItemsContainer[AnyLDAPActor](
                     items=test_person_accounts_ldap,
                     total=len(test_person_accounts_ldap),
                 ),
