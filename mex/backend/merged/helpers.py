@@ -19,7 +19,7 @@ from mex.common.models import (
     ExtractedModelTypeAdapter,
     PaginatedItemsContainer,
 )
-from mex.common.types import Identifier, Validation
+from mex.common.types import Identifier, PublishingStatus, Validation
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Sequence
@@ -79,6 +79,12 @@ def merge_search_result_item(
         rule_set = transform_raw_rules_to_rule_set_response(raw_rules)
     else:
         rule_set = None
+    if (
+        rule_set
+        and rule_set.publishing.status == PublishingStatus.INVALID_FOR_PUBLISHING
+        and validation == Validation.STRICT
+    ):
+        return None
     try:
         return create_merged_item(
             identifier=Identifier(item["identifier"]),

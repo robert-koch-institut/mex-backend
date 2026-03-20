@@ -39,7 +39,7 @@ def search_persons_or_contact_points_in_ldap(
     ldap_actors = connector.get_persons_or_functional_accounts(query=q, limit=limit)
     extracted_persons_or_contact_points = (
         transform_any_ldap_actor_to_extracted_persons_or_contact_points(
-            ldap_actors,
+            ldap_actors.items,
             extracted_organizational_units(),
             extracted_primary_source_ldap().stableTargetId,
             extracted_organization_rki(),
