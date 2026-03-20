@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 from typing import Any, cast
 from unittest.mock import MagicMock, Mock
@@ -10,7 +11,7 @@ from pytest import MonkeyPatch
 from requests import Response
 
 from mex.common.ldap.connector import LDAPConnector
-from mex.common.ldap.models import AnyLDAPActor, LDAPFunctionalAccount, LDAPPerson
+from mex.common.ldap.models import LDAPFunctionalAccount, LDAPPerson
 from mex.common.models import PaginatedItemsContainer
 from mex.common.orcid.connector import OrcidConnector
 from mex.common.orcid.models import OrcidRecord, OrcidSearchResponse
@@ -25,6 +26,7 @@ test_persons_ldap = [
         givenName=["Max"],
         objectGUID=UUID(version=4, int=432),
         department="FG99",
+        displayName="Max Mueller",
     ),
     LDAPPerson(
         employeeID="def",
@@ -32,6 +34,7 @@ test_persons_ldap = [
         givenName=["Moritz"],
         objectGUID=UUID(version=4, int=789),
         department="FG99",
+        displayName="Moritz Example",
     ),
     LDAPPerson(
         employeeID="ghi",
@@ -39,6 +42,7 @@ test_persons_ldap = [
         givenName=["Moritz"],
         objectGUID=UUID(version=4, int=321),
         department="FG99",
+        displayName="Moritz Mueller",
     ),
 ]
 
@@ -80,44 +84,58 @@ test_person_orcid = [
 ]
 
 
-@pytest.fixture
-def mocked_ldap(monkeypatch: MonkeyPatch) -> None:
-    def __init__(self: LDAPConnector) -> None:
-        self._connection = MagicMock(extend=Mock())
-        self._connection.extend.standard.paged_search = MagicMock(side_effect=[])
+@pytest.fixture(params=["ldap_patched_connector", "ldap_mock_server"])
+def mocked_ldap(request: pytest.FixtureRequest, monkeypatch: MonkeyPatch) -> None:
+    if request.param == "ldap_patched_connector":
 
-    monkeypatch.setattr(LDAPConnector, "__init__", __init__)
-    monkeypatch.setattr(
-        LDAPConnector,
-        "get_persons",
-        MagicMock(
-            return_value=PaginatedItemsContainer[LDAPPerson](
-                items=test_persons_ldap, total=len(test_persons_ldap)
-            )
-        ),
-    )
-    monkeypatch.setattr(
-        LDAPConnector,
-        "get_functional_accounts",
-        MagicMock(
-            return_value=PaginatedItemsContainer[LDAPFunctionalAccount](
-                items=test_accounts_ldap, total=len(test_accounts_ldap)
-            )
-        ),
-    )
-    persons_functional_accounts = sorted(
-        [*test_persons_ldap, *test_accounts_ldap], key=lambda x: x.objectGUID
-    )
-    monkeypatch.setattr(
-        LDAPConnector,
-        "get_persons_or_functional_accounts",
-        MagicMock(
-            return_value=PaginatedItemsContainer[AnyLDAPActor](
-                items=persons_functional_accounts,
-                total=len(persons_functional_accounts),
+        def __init__(self: LDAPConnector) -> None:
+            self._connection = MagicMock(extend=Mock())
+            self._connection.extend.standard.paged_search = MagicMock(side_effect=[])
+
+        monkeypatch.setattr(LDAPConnector, "__init__", __init__)
+
+        monkeypatch.setattr(
+            LDAPConnector,
+            "get_persons",
+            MagicMock(
+                return_value=PaginatedItemsContainer[LDAPPerson](
+                    items=test_persons_ldap, total=len(test_persons_ldap)
+                )
             ),
-        ),
-    )
+        )
+
+        monkeypatch.setattr(
+            LDAPConnector,
+            "get_functional_accounts",
+            MagicMock(
+                return_value=PaginatedItemsContainer[LDAPFunctionalAccount](
+                    items=test_accounts_ldap, total=len(test_accounts_ldap)
+                )
+            ),
+        )
+
+        test_person_accounts_ldap = sorted(
+            [*test_persons_ldap, *test_accounts_ldap], key=lambda x: x.objectGUID
+        )
+        monkeypatch.setattr(
+            LDAPConnector,
+            "get_persons_or_functional_accounts",
+            MagicMock(
+                return_value=PaginatedItemsContainer[LDAPFunctionalAccount](
+                    items=test_person_accounts_ldap,
+                    total=len(test_person_accounts_ldap),
+                ),
+            ),
+        )
+    elif request.param == "ldap_mock_server":
+        if "MEX_LDAP_SEARCH_BASE" not in os.environ:
+            pytest.skip("LDAP mock server not configured")
+        else:
+            # TODO(ND): Make this configurable in mex-common
+
+            from mex.common.ldap import connector as connector_module  # noqa: PLC0415
+
+            monkeypatch.setattr(connector_module, "AUTO_BIND_NO_TLS", "DEFAULT")
 
 
 @pytest.fixture

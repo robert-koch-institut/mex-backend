@@ -9,9 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- add slapd LDAP mock server to compose and CI
+- add `mocked_ldap` fixture variant running against slapd when a search base is set
+- add LDAP mock data in `assets/raw-data/ldap/` with persons and functional accounts
+
 ### Changes
 
 - /ldap has offset param (allow pagination)
+- use neo4j and valkey from docker compose instead of re-configuring in testing.yml
 
 ### Deprecated
 
@@ -19,7 +24,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- sort ldap endpoint results by `identifierInPrimarySource` for deterministic ordering
+
 ### Security
+
+## [1.7.2] - 2026-03-13
+
+### Removed
+
+- drop orjson response rendering because fastapi 0.130+ uses rust anyway
+
+### Fixed
+
+- disable strict content-type header check, as introduced by fastapi 0.132+
+
+## [1.7.1] - 2026-03-10
+
+### Changes
+
+- upgraded neo4j to 2026.01
+- upgraded valkey to 9.0.3
+- updated template to https://github.com/robert-koch-institut/mex-template/commit/0c16a6
 
 ## [1.7.0] - 2026-03-02
 

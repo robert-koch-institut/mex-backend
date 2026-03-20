@@ -17,7 +17,6 @@ from mex.backend.logging import UVICORN_LOGGING_CONFIG
 from mex.backend.main import lifespan
 from mex.backend.merged.main import router as merged_router
 from mex.backend.preview.main import router as preview_router
-from mex.backend.responses import BackendResponse
 from mex.backend.rules.main import router as rules_router
 from mex.backend.security import has_read_access, has_write_access
 from mex.backend.settings import BackendSettings
@@ -38,8 +37,8 @@ app = FastAPI(
         "email": "mex@rki.de",
         "url": "https://github.com/robert-koch-institut/mex-backend",
     },
+    strict_content_type=False,
     lifespan=lifespan,
-    default_response_class=BackendResponse,
     version="v0",
 )
 router = APIRouter(prefix="/v0")

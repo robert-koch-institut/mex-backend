@@ -15,13 +15,37 @@ services:
       timeout: 5s
       retries: 5
   neo4j:
-    image: neo4j:2025.12-community
+    image: neo4j:2026.02-community
     environment:
       - NEO4J_AUTH=neo4j/password
       - NEO4J_dbms_usage__report_enabled=false
-    expose:
-      - 7687
+    ports:
+      - 7687:7687
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "password", "RETURN 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
   valkey:
-    image: valkey/valkey:9.0.2
-    expose:
-      - 6379
+    image: valkey/valkey:9.0.3
+    ports:
+      - 6379:6379
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+  slapd:
+    image: thoteam/slapd-server-mock
+    platform: linux/amd64
+    ports:
+      - 636:636
+    volumes:
+      - ./assets/raw-data/ldap/:/bootstrap/
+    healthcheck:
+      test: ["CMD", "ldapsearch", "-x", "-o", "tls_reqcert=never", "-H", "ldaps://localhost:636", "-b", "dc=ldapmock,dc=local", "-D", "cn=admin,dc=ldapmock,dc=local", "-w", "adminpass"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
