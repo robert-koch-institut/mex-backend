@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changes
 
 - /ldap has offset param (allow pagination)
+- updated mex-common to 1.17
 - use neo4j and valkey from docker compose instead of re-configuring in testing.yml
 
 ### Deprecated
