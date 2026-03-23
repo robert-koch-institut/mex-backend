@@ -59,7 +59,7 @@ CALL (main, data) {
 <% if params.has_create_rels -%>
 <# delete referenced Text/Link nodes and their edges that are not in newCreateEdges -#>
 CALL (main, newCreateEdges) {
-    OPTIONAL MATCH (main)-[gcEdge:<<params.delete_node_edges|join("|")>>]->(gcNode:<<params.used_nested_labels>>)
+    OPTIONAL MATCH (main)-[gcEdge:<<params.delete_node_edges|join("|")>>]->(gcNode:<<params.used_nested_labels|join("|")>>)
         WHERE NOT gcEdge IN newCreateEdges
     DETACH DELETE gcNode
 }
@@ -77,7 +77,7 @@ CALL (main, newLinkEdges) {
 <% if params.has_create_rels -%>
 <# get all relations to nested items -#>
 CALL (main) {
-    MATCH (main)-[createEdge]->(createNode:<<params.used_nested_labels>>)
+    MATCH (main)-[createEdge]->(createNode:<<params.used_nested_labels|join("|")>>)
     ORDER BY type(createEdge), createEdge.position
     RETURN collect(
         {
