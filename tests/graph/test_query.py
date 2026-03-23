@@ -12,7 +12,7 @@ def query_builder() -> QueryBuilder:
         any_merged_label="MergedPerson|MergedVariable|MergedDistribution",
         any_nested_label="Link|Text|Location",
         any_rule_label="AdditivePerson|AdditiveVariable|AdditiveDistribution",
-        any_extracted_or_rule_labels=(
+        any_extracted_or_rule_label=(
             "ExtractedPerson|"
             "ExtractedVariable|"
             "ExtractedDistribution|"
