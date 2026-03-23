@@ -17,10 +17,8 @@ from mex.artificial.helpers import create_artificial_items_and_rule_sets
 from mex.backend.cache.connector import CacheConnector, LocalCache, ValkeyCache
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.main import app
-from mex.backend.models import APIKeyDatabase, APIUserDatabase
 from mex.backend.settings import BackendSettings
 from mex.backend.testing.main import app as testing_app
-from mex.backend.types import APIUserPassword
 from mex.common.connector import CONNECTOR_STORE
 from mex.common.logging import logger
 from mex.common.models import (
@@ -65,20 +63,25 @@ def settings(
         if is_integration_test:
             monkeypatch.setenv(
                 "MEX_IDENTITY_PROVIDER",
-                IdentityProvider.BACKEND.value,
+                IdentityProvider.GRAPH.value,
             )
             monkeypatch.setenv(
                 "MEX_BACKEND_API_KEY_DATABASE",
-                APIKeyDatabase(
-                    read=["read_key"], write=["write_key"]
-                ).model_dump_json(),
+                json.dumps(
+                    {
+                        "read": ["read_key"],
+                        "write": ["write_key"],
+                    }
+                ),
             )
             monkeypatch.setenv(
                 "MEX_BACKEND_API_USER_DATABASE",
-                APIUserDatabase(
-                    read={"Reader": APIUserPassword("read_password")},
-                    write={"Writer": APIUserPassword("write_password")},
-                ).model_dump_json(),
+                json.dumps(
+                    {
+                        "read": {"Reader": "read_password"},
+                        "write": {"Writer": "write_password"},
+                    }
+                ),
             )
         else:
             monkeypatch.setenv(
@@ -229,21 +232,6 @@ def isolate_identifier_seeds(monkeypatch: MonkeyPatch) -> None:
 
 
 @pytest.fixture(autouse=True)
-def set_identity_provider(
-    is_integration_test: bool,  # noqa: FBT001
-    monkeypatch: MonkeyPatch,
-) -> None:
-    """Ensure the identifier provider is set correctly for unit and int tests."""
-    # TODO(ND): yuck, all this needs cleaning up after MX-1596
-    settings = BackendSettings.get()
-    if is_integration_test:
-        monkeypatch.setitem(settings.model_config, "validate_assignment", False)  # noqa: FBT003
-        monkeypatch.setattr(settings, "identity_provider", IdentityProvider.GRAPH)
-    else:
-        monkeypatch.setattr(settings, "identity_provider", IdentityProvider.MEMORY)
-
-
-@pytest.fixture(autouse=True)
 def isolate_graph_database(
     is_integration_test: bool,  # noqa: FBT001
     settings: BackendSettings,
@@ -331,7 +319,7 @@ DummyDataName = Literal[
 
 @pytest.fixture
 def dummy_data(
-    set_identity_provider: None,  # noqa: ARG001
+    settings: BackendSettings,  # noqa: ARG001
 ) -> DummyData:
     """Create interlinked dummy data and return a lookup by memorable names."""
     primary_source_1 = ExtractedPrimarySource(

@@ -1,9 +1,9 @@
 <# Fetch extracted or rule items including their nested objects and referenced identifiers.
 
 Globals:
-    extracted_or_rule_labels: List of all extracted or rule labels
-    merged_labels: List of all merged class labels
-    nested_labels: List of labels for all nestable objects
+    any_extracted_or_rule_label: List of all extracted or rule labels
+    any_merged_label: List of all merged class labels
+    any_nested_label: List of labels for all nestable objects
 
 Jinja:
     filter_by_query_string: Whether the final query should accept a full text query string
@@ -33,15 +33,15 @@ CALL () {
     OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
     YIELD node AS hit, score
     CALL (hit) {
-        MATCH (hit:<<extracted_or_rule_labels|join("|")>>)-[:stableTargetId]->(merged_node:<<merged_labels|join("|")>>)
+        MATCH (hit:<<any_extracted_or_rule_label>>)-[:stableTargetId]->(merged_node:<<any_merged_label>>)
         RETURN hit as extracted_or_rule_node, merged_node
     UNION
-        MATCH (hit:<<nested_labels|join("|")>>)<-[]-(extracted_or_rule_node:<<extracted_or_rule_labels|join("|")>>)-[:stableTargetId]->(merged_node:<<merged_labels|join("|")>>)
+        MATCH (hit:<<any_nested_label>>)<-[]-(extracted_or_rule_node:<<any_extracted_or_rule_label>>)-[:stableTargetId]->(merged_node:<<any_merged_label>>)
         RETURN extracted_or_rule_node, merged_node
     }
     WITH DISTINCT extracted_or_rule_node, merged_node
 <%- else %>
-    OPTIONAL MATCH (extracted_or_rule_node:<<extracted_or_rule_labels|join("|")>>)-[:stableTargetId]->(merged_node:<<merged_labels|join("|")>>)
+    OPTIONAL MATCH (extracted_or_rule_node:<<any_extracted_or_rule_label>>)-[:stableTargetId]->(merged_node:<<any_merged_label>>)
 <%- endif %>
     WHERE
         ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
@@ -52,7 +52,7 @@ CALL () {
         AND merged_node.identifier = $stable_target_id
         <%- endif %>
     <%- if filter_by_referenced_identifiers %>
-    OPTIONAL MATCH (extracted_or_rule_node)-[:<<reference_field>>]->(referenced_node_to_filter_by:<<merged_labels|join("|")>>)
+    OPTIONAL MATCH (extracted_or_rule_node)-[:<<reference_field>>]->(referenced_node_to_filter_by:<<any_merged_label>>)
 <#- WITH is before WHERE, because WHERE is otherwise applied to the query and results in
    (referenced_node_to_filter_by IS NULL = True) for all extracted_or_rule_node
 #>
@@ -79,10 +79,10 @@ CALL () {
     WITH
         extracted_or_rule_node,
         [
-            (extracted_or_rule_node)-[r]->(referenced_merged_node:<<merged_labels|join("|")>>) |
+            (extracted_or_rule_node)-[r]->(referenced_merged_node:<<any_merged_label>>) |
             {value: referenced_merged_node.identifier, position:r.position, label: type(r)}
         ] + [
-            (extracted_or_rule_node)-[r]->(referenced_nested_node:<<nested_labels|join("|")>>) |
+            (extracted_or_rule_node)-[r]->(referenced_nested_node:<<any_nested_label>>) |
             {value: properties(referenced_nested_node), position:r.position , label: type(r)}
         ] AS refs
     WITH
