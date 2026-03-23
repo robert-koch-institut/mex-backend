@@ -60,28 +60,28 @@ def settings(
     verbosity = request.config.option.verbose
     cutoff_level = logging.INFO if verbosity >= 2 else logging.WARNING
     with caplog.at_level(cutoff_level, logger=logger.name):
+        monkeypatch.setenv(
+            "MEX_BACKEND_API_KEY_DATABASE",
+            json.dumps(
+                {
+                    "read": ["read_key"],
+                    "write": ["write_key"],
+                }
+            ),
+        )
+        monkeypatch.setenv(
+            "MEX_BACKEND_API_USER_DATABASE",
+            json.dumps(
+                {
+                    "read": {"Reader": "read_password"},
+                    "write": {"Writer": "write_password"},
+                }
+            ),
+        )
         if is_integration_test:
             monkeypatch.setenv(
                 "MEX_IDENTITY_PROVIDER",
                 IdentityProvider.GRAPH.value,
-            )
-            monkeypatch.setenv(
-                "MEX_BACKEND_API_KEY_DATABASE",
-                json.dumps(
-                    {
-                        "read": ["read_key"],
-                        "write": ["write_key"],
-                    }
-                ),
-            )
-            monkeypatch.setenv(
-                "MEX_BACKEND_API_USER_DATABASE",
-                json.dumps(
-                    {
-                        "read": {"Reader": "read_password"},
-                        "write": {"Writer": "write_password"},
-                    }
-                ),
             )
         else:
             monkeypatch.setenv(
