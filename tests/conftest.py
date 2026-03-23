@@ -1,4 +1,5 @@
 import json
+import logging
 from base64 import b64encode
 from collections import deque
 from functools import partial
@@ -9,7 +10,7 @@ from unittest.mock import MagicMock, Mock
 import pytest
 from fastapi.testclient import TestClient
 from neo4j import Driver, Session, SummaryCounters, Transaction
-from pytest import FixtureRequest, MonkeyPatch
+from pytest import FixtureRequest, LogCaptureFixture, MonkeyPatch
 from valkey import Valkey
 
 from mex.artificial.helpers import create_artificial_items_and_rule_sets
@@ -19,7 +20,9 @@ from mex.backend.main import app
 from mex.backend.models import APIKeyDatabase, APIUserDatabase
 from mex.backend.settings import BackendSettings
 from mex.backend.testing.main import app as testing_app
+from mex.backend.types import APIUserPassword
 from mex.common.connector import CONNECTOR_STORE
+from mex.common.logging import logger
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     AdditiveOrganizationalUnit,
@@ -48,16 +51,41 @@ pytest_plugins = ("mex.common.testing.plugin",)
 
 
 @pytest.fixture(autouse=True)
-def settings() -> BackendSettings:
+def settings(
+    caplog: LogCaptureFixture,
+    request: FixtureRequest,
+    monkeypatch: MonkeyPatch,
+    is_integration_test: bool,  # noqa: FBT001
+    isolate_settings: None,  # noqa: ARG001
+) -> BackendSettings:
     """Load the settings for this pytest session."""
-    settings = BackendSettings.get()
-    settings.backend_api_key_database = APIKeyDatabase(
-        read=["read_key"], write=["write_key"]
-    )
-    settings.backend_user_database = APIUserDatabase(
-        read={"Reader": "read_password"}, write={"Writer": "write_password"}
-    )
-    return settings
+    verbosity = request.config.option.verbose
+    cutoff_level = logging.INFO if verbosity >= 2 else logging.WARNING
+    with caplog.at_level(cutoff_level, logger=logger.name):
+        if is_integration_test:
+            monkeypatch.setenv(
+                "MEX_IDENTITY_PROVIDER",
+                IdentityProvider.BACKEND.value,
+            )
+            monkeypatch.setenv(
+                "MEX_BACKEND_API_KEY_DATABASE",
+                APIKeyDatabase(
+                    read=["read_key"], write=["write_key"]
+                ).model_dump_json(),
+            )
+            monkeypatch.setenv(
+                "MEX_BACKEND_API_USER_DATABASE",
+                APIUserDatabase(
+                    read={"Reader": APIUserPassword("read_password")},
+                    write={"Writer": APIUserPassword("write_password")},
+                ).model_dump_json(),
+            )
+        else:
+            monkeypatch.setenv(
+                "MEX_IDENTITY_PROVIDER",
+                IdentityProvider.MEMORY.value,
+            )
+        return BackendSettings.get()
 
 
 @pytest.fixture
