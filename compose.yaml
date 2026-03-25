@@ -15,7 +15,7 @@ services:
       timeout: 5s
       retries: 5
   neo4j:
-    image: neo4j:2026.01-community
+    image: neo4j:2026.02-community
     environment:
       - NEO4J_AUTH=neo4j/password
       - NEO4J_dbms_usage__report_enabled=false
@@ -42,7 +42,7 @@ services:
     ports:
       - 636:636
     volumes:
-      - ./assets/ldap/:/bootstrap/
+      - ./assets/raw-data/ldap/:/bootstrap/
     healthcheck:
       test: ["CMD", "ldapsearch", "-x", "-o", "tls_reqcert=never", "-H", "ldaps://localhost:636", "-b", "dc=ldapmock,dc=local", "-D", "cn=admin,dc=ldapmock,dc=local", "-w", "adminpass"]
       interval: 10s

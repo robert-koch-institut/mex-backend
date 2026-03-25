@@ -58,6 +58,14 @@ def test_local_cache_set_and_get(local_cache: LocalCache) -> None:
     assert local_cache.get("nonexistent") is None
 
 
+def test_local_cache_delete(local_cache: LocalCache) -> None:
+    local_cache.set("key1", "value1")
+
+    local_cache.delete("key1")
+
+    assert local_cache.get("key1") is None
+
+
 def test_local_cache_info(local_cache: LocalCache) -> None:
     info = local_cache.info()
     assert info == {"local_cache_size": 0}
@@ -156,6 +164,17 @@ def test_set_value(monkeypatch: MonkeyPatch, sample_model: DummyModel) -> None:
 
     serialized_value = json.loads(call_args[0][1])
     assert serialized_value == sample_model.model_dump()
+
+
+def test_delete_value(monkeypatch: MonkeyPatch) -> None:
+    mock_cache = Mock()
+
+    connector = CacheConnector()
+    monkeypatch.setattr(connector, "_cache", mock_cache)
+
+    connector.delete_value("test_key")
+
+    mock_cache.delete.assert_called_once_with("test_key")
 
 
 def test_metrics_with_integer_values(monkeypatch: MonkeyPatch) -> None:
