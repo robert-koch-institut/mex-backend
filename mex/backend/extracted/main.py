@@ -21,7 +21,7 @@ router = APIRouter()
 @router.get("/extracted-item", tags=["editor"])
 def search_extracted_items(  # noqa: PLR0913
     q: Annotated[str, Query(max_length=100)] = "",
-    stableTargetId: Annotated[Identifier, Query(deprecated=True)] | None = None,
+    stableTargetId: Annotated[Identifier | None, Query(deprecated=True)] = None,
     entityType: Annotated[
         Sequence[ExtractedType], Query(max_length=len(ExtractedType))
     ] = [],

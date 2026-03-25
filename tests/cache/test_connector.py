@@ -1,5 +1,5 @@
 import json
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import Mock
 
 import pytest
@@ -10,8 +10,10 @@ from valkey.exceptions import ConnectionError as ValkeyConnectionError
 from valkey.exceptions import ValkeyError
 
 from mex.backend.cache.connector import CacheConnector, LocalCache, ValkeyCache
-from mex.backend.settings import BackendSettings
 from mex.common.transform import MExEncoder
+
+if TYPE_CHECKING:  # pragma: no cover
+    from mex.backend.settings import BackendSettings
 
 
 class DummyModel(BaseModel):
@@ -58,6 +60,14 @@ def test_local_cache_set_and_get(local_cache: LocalCache) -> None:
     assert local_cache.get("nonexistent") is None
 
 
+def test_local_cache_delete(local_cache: LocalCache) -> None:
+    local_cache.set("key1", "value1")
+
+    local_cache.delete("key1")
+
+    assert local_cache.get("key1") is None
+
+
 def test_local_cache_info(local_cache: LocalCache) -> None:
     info = local_cache.info()
     assert info == {"local_cache_size": 0}
@@ -83,9 +93,8 @@ def test_local_cache_close(local_cache: LocalCache) -> None:
 
 
 def test_cache_connector_with_valkey_url(
-    monkeypatch: MonkeyPatch, mocked_valkey: Mock
+    monkeypatch: MonkeyPatch, mocked_valkey: Mock, settings: BackendSettings
 ) -> None:
-    settings = BackendSettings.get()
     monkeypatch.setattr(settings, "valkey_url", "valkey://localhost:6379")
     monkeypatch.setattr(Valkey, "from_url", lambda url: mocked_valkey)
 
@@ -94,8 +103,9 @@ def test_cache_connector_with_valkey_url(
     assert connector._cache._client is mocked_valkey
 
 
-def test_cache_connector_without_valkey_url(monkeypatch: MonkeyPatch) -> None:
-    settings = BackendSettings.get()
+def test_cache_connector_without_valkey_url(
+    monkeypatch: MonkeyPatch, settings: BackendSettings
+) -> None:
     monkeypatch.setattr(settings, "valkey_url", None)
 
     connector = CacheConnector()
@@ -158,6 +168,17 @@ def test_set_value(monkeypatch: MonkeyPatch, sample_model: DummyModel) -> None:
     assert serialized_value == sample_model.model_dump()
 
 
+def test_delete_value(monkeypatch: MonkeyPatch) -> None:
+    mock_cache = Mock()
+
+    connector = CacheConnector()
+    monkeypatch.setattr(connector, "_cache", mock_cache)
+
+    connector.delete_value("test_key")
+
+    mock_cache.delete.assert_called_once_with("test_key")
+
+
 def test_metrics_with_integer_values(monkeypatch: MonkeyPatch) -> None:
     mock_cache = Mock()
     mock_cache.info.return_value = {
@@ -196,8 +217,9 @@ def test_metrics_with_local_cache(monkeypatch: MonkeyPatch) -> None:
     assert metrics == {"local_cache_size": 2}
 
 
-def test_flush_in_debug_mode(monkeypatch: MonkeyPatch) -> None:
-    settings = BackendSettings.get()
+def test_flush_in_debug_mode(
+    monkeypatch: MonkeyPatch, settings: BackendSettings
+) -> None:
     monkeypatch.setattr(settings, "debug", True)
 
     mock_cache = Mock()
@@ -208,8 +230,9 @@ def test_flush_in_debug_mode(monkeypatch: MonkeyPatch) -> None:
     mock_cache.flushdb.assert_called_once()
 
 
-def test_flush_not_in_debug_mode(monkeypatch: MonkeyPatch) -> None:
-    settings = BackendSettings.get()
+def test_flush_not_in_debug_mode(
+    monkeypatch: MonkeyPatch, settings: BackendSettings
+) -> None:
     monkeypatch.setattr(settings, "debug", False)
 
     mock_cache = Mock()
@@ -229,8 +252,9 @@ def test_close(monkeypatch: MonkeyPatch) -> None:
     mock_cache.close.assert_called_once()
 
 
-def test_valkey_connection_error_fallback(monkeypatch: MonkeyPatch) -> None:
-    settings = BackendSettings.get()
+def test_valkey_connection_error_fallback(
+    monkeypatch: MonkeyPatch, settings: BackendSettings
+) -> None:
     monkeypatch.setattr(settings, "valkey_url", "valkey://localhost:6379")
 
     def mock_from_url(_url: str) -> Mock:
@@ -247,14 +271,13 @@ def test_valkey_connection_error_fallback(monkeypatch: MonkeyPatch) -> None:
 
 
 def test_valkey_operation_errors(
-    monkeypatch: MonkeyPatch, sample_model: DummyModel
+    monkeypatch: MonkeyPatch, sample_model: DummyModel, settings: BackendSettings
 ) -> None:
     mock_valkey = Mock()
     mock_valkey.get.side_effect = ValkeyError("Valkey operation failed")
     mock_valkey.set.side_effect = ValkeyError("Valkey operation failed")
 
     monkeypatch.setattr(Valkey, "from_url", lambda url: mock_valkey)
-    settings = BackendSettings.get()
     monkeypatch.setattr(settings, "valkey_url", "valkey://localhost:6379")
 
     connector = CacheConnector()
@@ -267,9 +290,8 @@ def test_valkey_operation_errors(
 
 
 def test_roundtrip_with_local_cache(
-    monkeypatch: MonkeyPatch, sample_model: DummyModel
+    monkeypatch: MonkeyPatch, sample_model: DummyModel, settings: BackendSettings
 ) -> None:
-    settings = BackendSettings.get()
     monkeypatch.setattr(settings, "valkey_url", None)
 
     connector = CacheConnector()
@@ -282,7 +304,9 @@ def test_roundtrip_with_local_cache(
     assert result == sample_model.model_dump()
 
 
-def test_complex_model_serialization(monkeypatch: MonkeyPatch) -> None:
+def test_complex_model_serialization(
+    monkeypatch: MonkeyPatch, settings: BackendSettings
+) -> None:
     class ComplexModel(BaseModel):
         name: str
         items: list[dict[str, Any]]
@@ -294,7 +318,6 @@ def test_complex_model_serialization(monkeypatch: MonkeyPatch) -> None:
         metadata={"version": "1.0", "author": "test"},
     )
 
-    settings = BackendSettings.get()
     monkeypatch.setattr(settings, "valkey_url", None)
 
     connector = CacheConnector()
@@ -304,8 +327,9 @@ def test_complex_model_serialization(monkeypatch: MonkeyPatch) -> None:
     assert result == complex_model.model_dump()
 
 
-def test_cache_isolation_after_flush(monkeypatch: MonkeyPatch) -> None:
-    settings = BackendSettings.get()
+def test_cache_isolation_after_flush(
+    monkeypatch: MonkeyPatch, settings: BackendSettings
+) -> None:
     monkeypatch.setattr(settings, "valkey_url", None)
     monkeypatch.setattr(settings, "debug", True)
 
@@ -320,8 +344,9 @@ def test_cache_isolation_after_flush(monkeypatch: MonkeyPatch) -> None:
     assert connector.get_value("test_key") is None
 
 
-def test_metrics_consistency(monkeypatch: MonkeyPatch) -> None:
-    settings = BackendSettings.get()
+def test_metrics_consistency(
+    monkeypatch: MonkeyPatch, settings: BackendSettings
+) -> None:
     monkeypatch.setattr(settings, "valkey_url", None)
 
     connector = CacheConnector()

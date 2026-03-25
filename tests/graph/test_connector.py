@@ -1,6 +1,6 @@
 import re
 from collections import deque
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import Mock, call
 
 import pytest
@@ -27,6 +27,9 @@ from mex.common.models import (
 )
 from mex.common.types import Identifier, Text, TextLanguage, Validation
 from tests.conftest import DummyData, MockedGraph, get_graph
+
+if TYPE_CHECKING:  # pragma: no cover
+    from mex.backend.settings import BackendSettings
 
 
 @pytest.fixture
@@ -2075,16 +2078,17 @@ def test_graph_match_item_preconditions_pass(loaded_dummy_data: DummyData) -> No
 )
 @pytest.mark.integration
 @pytest.mark.usefixtures("loaded_dummy_data")
-def test_graph_match_item_preconditions_failed(
+def test_graph_match_item_preconditions_failed(  # noqa: PLR0913
     monkeypatch: MonkeyPatch,
     extracted_identifier: Identifier,
     merged_identifier: Identifier,
     expected_failed: str,
+    settings: BackendSettings,
     request: FixtureRequest,
 ) -> None:
     if "entity type not allowed" in request.node.name:
         monkeypatch.setattr(
-            BackendSettings.get(),
+            settings,
             "non_matchable_types",
             [MergedType("MergedOrganizationalUnit")],
         )
@@ -2143,10 +2147,9 @@ def test_mocked_graph_delete_rule_set(mocked_graph: MockedGraph) -> None:
 
 @pytest.mark.integration
 @pytest.mark.usefixtures("loaded_dummy_data")
-def test_connector_flush(monkeypatch: MonkeyPatch) -> None:
+def test_connector_flush(monkeypatch: MonkeyPatch, settings: BackendSettings) -> None:
     assert len(get_graph()) >= 10
 
-    settings = BackendSettings.get()
     monkeypatch.setattr(settings, "debug", True)
     graph = GraphConnector.get()
     graph.flush()
@@ -2155,9 +2158,9 @@ def test_connector_flush(monkeypatch: MonkeyPatch) -> None:
 
 
 @pytest.mark.integration
-def test_connector_flush_fails(monkeypatch: MonkeyPatch) -> None:
-    settings = BackendSettings.get()
-
+def test_connector_flush_fails(
+    monkeypatch: MonkeyPatch, settings: BackendSettings
+) -> None:
     monkeypatch.setattr(settings, "debug", False)
     graph = GraphConnector.get()
 

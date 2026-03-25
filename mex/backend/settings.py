@@ -1,4 +1,6 @@
-from pydantic import Field, SecretStr
+from typing import Self
+
+from pydantic import Field, SecretStr, model_validator
 
 from mex.backend.models import APIKeyDatabase, APIUserDatabase
 from mex.backend.types import MergedType
@@ -83,3 +85,18 @@ class BackendSettings(BaseSettings):
         description="Fully qualified URL of a valkey cache server.",
         validation_alias="MEX_BACKEND_VALKEY_URL",
     )
+
+    @model_validator(mode="after")
+    def assert_valkey_is_configured_when_parallelized(self) -> Self:
+        """Validate that valkey is configured if parallelization is > 1.
+
+        Rationale: We cache identities to make sure that multiple calls for getting an
+        identifier receive the same identifier, even if the item with this identifier
+        is not yet ingested in our database. If we use multiple backend instances, they
+        must use a shared cache for storing these identities. The only shared cache is
+        valkey, hence we make sure that valkey is configured if parallelization > 1.
+        """
+        if self.backend_api_parallelization > 1 and self.valkey_url is None:
+            msg = "If parallelization is > 1, valkey url must be set."
+            raise ValueError(msg)
+        return self

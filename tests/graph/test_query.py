@@ -13,8 +13,12 @@ def query_builder() -> QueryBuilder:
         any_nested_label="Link|Text|Location",
         any_rule_label="AdditivePerson|AdditiveVariable|AdditiveDistribution",
         any_extracted_or_rule_label=(
-            "ExtractedPerson|ExtractedVariable|ExtractedDistribution"
-            "|AdditivePerson|AdditiveVariable|AdditiveDistribution"
+            "ExtractedPerson|"
+            "ExtractedVariable|"
+            "ExtractedDistribution|"
+            "AdditivePerson|"
+            "AdditiveVariable|"
+            "AdditiveDistribution"
         ),
     )
     return builder
