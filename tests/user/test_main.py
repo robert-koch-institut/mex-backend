@@ -9,7 +9,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 def test_get_current_user(
-    client_with_bearer_write_permission: "TestClient",
+    client_with_bearer_write_permission: TestClient,
 ) -> None:
     with (
         patch("mex.backend.security._get_jwks_client") as mock_get_jwks_client,
@@ -22,7 +22,9 @@ def test_get_current_user(
         patch("mex.backend.user.main.get_merged_item") as mock_get_merged_item,
     ):
         mock_jwks_client = MagicMock()
-        mock_jwks_client.get_signing_key_from_jwt.return_value = MagicMock(key="fake_key")
+        mock_jwks_client.get_signing_key_from_jwt.return_value = MagicMock(
+            key="fake_key"
+        )
         mock_get_jwks_client.return_value = mock_jwks_client
 
         mock_ldap_connector = MagicMock()
