@@ -82,7 +82,7 @@ router.include_router(orcid_router, dependencies=[Depends(has_read_access)])
 router.include_router(preview_router, dependencies=[Depends(has_read_access)])
 router.include_router(rules_router, dependencies=[Depends(has_write_access)])
 router.include_router(wikidata_router, dependencies=[Depends(has_read_access)])
-router.include_router(user_router, prefix="/user")
+router.include_router(user_router)
 
 router.include_router(system_router)
 

@@ -56,7 +56,7 @@ router.include_router(preview_router, dependencies=[Depends(has_read_access)])
 router.include_router(rules_router, dependencies=[Depends(has_write_access)])
 router.include_router(wikidata_router, dependencies=[Depends(has_read_access)])
 router.include_router(testing_ldap_router)
-router.include_router(testing_user_router, prefix="/user")
+router.include_router(testing_user_router)
 
 router.include_router(system_router)
 router.include_router(testing_system_router)

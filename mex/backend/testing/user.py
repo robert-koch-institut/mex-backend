@@ -1,5 +1,5 @@
 from collections import deque
-from typing import Annotated
+from typing import Annotated, cast
 
 from fastapi import APIRouter, Depends
 
@@ -16,8 +16,8 @@ from mex.common.types import Validation
 router = APIRouter()
 
 
-@router.get("/me")
-def get_current_user(
+@router.get("/user/me", tags=["user"])
+def get_current_testing_user(
     username: Annotated[str, Depends(has_write_access_oidc_mocked)],
 ) -> MergedPerson:
     """Return a mocked MergedPerson for the testing app."""
@@ -41,4 +41,4 @@ def get_current_user(
         limit=1,
         validation=Validation.IGNORE,
     )
-    return result.items[0]  # type: ignore[return-value]
+    return cast("MergedPerson", result.items[0])
