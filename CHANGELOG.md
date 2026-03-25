@@ -26,7 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- BREAKING: removed basic-auth, only API keys and ldap auth remain
 - BREAKING: removed `POST /v0/merged-person-from-login` (replaced by `GET /v0/user/me`)
 
 ### Fixed
