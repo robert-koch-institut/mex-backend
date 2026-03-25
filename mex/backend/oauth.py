@@ -6,7 +6,7 @@ from mex.backend.settings import BackendSettings
 router = APIRouter()
 
 
-@router.post("/oauth/token", tags=["oauth"], include_in_schema=False)
+@router.post("/oauth/token", tags=["oauth"])
 async def proxy_token(request: Request) -> Response:
     """Proxy the OAuth2 token request to the OIDC issuer.
 
