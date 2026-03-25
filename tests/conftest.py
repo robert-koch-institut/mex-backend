@@ -51,44 +51,59 @@ pytest_plugins = ("mex.common.testing.plugin",)
 @pytest.fixture(autouse=True)
 def settings(
     caplog: LogCaptureFixture,
-    request: FixtureRequest,
     monkeypatch: MonkeyPatch,
     is_integration_test: bool,  # noqa: FBT001
+    log_level: int,
     isolate_settings: None,  # noqa: ARG001
 ) -> BackendSettings:
     """Load the settings for this pytest session."""
-    verbosity = request.config.option.verbose
-    cutoff_level = logging.INFO if verbosity >= 2 else logging.WARNING
-    with caplog.at_level(cutoff_level, logger=logger.name):
+    monkeypatch.setenv(
+        "MEX_BACKEND_API_KEY_DATABASE",
+        json.dumps(
+            {
+                "read": ["read_key"],
+                "write": ["write_key"],
+            }
+        ),
+    )
+    monkeypatch.setenv(
+        "MEX_BACKEND_API_USER_DATABASE",
+        json.dumps(
+            {
+                "read": {"Reader": "read_password"},
+                "write": {"Writer": "write_password"},
+            }
+        ),
+    )
+    if is_integration_test:
         monkeypatch.setenv(
-            "MEX_BACKEND_API_KEY_DATABASE",
-            json.dumps(
-                {
-                    "read": ["read_key"],
-                    "write": ["write_key"],
-                }
-            ),
+            "MEX_IDENTITY_PROVIDER",
+            IdentityProvider.GRAPH.value,
         )
+    else:
         monkeypatch.setenv(
-            "MEX_BACKEND_API_USER_DATABASE",
-            json.dumps(
-                {
-                    "read": {"Reader": "read_password"},
-                    "write": {"Writer": "write_password"},
-                }
-            ),
+            "MEX_IDENTITY_PROVIDER",
+            IdentityProvider.MEMORY.value,
         )
-        if is_integration_test:
-            monkeypatch.setenv(
-                "MEX_IDENTITY_PROVIDER",
-                IdentityProvider.GRAPH.value,
-            )
-        else:
-            monkeypatch.setenv(
-                "MEX_IDENTITY_PROVIDER",
-                IdentityProvider.MEMORY.value,
-            )
+    with caplog.at_level(log_level, logger=logger.name):
         return BackendSettings.get()
+
+
+@pytest.fixture
+def log_level(request: FixtureRequest) -> int:
+    """Returns a sensible log-level for the current pytest verbosity.
+
+    This can be controlled by adding more "v"s to `pytest -v`.
+    """
+    levels_by_verbosity = {
+        0: logging.ERROR,  # always shown
+        1: logging.WARNING,  # -v
+        2: logging.INFO,  # -vv
+    }
+    return levels_by_verbosity.get(
+        request.config.option.verbose,
+        logging.DEBUG,  # `-vvv` and above
+    )
 
 
 @pytest.fixture
