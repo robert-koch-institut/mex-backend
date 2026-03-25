@@ -6,8 +6,7 @@ storage:
 web:
   http: 0.0.0.0:5556
   allowedOrigins:
-    - http://localhost:4200
-    - http://localhost:8030
+    - http://localhost:8080
 
 oauth2:
   skipApprovalScreen: true
@@ -42,11 +41,7 @@ connectors:
 
 staticClients:
   - id: mex-backend
-    secret: mex-backend-secret
     name: MEx Backend
-    # CI/testing only — production must use a confidential client with a proper secret.
     public: true
     redirectURIs:
-      - http://localhost:4200/callback
-      - http://localhost:8030/callback
       - http://localhost:8080/callback
