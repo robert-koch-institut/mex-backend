@@ -6,12 +6,13 @@ storage:
 web:
   http: 0.0.0.0:5556
   allowedOrigins:
-    - http://localhost:4200   # Angular dev server
+    - http://localhost:4200
+    - http://localhost:8030
 
 oauth2:
   skipApprovalScreen: true
   responseTypes:
-    - code                    # Authorization Code + PKCE (Angular / browser clients)
+    - code
 
 connectors:
   - type: ldap
@@ -43,7 +44,8 @@ staticClients:
   - id: mex-backend
     secret: mex-backend-secret
     name: MEx Backend
-    public: true          # enables PKCE (no client_secret needed in browser) + ROPC for tests
+    public: true
     redirectURIs:
+      - http://localhost:4200/callback
+      - http://localhost:8030/callback
       - http://localhost:8080/callback
-      - http://localhost:4200/callback    # Angular dev server
