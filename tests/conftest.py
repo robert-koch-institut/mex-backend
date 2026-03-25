@@ -85,6 +85,9 @@ def settings(
             "MEX_IDENTITY_PROVIDER",
             IdentityProvider.MEMORY.value,
         )
+    # temporarily reduce log-level because the settings emit their configuration
+    # on every instantiation or value-change. this would flood the test logs with noise,
+    # especially because this fixture is used by *every* test.
     with caplog.at_level(log_level, logger=logger.name):
         return BackendSettings.get()
 
