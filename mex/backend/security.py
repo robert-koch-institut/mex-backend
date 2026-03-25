@@ -1,200 +1,213 @@
-from secrets import compare_digest
-from typing import Annotated
-from urllib.parse import urlsplit
+import threading
+from typing import Annotated, Any
 
-from fastapi import Depends, Header, HTTPException
-from fastapi.security import APIKeyHeader, HTTPBasic, HTTPBasicCredentials
-from ldap3 import AUTO_BIND_NO_TLS, Connection, Server
-from ldap3.core.exceptions import LDAPBindError
-from ldap3.utils.dn import escape_rdn
+import jwt
+from fastapi import Depends, HTTPException
+from fastapi.security import APIKeyHeader, OAuth2AuthorizationCodeBearer
+from jwt import PyJWKClient
+from pydantic import ValidationError
 from starlette import status
 
 from mex.backend.settings import BackendSettings
-from mex.backend.types import APIKey
+from mex.backend.types import APIKey, OIDCClaims
 from mex.common.logging import logger
 
 X_API_KEY = APIKeyHeader(name="X-API-Key", auto_error=False)
-HTTP_BASIC_AUTH = HTTPBasic(auto_error=False)
+OAUTH2_SCHEME = OAuth2AuthorizationCodeBearer(
+    authorizationUrl="http://localhost:5556/dex/auth",
+    tokenUrl="/v0/oauth/token",
+    scopes={
+        "openid": "OpenID Connect",
+        "profile": "User profile",
+        "groups": "Group membership",
+        "email": "Email address",
+    },
+    auto_error=False,
+)
+
+_jwks_client: PyJWKClient | None = None
+_jwks_lock = threading.Lock()
 
 
-def check_header_for_authorization_method(
-    api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
-    credentials: Annotated[
-        HTTPBasicCredentials | None, Depends(HTTP_BASIC_AUTH)
-    ] = None,
-    user_agent: Annotated[str, Header(include_in_schema=False)] = "n/a",
-) -> None:
-    """Check authorization header for API key or credentials.
-
-    Raises:
-        HTTPException if both API key and credentials or none of them are in header.
-
-    Args:
-        api_key: the API key
-        credentials: username and password
-        user_agent: user-agent (in case of a web browser starts with "Mozilla/")
-    """
-    if not api_key and not credentials:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing authentication header X-API-Key or credentials.",
-            headers=(
-                {"WWW-Authenticate": "Basic"}
-                if user_agent.startswith("Mozilla/")
-                else None
-            ),
-        )
-    if api_key and credentials:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authenticate with X-API-Key or credentials, not both.",
-            headers=(
-                {"WWW-Authenticate": "Basic"}
-                if user_agent.startswith("Mozilla/")
-                else None
-            ),
-        )
+def _get_jwks_client() -> PyJWKClient:
+    global _jwks_client  # noqa: PLW0603
+    issuer = str(BackendSettings.get().oidc_issuer_url)
+    jwks_uri = f"{issuer}/keys"
+    with _jwks_lock:
+        if _jwks_client is None or _jwks_client.uri != jwks_uri:
+            _jwks_client = PyJWKClient(jwks_uri, lifespan=3600)
+    return _jwks_client
 
 
-def has_write_access(
-    api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
-    credentials: Annotated[
-        HTTPBasicCredentials | None, Depends(HTTP_BASIC_AUTH)
-    ] = None,
-    user_agent: Annotated[str, Header(include_in_schema=False)] = "n/a",
-) -> None:
-    """Verify if provided api key or credentials have write access.
+def _verify_jwt(token: str) -> OIDCClaims:
+    """Verify JWT signature and return parsed claims.
 
     Raises:
-        HTTPException if no header or provided APIKey/credentials have no write access.
+        HTTPException 503 if JWKS fetch or key lookup fails (Dex down).
+        HTTPException 401 if token is expired, has invalid signature, wrong aud/iss,
+            or claims do not match the expected schema.
 
     Args:
-        api_key: the API key
-        credentials: username and password
-        user_agent: user-agent (in case of a web browser starts with "Mozilla/")
+        token: raw JWT string
 
-    Settings:
-        check credentials in backend_user_database or backend_api_key_database
+    Returns:
+        Parsed and validated OIDC claims
     """
-    check_header_for_authorization_method(api_key, credentials, user_agent)
-
+    try:
+        client = _get_jwks_client()
+        signing_key = client.get_signing_key_from_jwt(token)
+    except Exception as e:
+        logger.error("JWKS fetch/key lookup failed: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Authentication service unavailable.",
+        ) from e
     settings = BackendSettings.get()
-    can_write = False
-    if api_key:
-        api_key_database = settings.backend_api_key_database
-        can_write = APIKey(api_key) in api_key_database.write
-    elif credentials:
-        api_write_user_db = settings.backend_user_database.write
-        user, pw = credentials.username, credentials.password.encode("utf-8")
-        if api_write_user := api_write_user_db.get(user):
-            can_write = compare_digest(
-                pw, api_write_user.get_secret_value().encode("utf-8")
-            )
-    if not can_write:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Unauthorized {'API Key' if api_key else 'credentials'}.",
-            headers=(
-                {"WWW-Authenticate": "Basic"}
-                if user_agent.startswith("Mozilla/")
-                else None
-            ),
+    try:
+        decoded: dict[str, Any] = jwt.decode(
+            token,
+            signing_key,
+            algorithms=settings.oidc_algorithms,
+            audience=settings.oidc_client_id,
+            issuer=str(settings.oidc_issuer_url),
         )
+    except jwt.ExpiredSignatureError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token expired.",
+        ) from e
+    except jwt.InvalidTokenError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token.",
+        ) from e
+    else:
+        try:
+            return OIDCClaims.model_validate(decoded)
+        except ValidationError as e:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token claims.",
+            ) from e
 
 
 def has_read_access(
     api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
-    credentials: Annotated[
-        HTTPBasicCredentials | None,
-        Depends(HTTP_BASIC_AUTH),
-    ] = None,
-    user_agent: Annotated[str, Header(include_in_schema=False)] = "n/a",
+    token: Annotated[str | None, Depends(OAUTH2_SCHEME)] = None,
 ) -> None:
-    """Verify if api key or credentials have read access or write access.
+    """Accept X-API-Key OR Bearer JWT with read or write group membership.
+
+    Write group members implicitly have read access.
 
     Raises:
-        HTTPException if no header or provided APIKey/credentials have no read access.
+        HTTPException if credentials are missing or insufficient.
 
     Args:
         api_key: the API key
-        credentials: username and password
-        user_agent: user-agent (in case of a web browser starts with "Mozilla/")
-
-    Settings:
-        check credentials in backend_user_database or backend_api_key_database
+        token: Bearer JWT string
     """
-    check_header_for_authorization_method(api_key, credentials, user_agent)
-
-    try:
-        has_write_access(api_key, credentials)  # read access implied by write access
-        can_write = True
-    except HTTPException:
-        can_write = False
-
-    settings = BackendSettings.get()
-    can_read = False
-    if api_key:
-        api_key_database = settings.backend_api_key_database
-        can_read = APIKey(api_key) in api_key_database.read
-    elif credentials:
-        api_read_user_db = settings.backend_user_database.read
-        user, pw = credentials.username, credentials.password.encode("utf-8")
-        if api_read_user := api_read_user_db.get(user):
-            can_read = compare_digest(
-                pw, api_read_user.get_secret_value().encode("utf-8")
-            )
-    can_read = can_read or can_write
-    if not can_read:
+    if api_key and token:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Unauthorized {'API Key' if api_key else 'credentials'}.",
-            headers=(
-                {"WWW-Authenticate": "Basic"}
-                if user_agent.startswith("Mozilla/")
-                else None
-            ),
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Provide either X-API-Key or Bearer token, not both.",
         )
+    if api_key:
+        api_key_db = BackendSettings.get().backend_api_key_database
+        if (
+            APIKey(api_key) not in api_key_db.read
+            and APIKey(api_key) not in api_key_db.write
+        ):
+            raise HTTPException(status_code=403, detail="Unauthorized API Key.")
+    elif token:
+        claims = _verify_jwt(token)
+        logger.info(
+            "OIDC claims: groups=%s, preferred_username=%s",
+            claims.groups,
+            claims.preferred_username,
+        )
+        oidc_db = BackendSettings.get().oidc_groups_database
+        if not set(claims.groups) & (set(oidc_db.read) | set(oidc_db.write)):
+            raise HTTPException(
+                status_code=403, detail="No read-level group membership."
+            )
+    else:
+        raise HTTPException(status_code=401, detail="Missing credentials.")
 
 
-def has_write_access_ldap(
-    credentials: Annotated[HTTPBasicCredentials, Depends(HTTP_BASIC_AUTH)],
-) -> str:
-    """Verify if provided credentials have LDAP write access.
+def has_write_access(
+    api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
+    token: Annotated[str | None, Depends(OAUTH2_SCHEME)] = None,
+) -> None:
+    """Accept X-API-Key OR Bearer JWT with write group membership.
 
     Raises:
-        HTTPException if credentials have no LDAP write access or are missing.
+        HTTPException if credentials are missing or insufficient.
 
     Args:
-        credentials: username and password
+        api_key: the API key
+        token: Bearer JWT string
     """
-    check_header_for_authorization_method(credentials=credentials)
-    settings = BackendSettings.get()
-    url = urlsplit(settings.ldap_url.get_secret_value())
-    host = str(url.hostname)
-    port = int(url.port) if url.port else None
-    server = Server(host, port, use_ssl=True)
-    username = escape_rdn(credentials.username.split("@")[0])
-    try:
-        with Connection(
-            server,
-            user=f"{username}@rki.local",
-            password=credentials.password,
-            auto_bind=AUTO_BIND_NO_TLS,
-            read_only=True,
-        ) as connection:
-            availability = connection.server.check_availability()
-            if availability is True:
-                return credentials.username
-            logger.error(f"LDAP server not available: {availability}")
+    if api_key and token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Provide either X-API-Key or Bearer token, not both.",
+        )
+    if api_key:
+        if APIKey(api_key) not in BackendSettings.get().backend_api_key_database.write:
+            raise HTTPException(status_code=403, detail="Unauthorized API Key.")
+    elif token:
+        claims = _verify_jwt(token)
+        db = BackendSettings.get().oidc_groups_database
+        if not set(claims.groups) & set(db.write):
             raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="LDAP server not available.",
-                headers=({"WWW-Authenticate": "Basic"}),
+                status_code=403, detail="No write-level group membership."
             )
-    except LDAPBindError as e:
-        logger.error(f"LDAP bind error: {e}")
+    else:
+        raise HTTPException(status_code=401, detail="Missing credentials.")
+
+
+def has_oidc_access(
+    api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
+    token: Annotated[str | None, Depends(OAUTH2_SCHEME)] = None,
+) -> str:
+    """Accept Bearer JWT with read or write group membership; return preferred_username.
+
+    Used by the user endpoint to identify the authenticated user.
+
+    Raises:
+        HTTPException if both credentials are provided, Bearer token is missing,
+            invalid, or lacks group membership.
+
+    Args:
+        api_key: the API key (rejected — OIDC-only endpoint)
+        token: Bearer JWT string
+
+    Returns:
+        The preferred_username claim from the JWT
+    """
+    if api_key and token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Provide either X-API-Key or Bearer token, not both.",
+        )
+    if api_key:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This endpoint requires a Bearer token, not an API key.",
+        )
+    if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="LDAP bind failed.",
-            headers=({"WWW-Authenticate": "Basic"}),
-        ) from e
+            detail="Missing Bearer token.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    claims = _verify_jwt(token)
+    oidc_db = BackendSettings.get().oidc_groups_database
+    if not set(claims.groups) & (set(oidc_db.read) | set(oidc_db.write)):
+        raise HTTPException(status_code=403, detail="No read-level group membership.")
+    if not claims.preferred_username:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token missing 'preferred_username' claim.",
+        )
+    return claims.preferred_username

@@ -1,23 +1,67 @@
 from typing import Annotated
 
-from fastapi import Depends
-from fastapi.security import APIKeyHeader, HTTPBasic, HTTPBasicCredentials
-from ldap3.utils.dn import escape_rdn
+from fastapi import Depends, HTTPException
+from fastapi.security import APIKeyHeader, OAuth2AuthorizationCodeBearer
+from starlette import status
 
-from mex.backend.security import check_header_for_authorization_method
+from mex.backend.settings import BackendSettings
+from mex.backend.types import APIKey
 
 X_API_KEY = APIKeyHeader(name="X-API-Key", auto_error=False)
-HTTP_BASIC_AUTH = HTTPBasic(auto_error=False)
+OAUTH2_SCHEME = OAuth2AuthorizationCodeBearer(
+    authorizationUrl="http://localhost:5556/dex/auth",
+    tokenUrl="/v0/oauth/token",
+    auto_error=False,
+)
 
 
-def has_write_access_ldap_mocked(
-    credentials: Annotated[HTTPBasicCredentials, Depends(HTTP_BASIC_AUTH)],
+def has_read_access_mocked(
+    api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
+    token: Annotated[str | None, Depends(OAUTH2_SCHEME)] = None,
+) -> None:
+    """Mocked read access — validates API keys normally, accepts any Bearer token."""
+    if api_key:
+        db = BackendSettings.get().backend_api_key_database
+        if APIKey(api_key) not in db.read and APIKey(api_key) not in db.write:
+            raise HTTPException(status_code=403, detail="Unauthorized API Key.")
+    elif token:
+        pass  # Accept any Bearer token without JWT verification
+    else:
+        raise HTTPException(status_code=401, detail="Missing credentials.")
+
+
+def has_write_access_mocked(
+    api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
+    token: Annotated[str | None, Depends(OAUTH2_SCHEME)] = None,
+) -> None:
+    """Mocked write access — validates API keys normally, accepts any Bearer token."""
+    if api_key:
+        if APIKey(api_key) not in BackendSettings.get().backend_api_key_database.write:
+            raise HTTPException(status_code=403, detail="Unauthorized API Key.")
+    elif token:
+        pass  # Accept any Bearer token without JWT verification
+    else:
+        raise HTTPException(status_code=401, detail="Missing credentials.")
+
+
+def has_oidc_access_mocked(
+    token: Annotated[str | None, Depends(OAUTH2_SCHEME)] = None,
 ) -> str:
-    """Mocked function to verify if provided credentials have LDAP write access.
+    """Mocked OIDC access — returns Bearer token value as username.
+
+    Raises:
+        HTTPException 401 if no Bearer header is present.
 
     Args:
-        credentials: username and password
-    """
-    check_header_for_authorization_method(credentials=credentials)
+        token: Bearer token string
 
-    return escape_rdn(credentials.username.split("@")[0])
+    Returns:
+        The raw Bearer token string, used as the username in tests
+    """
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing Bearer token.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return token

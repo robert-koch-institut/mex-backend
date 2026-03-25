@@ -1,6 +1,6 @@
 from enum import Enum, EnumMeta, _EnumDict
 
-from pydantic import SecretStr
+from pydantic import ConfigDict, SecretStr, field_validator
 
 from mex.common.fields import ALL_REFERENCE_FIELD_NAMES
 from mex.common.models import (
@@ -26,10 +26,6 @@ class APIKey(SecretStr):
         return f"APIKey('{self}')"
 
 
-class APIUserPassword(SecretStr):
-    """An API password used for basic authentication along with a username."""
-
-
 class APIKeyDatabase(BaseModel):
     """A lookup from access level to list of allowed APIKeys."""
 
@@ -37,11 +33,26 @@ class APIKeyDatabase(BaseModel):
     write: list[APIKey] = []
 
 
-class APIUserDatabase(BaseModel):
-    """Database containing usernames and passwords for backend API."""
+class OIDCGroupsDatabase(BaseModel):
+    """A lookup from access level to list of allowed OIDC group names."""
 
-    read: dict[str, APIUserPassword] = {}
-    write: dict[str, APIUserPassword] = {}
+    read: list[str] = []
+    write: list[str] = []
+
+
+class OIDCClaims(BaseModel):
+    """Parsed and validated claims from an OIDC JWT."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    preferred_username: str = ""
+    groups: list[str] = []
+
+    @field_validator("groups", mode="before")
+    @classmethod
+    def coerce_null_groups(cls, v: object) -> object:
+        """Treat a null groups claim the same as an absent one."""
+        return [] if v is None else v
 
 
 class DynamicStrEnum(EnumMeta):

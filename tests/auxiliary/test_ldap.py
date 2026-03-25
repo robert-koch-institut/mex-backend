@@ -27,7 +27,7 @@ def test_search_persons_or_contact_points_in_ldap(
         "hadPrimarySource": "ebs5siX85RkdrhBRlsYgRP",
         "identifierInPrimarySource": "00000000-0000-4000-8000-000000000141",
         "affiliation": [rki_organization.stableTargetId],
-        "email": [],
+        "email": ["MoritzM@ldapmock.local"],
         "familyName": ["Mueller"],
         "fullName": ["Moritz Mueller"],
         "givenName": ["Moritz"],

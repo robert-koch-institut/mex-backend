@@ -49,3 +49,19 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+  dex:
+    image: ghcr.io/dexidp/dex:v2.42.0
+    command: ["dex", "serve", "/etc/dex/config.yaml"]
+    ports:
+      - 5556:5556
+    volumes:
+      - ./assets/raw-data/dex/config.yaml:/etc/dex/config.yaml:ro
+    depends_on:
+      slapd:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:5556/dex/.well-known/openid-configuration"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s

@@ -13,15 +13,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add `mocked_ldap` fixture variant running against slapd when a search base is set
 - add LDAP mock data in `assets/raw-data/ldap/` with persons and functional accounts
 - add delete methods to caches and CacheConnector
+- add Dex OIDC provider to compose and CI, federating to slapd via LDAP
+- add `GET /v0/user/me` returning the `MergedPerson` for the authenticated OIDC user
 
 ### Changes
 
+- `has_read_access` and `has_write_access` now accept Bearer JWT (OIDC) in addition to API key
 - use neo4j and valkey from docker compose instead of re-configuring in testing.yml
-- seetings validation: validate that valkey url is set if parallelized
+- settings validation: validate that valkey url is set if parallelized
 
 ### Deprecated
 
 ### Removed
+
+- BREAKING: removed `POST /v0/merged-person-from-login` (replaced by `GET /v0/user/me`)
 
 ### Fixed
 
