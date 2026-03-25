@@ -20,4 +20,4 @@ def test_has_write_access_ldap_mocked_missing_credentials() -> None:
     with pytest.raises(HTTPException) as error:
         has_write_access_ldap_mocked(credentials=None)  # type: ignore [arg-type]
     assert error.value.status_code == 401
-    assert "Missing authentication header" in error.value.detail
+    assert "Missing credentials." in error.value.detail

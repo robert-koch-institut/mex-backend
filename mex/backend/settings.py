@@ -2,7 +2,7 @@ from typing import Self
 
 from pydantic import Field, SecretStr, model_validator
 
-from mex.backend.types import APIKeyDatabase, APIUserDatabase, MergedType
+from mex.backend.types import APIKeyDatabase, MergedType
 from mex.common.settings import BaseSettings
 
 
@@ -73,11 +73,6 @@ class BackendSettings(BaseSettings):
         APIKeyDatabase(),
         description="Database of API keys.",
         validation_alias="MEX_BACKEND_API_KEY_DATABASE",
-    )
-    backend_user_database: APIUserDatabase = Field(
-        APIUserDatabase(),
-        description="Database of users.",
-        validation_alias="MEX_BACKEND_API_USER_DATABASE",
     )
     valkey_url: SecretStr | None = Field(
         None,
