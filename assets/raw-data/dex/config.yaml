@@ -44,6 +44,7 @@ staticClients:
   - id: mex-backend
     secret: mex-backend-secret
     name: MEx Backend
+    # CI/testing only — production must use a confidential client with a proper secret.
     public: true
     redirectURIs:
       - http://localhost:4200/callback

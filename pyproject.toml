@@ -33,6 +33,7 @@ dev = [
     "requests>=2",
     "ruff>=0.15",
     "sphinx>=9",
+    "types-ldap3",
     "types-pytz",
     "types-requests",
 ]

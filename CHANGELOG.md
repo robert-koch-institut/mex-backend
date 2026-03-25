@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `has_read_access` and `has_write_access` now accept Bearer JWT (OIDC) in addition to API key
 - use neo4j and valkey from docker compose instead of re-configuring in testing.yml
-- seetings validation: validate that valkey url is set if parallelized
+- settings validation: validate that valkey url is set if parallelized
 
 ### Deprecated
 

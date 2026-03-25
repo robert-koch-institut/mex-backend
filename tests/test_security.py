@@ -8,9 +8,9 @@ from pytest import MonkeyPatch
 
 import mex.backend.security as security_module
 from mex.backend.security import (
+    has_oidc_access,
     has_read_access,
     has_write_access,
-    has_write_access_oidc,
 )
 
 
@@ -38,28 +38,43 @@ def _mock_jwks_and_decode(claims: dict) -> tuple:  # type: ignore[type-arg]
     )
 
 
-# --- has_write_access_oidc ---
+# --- has_oidc_access ---
 
 
-def test_has_write_access_oidc_no_bearer() -> None:
+def test_has_oidc_access_no_bearer() -> None:
     with pytest.raises(HTTPException) as exc:
-        has_write_access_oidc(credentials=None)
+        has_oidc_access(credentials=None)
     assert exc.value.status_code == 401
     assert "Missing Bearer token" in exc.value.detail
 
 
-def test_has_write_access_oidc_jwks_unavailable() -> None:
+def test_has_oidc_access_api_key_rejected() -> None:
+    with pytest.raises(HTTPException) as exc:
+        has_oidc_access(api_key="write_key")
+    assert exc.value.status_code == 400
+    assert "requires a Bearer token" in exc.value.detail
+
+
+def test_has_oidc_access_both_credentials_rejected() -> None:
+    with pytest.raises(HTTPException) as exc:
+        has_oidc_access(api_key="write_key", credentials=_write_bearer)
+    assert exc.value.status_code == 400
+
+
+def test_has_oidc_access_jwks_unavailable() -> None:
     mock_client = MagicMock()
-    mock_client.get_signing_key_from_jwt.side_effect = Exception("connection refused")
+    mock_client.get_signing_key_from_jwt.side_effect = jwt_lib.PyJWKClientError(
+        "connection refused"
+    )
     with (
         patch("mex.backend.security._get_jwks_client", return_value=mock_client),
         pytest.raises(HTTPException) as exc,
     ):
-        has_write_access_oidc(credentials=_write_bearer)
+        has_oidc_access(credentials=_write_bearer)
     assert exc.value.status_code == 503
 
 
-def test_has_write_access_oidc_expired_token() -> None:
+def test_has_oidc_access_expired_token() -> None:
     mock_client = MagicMock()
     mock_client.get_signing_key_from_jwt.return_value = MagicMock(key="fake_key")
     with (
@@ -70,12 +85,12 @@ def test_has_write_access_oidc_expired_token() -> None:
         ),
         pytest.raises(HTTPException) as exc,
     ):
-        has_write_access_oidc(credentials=_write_bearer)
+        has_oidc_access(credentials=_write_bearer)
     assert exc.value.status_code == 401
     assert "expired" in exc.value.detail.lower()
 
 
-def test_has_write_access_oidc_invalid_token() -> None:
+def test_has_oidc_access_invalid_token() -> None:
     mock_client = MagicMock()
     mock_client.get_signing_key_from_jwt.return_value = MagicMock(key="fake_key")
     with (
@@ -86,34 +101,43 @@ def test_has_write_access_oidc_invalid_token() -> None:
         ),
         pytest.raises(HTTPException) as exc,
     ):
-        has_write_access_oidc(credentials=_write_bearer)
+        has_oidc_access(credentials=_write_bearer)
     assert exc.value.status_code == 401
 
 
-def test_has_write_access_oidc_no_write_group() -> None:
+def test_has_oidc_access_no_group() -> None:
+    mock_jwks, mock_decode = _mock_jwks_and_decode(
+        {"preferred_username": "nobody", "groups": []}
+    )
+    with mock_jwks, mock_decode, pytest.raises(HTTPException) as exc:
+        has_oidc_access(credentials=_write_bearer)
+    assert exc.value.status_code == 403
+    assert "read-level" in exc.value.detail
+
+
+def test_has_oidc_access_missing_preferred_username() -> None:
+    mock_jwks, mock_decode = _mock_jwks_and_decode({"groups": ["Abteilung_21"]})
+    with mock_jwks, mock_decode, pytest.raises(HTTPException) as exc:
+        has_oidc_access(credentials=_write_bearer)
+    assert exc.value.status_code == 401
+    assert "Invalid token claims" in exc.value.detail
+
+
+def test_has_oidc_access_read_group_success() -> None:
     mock_jwks, mock_decode = _mock_jwks_and_decode(
         {"preferred_username": "MoritzE", "groups": ["Fachgebiet_99"]}
     )
-    with mock_jwks, mock_decode, pytest.raises(HTTPException) as exc:
-        has_write_access_oidc(credentials=_write_bearer)
-    assert exc.value.status_code == 403
-    assert "write-level" in exc.value.detail
+    with mock_jwks, mock_decode:
+        result = has_oidc_access(credentials=_read_bearer)
+    assert result == "MoritzE"
 
 
-def test_has_write_access_oidc_missing_preferred_username() -> None:
-    mock_jwks, mock_decode = _mock_jwks_and_decode({"groups": ["Abteilung_21"]})
-    with mock_jwks, mock_decode, pytest.raises(HTTPException) as exc:
-        has_write_access_oidc(credentials=_write_bearer)
-    assert exc.value.status_code == 401
-    assert "preferred_username" in exc.value.detail
-
-
-def test_has_write_access_oidc_success() -> None:
+def test_has_oidc_access_write_group_success() -> None:
     mock_jwks, mock_decode = _mock_jwks_and_decode(
         {"preferred_username": "MaxM", "groups": ["Abteilung_21"]}
     )
     with mock_jwks, mock_decode:
-        result = has_write_access_oidc(credentials=_write_bearer)
+        result = has_oidc_access(credentials=_write_bearer)
     assert result == "MaxM"
 
 

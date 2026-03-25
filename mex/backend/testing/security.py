@@ -44,12 +44,12 @@ def has_write_access_mocked(
         raise HTTPException(status_code=401, detail="Missing credentials.")
 
 
-def has_write_access_oidc_mocked(
+def has_oidc_access_mocked(
     credentials: Annotated[
         HTTPAuthorizationCredentials | None, Depends(HTTP_BEARER)
     ] = None,
 ) -> str:
-    """Mocked OIDC write access — returns Bearer token value as username.
+    """Mocked OIDC access — returns Bearer token value as username.
 
     Raises:
         HTTPException 401 if no Bearer header is present.

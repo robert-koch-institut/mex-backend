@@ -5,7 +5,7 @@ from starlette import status
 
 from mex.backend.auxiliary.primary_source import extracted_primary_source_ldap
 from mex.backend.merged.main import get_merged_item
-from mex.backend.security import has_write_access_oidc
+from mex.backend.security import has_oidc_access
 from mex.common.identity import get_provider
 from mex.common.ldap.connector import LDAPConnector
 from mex.common.models import MergedPerson
@@ -16,7 +16,7 @@ router = APIRouter()
 
 @router.get("/user/me", tags=["user"])
 def get_current_user(
-    username: Annotated[str, Depends(has_write_access_oidc)],
+    username: Annotated[str, Depends(has_oidc_access)],
 ) -> MergedPerson:
     """Return the MergedPerson for the currently authenticated OIDC user."""
     ldap_connector = LDAPConnector.get()

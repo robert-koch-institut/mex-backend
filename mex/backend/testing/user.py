@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.merged.helpers import search_merged_items_in_graph
-from mex.backend.testing.security import has_write_access_oidc_mocked
+from mex.backend.testing.security import has_oidc_access_mocked
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     ExtractedPerson,
@@ -18,7 +18,7 @@ router = APIRouter()
 
 @router.get("/user/me", tags=["user"])
 def get_current_testing_user(
-    username: Annotated[str, Depends(has_write_access_oidc_mocked)],
+    username: Annotated[str, Depends(has_oidc_access_mocked)],
 ) -> MergedPerson:
     """Return a mocked MergedPerson for the testing app."""
     person = ExtractedPerson(

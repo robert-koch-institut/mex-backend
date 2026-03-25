@@ -46,8 +46,8 @@ def _verify_jwt(credentials: HTTPAuthorizationCredentials) -> OIDCClaims:
     try:
         client = _get_jwks_client()
         signing_key = client.get_signing_key_from_jwt(credentials.credentials)
-    except (jwt.PyJWKClientError, jwt.PyJWKError) as e:
-        logger.error(f"JWKS fetch/key lookup failed: {e}")
+    except Exception as e:
+        logger.error("JWKS fetch/key lookup failed: %s", e)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Authentication service unavailable.",
@@ -155,24 +155,37 @@ def has_write_access(
         raise HTTPException(status_code=401, detail="Missing credentials.")
 
 
-def has_write_access_oidc(
+def has_oidc_access(
+    api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
     credentials: Annotated[
         HTTPAuthorizationCredentials | None, Depends(HTTP_BEARER)
     ] = None,
 ) -> str:
-    """Accept Bearer JWT with write group membership; return preferred_username.
+    """Accept Bearer JWT with read or write group membership; return preferred_username.
 
-    Used by the login endpoint to identify the authenticated user.
+    Used by the user endpoint to identify the authenticated user.
 
     Raises:
-        HTTPException if Bearer token is missing, invalid, or lacks write access.
+        HTTPException if both credentials are provided, Bearer token is missing,
+            invalid, or lacks group membership.
 
     Args:
+        api_key: the API key (rejected — OIDC-only endpoint)
         credentials: HTTP Bearer credentials containing a JWT
 
     Returns:
         The preferred_username claim from the JWT
     """
+    if api_key and credentials:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Provide either X-API-Key or Bearer token, not both.",
+        )
+    if api_key:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This endpoint requires a Bearer token, not an API key.",
+        )
     if not credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -180,9 +193,9 @@ def has_write_access_oidc(
             headers={"WWW-Authenticate": "Bearer"},
         )
     claims = _verify_jwt(credentials)
-    db = BackendSettings.get().oidc_groups_database
-    if not set(claims.groups) & set(db.write):
-        raise HTTPException(status_code=403, detail="No write-level group membership.")
+    oidc_db = BackendSettings.get().oidc_groups_database
+    if not set(claims.groups) & (set(oidc_db.read) | set(oidc_db.write)):
+        raise HTTPException(status_code=403, detail="No read-level group membership.")
     if not claims.preferred_username:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
