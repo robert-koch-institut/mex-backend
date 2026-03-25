@@ -26,6 +26,10 @@ class ValkeyCache:
         """Store a key-value pair in the cache."""
         self._client.set(key, value)
 
+    def delete(self, key: str) -> None:
+        """Delete key-value pair in the cache."""
+        self._client.delete(key)
+
     def info(self) -> dict[str, int | str]:
         """Return Valkey server information and statistics."""
         return cast("dict[str, int | str]", self._client.info())
@@ -45,6 +49,10 @@ class LocalCache(dict[str, str]):
     def set(self, key: str, value: str) -> None:
         """Store the given value for the given key."""
         self[key] = value
+
+    def delete(self, key: str) -> None:
+        """Delete key-value pair in the cache."""
+        del self[key]
 
     def info(self) -> dict[str, int | str]:
         """Return basic info for local cache usage."""
@@ -94,6 +102,14 @@ class CacheConnector(BaseConnector):
             model: Pydantic model to serialize and cache
         """
         self._cache.set(key, json.dumps(model, cls=MExEncoder))
+
+    def delete_value(self, key: str) -> None:
+        """Delete value with the given key from the cache.
+
+        Args:
+            key: Cache key to delete the value for
+        """
+        self._cache.delete(key)
 
     def metrics(self) -> dict[str, int]:
         """Generate metrics about the underlying cache."""
