@@ -14,7 +14,7 @@ from mex.common.types import MergedPrimarySourceIdentifier
 router = APIRouter()
 
 
-@router.get("/user/me", tags=["user"])
+@router.get("/user/me", tags=["oauth"])
 def get_current_user(
     username: Annotated[str, Depends(has_oidc_access)],
 ) -> MergedPerson:

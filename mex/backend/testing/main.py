@@ -16,6 +16,7 @@ from mex.backend.ingest.main import router as ingest_router
 from mex.backend.logging import UVICORN_LOGGING_CONFIG
 from mex.backend.main import lifespan
 from mex.backend.merged.main import router as merged_router
+from mex.backend.oauth import router as oauth_router
 from mex.backend.preview.main import router as preview_router
 from mex.backend.rules.main import router as rules_router
 from mex.backend.security import has_read_access, has_write_access
@@ -42,6 +43,11 @@ app = FastAPI(
     strict_content_type=False,
     lifespan=lifespan,
     version="v0",
+    swagger_ui_init_oauth={
+        "clientId": "mex-backend",
+        "scopes": "openid profile groups email",
+        "usePkceWithAuthorizationCodeGrant": True,
+    },
 )
 app.dependency_overrides[has_read_access] = has_read_access_mocked
 app.dependency_overrides[has_write_access] = has_write_access_mocked
@@ -50,13 +56,14 @@ router = APIRouter(prefix="/v0")
 router.include_router(extracted_router, dependencies=[Depends(has_read_access)])
 router.include_router(identity_router, dependencies=[Depends(has_write_access)])
 router.include_router(ingest_router, dependencies=[Depends(has_write_access)])
+router.include_router(testing_ldap_router)
 router.include_router(merged_router, dependencies=[Depends(has_read_access)])
 router.include_router(orcid_router, dependencies=[Depends(has_read_access)])
 router.include_router(preview_router, dependencies=[Depends(has_read_access)])
 router.include_router(rules_router, dependencies=[Depends(has_write_access)])
 router.include_router(wikidata_router, dependencies=[Depends(has_read_access)])
-router.include_router(testing_ldap_router)
 router.include_router(testing_user_router)
+router.include_router(oauth_router)
 
 router.include_router(system_router)
 router.include_router(testing_system_router)

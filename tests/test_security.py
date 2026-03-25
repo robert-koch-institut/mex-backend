@@ -3,7 +3,6 @@ from unittest.mock import MagicMock, patch
 import jwt as jwt_lib
 import pytest
 from fastapi import HTTPException
-from fastapi.security import HTTPAuthorizationCredentials
 from pytest import MonkeyPatch
 
 import mex.backend.security as security_module
@@ -13,19 +12,13 @@ from mex.backend.security import (
     has_write_access,
 )
 
+FAKE_TOKEN = "fake.jwt.token"  # noqa: S105
+
 
 @pytest.fixture(autouse=True)
 def reset_jwks_client(monkeypatch: MonkeyPatch) -> None:
     """Reset the cached JWKS client between tests."""
     monkeypatch.setattr(security_module, "_jwks_client", None)
-
-
-_write_bearer = HTTPAuthorizationCredentials(
-    scheme="Bearer", credentials="fake.jwt.token"
-)
-_read_bearer = HTTPAuthorizationCredentials(
-    scheme="Bearer", credentials="fake.jwt.token"
-)
 
 
 def _mock_jwks_and_decode(claims: dict) -> tuple:  # type: ignore[type-arg]
@@ -43,7 +36,7 @@ def _mock_jwks_and_decode(claims: dict) -> tuple:  # type: ignore[type-arg]
 
 def test_has_oidc_access_no_bearer() -> None:
     with pytest.raises(HTTPException) as exc:
-        has_oidc_access(credentials=None)
+        has_oidc_access(token=None)
     assert exc.value.status_code == 401
     assert "Missing Bearer token" in exc.value.detail
 
@@ -57,7 +50,7 @@ def test_has_oidc_access_api_key_rejected() -> None:
 
 def test_has_oidc_access_both_credentials_rejected() -> None:
     with pytest.raises(HTTPException) as exc:
-        has_oidc_access(api_key="write_key", credentials=_write_bearer)
+        has_oidc_access(api_key="write_key", token=FAKE_TOKEN)
     assert exc.value.status_code == 400
 
 
@@ -70,7 +63,7 @@ def test_has_oidc_access_jwks_unavailable() -> None:
         patch("mex.backend.security._get_jwks_client", return_value=mock_client),
         pytest.raises(HTTPException) as exc,
     ):
-        has_oidc_access(credentials=_write_bearer)
+        has_oidc_access(token=FAKE_TOKEN)
     assert exc.value.status_code == 503
 
 
@@ -85,7 +78,7 @@ def test_has_oidc_access_expired_token() -> None:
         ),
         pytest.raises(HTTPException) as exc,
     ):
-        has_oidc_access(credentials=_write_bearer)
+        has_oidc_access(token=FAKE_TOKEN)
     assert exc.value.status_code == 401
     assert "expired" in exc.value.detail.lower()
 
@@ -101,7 +94,7 @@ def test_has_oidc_access_invalid_token() -> None:
         ),
         pytest.raises(HTTPException) as exc,
     ):
-        has_oidc_access(credentials=_write_bearer)
+        has_oidc_access(token=FAKE_TOKEN)
     assert exc.value.status_code == 401
 
 
@@ -110,7 +103,7 @@ def test_has_oidc_access_no_group() -> None:
         {"preferred_username": "nobody", "groups": []}
     )
     with mock_jwks, mock_decode, pytest.raises(HTTPException) as exc:
-        has_oidc_access(credentials=_write_bearer)
+        has_oidc_access(token=FAKE_TOKEN)
     assert exc.value.status_code == 403
     assert "read-level" in exc.value.detail
 
@@ -118,7 +111,7 @@ def test_has_oidc_access_no_group() -> None:
 def test_has_oidc_access_missing_preferred_username() -> None:
     mock_jwks, mock_decode = _mock_jwks_and_decode({"groups": ["Abteilung_21"]})
     with mock_jwks, mock_decode, pytest.raises(HTTPException) as exc:
-        has_oidc_access(credentials=_write_bearer)
+        has_oidc_access(token=FAKE_TOKEN)
     assert exc.value.status_code == 401
     assert "Invalid token claims" in exc.value.detail
 
@@ -128,7 +121,7 @@ def test_has_oidc_access_read_group_success() -> None:
         {"preferred_username": "MoritzE", "groups": ["Fachgebiet_99"]}
     )
     with mock_jwks, mock_decode:
-        result = has_oidc_access(credentials=_read_bearer)
+        result = has_oidc_access(token=FAKE_TOKEN)
     assert result == "MoritzE"
 
 
@@ -137,7 +130,7 @@ def test_has_oidc_access_write_group_success() -> None:
         {"preferred_username": "MaxM", "groups": ["Abteilung_21"]}
     )
     with mock_jwks, mock_decode:
-        result = has_oidc_access(credentials=_write_bearer)
+        result = has_oidc_access(token=FAKE_TOKEN)
     assert result == "MaxM"
 
 
@@ -161,7 +154,7 @@ def test_has_write_access_with_api_key() -> None:
 
 def test_has_write_access_both_credentials_rejected() -> None:
     with pytest.raises(HTTPException) as exc:
-        has_write_access("write_key", _write_bearer)
+        has_write_access("write_key", FAKE_TOKEN)
     assert exc.value.status_code == 400
 
 
@@ -170,7 +163,7 @@ def test_has_write_access_bearer_write_group() -> None:
         {"preferred_username": "MaxM", "groups": ["Abteilung_21"]}
     )
     with mock_jwks, mock_decode:
-        has_write_access(api_key=None, credentials=_write_bearer)
+        has_write_access(api_key=None, token=FAKE_TOKEN)
 
 
 def test_has_write_access_bearer_no_write_group() -> None:
@@ -178,7 +171,7 @@ def test_has_write_access_bearer_no_write_group() -> None:
         {"preferred_username": "MoritzE", "groups": ["Fachgebiet_99"]}
     )
     with mock_jwks, mock_decode, pytest.raises(HTTPException) as exc:
-        has_write_access(api_key=None, credentials=_read_bearer)
+        has_write_access(api_key=None, token=FAKE_TOKEN)
     assert exc.value.status_code == 403
 
 
@@ -187,7 +180,7 @@ def test_has_write_access_bearer_no_write_group() -> None:
 
 def test_has_read_access_both_credentials_rejected() -> None:
     with pytest.raises(HTTPException) as exc:
-        has_read_access("read_key", _read_bearer)
+        has_read_access("read_key", FAKE_TOKEN)
     assert exc.value.status_code == 400
 
 
@@ -209,7 +202,7 @@ def test_has_read_access_bearer_read_group() -> None:
         {"preferred_username": "MoritzE", "groups": ["Fachgebiet_99"]}
     )
     with mock_jwks, mock_decode:
-        has_read_access(api_key=None, credentials=_read_bearer)
+        has_read_access(api_key=None, token=FAKE_TOKEN)
 
 
 def test_has_read_access_bearer_write_group_implies_read() -> None:
@@ -217,7 +210,7 @@ def test_has_read_access_bearer_write_group_implies_read() -> None:
         {"preferred_username": "MaxM", "groups": ["Abteilung_21"]}
     )
     with mock_jwks, mock_decode:
-        has_read_access(api_key=None, credentials=_read_bearer)
+        has_read_access(api_key=None, token=FAKE_TOKEN)
 
 
 def test_has_read_access_bearer_no_group() -> None:
@@ -225,5 +218,5 @@ def test_has_read_access_bearer_no_group() -> None:
         {"preferred_username": "nobody", "groups": []}
     )
     with mock_jwks, mock_decode, pytest.raises(HTTPException) as exc:
-        has_read_access(api_key=None, credentials=_read_bearer)
+        has_read_access(api_key=None, token=FAKE_TOKEN)
     assert exc.value.status_code == 403

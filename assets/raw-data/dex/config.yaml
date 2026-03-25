@@ -44,4 +44,4 @@ staticClients:
     name: MEx Backend
     public: true
     redirectURIs:
-      - http://localhost:8080/callback
+      - http://localhost:8080/docs/oauth2-redirect

@@ -9,7 +9,7 @@ from mex.common.types import AnyExtractedIdentifier, AnyMergedIdentifier
 router = APIRouter()
 
 
-@router.post("/match", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/match", status_code=status.HTTP_204_NO_CONTENT, tags=["editor"])
 def match_item(
     extractedIdentifier: Annotated[AnyExtractedIdentifier, Body()],
     mergedIdentifier: Annotated[AnyMergedIdentifier, Body()],
