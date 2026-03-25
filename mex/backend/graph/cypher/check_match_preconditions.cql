@@ -6,9 +6,9 @@ Passed preconditions return `true`, failed preconditions `false` and unverifiabl
 preconditions return `null`.
 
 Globals:
-    any_extracted_label: List of all extracted class labels
-    any_merged_label: List of all merged class labels
-    any_rule_label: List of all rule class labels
+    any_extracted_label: pipe delimited sequence of all extracted class labels?
+    any_merged_label: pipe delimited sequence of all merged class labels
+    any_rule_label: pipe delimited sequence of all rule class labels
 
 Args:
     extracted_identifier: Identifier of the extracted item to be matched
