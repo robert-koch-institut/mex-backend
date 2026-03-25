@@ -55,7 +55,7 @@ services:
     ports:
       - 5556:5556
     volumes:
-      - ./assets/dex/config.yaml:/etc/dex/config.yaml:ro
+      - ./assets/raw-data/dex/config.yaml:/etc/dex/config.yaml:ro
     depends_on:
       slapd:
         condition: service_healthy

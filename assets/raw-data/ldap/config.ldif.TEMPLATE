@@ -12,6 +12,13 @@ olcTLSCertificateKeyFile: /etc/ldap/ssl/ldap.key
 replace: olcTLSVerifyClient
 olcTLSVerifyClient: never
 
+# Store passwords in cleartext so Dex can bind as the user to verify credentials.
+# WARNING: CI/testing only — production Dex uses MS AD (no slapd, no CLEARTEXT).
+dn: cn=config
+changetype: modify
+add: olcPasswordHash
+olcPasswordHash: {CLEARTEXT}
+
 # Configure loging
 dn: cn=config
 changetype: modify

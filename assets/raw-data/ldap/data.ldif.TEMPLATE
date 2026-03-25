@@ -14,6 +14,8 @@ sAMAccountName: MaxM
 objectGUID: 00000000-0000-4000-8000-0000000001b0
 department: FG99
 uid: MaxM
+userPassword: MaxM_password
+mail: MaxM@ldapmock.local
 
 # Moritz Example
 dn: uid=MoritzE,dc=ldapmock,dc=local
@@ -31,6 +33,8 @@ sAMAccountName: MoritzE
 objectGUID: 00000000-0000-4000-8000-000000000315
 department: FG99
 uid: MoritzE
+userPassword: MoritzE_password
+mail: MoritzE@ldapmock.local
 
 # Moritz Mueller
 dn: uid=MoritzM,dc=ldapmock,dc=local
@@ -48,6 +52,8 @@ sAMAccountName: MoritzM
 objectGUID: 00000000-0000-4000-8000-000000000141
 department: FG99
 uid: MoritzM
+userPassword: MoritzM_password
+mail: MoritzM@ldapmock.local
 
 # Funktion Organizational Unit
 dn: OU=Funktion,dc=ldapmock,dc=local
@@ -82,3 +88,18 @@ ou: Funktion
 objectGUID: 00000000-0000-4000-8000-00000000021f
 mail: info@mail.provider
 uid: infoMail
+
+# Abteilung_21 group (write access: MaxM, MoritzM)
+dn: cn=Abteilung_21,dc=ldapmock,dc=local
+objectClass: top
+objectClass: groupOfNames
+cn: Abteilung_21
+member: uid=MaxM,dc=ldapmock,dc=local
+member: uid=MoritzM,dc=ldapmock,dc=local
+
+# Fachgebiet_99 group (read access: MoritzE)
+dn: cn=Fachgebiet_99,dc=ldapmock,dc=local
+objectClass: top
+objectClass: groupOfNames
+cn: Fachgebiet_99
+member: uid=MoritzE,dc=ldapmock,dc=local
