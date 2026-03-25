@@ -114,7 +114,7 @@ def mocked_ldap(request: pytest.FixtureRequest, monkeypatch: MonkeyPatch) -> Non
             ),
         )
 
-        test_person_accounts_ldap = sorted(
+        test_persons_and_functional_accounts_ldap = sorted(
             [*test_persons_ldap, *test_accounts_ldap], key=lambda x: x.objectGUID
         )
         monkeypatch.setattr(
@@ -122,8 +122,8 @@ def mocked_ldap(request: pytest.FixtureRequest, monkeypatch: MonkeyPatch) -> Non
             "get_persons_or_functional_accounts",
             MagicMock(
                 return_value=PaginatedItemsContainer[AnyLDAPActor](
-                    items=test_person_accounts_ldap,
-                    total=len(test_person_accounts_ldap),
+                    items=test_persons_and_functional_accounts_ldap,
+                    total=len(test_persons_and_functional_accounts_ldap),
                 ),
             ),
         )
