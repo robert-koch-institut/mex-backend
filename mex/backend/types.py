@@ -6,7 +6,6 @@ from mex.common.fields import ALL_REFERENCE_FIELD_NAMES
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
-    BaseModel,
 )
 from mex.common.transform import dromedary_to_snake
 
@@ -28,20 +27,6 @@ class APIKey(SecretStr):
 
 class APIUserPassword(SecretStr):
     """An API password used for basic authentication along with a username."""
-
-
-class APIKeyDatabase(BaseModel):
-    """A lookup from access level to list of allowed APIKeys."""
-
-    read: list[APIKey] = []
-    write: list[APIKey] = []
-
-
-class APIUserDatabase(BaseModel):
-    """Database containing usernames and passwords for backend API."""
-
-    read: dict[str, APIUserPassword] = {}
-    write: dict[str, APIUserPassword] = {}
 
 
 class DynamicStrEnum(EnumMeta):

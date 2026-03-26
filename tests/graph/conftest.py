@@ -89,11 +89,11 @@ def organizational_unit_rule_set_ingest_call_expectation() -> list[object]:
                 params=IngestParams(
                     merged_label="MergedOrganizationalUnit",
                     node_label="AdditiveOrganizationalUnit",
-                    all_referenced_labels=[
+                    used_referenced_labels=[
                         "MergedOrganization",
                         "MergedOrganizationalUnit",
                     ],
-                    all_nested_labels=["Link", "Text"],
+                    used_nested_labels=["Link", "Text"],
                     detach_node_edges=["parentUnit", "supersededBy", "unitOf"],
                     delete_node_edges=[
                         "alternativeName",
@@ -144,11 +144,11 @@ def organizational_unit_rule_set_ingest_call_expectation() -> list[object]:
                 params=IngestParams(
                     merged_label="MergedOrganizationalUnit",
                     node_label="SubtractiveOrganizationalUnit",
-                    all_referenced_labels=[
+                    used_referenced_labels=[
                         "MergedOrganization",
                         "MergedOrganizationalUnit",
                     ],
-                    all_nested_labels=["Link", "Text"],
+                    used_nested_labels=["Link", "Text"],
                     detach_node_edges=["parentUnit", "unitOf"],
                     delete_node_edges=[
                         "alternativeName",
@@ -182,8 +182,8 @@ def organizational_unit_rule_set_ingest_call_expectation() -> list[object]:
                 params=IngestParams(
                     merged_label="MergedOrganizationalUnit",
                     node_label="PreventiveOrganizationalUnit",
-                    all_referenced_labels=["MergedPrimarySource"],
-                    all_nested_labels=[],
+                    used_referenced_labels=["MergedPrimarySource"],
+                    used_nested_labels=[],
                     detach_node_edges=[
                         "alternativeName",
                         "email",
