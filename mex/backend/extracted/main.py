@@ -21,14 +21,31 @@ router = APIRouter()
 @router.get("/extracted-item", tags=["editor"])
 def search_extracted_items(  # noqa: PLR0913
     q: Annotated[str, Query(max_length=100)] = "",
-    stableTargetId: Annotated[Identifier | None, Query(deprecated=True)] = None,
+    stableTargetId: Annotated[
+        Identifier | None,
+        Query(
+            deprecated=True,
+            description="Use /extracted-item/_search with reference filters instead.",
+        ),
+    ] = None,
     entityType: Annotated[
         Sequence[ExtractedType], Query(max_length=len(ExtractedType))
     ] = [],
     referencedIdentifier: Annotated[
-        Sequence[Identifier] | None, Query(max_length=100, deprecated=True)
+        Sequence[Identifier] | None,
+        Query(
+            max_length=100,
+            deprecated=True,
+            description="Use /extracted-item/_search with reference filters instead.",
+        ),
     ] = None,
-    referenceField: Annotated[ReferenceFieldName | None, Query(deprecated=True)] = None,
+    referenceField: Annotated[
+        ReferenceFieldName | None,
+        Query(
+            deprecated=True,
+            description="Use /extracted-item/_search with reference filters instead.",
+        ),
+    ] = None,
     skip: Annotated[int, Query(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> PaginatedItemsContainer[AnyExtractedModel]:
@@ -60,7 +77,7 @@ def search_extracted_items(  # noqa: PLR0913
     )
 
 
-@router.post("/extracted-item-search", tags=["editor"])
+@router.post("/extracted-item/_search", tags=["editor"])
 def search_extracted_items_advanced(
     q: Annotated[str, Body(max_length=100)] = "",
     entityType: Annotated[

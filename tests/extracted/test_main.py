@@ -396,7 +396,7 @@ def test_search_extracted_items_advanced(
     expected: dict[str, Any],
 ) -> None:
     response = client_with_api_key_read_permission.post(
-        "/v0/extracted-item-search", json=payload
+        "/v0/extracted-item/_search", json=payload
     )
     assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == expected
@@ -421,7 +421,7 @@ def test_search_extracted_items_invalid_reference_field_filter(
     client_with_api_key_read_permission: TestClient,
 ) -> None:
     response = client_with_api_key_read_permission.post(
-        "/v0/extracted-item-search",
+        "/v0/extracted-item/_search",
         json={"referenceFilters": [{"field": "description", "identifiers": ["x"]}]},
     )
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT, response.text

@@ -28,12 +28,23 @@ router = APIRouter()
 @router.get("/merged-item", tags=["editor"])
 def search_merged_items(  # noqa: PLR0913
     q: Annotated[str, Query(max_length=100)] = "",
-    identifier: Annotated[Identifier, Query()] | None = None,
+    identifier: Annotated[Identifier | None, Query()] = None,
     entityType: Annotated[Sequence[MergedType], Query(max_length=len(MergedType))] = [],
     referencedIdentifier: Annotated[
-        Sequence[Identifier] | None, Query(max_length=100, deprecated=True)
+        Sequence[Identifier] | None,
+        Query(
+            max_length=100,
+            deprecated=True,
+            description="Use /merged-item/_search with reference filters instead.",
+        ),
     ] = None,
-    referenceField: Annotated[ReferenceFieldName | None, Query(deprecated=True)] = None,
+    referenceField: Annotated[
+        ReferenceFieldName | None,
+        Query(
+            deprecated=True,
+            description="Use /merged-item/_search with reference filters instead.",
+        ),
+    ] = None,
     skip: Annotated[int, Query(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> PaginatedItemsContainer[AnyMergedModel]:
@@ -59,7 +70,7 @@ def search_merged_items(  # noqa: PLR0913
     )
 
 
-@router.post("/merged-item-search", tags=["editor"])
+@router.post("/merged-item/_search", tags=["editor"])
 def search_merged_items_advanced(  # noqa: PLR0913
     q: Annotated[str, Body(max_length=100)] = "",
     identifier: Annotated[Identifier | None, Body()] = None,

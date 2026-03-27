@@ -49,9 +49,19 @@ def search_preview_items(  # noqa: PLR0913
     identifier: Annotated[Identifier | None, Query()] = None,
     entityType: Annotated[Sequence[MergedType], Query(max_length=len(MergedType))] = [],
     referencedIdentifier: Annotated[
-        Sequence[Identifier] | None, Query(deprecated=True)
+        Sequence[Identifier] | None,
+        Query(
+            deprecated=True,
+            description="Use /preview-item/_search with reference filters instead.",
+        ),
     ] = None,
-    referenceField: Annotated[ReferenceFieldName | None, Query(deprecated=True)] = None,
+    referenceField: Annotated[
+        ReferenceFieldName | None,
+        Query(
+            deprecated=True,
+            description="Use /preview-item/_search with reference filters instead.",
+        ),
+    ] = None,
     skip: Annotated[int, Query(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> PaginatedItemsContainer[AnyPreviewModel]:
@@ -81,7 +91,7 @@ def search_preview_items(  # noqa: PLR0913
     )
 
 
-@router.post("/preview-item-search", tags=["editor"])
+@router.post("/preview-item/_search", tags=["editor"])
 def search_preview_items_advanced(  # noqa: PLR0913
     q: Annotated[str, Body(max_length=100)] = "",
     identifier: Annotated[Identifier | None, Body()] = None,
@@ -93,7 +103,7 @@ def search_preview_items_advanced(  # noqa: PLR0913
 ) -> PaginatedItemsContainer[AnyPreviewModel]:
     """Search for merged item previews with advanced search filters.
 
-    In contrast to `/merged-item-search`, this endpoint does not validate the existence
+    In contrast to `/merged-item/_search`, this endpoint does not validate the existence
     of required fields or the length restrictions of lists.
     """
     return search_merged_items_in_graph(
