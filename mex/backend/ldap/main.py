@@ -34,4 +34,4 @@ def get_merged_person_from_login(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User is not authorized for MEx.",
         )
-    return cast("MergedPerson", get_merged_item(identities[0].stableTargetId))
+    return cast("MergedPerson", get_merged_item(identities[0].stableTargetId), None)

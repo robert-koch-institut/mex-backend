@@ -68,6 +68,11 @@ from mex.common.types import TextLanguage
                     "stableTargetId": ["00000000000007"],
                     "containedBy": ["00000000000042"],
                 },
+                {
+                    "entityType": "PublishingVariableGroup",
+                    "stableTargetId": ["00000000000007"],
+                    "status": None,
+                },
             ],
             {
                 "additive": {
@@ -85,6 +90,10 @@ from mex.common.types import TextLanguage
                     "entityType": "PreventiveVariableGroup",
                     "containedBy": ["00000000000042"],
                     "label": [],
+                },
+                "publishing": {
+                    "entityType": "PublishingVariableGroup",
+                    "status": None,
                 },
                 "entityType": "VariableGroupRuleSetResponse",
                 "stableTargetId": "00000000000007",

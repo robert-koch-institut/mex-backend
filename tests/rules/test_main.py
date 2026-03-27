@@ -398,6 +398,9 @@ def test_update_rule_set(
             "subtractive": {
                 "$type": "SubtractiveOrganizationalUnit",
             },
+            "publishing": {
+                "$type": "PublishingOrganizationalUnit",
+            },
         },
     )
     assert response.status_code == status.HTTP_200_OK, response.text
@@ -432,6 +435,10 @@ def test_update_rule_set(
             "shortName": [],
             "unitOf": [],
             "website": [],
+        },
+        "publishing": {
+            "$type": "PublishingOrganizationalUnit",
+            "status": None,
         },
         "$type": "OrganizationalUnitRuleSetResponse",
         "stableTargetId": loaded_dummy_data["unit_2_rule_set"].stableTargetId,

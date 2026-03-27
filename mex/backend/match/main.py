@@ -16,7 +16,7 @@ def match_item(
 ) -> None:
     """Match an extracted item to a merged item."""
     try:
-        match_item_in_graph(extractedIdentifier, mergedIdentifier)
+        match_item_in_graph(extractedIdentifier, mergedIdentifier, None)
     except MExError as error:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

@@ -19,7 +19,7 @@ from mex.common.models import (
     ExtractedModelTypeAdapter,
     PaginatedItemsContainer,
 )
-from mex.common.types import Identifier, Validation
+from mex.common.types import Identifier, PublishingTarget, Validation
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Sequence
@@ -29,6 +29,7 @@ if TYPE_CHECKING:  # pragma: no cover
 def merge_search_result_item(
     item: dict[str, Any],
     validation: Literal[Validation.LENIENT],
+    publishing_target: PublishingTarget,
 ) -> AnyPreviewModel: ...
 
 
@@ -36,6 +37,7 @@ def merge_search_result_item(
 def merge_search_result_item(
     item: dict[str, Any],
     validation: Literal[Validation.STRICT],
+    publishing_target: PublishingTarget,
 ) -> AnyMergedModel: ...
 
 
@@ -43,12 +45,14 @@ def merge_search_result_item(
 def merge_search_result_item(
     item: dict[str, Any],
     validation: Literal[Validation.IGNORE],
+    publishing_target: PublishingTarget,
 ) -> AnyMergedModel | None: ...
 
 
 def merge_search_result_item(
     item: dict[str, Any],
     validation: Literal[Validation.STRICT, Validation.LENIENT, Validation.IGNORE],
+    publishing_target: PublishingTarget,
 ) -> AnyPreviewModel | AnyMergedModel | None:
     """Merge a single search result into a merged item.
 
@@ -58,6 +62,7 @@ def merge_search_result_item(
             the lengths of lists by default, set this to `LENIENT` to avoid this and
             return a "preview" of a merged item instead of a valid merged item,
             or set this to `IGNORE` to return None in case of validation errors.
+        publishing_target: target to which the merged item is to be published
 
     Raises:
         MergingError: When the given items cannot be merged
@@ -85,6 +90,7 @@ def merge_search_result_item(
             extracted_items=extracted_items,
             rule_set=rule_set,
             validation=validation,
+            publishing_target=publishing_target,
         )
     except MergingError, ValidationError:
         if validation == Validation.STRICT:
@@ -146,6 +152,7 @@ def search_merged_items_in_graph(  # noqa: PLR0913
     validation: Literal[
         Validation.STRICT, Validation.LENIENT, Validation.IGNORE
     ] = Validation.STRICT,
+    publishing_target: PublishingTarget,
 ) -> PaginatedItemsContainer[AnyPreviewModel] | PaginatedItemsContainer[AnyMergedModel]:
     """Search for merged items.
 
@@ -161,6 +168,7 @@ def search_merged_items_in_graph(  # noqa: PLR0913
             the lengths of lists by default, set this to `LENIENT` to avoid this and
             return a "preview" of a merged item instead of a valid merged item,
             or set this to `IGNORE` to return None in case of validation errors.
+        publishing_target: target to which the merged item is to be published
 
     Raises:
         MergingError: When the given items cannot be merged
@@ -182,14 +190,21 @@ def search_merged_items_in_graph(  # noqa: PLR0913
     items = [
         merged_model
         for item in result["items"]
-        if (merged_model := merge_search_result_item(item, validation))
+        if (
+            merged_model := merge_search_result_item(
+                item, validation, publishing_target
+            )
+        )
     ]
     if validation == Validation.LENIENT:
         return PaginatedItemsContainer[AnyPreviewModel](items=items, total=total)
     return PaginatedItemsContainer[AnyMergedModel](items=items, total=total)
 
 
-def get_merged_item_from_graph(identifier: Identifier) -> AnyMergedModel:
+def get_merged_item_from_graph(
+    identifier: Identifier,
+    publishing_target: PublishingTarget,
+) -> AnyMergedModel:
     """Fetch and return the merged item for the given `identifier`."""
     connector = GraphConnector.get()
     result = connector.fetch_merged_items(
@@ -207,7 +222,11 @@ def get_merged_item_from_graph(identifier: Identifier) -> AnyMergedModel:
     if result["total"] != 1:
         msg = "Found multiple merged items."
         raise InconsistentGraphError(msg)
-    return merge_search_result_item(result["items"][0], Validation.STRICT)
+    return merge_search_result_item(
+        result["items"][0],
+        Validation.STRICT,
+        publishing_target,
+    )
 
 
 def delete_merged_item_from_graph(identifier: Identifier) -> None:
