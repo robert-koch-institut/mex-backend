@@ -1,8 +1,5 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "baseBranchPatterns": [
-        "feature/apply-mex-updates-immediately"
-    ],
     "enabledManagers": [
         "docker-compose",
         "dockerfile",
