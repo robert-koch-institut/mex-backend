@@ -2,7 +2,7 @@ name: Renovate
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "feature/apply-mex-updates-immediately"]
   schedule:
     - cron: "14 3 * * 1-5"
   workflow_dispatch:
@@ -26,6 +26,7 @@ jobs:
         env:
           RENOVATE_GIT_PRIVATE_KEY: ${{ secrets.GPG_SIGNING_KEY }}
           RENOVATE_REPOSITORIES: "robert-koch-institut/mex-backend"
+          LOG_LEVEL: "debug"
         with:
           configurationFile: renovate.json
           token: ${{ secrets.WORKFLOW_TOKEN }}
