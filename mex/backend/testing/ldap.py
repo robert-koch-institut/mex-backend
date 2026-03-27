@@ -44,6 +44,7 @@ def get_merged_person_from_login(
         skip=0,
         limit=1,
         validation=Validation.IGNORE,
+        publishing_target=None,
     )
     return result.items[0]  # type: ignore [return-value]
 

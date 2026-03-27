@@ -449,7 +449,7 @@ class GraphConnector(BaseConnector):
                 model.additive,
                 model.subtractive,
                 model.preventive,
-                model.publishing,
+                model.workflow,
             ]
         else:
             items_to_ingest = [model]
@@ -602,7 +602,7 @@ class GraphConnector(BaseConnector):
     def delete_rule_set(self, stable_target_id: str) -> Result:
         """Delete a rule-set by stableTargetId.
 
-        Deletes all additive, subtractive, preventive, and publishing rules connected to
+        Deletes all additive, subtractive, preventive, and workflow rules connected to
         the given stableTargetId, along with their nested items and outbound
         connections.
         """

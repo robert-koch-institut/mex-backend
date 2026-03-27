@@ -28,7 +28,7 @@ def create_and_get_rule_set(
         additive=rule_set.additive,
         subtractive=rule_set.subtractive,
         preventive=rule_set.preventive,
-        publishing=rule_set.publishing,
+        workflow=rule_set.workflow,
         stableTargetId=stable_target_id,
     )
     deque(connector.ingest_items([rule_set_response]))
@@ -36,7 +36,7 @@ def create_and_get_rule_set(
         rule_set.additive.entityType,
         rule_set.subtractive.entityType,
         rule_set.preventive.entityType,
-        rule_set.publishing.entityType,
+        rule_set.workflow.entityType,
     ]
     graph_result = connector.fetch_rule_items(
         query_string=None,
