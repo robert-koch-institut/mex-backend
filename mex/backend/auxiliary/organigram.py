@@ -5,6 +5,7 @@ from mex.backend.auxiliary.primary_source import extracted_primary_source_organi
 from mex.backend.auxiliary.wikidata import extracted_organization_rki
 from mex.backend.extracted.helpers import search_extracted_items_in_graph
 from mex.backend.graph.connector import GraphConnector
+from mex.backend.models import ReferenceFilter
 from mex.common.organigram.extract import extract_organigram_units
 from mex.common.organigram.transform import (
     transform_organigram_units_to_organizational_units,
@@ -21,8 +22,12 @@ def extracted_organizational_units() -> list[ExtractedOrganizationalUnit]:
 
     unit_container = search_extracted_items_in_graph(
         entity_type=["ExtractedOrganizationalUnit"],
-        referenced_identifiers=[organigram_primary_source.stableTargetId],
-        reference_field="hadPrimarySource",
+        reference_filters=[
+            ReferenceFilter(
+                field="hadPrimarySource",
+                identifiers=[organigram_primary_source.stableTargetId],
+            )
+        ],
         limit=len(organigram_units),
     )
     if unit_container.total >= len(organigram_units):
@@ -37,8 +42,12 @@ def extracted_organizational_units() -> list[ExtractedOrganizationalUnit]:
     deque(connector.ingest_items(extracted_units))
     unit_container = search_extracted_items_in_graph(
         entity_type=["ExtractedOrganizationalUnit"],
-        referenced_identifiers=[organigram_primary_source.stableTargetId],
-        reference_field="hadPrimarySource",
+        reference_filters=[
+            ReferenceFilter(
+                field="hadPrimarySource",
+                identifiers=[organigram_primary_source.stableTargetId],
+            )
+        ],
         limit=len(organigram_units),
     )
     return cast("list[ExtractedOrganizationalUnit]", unit_container.items)

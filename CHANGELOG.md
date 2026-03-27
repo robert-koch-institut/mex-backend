@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- new POST endpoints for advanced search of extracted, preview and merged items
+- new reference filters syntax that allows chaining multiple filters with AND condition
 - add slapd LDAP mock server to compose and CI
 - add `mocked_ldap` fixture variant running against slapd when a search base is set
 - add LDAP mock data in `assets/raw-data/ldap/` with persons and functional accounts
@@ -16,12 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- simplified search queries using jinja macros that are individually testable
 - update dependency requests to v2.33.0
 - updated template to https://github.com/robert-koch-institut/mex-template/commit/172aac
 - updated template to https://github.com/robert-koch-institut/mex-template/commit/491e2d
 - clean up query builder global and ingest-param names
 - use neo4j and valkey from docker compose instead of re-configuring in testing.yml
-- seetings validation: validate that valkey url is set if parallelized
+- settings validation: validate that valkey url is set if parallelized
 
 ### Deprecated
 

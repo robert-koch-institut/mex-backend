@@ -4,9 +4,9 @@ Deletes all additive, subtractive, and preventive rules connected to the given
 stableTargetId, along with their nested items (text/link) and outbound connections.
 
 Globals:
-    any_merged_label: pipe delimited sequence of all merged class labels
-    any_rule_label: pipe delimited sequence of all rule class labels
-    any_nested_label: pipe delimited sequence of labels for all nestable objects
+    any_merged_label: Pipe-delimited sequence of all merged class labels
+    any_rule_label: Pipe-delimited sequence of all rule class labels
+    any_nested_label: Pipe-delimited sequence of labels for all nestable objects
 
 Args:
     stable_target_id: stableTargetId of the merged item whose rules to delete
