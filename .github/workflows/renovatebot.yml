@@ -26,6 +26,7 @@ jobs:
         env:
           RENOVATE_GIT_PRIVATE_KEY: ${{ secrets.GPG_SIGNING_KEY }}
           RENOVATE_REPOSITORIES: "robert-koch-institut/mex-backend"
+          LOG_LEVEL: "debug"
         with:
           configurationFile: renovate.json
           token: ${{ secrets.WORKFLOW_TOKEN }}
