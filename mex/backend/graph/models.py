@@ -200,8 +200,8 @@ class IngestParams(BaseModel):
 
     merged_label: str
     node_label: str
-    all_referenced_labels: list[str]
-    all_nested_labels: list[str]
+    used_referenced_labels: list[str]
+    used_nested_labels: list[str]
     detach_node_edges: list[str]
     delete_node_edges: list[str]
     has_link_rels: bool

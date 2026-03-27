@@ -1,20 +1,20 @@
 import secrets
 from enum import Enum
 
+from mex.backend.models import APIKeyDatabase, APIUserDatabase
 from mex.backend.types import (
     APIKey,
-    APIKeyDatabase,
-    APIUserDatabase,
     APIUserPassword,
     DynamicStrEnum,
 )
 
 
 def test_api_key_database() -> None:
-    data_dict = {"read": "foo", "write": "bar"}
+    data_dict = {"read": ["foo"], "write": ["bar", "batz"]}
     db = APIKeyDatabase(**data_dict)
 
     assert db.read == [APIKey("foo")]
+    assert db.write == [APIKey("bar"), APIKey("batz")]
 
 
 def test_api_key_repr() -> None:

@@ -1,4 +1,5 @@
 from functools import cache
+from itertools import chain
 from typing import TYPE_CHECKING, Annotated, Any
 
 from jinja2 import (
@@ -92,12 +93,13 @@ class QueryBuilder(BaseConnector):
             render_constraints=render_constraints,
         )
         self._env.globals.update(
-            extracted_labels=list(EXTRACTED_MODEL_CLASSES_BY_NAME),
-            merged_labels=list(MERGED_MODEL_CLASSES_BY_NAME),
-            nested_labels=list(NESTED_MODEL_CLASSES_BY_NAME),
-            rule_labels=list(RULE_MODEL_CLASSES_BY_NAME),
-            extracted_or_rule_labels=list(EXTRACTED_MODEL_CLASSES_BY_NAME)
-            + list(RULE_MODEL_CLASSES_BY_NAME),
+            any_extracted_label="|".join(EXTRACTED_MODEL_CLASSES_BY_NAME),
+            any_merged_label="|".join(MERGED_MODEL_CLASSES_BY_NAME),
+            any_nested_label="|".join(NESTED_MODEL_CLASSES_BY_NAME),
+            any_rule_label="|".join(RULE_MODEL_CLASSES_BY_NAME),
+            any_extracted_or_rule_label="|".join(
+                chain(EXTRACTED_MODEL_CLASSES_BY_NAME, RULE_MODEL_CLASSES_BY_NAME)
+            ),
         )
         self.get_ingest_query_for_entity_type = cache(
             self._get_ingest_query_for_entity_type
@@ -136,8 +138,8 @@ class QueryBuilder(BaseConnector):
         params = IngestParams(
             merged_label=merged_label,
             node_label=entity_type,
-            all_referenced_labels=ref_types_for_class,
-            all_nested_labels=nested_types_for_class,
+            used_referenced_labels=ref_types_for_class,
+            used_nested_labels=nested_types_for_class,
             detach_node_edges=ref_fields,
             delete_node_edges=[*text_fields, *link_fields],
             has_link_rels=bool(ref_types_for_class),
