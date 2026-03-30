@@ -6,6 +6,8 @@ from starlette import status
 from mex.backend.auxiliary.primary_source import extracted_primary_source_ldap
 from mex.backend.auxiliary.wikidata import extracted_organization_rki
 from mex.backend.extracted.helpers import search_extracted_items_in_graph
+from mex.backend.models import ReferenceFilter
+from mex.backend.types import ReferenceFieldName
 from mex.common.models import ExtractedPrimarySource
 from mex.common.types import Identifier, TextLanguage
 from tests.conftest import get_graph
@@ -67,7 +69,12 @@ def test_extracted_primary_source_ldap_ingest() -> None:
 
     ingested = search_extracted_items_in_graph(
         query_string="Active Directory",
-        stable_target_id=Identifier(result.stableTargetId),
+        reference_filters=[
+            ReferenceFilter(
+                field=ReferenceFieldName("stableTargetId"),
+                identifiers=[Identifier(result.stableTargetId)],
+            )
+        ],
         entity_type=["ExtractedPrimarySource"],
     )
 

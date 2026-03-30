@@ -226,6 +226,182 @@ def test_search_extracted_items(
     assert response.json() == expected
 
 
+@pytest.mark.parametrize(
+    ("payload", "expected"),
+    [
+        pytest.param(
+            {"limit": 1},
+            {
+                "items": [
+                    {
+                        "$type": "ExtractedPrimarySource",
+                        "alternativeTitle": [],
+                        "contact": [],
+                        "description": [],
+                        "documentation": [],
+                        "hadPrimarySource": "00000000000000",
+                        "identifier": "00000000000001",
+                        "identifierInPrimarySource": "mex",
+                        "locatedAt": [],
+                        "stableTargetId": "00000000000000",
+                        "title": [],
+                        "unitInCharge": [],
+                        "version": None,
+                    }
+                ],
+                "total": 11,
+            },
+            id="limit-1",
+        ),
+        pytest.param(
+            {"limit": 1, "skip": 10},
+            {
+                "items": [
+                    {
+                        "$type": "ExtractedOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "hadPrimarySource": "bFQoRhcVH5DHUt",
+                        "identifier": "bFQoRhcVH5DHUy",
+                        "identifierInPrimarySource": "ou-1.6",
+                        "name": [{"language": "en", "value": "Unit 1.6"}],
+                        "parentUnit": None,
+                        "shortName": [],
+                        "stableTargetId": "bFQoRhcVH5DHUz",
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [],
+                    }
+                ],
+                "total": 11,
+            },
+            id="skip-10",
+        ),
+        pytest.param(
+            {"entityType": ["ExtractedContactPoint"]},
+            {
+                "items": [
+                    {
+                        "$type": "ExtractedContactPoint",
+                        "email": ["info@contact-point.one"],
+                        "hadPrimarySource": "bFQoRhcVH5DHUr",
+                        "identifier": "bFQoRhcVH5DHUA",
+                        "identifierInPrimarySource": "cp-1",
+                        "stableTargetId": "bFQoRhcVH5DHUB",
+                    },
+                    {
+                        "$type": "ExtractedContactPoint",
+                        "email": ["help@contact-point.two"],
+                        "hadPrimarySource": "bFQoRhcVH5DHUr",
+                        "identifier": "bFQoRhcVH5DHUC",
+                        "identifierInPrimarySource": "cp-2",
+                        "stableTargetId": "bFQoRhcVH5DHUD",
+                    },
+                ],
+                "total": 2,
+            },
+            id="entity-type-contact-points",
+        ),
+        pytest.param(
+            {"q": "cool"},
+            {
+                "items": [
+                    {
+                        "$type": "ExtractedPrimarySource",
+                        "alternativeTitle": [],
+                        "contact": [],
+                        "description": [],
+                        "documentation": [],
+                        "hadPrimarySource": "00000000000000",
+                        "identifier": "bFQoRhcVH5DHUs",
+                        "identifierInPrimarySource": "ps-2",
+                        "locatedAt": [],
+                        "stableTargetId": "bFQoRhcVH5DHUt",
+                        "title": [],
+                        "unitInCharge": [],
+                        "version": "Cool Version v2.13",
+                    }
+                ],
+                "total": 1,
+            },
+            id="full-text-search",
+        ),
+        pytest.param(
+            {
+                "referenceFilters": [
+                    {
+                        "field": "stableTargetId",
+                        "identifiers": ["bFQoRhcVH5DHUx"],
+                    }
+                ]
+            },
+            {
+                "items": [
+                    {
+                        "$type": "ExtractedOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "hadPrimarySource": "bFQoRhcVH5DHUt",
+                        "identifier": "bFQoRhcVH5DHUw",
+                        "identifierInPrimarySource": "ou-1",
+                        "name": [{"value": "Unit 1", "language": "en"}],
+                        "parentUnit": None,
+                        "shortName": [],
+                        "stableTargetId": "bFQoRhcVH5DHUx",
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [
+                            {"language": None, "title": None, "url": "https://ou-1"}
+                        ],
+                    }
+                ],
+                "total": 1,
+            },
+            id="stable-target-id-filter",
+        ),
+        pytest.param(
+            {
+                "referenceFilters": [
+                    {
+                        "field": "hadPrimarySource",
+                        "identifiers": ["00000000000002"],
+                    }
+                ]
+            },
+            {"items": [], "total": 0},
+            id="had-primary-source-mex-editor-filter",
+        ),
+        pytest.param(
+            {
+                "referenceFilters": [
+                    {
+                        "field": "stableTargetId",
+                        "identifiers": ["thisIdDoesNotExist"],
+                    }
+                ]
+            },
+            {"items": [], "total": 0},
+            id="identifier-not-found",
+        ),
+        pytest.param(
+            {"q": "queryNotFound"},
+            {"items": [], "total": 0},
+            id="full-text-not-found",
+        ),
+    ],
+)
+@pytest.mark.usefixtures("loaded_dummy_data")
+@pytest.mark.integration
+def test_search_extracted_items_advanced(
+    client_with_api_key_read_permission: TestClient,
+    payload: dict[str, Any],
+    expected: dict[str, Any],
+) -> None:
+    response = client_with_api_key_read_permission.post(
+        "/v0/extracted-item/_search", json=payload
+    )
+    assert response.status_code == status.HTTP_200_OK, response.text
+    assert response.json() == expected
+
+
 @pytest.mark.integration
 def test_search_extracted_items_in_graph_bad_request(
     client_with_api_key_read_permission: TestClient,
@@ -244,8 +420,9 @@ def test_search_extracted_items_in_graph_bad_request(
 def test_search_extracted_items_invalid_reference_field_filter(
     client_with_api_key_read_permission: TestClient,
 ) -> None:
-    response = client_with_api_key_read_permission.get(
-        "/v0/extracted-item?referenceField=description"
+    response = client_with_api_key_read_permission.post(
+        "/v0/extracted-item/_search",
+        json={"referenceFilters": [{"field": "description", "identifiers": ["x"]}]},
     )
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT, response.text
     assert (

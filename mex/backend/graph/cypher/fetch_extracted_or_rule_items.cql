@@ -1,90 +1,57 @@
 <# Fetch extracted or rule items including their nested objects and referenced identifiers.
 
 Globals:
-    any_extracted_or_rule_label: pipe delimited sequence of all extracted or rule labels
-    any_merged_label: pipe delimited sequence of all merged class labels
-    any_nested_label: pipe delimited sequence of labels for all nestable objects
+    any_extracted_or_rule_label: Pipe-delimited sequence of all extracted or rule labels
+    any_merged_label: Pipe-delimited sequence of all merged class labels
+    any_nested_label: Pipe-delimited sequence of labels for all nestable objects
 
 Jinja:
     filter_by_query_string: Whether the final query should accept a full text query string
-    filter_by_identifier: Whether the final query should filter by identifiers
-    filter_by_stable_target_id: Whether the final query should filter by stableTargetIds
-    filter_by_referenced_identifiers: Whether to filter for references to items with specific identifiers
-    reference_field: Name of the relationship holding referenced identifiers to use for filtering
+    filter_by_identifier: Whether the final query should filter by item identifiers
+    filter_by_references: Whether to filter for references to items with specific identifiers
+    reference_fields: List of relationship names holding referenced identifiers to use for filtering
 
 Args:
     query_string: Full text query string
     labels: Labels to filter items by
     identifier: Identifier to filter items by
-    stable_target_id: Identifier of the connected merged item to filter by
-    referenced_identifiers: Identifiers referenced by `reference_field`
+    reference_filters: List of reference filters
     skip: Skip these many nodes for pagination
     limit: Limit pagination to this many items
 
 Returns:
     total: Count of all items found by this query
-    items: List of extracted items, each item has an extra attribute `_refs` that
-           contains the values of nested objects as well as the identifiers of
-           referenced items
+    items: List of extracted or rule items
+        entityType: Label of the node
+        _refs: Values of nested objects as well as referenced identifiers
+        *nodeProps: All other properties of the node
 -#>
+<% from "macros/match_or_search_nodes.cql" import match_or_search_nodes with context -%>
+<% from "macros/check_reference_filters.cql" import check_reference_filters with context -%>
+<% from "macros/collect_references_and_nested.cql" import collect_references_and_nested with context -%>
+
 CALL () {
-<%- block match_clause -%>
-<%- if filter_by_query_string %>
-    OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
-    YIELD node AS hit, score
-    CALL (hit) {
-        MATCH (hit:<<any_extracted_or_rule_label>>)-[:stableTargetId]->(merged_node:<<any_merged_label>>)
-        RETURN hit as extracted_or_rule_node, merged_node
-    UNION
-        MATCH (hit:<<any_nested_label>>)<-[]-(extracted_or_rule_node:<<any_extracted_or_rule_label>>)-[:stableTargetId]->(merged_node:<<any_merged_label>>)
-        RETURN extracted_or_rule_node, merged_node
-    }
-    WITH DISTINCT extracted_or_rule_node, merged_node
-<%- else %>
-    OPTIONAL MATCH (extracted_or_rule_node:<<any_extracted_or_rule_label>>)-[:stableTargetId]->(merged_node:<<any_merged_label>>)
-<%- endif %>
+    <% block match_clause -%>
+    <<match_or_search_nodes()>>
     WHERE
         ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
         <%- if filter_by_identifier %>
         AND extracted_or_rule_node.identifier = $identifier
         <%- endif %>
-        <%- if filter_by_stable_target_id %>
-        AND merged_node.identifier = $stable_target_id
+        <%- if filter_by_references %>
+        AND EXISTS {<<check_reference_filters()>>}
         <%- endif %>
-    <%- if filter_by_referenced_identifiers %>
-    OPTIONAL MATCH (extracted_or_rule_node)-[:<<reference_field>>]->(referenced_node_to_filter_by:<<any_merged_label>>)
-<#- WITH is before WHERE, because WHERE is otherwise applied to the query and results in
-   (referenced_node_to_filter_by IS NULL = True) for all extracted_or_rule_node
-#>
-    WITH merged_node, extracted_or_rule_node, referenced_node_to_filter_by
-    WHERE
-        (
-            (referenced_node_to_filter_by.identifier IN $referenced_identifiers)
-            OR
-            (
-                referenced_node_to_filter_by IS NULL
-                AND
-                any(identifier IN $referenced_identifiers WHERE identifier IS NULL)
-            )
-        )
-    <%- endif %>
-<%- endblock %>
-    RETURN COUNT(extracted_or_rule_node) AS total
+    <%- endblock %>
+    RETURN COUNT(DISTINCT extracted_or_rule_node) AS total
 }
 CALL () {
-    <<-self.match_clause()>>
+    <<self.match_clause()>>
     ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
     SKIP $skip
     LIMIT $limit
     WITH
         extracted_or_rule_node,
-        [
-            (extracted_or_rule_node)-[r]->(referenced_merged_node:<<any_merged_label>>) |
-            {value: referenced_merged_node.identifier, position:r.position, label: type(r)}
-        ] + [
-            (extracted_or_rule_node)-[r]->(referenced_nested_node:<<any_nested_label>>) |
-            {value: properties(referenced_nested_node), position:r.position , label: type(r)}
-        ] AS refs
+        <<collect_references_and_nested()>> AS refs
     WITH
         collect(
             extracted_or_rule_node{.*, entityType: head(labels(extracted_or_rule_node)), _refs: refs}
