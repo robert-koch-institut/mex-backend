@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - /ldap has offset param (allow pagination)
 - updated mex-common to 1.17
+- update dependency requests to v2.33.0
+- updated template to https://github.com/robert-koch-institut/mex-template/commit/172aac
+- updated template to https://github.com/robert-koch-institut/mex-template/commit/491e2d
 - clean up query builder global and ingest-param names
 - use neo4j and valkey from docker compose instead of re-configuring in testing.yml
 - seetings validation: validate that valkey url is set if parallelized
