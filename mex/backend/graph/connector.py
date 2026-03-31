@@ -11,7 +11,6 @@ from neo4j import (
 )
 from neo4j.exceptions import ConstraintError, Neo4jError
 
-from mex.backend.graph.constants import NO_REFERENCE_SENTINEL
 from mex.backend.graph.exceptions import (
     DeletionFailedError,
     IngestionError,
@@ -29,10 +28,11 @@ from mex.backend.graph.transform import (
     expand_references_in_search_result,
     get_error_details_from_neo4j_error,
     transform_model_into_ingest_data,
+    transform_reference_filters_to_raw_fields,
+    transform_reference_filters_to_raw_filters,
     validate_ingested_data,
 )
 from mex.backend.settings import BackendSettings
-from mex.backend.types import ReferenceFieldName
 from mex.common.connector import BaseConnector
 from mex.common.exceptions import MExError
 from mex.common.fields import (
@@ -44,7 +44,6 @@ from mex.common.logging import logger
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
-    MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
     RULE_MODEL_CLASSES_BY_NAME,
     AnyExtractedModel,
     AnyMergedModel,
@@ -196,31 +195,17 @@ class GraphConnector(BaseConnector):
         Returns:
             Graph result instance
         """
-        reference_filter_list = reference_filters or []
-        raw_reference_filters = [
-            {
-                "field": reference_filter.field.value,
-                "identifiers": [
-                    NO_REFERENCE_SENTINEL
-                    if (
-                        identifier == MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID
-                        and reference_filter.field
-                        == ReferenceFieldName("hadPrimarySource")
-                    )
-                    or identifier is None
-                    else str(identifier)
-                    for identifier in reference_filter.identifiers
-                ],
-            }
-            for reference_filter in reference_filter_list
-        ]
-        raw_reference_fields = [f.field.value for f in reference_filter_list]
-
+        raw_reference_filters = transform_reference_filters_to_raw_filters(
+            reference_filters
+        )
+        raw_reference_fields = transform_reference_filters_to_raw_fields(
+            reference_filters
+        )
         query_builder = QueryBuilder.get()
         query = query_builder.fetch_extracted_or_rule_items(
             filter_by_query_string=bool(query_string),
             filter_by_identifier=bool(identifier),
-            filter_by_references=bool(reference_filter_list),
+            filter_by_references=bool(raw_reference_filters),
             reference_fields=raw_reference_fields,
         )
         result = self.commit(
@@ -322,31 +307,17 @@ class GraphConnector(BaseConnector):
         Returns:
             Graph result instance
         """
-        reference_filter_list = reference_filters or []
-        raw_reference_filters = [
-            {
-                "field": reference_filter.field.value,
-                "identifiers": [
-                    NO_REFERENCE_SENTINEL
-                    if (
-                        identifier == MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID
-                        and reference_filter.field
-                        == ReferenceFieldName("hadPrimarySource")
-                    )
-                    or identifier is None
-                    else str(identifier)
-                    for identifier in reference_filter.identifiers
-                ],
-            }
-            for reference_filter in reference_filter_list
-        ]
-        raw_reference_fields = [f.field.value for f in reference_filter_list]
-
+        raw_reference_filters = transform_reference_filters_to_raw_filters(
+            reference_filters
+        )
+        raw_reference_fields = transform_reference_filters_to_raw_fields(
+            reference_filters
+        )
         query_builder = QueryBuilder.get()
         query = query_builder.fetch_merged_items(
             filter_by_query_string=bool(query_string),
             filter_by_identifier=bool(identifier),
-            filter_by_references=bool(reference_filter_list),
+            filter_by_references=bool(raw_reference_filters),
             reference_fields=raw_reference_fields,
         )
         result = self.commit(

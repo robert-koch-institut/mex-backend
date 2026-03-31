@@ -183,12 +183,12 @@ WHERE ALL(rf IN $reference_filters WHERE
     WITH
         extracted_or_rule_node,
         [
-    (extracted_or_rule_node)-[r]->(referenced_merged_node:MergedPerson|MergedVariable|MergedDistribution) |
-    {value: referenced_merged_node.identifier, position:r.position, label: type(r)}
-] + [
-    (extracted_or_rule_node)-[r]->(referenced_nested_node:Link|Text|Location) |
-    {value: properties(referenced_nested_node), position:r.position , label: type(r)}
-] AS refs
+            (extracted_or_rule_node)-[r]->(referenced_merged_node:MergedPerson|MergedVariable|MergedDistribution) |
+            {value: referenced_merged_node.identifier, position:r.position, label: type(r)}
+        ] + [
+            (extracted_or_rule_node)-[r]->(referenced_nested_node:Link|Text|Location) |
+            {value: properties(referenced_nested_node), position:r.position, label: type(r)}
+        ] AS refs
     WITH
         collect(
             extracted_or_rule_node{.*, entityType: head(labels(extracted_or_rule_node)), _refs: refs}
@@ -216,12 +216,12 @@ CALL () {
     WITH
         extracted_or_rule_node,
         [
-    (extracted_or_rule_node)-[r]->(referenced_merged_node:MergedPerson|MergedVariable|MergedDistribution) |
-    {value: referenced_merged_node.identifier, position:r.position, label: type(r)}
-] + [
-    (extracted_or_rule_node)-[r]->(referenced_nested_node:Link|Text|Location) |
-    {value: properties(referenced_nested_node), position:r.position , label: type(r)}
-] AS refs
+            (extracted_or_rule_node)-[r]->(referenced_merged_node:MergedPerson|MergedVariable|MergedDistribution) |
+            {value: referenced_merged_node.identifier, position:r.position, label: type(r)}
+        ] + [
+            (extracted_or_rule_node)-[r]->(referenced_nested_node:Link|Text|Location) |
+            {value: properties(referenced_nested_node), position:r.position, label: type(r)}
+        ] AS refs
     WITH
         collect(
             extracted_or_rule_node{.*, entityType: head(labels(extracted_or_rule_node)), _refs: refs}
@@ -332,12 +332,12 @@ WHERE ALL(rf IN $reference_filters WHERE
         extracted_or_rule_node,
         merged_node,
         [
-    (extracted_or_rule_node)-[r]->(referenced_merged_node:MergedPerson|MergedVariable|MergedDistribution) |
-    {value: referenced_merged_node.identifier, position:r.position, label: type(r)}
-] + [
-    (extracted_or_rule_node)-[r]->(referenced_nested_node:Link|Text|Location) |
-    {value: properties(referenced_nested_node), position:r.position , label: type(r)}
-] AS refs
+            (extracted_or_rule_node)-[r]->(referenced_merged_node:MergedPerson|MergedVariable|MergedDistribution) |
+            {value: referenced_merged_node.identifier, position:r.position, label: type(r)}
+        ] + [
+            (extracted_or_rule_node)-[r]->(referenced_nested_node:Link|Text|Location) |
+            {value: properties(referenced_nested_node), position:r.position, label: type(r)}
+        ] AS refs
     ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
     WITH
         merged_node,
@@ -376,12 +376,12 @@ CALL () {
         extracted_or_rule_node,
         merged_node,
         [
-    (extracted_or_rule_node)-[r]->(referenced_merged_node:MergedPerson|MergedVariable|MergedDistribution) |
-    {value: referenced_merged_node.identifier, position:r.position, label: type(r)}
-] + [
-    (extracted_or_rule_node)-[r]->(referenced_nested_node:Link|Text|Location) |
-    {value: properties(referenced_nested_node), position:r.position , label: type(r)}
-] AS refs
+            (extracted_or_rule_node)-[r]->(referenced_merged_node:MergedPerson|MergedVariable|MergedDistribution) |
+            {value: referenced_merged_node.identifier, position:r.position, label: type(r)}
+        ] + [
+            (extracted_or_rule_node)-[r]->(referenced_nested_node:Link|Text|Location) |
+            {value: properties(referenced_nested_node), position:r.position, label: type(r)}
+        ] AS refs
     ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
     WITH
         merged_node,

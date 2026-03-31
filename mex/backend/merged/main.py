@@ -85,7 +85,7 @@ def search_merged_items_advanced(  # noqa: PLR0913
         query_string=q,
         identifier=identifier,
         entity_type=[str(t.value) for t in entityType or MergedType],
-        reference_filters=referenceFilters,
+        reference_filters=referenceFilters or None,
         skip=skip,
         limit=limit,
         validation=Validation.IGNORE,

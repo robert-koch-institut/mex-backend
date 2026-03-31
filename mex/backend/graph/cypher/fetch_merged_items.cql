@@ -58,7 +58,7 @@ CALL () {
     WITH
         extracted_or_rule_node,
         merged_node,
-        <<collect_references_and_nested()>> AS refs
+        <<collect_references_and_nested()|indent(8)>> AS refs
     ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
     WITH
         merged_node,

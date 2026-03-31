@@ -96,7 +96,7 @@ RETURN [
     {value: referenced_merged_node.identifier, position:r.position, label: type(r)}
 ] + [
     (extracted_or_rule_node)-[r]->(referenced_nested_node:Link|Text) |
-    {value: properties(referenced_nested_node), position:r.position , label: type(r)}
+    {value: properties(referenced_nested_node), position:r.position, label: type(r)}
 ] AS refs;"""
     )
 

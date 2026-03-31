@@ -771,6 +771,58 @@ def test_search_preview_items(
             {"items": [], "total": 0},
             id="full-text-not-found",
         ),
+        pytest.param(
+            {
+                "referenceFilters": [
+                    {
+                        "field": "hadPrimarySource",
+                        "identifiers": ["bFQoRhcVH5DHUt"],
+                    },
+                    {
+                        "field": "unitOf",
+                        "identifiers": ["bFQoRhcVH5DHUv"],
+                    },
+                ]
+            },
+            {
+                "items": [
+                    {
+                        "$type": "PreviewOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "identifier": "bFQoRhcVH5DHUx",
+                        "name": [{"language": "en", "value": "Unit 1"}],
+                        "parentUnit": None,
+                        "shortName": [],
+                        "supersededBy": None,
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [
+                            {"language": None, "title": None, "url": "https://ou-1"}
+                        ],
+                    },
+                    {
+                        "$type": "PreviewOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "identifier": "bFQoRhcVH5DHUz",
+                        "name": [{"language": "de", "value": "Abteilung 1.6"}],
+                        "parentUnit": "bFQoRhcVH5DHUx",
+                        "shortName": [],
+                        "supersededBy": None,
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [
+                            {
+                                "language": None,
+                                "title": "Unit Homepage",
+                                "url": "https://unit-1-6",
+                            }
+                        ],
+                    },
+                ],
+                "total": 2,
+            },
+            id="multiple-reference-filters-and",
+        ),
     ],
 )
 @pytest.mark.usefixtures("loaded_dummy_data")

@@ -386,6 +386,56 @@ def test_search_extracted_items(
             {"items": [], "total": 0},
             id="full-text-not-found",
         ),
+        pytest.param(
+            {
+                "referenceFilters": [
+                    {
+                        "field": "hadPrimarySource",
+                        "identifiers": ["bFQoRhcVH5DHUt"],
+                    },
+                    {
+                        "field": "unitOf",
+                        "identifiers": ["bFQoRhcVH5DHUv"],
+                    },
+                ]
+            },
+            {
+                "items": [
+                    {
+                        "$type": "ExtractedOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "hadPrimarySource": "bFQoRhcVH5DHUt",
+                        "identifier": "bFQoRhcVH5DHUw",
+                        "identifierInPrimarySource": "ou-1",
+                        "name": [{"value": "Unit 1", "language": "en"}],
+                        "parentUnit": None,
+                        "shortName": [],
+                        "stableTargetId": "bFQoRhcVH5DHUx",
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [
+                            {"language": None, "title": None, "url": "https://ou-1"}
+                        ],
+                    },
+                    {
+                        "$type": "ExtractedOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "hadPrimarySource": "bFQoRhcVH5DHUt",
+                        "identifier": "bFQoRhcVH5DHUy",
+                        "identifierInPrimarySource": "ou-1.6",
+                        "name": [{"language": "en", "value": "Unit 1.6"}],
+                        "parentUnit": None,
+                        "shortName": [],
+                        "stableTargetId": "bFQoRhcVH5DHUz",
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [],
+                    },
+                ],
+                "total": 2,
+            },
+            id="multiple-reference-filters-and",
+        ),
     ],
 )
 @pytest.mark.usefixtures("loaded_dummy_data")

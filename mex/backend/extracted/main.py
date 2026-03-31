@@ -92,7 +92,7 @@ def search_extracted_items_advanced(
     return search_extracted_items_in_graph(
         query_string=q,
         entity_type=[str(t.value) for t in entityType or ExtractedType],
-        reference_filters=referenceFilters,
+        reference_filters=referenceFilters or None,
         skip=skip,
         limit=limit,
     )

@@ -21,6 +21,32 @@ from mex.common.types import Identifier, Validation
 router = APIRouter()
 
 
+@router.post("/preview-item/_search", tags=["editor"])
+def search_preview_items_advanced(  # noqa: PLR0913
+    q: Annotated[str, Body(max_length=100)] = "",
+    identifier: Annotated[Identifier | None, Body()] = None,
+    entityType: Annotated[Sequence[MergedType], Body(max_length=len(MergedType))] = [],
+    referenceFilters: Annotated[Sequence[ReferenceFilter], Body(max_length=100)]
+    | None = None,
+    skip: Annotated[int, Body(ge=0, le=10e10)] = 0,
+    limit: Annotated[int, Body(ge=1, le=100)] = 10,
+) -> PaginatedItemsContainer[AnyPreviewModel]:
+    """Search for merged item previews with advanced search filters.
+
+    In contrast to `/merged-item/_search`, this endpoint does not validate the existence
+    of required fields or the length restrictions of lists.
+    """
+    return search_merged_items_in_graph(
+        query_string=q,
+        identifier=identifier,
+        entity_type=[str(t.value) for t in entityType or MergedType],
+        reference_filters=referenceFilters or None,
+        skip=skip,
+        limit=limit,
+        validation=Validation.LENIENT,
+    )
+
+
 @router.post("/preview-item/{identifier}", tags=["editor"])
 def preview_item(
     identifier: Annotated[Identifier, Path()],
@@ -85,32 +111,6 @@ def search_preview_items(  # noqa: PLR0913
         identifier=identifier,
         entity_type=[str(t.value) for t in entityType or MergedType],
         reference_filters=reference_filters,
-        skip=skip,
-        limit=limit,
-        validation=Validation.LENIENT,
-    )
-
-
-@router.post("/preview-item/_search", tags=["editor"])
-def search_preview_items_advanced(  # noqa: PLR0913
-    q: Annotated[str, Body(max_length=100)] = "",
-    identifier: Annotated[Identifier | None, Body()] = None,
-    entityType: Annotated[Sequence[MergedType], Body(max_length=len(MergedType))] = [],
-    referenceFilters: Annotated[Sequence[ReferenceFilter], Body(max_length=100)]
-    | None = None,
-    skip: Annotated[int, Body(ge=0, le=10e10)] = 0,
-    limit: Annotated[int, Body(ge=1, le=100)] = 10,
-) -> PaginatedItemsContainer[AnyPreviewModel]:
-    """Search for merged item previews with advanced search filters.
-
-    In contrast to `/merged-item/_search`, this endpoint does not validate the existence
-    of required fields or the length restrictions of lists.
-    """
-    return search_merged_items_in_graph(
-        query_string=q,
-        identifier=identifier,
-        entity_type=[str(t.value) for t in entityType or MergedType],
-        reference_filters=referenceFilters,
         skip=skip,
         limit=limit,
         validation=Validation.LENIENT,

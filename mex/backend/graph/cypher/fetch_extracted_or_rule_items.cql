@@ -51,7 +51,7 @@ CALL () {
     LIMIT $limit
     WITH
         extracted_or_rule_node,
-        <<collect_references_and_nested()>> AS refs
+        <<collect_references_and_nested()|indent(8)>> AS refs
     WITH
         collect(
             extracted_or_rule_node{.*, entityType: head(labels(extracted_or_rule_node)), _refs: refs}
