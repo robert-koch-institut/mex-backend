@@ -109,6 +109,7 @@ def search_merged_items_in_graph(
     skip: int = 0,
     limit: int = 100,
     validation: Literal[Validation.LENIENT] = Validation.LENIENT,
+    publishing_target: PublishingTarget,
 ) -> PaginatedItemsContainer[AnyPreviewModel]: ...
 
 
@@ -123,6 +124,7 @@ def search_merged_items_in_graph(
     skip: int = 0,
     limit: int = 100,
     validation: Literal[Validation.STRICT] = Validation.STRICT,
+    publishing_target: PublishingTarget,
 ) -> PaginatedItemsContainer[AnyMergedModel]: ...
 
 
@@ -137,6 +139,7 @@ def search_merged_items_in_graph(
     skip: int = 0,
     limit: int = 100,
     validation: Literal[Validation.IGNORE] = Validation.IGNORE,
+    publishing_target: PublishingTarget,
 ) -> PaginatedItemsContainer[AnyMergedModel]: ...
 
 

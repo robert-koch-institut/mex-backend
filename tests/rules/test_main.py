@@ -398,8 +398,8 @@ def test_update_rule_set(
             "subtractive": {
                 "$type": "SubtractiveOrganizationalUnit",
             },
-            "publishing": {
-                "$type": "PublishingOrganizationalUnit",
+            "workflow": {
+                "$type": "WorkflowOrganizationalUnit",
             },
         },
     )
@@ -436,9 +436,9 @@ def test_update_rule_set(
             "unitOf": [],
             "website": [],
         },
-        "publishing": {
-            "$type": "PublishingOrganizationalUnit",
-            "status": None,
+        "workflow": {
+            "$type": "WorkflowOrganizationalUnit",
+            "forbiddenPublishingTarget": "testing",
         },
         "$type": "OrganizationalUnitRuleSetResponse",
         "stableTargetId": loaded_dummy_data["unit_2_rule_set"].stableTargetId,

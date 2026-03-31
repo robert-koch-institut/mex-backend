@@ -9,7 +9,7 @@ from mex.backend.security import has_write_access_ldap
 from mex.common.identity import get_provider
 from mex.common.ldap.connector import LDAPConnector
 from mex.common.models import MergedPerson
-from mex.common.types import MergedPrimarySourceIdentifier
+from mex.common.types import MergedPrimarySourceIdentifier, PublishingTarget
 
 router = APIRouter()
 
@@ -34,4 +34,7 @@ def get_merged_person_from_login(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User is not authorized for MEx.",
         )
-    return cast("MergedPerson", get_merged_item(identities[0].stableTargetId), None)
+    return cast(
+        "MergedPerson",
+        get_merged_item(identities[0].stableTargetId, PublishingTarget("testing")),
+    )

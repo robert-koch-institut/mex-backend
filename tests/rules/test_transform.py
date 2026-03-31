@@ -69,9 +69,9 @@ from mex.common.types import TextLanguage
                     "containedBy": ["00000000000042"],
                 },
                 {
-                    "entityType": "PublishingVariableGroup",
+                    "entityType": "WorkflowVariableGroup",
                     "stableTargetId": ["00000000000007"],
-                    "status": None,
+                    "forbiddenPublishingTarget": "testing",
                 },
             ],
             {
@@ -91,9 +91,9 @@ from mex.common.types import TextLanguage
                     "containedBy": ["00000000000042"],
                     "label": [],
                 },
-                "publishing": {
-                    "entityType": "PublishingVariableGroup",
-                    "status": None,
+                "workflow": {
+                    "entityType": "WorkflowVariableGroup",
+                    "forbiddenPublishingTarget": "testing",
                 },
                 "entityType": "VariableGroupRuleSetResponse",
                 "stableTargetId": "00000000000007",

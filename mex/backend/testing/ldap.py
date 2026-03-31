@@ -13,7 +13,7 @@ from mex.common.models import (
     MergedPerson,
     PaginatedItemsContainer,
 )
-from mex.common.types import Validation
+from mex.common.types import PublishingTarget, Validation
 
 DEFAULT_LDAP_QUERY = "mex@rki.de"
 
@@ -44,7 +44,7 @@ def get_merged_person_from_login(
         skip=0,
         limit=1,
         validation=Validation.IGNORE,
-        publishing_target=None,
+        publishing_target=PublishingTarget("testing"),
     )
     return result.items[0]  # type: ignore [return-value]
 
