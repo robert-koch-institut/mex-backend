@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 import pytest
+from mex.common.types import PublishingTarget
 
 from mex.backend.graph.exceptions import MatchingError
 from mex.backend.match.helpers import match_item_in_graph
@@ -20,7 +21,7 @@ def test_match_unit_1_to_unit_2_creates_rule_set(
     assert get_rule_set_from_graph(unit_1.stableTargetId) is None
 
     with pytest.raises(NotImplementedError):
-        match_item_in_graph(unit_1.identifier, unit_2.stableTargetId)
+        match_item_in_graph(unit_1.identifier, unit_2.stableTargetId, publishing_target=PublishingTarget("testing"))
 
     rule_set = get_rule_set_from_graph(unit_1.stableTargetId)
     assert rule_set is not None
@@ -39,7 +40,7 @@ def test_match_unit_2_to_unit_1_keeps_existing_rule_set(
     assert rule_set_before == unit_2_rule_set
 
     with pytest.raises(NotImplementedError):
-        match_item_in_graph(unit_2.identifier, unit_1.stableTargetId)
+        match_item_in_graph(unit_2.identifier, unit_1.stableTargetId, publishing_target=PublishingTarget("testing"))
 
     rule_set_after = get_rule_set_from_graph(unit_2.stableTargetId)
     assert rule_set_after == rule_set_before
@@ -53,4 +54,4 @@ def test_match_item_in_graph_error(
     contact_point_2 = loaded_dummy_data["contact_point_2"]
 
     with pytest.raises(MatchingError, match="Violated: same_merged_type"):
-        match_item_in_graph(activity_1.identifier, contact_point_2.stableTargetId)
+        match_item_in_graph(activity_1.identifier, contact_point_2.stableTargetId, publishing_target=PublishingTarget("testing"))
