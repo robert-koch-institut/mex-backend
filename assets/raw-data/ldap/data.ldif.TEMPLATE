@@ -13,6 +13,7 @@ employeeID: abc
 sAMAccountName: MaxM
 objectGUID: 00000000-0000-4000-8000-0000000001b0
 department: FG99
+mail: MaxM@ldapmock.local
 uid: MaxM
 
 # Moritz Example
@@ -30,6 +31,7 @@ employeeID: def
 sAMAccountName: MoritzE
 objectGUID: 00000000-0000-4000-8000-000000000315
 department: FG99
+mail: MoritzE@ldapmock.local
 uid: MoritzE
 
 # Moritz Mueller
@@ -47,6 +49,7 @@ employeeID: ghi
 sAMAccountName: MoritzM
 objectGUID: 00000000-0000-4000-8000-000000000141
 department: FG99
+mail: MoritzM@ldapmock.local
 uid: MoritzM
 
 # Funktion Organizational Unit
