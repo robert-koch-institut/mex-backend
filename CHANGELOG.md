@@ -17,7 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changes
 
 - updated template to https://github.com/robert-koch-institut/mex-template/commit/43f715
-
 - `/ldap` has offset param (allow pagination)
 - updated mex-common to 1.17
 - update dependency requests to v2.33.0
@@ -25,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - updated template to https://github.com/robert-koch-institut/mex-template/commit/491e2d
 - clean up query builder global and ingest-param names
 - use neo4j and valkey from docker compose instead of re-configuring in testing.yml
-- seetings validation: validate that valkey url is set if parallelized
+- settings validation: validate that valkey url is set if parallelized
 
 ### Deprecated
 
@@ -43,6 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.7.2] - 2026-03-13
 
+**🚨 SECURITY: DO NOT USE** - faulty delete permissions (MX-2252), use 1.8+ instead
+
 ### Removed
 
 - drop orjson response rendering because fastapi 0.130+ uses rust anyway
@@ -53,6 +54,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.7.1] - 2026-03-10
 
+**🚨 SECURITY: DO NOT USE** - faulty delete permissions (MX-2252), use 1.8+ instead
+
 ### Changes
 
 - upgraded neo4j to 2026.01
@@ -60,6 +63,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - updated template to https://github.com/robert-koch-institut/mex-template/commit/0c16a6
 
 ## [1.7.0] - 2026-03-02
+
+**🚨 SECURITY: DO NOT USE** - faulty delete permissions (MX-2252), use 1.8+ instead
 
 ### Added
 
@@ -72,6 +77,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.6.0] - 2026-02-24
 
+**🚨 SECURITY: DO NOT USE** - faulty delete permissions (MX-2252), use 1.8+ instead
+
 ### Added
 
 - automatically ingest primary source for mex-editor into database
@@ -79,6 +86,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   hadPrimarySource field returns rule items
 
 ## [1.5.0] - 2026-02-19
+
+**🚨 SECURITY: DO NOT USE** - faulty delete permissions (MX-2252), use 1.8+ instead
 
 ### Changes
 
@@ -99,6 +108,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - collect distinct rule items inside the merged item query
 
 ## [1.4.0] - 2026-02-02
+
+**🚨 SECURITY: DO NOT USE** - faulty delete permissions (MX-2252), use 1.8+ instead
 
 ### Changes
 
@@ -122,6 +133,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.3.0] - 2025-11-20
 
+**🚨 SECURITY: DO NOT USE** - faulty delete permissions (MX-2252), use 1.8+ instead
+
 ### Added
 
 - delete_rule_set endpoint
@@ -137,6 +150,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - mex.bat test command
 
 ## [1.2.0] - 2025-10-23
+
+**🚨 SECURITY: DO NOT USE** - faulty delete permissions (MX-2252), use 1.8+ instead
 
 ### Added
 
