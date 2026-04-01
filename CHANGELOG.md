@@ -37,6 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- require write access for DELETE `/v0/merged-item/{identifier}` endpoint
+
 ## [1.7.2] - 2026-03-13
 
 ### Removed
