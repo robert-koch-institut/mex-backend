@@ -587,8 +587,8 @@ dev = [
 
 [[package]]
 name = "mex-common"
-version = "1.17.0"
-source = { git = "https://github.com/robert-koch-institut/mex-common.git?branch=feature%2Fmx-2132-create-publishing-rule#48bfde7b7cab5deb43784897a98488d729a21218" }
+version = "1.18.1"
+source = { git = "https://github.com/robert-koch-institut/mex-common.git?branch=feature%2Fmx-2132-create-publishing-rule#636d1350fb2c1ecaa1bfe4860b35be63888fc2d7" }
 dependencies = [
     { name = "backoff" },
     { name = "click" },

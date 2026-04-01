@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- `/ldap` has offset param (allow pagination)
+- updated mex-common to 1.17
 - update dependency requests to v2.33.0
 - updated template to https://github.com/robert-koch-institut/mex-template/commit/172aac
 - updated template to https://github.com/robert-koch-institut/mex-template/commit/491e2d
@@ -34,6 +36,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - sort ldap endpoint results by `identifierInPrimarySource` for deterministic ordering
 
 ### Security
+
+- require write access for DELETE `/v0/merged-item/{identifier}` endpoint
 
 ## [1.7.2] - 2026-03-13
 

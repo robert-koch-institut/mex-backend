@@ -11,7 +11,7 @@ dependencies = [
     "backoff>=2.2,<3",
     "fastapi>=0.135,<0.136",
     "jinja2>=3.1,<4",
-    "mex-common>=1.16.1,<1.17",
+    "mex-common>=1.17,<1.18",
     "neo4j>=6.1,<7",
     "pydantic>=2,<3",
     "starlette>=1,<2",
@@ -164,6 +164,3 @@ packages = ["mex"]
 
 [tool.hatch.build.targets.sdist]
 packages = ["mex"]
-
-[tool.uv.sources]
-mex-common = { git = "https://github.com/robert-koch-institut/mex-common.git", branch = "feature/mx-2132-create-publishing-rule" }
