@@ -1,23 +1,13 @@
 from typing import TYPE_CHECKING
-from unittest.mock import Mock, patch
 
 import pytest
 from starlette import status
 
-from mex.backend.auxiliary.ldap import search_persons_or_contact_points_in_ldap
 from mex.backend.auxiliary.primary_source import extracted_primary_source_ldap
 from mex.backend.auxiliary.wikidata import extracted_organization_rki
 from mex.backend.extracted.helpers import search_extracted_items_in_graph
-from mex.common.ldap.connector import LDAPConnector
-from mex.common.ldap.models import AnyLDAPActor
-from mex.common.models import (
-    ExtractedContactPoint,
-    ExtractedOrganization,
-    ExtractedOrganizationalUnit,
-    ExtractedPrimarySource,
-)
-from mex.common.models.base.container import PaginatedItemsContainer
-from mex.common.types import Identifier, MergedPrimarySourceIdentifier, TextLanguage
+from mex.common.models import ExtractedPrimarySource
+from mex.common.types import Identifier, TextLanguage
 from tests.conftest import get_graph
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -37,7 +27,7 @@ def test_search_persons_or_contact_points_in_ldap(
         "hadPrimarySource": "ebs5siX85RkdrhBRlsYgRP",
         "identifierInPrimarySource": "00000000-0000-4000-8000-000000000141",
         "affiliation": [rki_organization.stableTargetId],
-        "email": [],
+        "email": ["MoritzM@ldapmock.local"],
         "familyName": ["Mueller"],
         "fullName": ["Moritz Mueller"],
         "givenName": ["Moritz"],
@@ -48,6 +38,27 @@ def test_search_persons_or_contact_points_in_ldap(
         "identifier": "c6OEuSCqKQYzHNHPC96hEF",
         "stableTargetId": "e9KbtvmWDHuiNRgo3KhiBv",
     } in response_json["items"]
+
+
+@pytest.mark.usefixtures("mocked_ldap", "mocked_wikidata")
+def test_ldap_pagination(
+    client_with_api_key_read_permission: TestClient,
+) -> None:
+    all_response = client_with_api_key_read_permission.get(
+        "/v0/ldap", params={"q": "*"}
+    )
+    assert all_response.status_code == status.HTTP_200_OK, all_response.text
+    all_items = all_response.json()
+
+    paginated_response = client_with_api_key_read_permission.get(
+        "/v0/ldap", params={"q": "*", "offset": 1, "limit": 2}
+    )
+    assert paginated_response.status_code == status.HTTP_200_OK, paginated_response.text
+    paginated_items = paginated_response.json()
+
+    assert paginated_items["total"] == all_items["total"]
+    assert len(paginated_items["items"]) == 2
+    assert paginated_items["items"] == all_items["items"][1:3]
 
 
 def test_extracted_primary_source_ldap() -> None:
@@ -82,57 +93,3 @@ def test_extracted_primary_source_ldap_ingest() -> None:
     )
 
     assert ingested.total == 1, get_graph()
-
-
-@pytest.mark.integration
-def test_ldap_pagination() -> None:
-
-    with (
-        patch("mex.common.ldap.connector.LDAPConnector.get") as mock_ldap_connector_get,
-        patch(
-            "mex.backend.auxiliary.organigram.extracted_organizational_units"
-        ) as mock_ext_org_units,
-        patch(
-            "mex.backend.auxiliary.primary_source.extracted_primary_source_ldap"
-        ) as mock_ext_prim_src_ldap,
-        patch(
-            "mex.backend.auxiliary.wikidata.extracted_organization_rki"
-        ) as mock_ext_org_rki,
-        patch(
-            "mex.common.ldap.transform.transform_any_ldap_actor_to_extracted_persons_or_contact_points"
-        ) as mock_transform_ldap,
-    ):
-        mocked_ldap_connector = Mock(spec=LDAPConnector)
-        mocked_ldap_connector.get_persons_or_functional_accounts.return_value = (
-            PaginatedItemsContainer[AnyLDAPActor](items=[], total=0)
-        )
-        mock_ldap_connector_get.return_value = mocked_ldap_connector
-
-        my_primary_source = MergedPrimarySourceIdentifier.generate()
-        mock_ext_org_units.return_value = [
-            ExtractedOrganizationalUnit(
-                name="RKI",
-                hadPrimarySource=my_primary_source,
-                identifierInPrimarySource="RKI",
-            )
-        ]
-        mock_ext_prim_src_ldap.return_value = ExtractedPrimarySource(
-            hadPrimarySource=my_primary_source, identifierInPrimarySource="LDAP"
-        )
-        mock_ext_org_rki.return_value = ExtractedOrganization(
-            officialName="RKI",
-            identifierInPrimarySource="RKI",
-            hadPrimarySource=my_primary_source,
-        )
-        mock_transform_ldap.return_value = [
-            ExtractedContactPoint(
-                identifierInPrimarySource="RKI",
-                hadPrimarySource=my_primary_source,
-                email=["rki@rki.de"],
-            )
-        ]
-
-        search_persons_or_contact_points_in_ldap("query-string", 10, 10)
-        mocked_ldap_connector.get_persons_or_functional_accounts.assert_called_once_with(
-            query="query-string", offset=10, limit=10
-        )

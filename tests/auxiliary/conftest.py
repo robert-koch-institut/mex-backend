@@ -1,20 +1,26 @@
 import json
 import os
+import ssl
 from pathlib import Path
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import MagicMock, Mock
 from uuid import UUID
 
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Callable, Sequence
+
 import pytest
 import requests
+from ldap3 import Tls
 from pytest import MonkeyPatch
 from requests import Response
 
 from mex.common.ldap.connector import LDAPConnector
-from mex.common.ldap.models import AnyLDAPActor, LDAPFunctionalAccount, LDAPPerson
+from mex.common.ldap.models import LDAPActor, LDAPFunctionalAccount, LDAPPerson
 from mex.common.models import PaginatedItemsContainer
 from mex.common.orcid.connector import OrcidConnector
 from mex.common.orcid.models import OrcidRecord, OrcidSearchResponse
+from mex.common.transform import MExEncoder, normalize
 from mex.common.wikidata.connector import WikidataAPIConnector
 
 TEST_DATA_DIR = Path(__file__).parent / "test_data"
@@ -27,6 +33,7 @@ test_persons_ldap = [
         objectGUID=UUID(version=4, int=432),
         department="FG99",
         displayName="Max Mueller",
+        mail=["MaxM@ldapmock.local"],
     ),
     LDAPPerson(
         employeeID="def",
@@ -35,6 +42,7 @@ test_persons_ldap = [
         objectGUID=UUID(version=4, int=789),
         department="FG99",
         displayName="Moritz Example",
+        mail=["MoritzE@ldapmock.local"],
     ),
     LDAPPerson(
         employeeID="ghi",
@@ -43,6 +51,7 @@ test_persons_ldap = [
         objectGUID=UUID(version=4, int=321),
         department="FG99",
         displayName="Moritz Mueller",
+        mail=["MoritzM@ldapmock.local"],
     ),
 ]
 
@@ -84,48 +93,60 @@ test_person_orcid = [
 ]
 
 
+def ldap_mock_searcher(
+    actors: Sequence[LDAPActor],
+) -> Callable[..., PaginatedItemsContainer[LDAPActor]]:
+    """Create a mocked search with token matching and pagination support."""
+
+    def tokenize(obj: object) -> set[str]:
+        serialized = json.dumps(obj, cls=MExEncoder, ensure_ascii=False)
+        return set(normalize(serialized.lower()).split())
+
+    def mock_search(
+        _self: LDAPConnector,
+        *,
+        query: str = "*",
+        offset: int = 0,
+        limit: int = 10,
+    ) -> PaginatedItemsContainer[LDAPActor]:
+        tokenized_query = tokenize(query)
+        actors_by_score = [
+            (len(tokenized_query & tokenize(actor)), actor) for actor in actors
+        ]
+        matched = [i[1] for i in sorted(actors_by_score, key=lambda i: i[0])]
+        return PaginatedItemsContainer[LDAPActor](
+            items=matched[offset : offset + limit],
+            total=len(matched),
+        )
+
+    return mock_search
+
+
 @pytest.fixture(params=["ldap_patched_connector", "ldap_mock_server"])
 def mocked_ldap(request: pytest.FixtureRequest, monkeypatch: MonkeyPatch) -> None:
     if request.param == "ldap_patched_connector":
-
-        def __init__(self: LDAPConnector) -> None:
-            self._connection = MagicMock(extend=Mock())
-            self._connection.extend.standard.paged_search = MagicMock(side_effect=[])
-
-        monkeypatch.setattr(LDAPConnector, "__init__", __init__)
-
+        monkeypatch.setattr(
+            LDAPConnector,
+            "__init__",
+            lambda self: setattr(self, "_connection", MagicMock()),
+        )
         monkeypatch.setattr(
             LDAPConnector,
             "get_persons",
-            MagicMock(
-                return_value=PaginatedItemsContainer[LDAPPerson](
-                    items=test_persons_ldap, total=len(test_persons_ldap)
-                )
-            ),
+            ldap_mock_searcher(test_persons_ldap),
         )
-
         monkeypatch.setattr(
             LDAPConnector,
             "get_functional_accounts",
-            MagicMock(
-                return_value=PaginatedItemsContainer[LDAPFunctionalAccount](
-                    items=test_accounts_ldap, total=len(test_accounts_ldap)
-                )
-            ),
+            ldap_mock_searcher(test_accounts_ldap),
         )
-
         test_persons_and_functional_accounts_ldap = sorted(
             [*test_persons_ldap, *test_accounts_ldap], key=lambda x: x.objectGUID
         )
         monkeypatch.setattr(
             LDAPConnector,
             "get_persons_or_functional_accounts",
-            MagicMock(
-                return_value=PaginatedItemsContainer[AnyLDAPActor](
-                    items=test_persons_and_functional_accounts_ldap,
-                    total=len(test_persons_and_functional_accounts_ldap),
-                ),
-            ),
+            ldap_mock_searcher(test_persons_and_functional_accounts_ldap),
         )
     elif request.param == "ldap_mock_server":
         if "MEX_LDAP_SEARCH_BASE" not in os.environ:
@@ -133,9 +154,13 @@ def mocked_ldap(request: pytest.FixtureRequest, monkeypatch: MonkeyPatch) -> Non
         else:
             # TODO(ND): Make this configurable in mex-common
 
-            from mex.common.ldap import connector as connector_module  # noqa: PLC0415
+            original_init = Tls.__init__
 
-            monkeypatch.setattr(connector_module, "AUTO_BIND_NO_TLS", "DEFAULT")
+            def _tls_init_no_verify(self: Tls, *args: Any, **kwargs: Any) -> None:  # noqa: ANN401
+                kwargs["validate"] = ssl.CERT_NONE
+                original_init(self, *args, **kwargs)
+
+            monkeypatch.setattr(Tls, "__init__", _tls_init_no_verify)
 
 
 @pytest.fixture
