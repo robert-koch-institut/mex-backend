@@ -255,6 +255,10 @@ def test_get_rule_set_not_found(
                     "unitOf": [],
                     "website": [],
                 },
+                "workflow": {
+                    "$type": "WorkflowOrganizationalUnit",
+                    "forbiddenPublishingTarget": [],
+                },
             },
             id="rule set with extracted",
         ),
@@ -293,6 +297,10 @@ def test_get_rule_set_not_found(
                     "shortName": [],
                     "unitOf": [],
                     "website": [],
+                },
+                "workflow": {
+                    "$type": "WorkflowOrganizationalUnit",
+                    "forbiddenPublishingTarget": [],
                 },
             },
             id="standalone rule set",

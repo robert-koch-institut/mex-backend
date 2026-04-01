@@ -7,7 +7,6 @@ from mex.common.exceptions import MExError
 from mex.common.types import (
     AnyExtractedIdentifier,
     AnyMergedIdentifier,
-    PublishingTarget,
 )
 
 router = APIRouter()
@@ -20,9 +19,7 @@ def match_item(
 ) -> None:
     """Match an extracted item to a merged item."""
     try:
-        match_item_in_graph(
-            extractedIdentifier, mergedIdentifier, PublishingTarget("testing")
-        )
+        match_item_in_graph(extractedIdentifier, mergedIdentifier)
     except MExError as error:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
