@@ -582,7 +582,7 @@ def test_fetch_extracted_items(
     }
     query_kwargs = query_parameter_defaults | query_parameters
     graph = GraphConnector.get()
-    result = graph.fetch_extracted_items(**query_kwargs)
+    result = graph.fetch_extracted_items(**query_kwargs)  # type: ignore[arg-type]
 
     assert result.one() == expected
 
@@ -761,7 +761,7 @@ def test_fetch_rule_items(
     }
     query_kwargs = query_parameter_defaults | query_parameters
     graph = GraphConnector.get()
-    result = graph.fetch_rule_items(**query_kwargs)
+    result = graph.fetch_rule_items(**query_kwargs)  # type: ignore[arg-type]
 
     assert result.one() == expected
 
@@ -1356,7 +1356,7 @@ def test_fetch_merged_items(
     query_kwargs = query_parameter_defaults | query_parameters
     graph = GraphConnector.get()
 
-    result = graph.fetch_merged_items(**query_kwargs)
+    result = graph.fetch_merged_items(**query_kwargs)  # type: ignore[arg-type]
 
     assert result.one() == expected
 
