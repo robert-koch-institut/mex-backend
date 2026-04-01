@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changes
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [1.8.0] - 2026-04-01
+
+### Added
+
 - add slapd LDAP mock server to compose and CI
 - add `mocked_ldap` fixture variant running against slapd when a search base is set
 - add LDAP mock data in `assets/raw-data/ldap/` with persons and functional accounts
@@ -29,8 +43,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Deprecated
 
 - deprecate `stableTargetId`, `referenceField` and `referencedIdentifier` filter params
-
-### Removed
 
 ### Fixed
 
