@@ -1,9 +1,10 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Body, HTTPException, Path
+from fastapi import Body, HTTPException, Path
 from starlette import status
 
 from mex.backend.graph.exceptions import NoResultFoundError
+from mex.backend.routers import read_router, write_router
 from mex.backend.rules.helpers import (
     create_and_get_rule_set,
     delete_rule_set_from_graph,
@@ -13,10 +14,8 @@ from mex.backend.rules.helpers import (
 from mex.common.models import AnyRuleSetRequest, AnyRuleSetResponse
 from mex.common.types import Identifier
 
-router = APIRouter()
 
-
-@router.post("/rule-set", status_code=status.HTTP_201_CREATED, tags=["editor"])
+@write_router.post("/rule-set", status_code=status.HTTP_201_CREATED, tags=["editor"])
 def create_rule_set(
     rule_set: Annotated[AnyRuleSetRequest, Body(discriminator="entityType")],
 ) -> AnyRuleSetResponse:
@@ -24,7 +23,7 @@ def create_rule_set(
     return create_and_get_rule_set(rule_set)
 
 
-@router.get("/rule-set/{stableTargetId}", tags=["editor"])
+@read_router.get("/rule-set/{stableTargetId}", tags=["editor"])
 def get_rule_set(
     stableTargetId: Annotated[Identifier, Path()],
 ) -> AnyRuleSetResponse:
@@ -34,7 +33,7 @@ def get_rule_set(
     raise HTTPException(status.HTTP_404_NOT_FOUND, "no rules found")
 
 
-@router.put("/rule-set/{stableTargetId}", tags=["editor"])
+@write_router.put("/rule-set/{stableTargetId}", tags=["editor"])
 def update_rule_set(
     stableTargetId: Annotated[Identifier, Path()],
     rule_set: Annotated[AnyRuleSetRequest, Body(discriminator="entityType")],
@@ -43,7 +42,7 @@ def update_rule_set(
     return update_and_get_rule_set(rule_set, stableTargetId)
 
 
-@router.delete(
+@write_router.delete(
     "/rule-set/{stableTargetId}",
     status_code=status.HTTP_204_NO_CONTENT,
     tags=["editor"],

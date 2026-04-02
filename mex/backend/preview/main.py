@@ -1,11 +1,12 @@
 from collections.abc import Sequence
 from typing import Annotated
 
-from fastapi import APIRouter, Body, HTTPException, Path, Query
+from fastapi import Body, HTTPException, Path, Query
 from starlette import status
 
 from mex.backend.extracted.helpers import get_extracted_items_from_graph
 from mex.backend.merged.helpers import search_merged_items_in_graph
+from mex.backend.routers import read_router
 from mex.backend.types import MergedType, ReferenceFieldName
 from mex.common.merged.main import create_merged_item
 from mex.common.models import (
@@ -17,10 +18,8 @@ from mex.common.models import (
 from mex.common.transform import ensure_prefix
 from mex.common.types import Identifier, Validation
 
-router = APIRouter()
 
-
-@router.post("/preview-item/{identifier}", tags=["editor"])
+@read_router.post("/preview-item/{identifier}", tags=["editor"])
 def preview_item(
     identifier: Annotated[Identifier, Path()],
     ruleSet: Annotated[AnyRuleSetRequest, Body(discriminator="entityType")],
@@ -42,7 +41,7 @@ def preview_item(
     )
 
 
-@router.get("/preview-item", tags=["editor"])
+@read_router.get("/preview-item", tags=["editor"])
 def search_preview_items(  # noqa: PLR0913
     q: Annotated[str, Query(max_length=100)] = "",
     identifier: Annotated[Identifier | None, Query()] = None,

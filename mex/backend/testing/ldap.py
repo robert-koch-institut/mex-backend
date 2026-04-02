@@ -17,10 +17,11 @@ from mex.common.types import Validation
 
 DEFAULT_LDAP_QUERY = "mex@rki.de"
 
-router = APIRouter()
+
+mocked_ldap_router = APIRouter()
 
 
-@router.post("/merged-person-from-login")
+@mocked_ldap_router.post("/merged-person-from-login")
 def get_merged_person_from_login(
     username: Annotated[str, Depends(has_write_access_ldap_mocked)],
 ) -> MergedPerson:
@@ -48,7 +49,7 @@ def get_merged_person_from_login(
     return result.items[0]  # type: ignore [return-value]
 
 
-@router.get("/ldap", tags=["auxiliary"])
+@mocked_ldap_router.get("/ldap", tags=["auxiliary"])
 def search_persons_or_contact_points_in_ldap(
     q: Annotated[str, Query(max_length=1000)] = DEFAULT_LDAP_QUERY,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,

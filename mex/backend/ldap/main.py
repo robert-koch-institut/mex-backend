@@ -1,20 +1,19 @@
 from typing import Annotated, cast
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import Depends, HTTPException
 from starlette import status
 
 from mex.backend.auxiliary.primary_source import extracted_primary_source_ldap
 from mex.backend.merged.main import get_merged_item
+from mex.backend.routers import public_router
 from mex.backend.security import has_write_access_ldap
 from mex.common.identity import get_provider
 from mex.common.ldap.connector import LDAPConnector
 from mex.common.models import MergedPerson
 from mex.common.types import MergedPrimarySourceIdentifier
 
-router = APIRouter()
 
-
-@router.post("/merged-person-from-login", tags=["editor"])
+@public_router.post("/merged-person-from-login", tags=["editor"])
 def get_merged_person_from_login(
     username: Annotated[str, Depends(has_write_access_ldap)],
 ) -> MergedPerson:
