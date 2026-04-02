@@ -15,7 +15,7 @@ from mex.common.models import (
     PaginatedItemsContainer,
 )
 from mex.common.transform import ensure_prefix
-from mex.common.types import Identifier, Validation
+from mex.common.types import Identifier, PublishingTarget, Validation
 
 router = APIRouter()
 
@@ -39,6 +39,7 @@ def preview_item(
         extracted_items=extracted_items,
         rule_set=ruleSet,
         validation=Validation.STRICT,
+        publishing_target=PublishingTarget("testing"),
     )
 
 
@@ -73,4 +74,5 @@ def search_preview_items(  # noqa: PLR0913
         skip=skip,
         limit=limit,
         validation=Validation.LENIENT,
+        publishing_target=PublishingTarget("testing"),
     )

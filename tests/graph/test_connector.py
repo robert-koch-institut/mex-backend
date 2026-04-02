@@ -22,7 +22,13 @@ from mex.common.models import (
     ExtractedOrganization,
     ExtractedOrganizationalUnit,
 )
-from mex.common.types import Identifier, Text, TextLanguage, Validation
+from mex.common.types import (
+    Identifier,
+    PublishingTarget,
+    Text,
+    TextLanguage,
+    Validation,
+)
 from tests.conftest import DummyData, MockedGraph, get_graph
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -718,7 +724,7 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
                         "stableTargetId": ["StandaloneRule"],
                     }
                 ],
-                "total": 6,
+                "total": 8,
             },
             id="no-filters",
         ),
@@ -1913,6 +1919,7 @@ def test_graph_match_item_preconditions_pass(loaded_dummy_data: DummyData) -> No
         [loaded_dummy_data["unit_1"]],
         None,
         Validation.STRICT,
+        publishing_target=PublishingTarget("testing"),
     )
 
     with pytest.raises(NotImplementedError):

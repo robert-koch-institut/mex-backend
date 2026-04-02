@@ -20,13 +20,14 @@ from mex.common.models import (
     AnyMergedModel,
     PaginatedItemsContainer,
 )
-from mex.common.types import Identifier, Validation
+from mex.common.types import Identifier, PublishingTarget, Validation
 
 router = APIRouter()
 
 
 @router.get("/merged-item", tags=["editor"])
 def search_merged_items(  # noqa: PLR0913
+    publishing_target: PublishingTarget,
     q: Annotated[str, Query(max_length=100)] = "",
     identifier: Annotated[Identifier | None, Query()] = None,
     entityType: Annotated[Sequence[MergedType], Query(max_length=len(MergedType))] = [],
@@ -52,14 +53,18 @@ def search_merged_items(  # noqa: PLR0913
         skip=skip,
         limit=limit,
         validation=Validation.IGNORE,
+        publishing_target=publishing_target,
     )
 
 
 @router.get("/merged-item/{identifier}", tags=["editor"])
-def get_merged_item(identifier: Annotated[Identifier, Path()]) -> AnyMergedModel:
+def get_merged_item(
+    identifier: Annotated[Identifier, Path()],
+    publishing_target: PublishingTarget,
+) -> AnyMergedModel:
     """Return one merged item for the given `identifier`."""
     try:
-        return get_merged_item_from_graph(identifier)
+        return get_merged_item_from_graph(identifier, publishing_target)
     except NoResultFoundError as error:
         raise HTTPException(status.HTTP_404_NOT_FOUND) from error
 

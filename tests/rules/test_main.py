@@ -255,6 +255,10 @@ def test_get_rule_set_not_found(
                     "unitOf": [],
                     "website": [],
                 },
+                "workflow": {
+                    "$type": "WorkflowOrganizationalUnit",
+                    "forbiddenPublishingTarget": [],
+                },
             },
             id="rule set with extracted",
         ),
@@ -293,6 +297,10 @@ def test_get_rule_set_not_found(
                     "shortName": [],
                     "unitOf": [],
                     "website": [],
+                },
+                "workflow": {
+                    "$type": "WorkflowOrganizationalUnit",
+                    "forbiddenPublishingTarget": [],
                 },
             },
             id="standalone rule set",
@@ -398,6 +406,9 @@ def test_update_rule_set(
             "subtractive": {
                 "$type": "SubtractiveOrganizationalUnit",
             },
+            "workflow": {
+                "$type": "WorkflowOrganizationalUnit",
+            },
         },
     )
     assert response.status_code == status.HTTP_200_OK, response.text
@@ -432,6 +443,10 @@ def test_update_rule_set(
             "shortName": [],
             "unitOf": [],
             "website": [],
+        },
+        "workflow": {
+            "$type": "WorkflowOrganizationalUnit",
+            "forbiddenPublishingTarget": "testing",
         },
         "$type": "OrganizationalUnitRuleSetResponse",
         "stableTargetId": loaded_dummy_data["unit_2_rule_set"].stableTargetId,

@@ -12,7 +12,7 @@ from mex.common.models import (
     OrganizationalUnitRuleSetRequest,
     SubtractiveOrganizationalUnit,
 )
-from mex.common.types import Validation
+from mex.common.types import PublishingTarget, Validation
 
 if TYPE_CHECKING:  # pragma: no cover
     from fastapi.testclient import TestClient
@@ -468,6 +468,7 @@ def test_get_merged_item(
         extracted_items=[extracted_organization_1],
         rule_set=None,
         validation=Validation.STRICT,
+        publishing_target=PublishingTarget("testing"),
     )
     response = client_with_api_key_read_permission.get(
         f"/v0/merged-item/{merged_organization.identifier}"
