@@ -10,7 +10,7 @@ from mex.backend.graph.exceptions import (
 from mex.backend.rules.transform import transform_raw_rules_to_rule_set_response
 from mex.common.exceptions import MergingError
 from mex.common.logging import logger
-from mex.common.merged.main import create_merged_item
+from mex.common.merged.main import create_merged_item_for_publishing_target
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     RULE_MODEL_CLASSES_BY_NAME,
@@ -85,7 +85,7 @@ def merge_search_result_item(
     else:
         rule_set = None
     try:
-        return create_merged_item(
+        return create_merged_item_for_publishing_target(
             identifier=Identifier(item["identifier"]),
             extracted_items=extracted_items,
             rule_set=rule_set,

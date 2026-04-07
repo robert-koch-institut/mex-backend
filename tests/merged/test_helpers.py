@@ -9,7 +9,7 @@ from mex.backend.merged.helpers import (
     get_merged_item_from_graph,
     search_merged_items_in_graph,
 )
-from mex.common.merged.main import create_merged_item
+from mex.common.merged.main import create_merged_item_for_publishing_target
 from mex.common.types import Identifier, PublishingTarget, TextLanguage, Validation
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -262,7 +262,7 @@ def test_get_merged_item_from_graph(
     fetched = get_merged_item_from_graph(
         organization_1.stableTargetId, publishing_target=PublishingTarget("testing")
     )
-    expected = create_merged_item(
+    expected = create_merged_item_for_publishing_target(
         identifier=organization_1.stableTargetId,
         extracted_items=[organization_2, organization_1],
         rule_set=None,

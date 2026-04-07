@@ -5,7 +5,7 @@ import pytest
 from starlette import status
 
 from mex.backend.rules.helpers import update_and_get_rule_set
-from mex.common.merged.main import create_merged_item
+from mex.common.merged.main import create_merged_item_for_publishing_target
 from mex.common.models import (
     MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
     ExtractedOrganizationalUnit,
@@ -463,7 +463,7 @@ def test_get_merged_item(
 ) -> None:
     extracted_organization_1 = loaded_dummy_data["organization_1"]
 
-    merged_organization = create_merged_item(
+    merged_organization = create_merged_item_for_publishing_target(
         identifier=extracted_organization_1.stableTargetId,
         extracted_items=[extracted_organization_1],
         rule_set=None,

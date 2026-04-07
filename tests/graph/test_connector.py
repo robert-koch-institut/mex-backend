@@ -13,7 +13,7 @@ from mex.backend.graph.models import IngestParams
 from mex.backend.graph.query import Query
 from mex.backend.types import MergedType
 from mex.common.exceptions import MExError
-from mex.common.merged.main import create_merged_item
+from mex.common.merged.main import create_merged_item_for_publishing_target
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
@@ -1914,12 +1914,12 @@ def test_mocked_graph_ingests_extracted_models(
 def test_graph_match_item_preconditions_pass(loaded_dummy_data: DummyData) -> None:
     graph = GraphConnector.get()
     extracted = loaded_dummy_data["unit_2"]
-    merged = create_merged_item(
+    merged = create_merged_item_for_publishing_target(
         loaded_dummy_data["unit_1"].stableTargetId,
         [loaded_dummy_data["unit_1"]],
         None,
         Validation.STRICT,
-        publishing_target=PublishingTarget("testing"),
+        publishing_target=PublishingTarget("datenkompass"),
     )
 
     with pytest.raises(NotImplementedError):

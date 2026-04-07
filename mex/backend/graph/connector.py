@@ -48,7 +48,7 @@ from mex.common.models import (
     AnyExtractedModel,
     AnyMergedModel,
     AnyRuleModel,
-    AnyRuleSetResponse,
+    AnyRuleSetResponse, AnyPreviewModel,
 )
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -514,7 +514,7 @@ class GraphConnector(BaseConnector):
         self,
         tx: Transaction,
         extracted_item: AnyExtractedModel,
-        merged_item: AnyMergedModel,
+        preview_item: AnyPreviewModel,
     ) -> None:
         """Raise an error when the preconditions for performing a match aren't met."""
         settings = BackendSettings.get()
@@ -525,7 +525,7 @@ class GraphConnector(BaseConnector):
             tx.run(
                 check_match_preconditions_query.render(),
                 extracted_identifier=str(extracted_item.identifier),
-                merged_identifier=str(merged_item.identifier),
+                merged_identifier=str(preview_item.identifier),
                 blocked_types=[t.value for t in settings.non_matchable_types],
             )
         )
@@ -549,16 +549,16 @@ class GraphConnector(BaseConnector):
         self,
         tx: Transaction,
         extracted_item: AnyExtractedModel,
-        merged_item: AnyMergedModel,
+        preview_item: AnyPreviewModel,
     ) -> None:
         """Run all required matching steps in a single transaction."""
-        self._check_match_preconditions_tx(tx, extracted_item, merged_item)
+        self._check_match_preconditions_tx(tx, extracted_item, preview_item)
         raise NotImplementedError
 
     def match_item(
         self,
         extracted_item: AnyExtractedModel,
-        merged_item: AnyMergedModel,
+        preview_item: AnyPreviewModel,
     ) -> None:
         """Match an extracted item to a new merged item and clean up afterwards."""
         settings = BackendSettings.get()
@@ -569,12 +569,12 @@ class GraphConnector(BaseConnector):
                 metadata={
                     "extracted_identifier": extracted_item.identifier,
                     "old_merged_identifier": extracted_item.stableTargetId,
-                    "new_merged_identifier": merged_item.identifier,
+                    "new_merged_identifier": preview_item.identifier,
                 },
             ) as tx,
         ):
             try:
-                self._match_item_tx(tx, extracted_item, merged_item)
+                self._match_item_tx(tx, extracted_item, preview_item)
             except:
                 tx.rollback()
                 raise
