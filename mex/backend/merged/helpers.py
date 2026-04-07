@@ -155,7 +155,7 @@ def search_merged_items_in_graph(  # noqa: PLR0913
     validation: Literal[
         Validation.STRICT, Validation.LENIENT, Validation.IGNORE
     ] = Validation.STRICT,
-    publishing_target: PublishingTarget | None = PublishingTarget,
+    publishing_target: PublishingTarget | None,
 ) -> PaginatedItemsContainer[AnyPreviewModel] | PaginatedItemsContainer[AnyMergedModel]:
     """Search for merged items.
 
