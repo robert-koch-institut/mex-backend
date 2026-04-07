@@ -10,10 +10,10 @@ from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     ExtractedContactPoint,
     ExtractedPerson,
-    MergedPerson,
-    PaginatedItemsContainer, PreviewPerson,
+    PaginatedItemsContainer,
+    PreviewPerson,
 )
-from mex.common.types import PublishingTarget, Validation
+from mex.common.types import Validation
 
 DEFAULT_LDAP_QUERY = "mex@rki.de"
 

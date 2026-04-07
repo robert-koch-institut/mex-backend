@@ -1914,16 +1914,16 @@ def test_mocked_graph_ingests_extracted_models(
 def test_graph_match_item_preconditions_pass(loaded_dummy_data: DummyData) -> None:
     graph = GraphConnector.get()
     extracted = loaded_dummy_data["unit_2"]
-    merged = create_merged_item_for_publishing_target(
+    preview = create_merged_item_for_publishing_target(
         loaded_dummy_data["unit_1"].stableTargetId,
         [loaded_dummy_data["unit_1"]],
         None,
-        Validation.STRICT,
+        Validation.LENIENT,
         publishing_target=PublishingTarget("datenkompass"),
     )
 
     with pytest.raises(NotImplementedError):
-        graph.match_item(extracted, merged)
+        graph.match_item(extracted, preview)
 
 
 @pytest.mark.parametrize(

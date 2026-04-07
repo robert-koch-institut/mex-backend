@@ -89,7 +89,7 @@ def test_graph_ingest_and_query_roundtrip(
 
     fetched_container = search_merged_items_in_graph(
         limit=len(expected_models),
-        publishing_target=PublishingTarget("testing"),
+        publishing_target=PublishingTarget("invenio"),
     )
     expected_container = PaginatedItemsContainer[AnyMergedModel](
         items=[e.model_dump() for e in expected_models], total=len(expected_models)

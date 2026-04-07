@@ -21,7 +21,7 @@ if TYPE_CHECKING:  # pragma: no cover
 def test_search_merged_items_in_graph() -> None:
     merged_result = search_merged_items_in_graph(
         identifier="bFQoRhcVH5DHUF",
-        publishing_target=PublishingTarget("testing"),
+        publishing_target=PublishingTarget("datenkompass"),
     )
     assert merged_result.model_dump(exclude_defaults=True) == {
         "items": [
@@ -243,7 +243,7 @@ def test_search_merged_items_in_graph_mocked(
 
     try:
         merged_result = search_merged_items_in_graph(
-            identifier="bFQoRhcVH5DHUB", publishing_target=PublishingTarget("testing")
+            identifier="bFQoRhcVH5DHUB", publishing_target=PublishingTarget("invenio")
         )
     except Exception as error:
         if str(expected) not in str(error):
@@ -260,14 +260,14 @@ def test_get_merged_item_from_graph(
     organization_1 = loaded_dummy_data["organization_1"]
     organization_2 = loaded_dummy_data["organization_2"]
     fetched = get_merged_item_from_graph(
-        organization_1.stableTargetId, publishing_target=PublishingTarget("testing")
+        organization_1.stableTargetId, publishing_target=PublishingTarget("invenio")
     )
     expected = create_merged_item_for_publishing_target(
         identifier=organization_1.stableTargetId,
         extracted_items=[organization_2, organization_1],
         rule_set=None,
         validation=Validation.STRICT,
-        publishing_target=PublishingTarget("testing"),
+        publishing_target=PublishingTarget("datenkompass"),
     )
     assert fetched.model_dump() == expected.model_dump()
 
@@ -277,7 +277,7 @@ def test_get_merged_item_from_graph_not_found() -> None:
     with pytest.raises(BackendError, match="Merged item was not found"):
         get_merged_item_from_graph(
             Identifier("notARealIdentifier"),
-            publishing_target=PublishingTarget("testing"),
+            publishing_target=PublishingTarget("datenkompass"),
         )
 
 
@@ -301,7 +301,7 @@ def test_delete_merged_item_from_graph_inbound_connections(
 
     # Verify item is still here
     merged_item = get_merged_item_from_graph(
-        extracted_item.stableTargetId, publishing_target=PublishingTarget("testing")
+        extracted_item.stableTargetId, publishing_target=PublishingTarget("invenio")
     )
     assert extracted_item.stableTargetId == merged_item.identifier
 
@@ -314,7 +314,7 @@ def test_delete_merged_item_from_graph(
     # Use item without inbound connections
     extracted_item = loaded_dummy_data["unit_2"]
     merged_item = get_merged_item_from_graph(
-        extracted_item.stableTargetId, publishing_target=PublishingTarget("testing")
+        extracted_item.stableTargetId, publishing_target=PublishingTarget("invenio")
     )
     assert extracted_item.stableTargetId == merged_item.identifier
 
@@ -328,5 +328,5 @@ def test_delete_merged_item_from_graph(
     # Verify item is gone
     with pytest.raises(BackendError, match="Merged item was not found"):
         get_merged_item_from_graph(
-            extracted_item.stableTargetId, publishing_target=PublishingTarget("testing")
+            extracted_item.stableTargetId, publishing_target=PublishingTarget("invenio")
         )

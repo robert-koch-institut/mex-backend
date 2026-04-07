@@ -893,7 +893,7 @@ def test_ingest_extracted_and_rule(
 
     response = client_with_api_key_write_permission.get(
         "/v0/merged-item",
-        params={"entityType": "MergedPerson", "publishing_target": "testing"},
+        params={"entityType": "MergedPerson", "publishing_target": "datenkompass"},
     )
     assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == {

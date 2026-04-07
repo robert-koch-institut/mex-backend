@@ -46,9 +46,9 @@ from mex.common.models import (
     MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
     RULE_MODEL_CLASSES_BY_NAME,
     AnyExtractedModel,
-    AnyMergedModel,
+    AnyPreviewModel,
     AnyRuleModel,
-    AnyRuleSetResponse, AnyPreviewModel,
+    AnyRuleSetResponse,
 )
 
 if TYPE_CHECKING:  # pragma: no cover

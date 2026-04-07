@@ -1,17 +1,15 @@
 from typing import Annotated, cast
 
 from fastapi import APIRouter, Depends, HTTPException
-from mex.common.models import PreviewPerson
 from starlette import status
 
 from mex.backend.auxiliary.primary_source import extracted_primary_source_ldap
-from mex.backend.merged.main import get_merged_item
 from mex.backend.preview.main import search_preview_items
 from mex.backend.security import has_write_access_ldap
 from mex.common.identity import get_provider
 from mex.common.ldap.connector import LDAPConnector
-from mex.common.models import MergedPerson
-from mex.common.types import MergedPrimarySourceIdentifier, PublishingTarget
+from mex.common.models import PreviewPerson
+from mex.common.types import MergedPrimarySourceIdentifier
 
 router = APIRouter()
 

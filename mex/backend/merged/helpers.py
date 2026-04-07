@@ -29,7 +29,7 @@ if TYPE_CHECKING:  # pragma: no cover
 def merge_search_result_item(
     item: dict[str, Any],
     validation: Literal[Validation.LENIENT],
-    publishing_target: PublishingTarget,
+    publishing_target: PublishingTarget | None,
 ) -> AnyPreviewModel: ...
 
 
@@ -52,7 +52,7 @@ def merge_search_result_item(
 def merge_search_result_item(
     item: dict[str, Any],
     validation: Literal[Validation.STRICT, Validation.LENIENT, Validation.IGNORE],
-    publishing_target: PublishingTarget,
+    publishing_target: PublishingTarget | None,
 ) -> AnyPreviewModel | AnyMergedModel | None:
     """Merge a single search result into a merged item.
 
@@ -109,7 +109,7 @@ def search_merged_items_in_graph(
     skip: int = 0,
     limit: int = 100,
     validation: Literal[Validation.LENIENT] = Validation.LENIENT,
-    publishing_target: PublishingTarget,
+    publishing_target: PublishingTarget | None,
 ) -> PaginatedItemsContainer[AnyPreviewModel]: ...
 
 
@@ -155,7 +155,7 @@ def search_merged_items_in_graph(  # noqa: PLR0913
     validation: Literal[
         Validation.STRICT, Validation.LENIENT, Validation.IGNORE
     ] = Validation.STRICT,
-    publishing_target: PublishingTarget,
+    publishing_target: PublishingTarget | None = PublishingTarget,
 ) -> PaginatedItemsContainer[AnyPreviewModel] | PaginatedItemsContainer[AnyMergedModel]:
     """Search for merged items.
 
