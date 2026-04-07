@@ -1,12 +1,13 @@
 from collections import deque
 from typing import Annotated, cast
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import HTTPException, Query
 
 from mex.backend.auxiliary.primary_source import extracted_primary_source_wikidata
 from mex.backend.auxiliary.utils import fetch_extracted_item_by_source_identifiers
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import NoResultFoundError
+from mex.backend.routers import read_router
 from mex.common.exceptions import EmptySearchResultError
 from mex.common.logging import logger
 from mex.common.models import (
@@ -22,10 +23,8 @@ from mex.common.wikidata.transform import (
 
 RKI_WIKIDATA_ID = "Q679041"
 
-router = APIRouter()
 
-
-@router.get("/wikidata", tags=["auxiliary"])
+@read_router.get("/wikidata", tags=["auxiliary"])
 def search_organizations_in_wikidata(
     q: Annotated[str, Query(max_length=1000)] = RKI_WIKIDATA_ID,
 ) -> PaginatedItemsContainer[ExtractedOrganization]:

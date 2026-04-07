@@ -1,16 +1,15 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Query
+from fastapi import Body, Query
 
 from mex.backend.identity.provider import GraphIdentityProvider
+from mex.backend.routers import read_router, write_router
 from mex.common.identity import Identity
 from mex.common.models import PaginatedItemsContainer
 from mex.common.types import Identifier, MergedPrimarySourceIdentifier
 
-router = APIRouter()
 
-
-@router.post("/identity", tags=["extractors"])
+@write_router.post("/identity", tags=["extractors"])
 def assign_identity(
     hadPrimarySource: Annotated[MergedPrimarySourceIdentifier, Body()],
     identifierInPrimarySource: Annotated[str, Body()],
@@ -23,7 +22,7 @@ def assign_identity(
     )
 
 
-@router.get("/identity", tags=["extractors"])
+@read_router.get("/identity", tags=["extractors"])
 def fetch_identity(
     hadPrimarySource: Annotated[Identifier | None, Query()] = None,
     identifierInPrimarySource: Annotated[str | None, Query()] = None,
@@ -31,8 +30,8 @@ def fetch_identity(
 ) -> PaginatedItemsContainer[Identity]:
     """Find an Identity instance from the database if it can be found.
 
-    Either provide `stableTargetId` or `hadPrimarySource`
-    and `identifierInPrimarySource` together to get a unique result.
+    Either provide `stableTargetId` or a tuple of `hadPrimarySource`
+    and `identifierInPrimarySource` to get a unique result.
     """
     identity_provider = GraphIdentityProvider.get()
     identities = identity_provider.fetch(

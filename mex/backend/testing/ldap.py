@@ -1,10 +1,11 @@
 from collections import deque
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import Depends, Query
 
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.merged.helpers import search_merged_items_in_graph
+from mex.backend.testing.routers import mocked_ldap_router
 from mex.backend.testing.security import has_write_access_ldap_mocked
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -17,10 +18,8 @@ from mex.common.types import Validation
 
 DEFAULT_LDAP_QUERY = "mex@rki.de"
 
-router = APIRouter()
 
-
-@router.post("/merged-person-from-login")
+@mocked_ldap_router.post("/merged-person-from-login")
 def get_merged_person_from_login(
     username: Annotated[str, Depends(has_write_access_ldap_mocked)],
 ) -> MergedPerson:
@@ -48,7 +47,7 @@ def get_merged_person_from_login(
     return result.items[0]  # type: ignore [return-value]
 
 
-@router.get("/ldap", tags=["auxiliary"])
+@mocked_ldap_router.get("/ldap", tags=["auxiliary"])
 def search_persons_or_contact_points_in_ldap(
     q: Annotated[str, Query(max_length=1000)] = DEFAULT_LDAP_QUERY,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,

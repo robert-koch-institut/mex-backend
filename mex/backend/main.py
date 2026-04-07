@@ -2,30 +2,24 @@ from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any
 
 import uvicorn
-from fastapi import APIRouter, Depends, FastAPI
+from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic_core import SchemaError, ValidationError
 
-from mex.backend.auxiliary.ldap import router as ldap_router
-from mex.backend.auxiliary.orcid import router as orcid_router
-from mex.backend.auxiliary.wikidata import router as wikidata_router
 from mex.backend.exceptions import (
     BackendError,
     handle_detailed_error,
     handle_uncaught_exception,
 )
-from mex.backend.extracted.main import router as extracted_router
-from mex.backend.identity.main import router as identity_router
-from mex.backend.ingest.main import router as ingest_router
-from mex.backend.ldap.main import router as ldap_login_router
 from mex.backend.logging import UVICORN_LOGGING_CONFIG
-from mex.backend.match.main import router as match_router
-from mex.backend.merged.main import router as merged_router
-from mex.backend.preview.main import router as preview_router
-from mex.backend.rules.main import router as rules_router
-from mex.backend.security import has_read_access, has_write_access
+from mex.backend.routers import (
+    ldap_login_router,
+    public_router,
+    read_router,
+    read_router_talking_to_ldap,
+    write_router,
+)
 from mex.backend.settings import BackendSettings
-from mex.backend.system.main import router as system_router
 from mex.common.cli import entrypoint
 from mex.common.connector import CONNECTOR_STORE
 from mex.common.logging import logger
@@ -72,19 +66,11 @@ app = FastAPI(
     version="v0",
 )
 router = APIRouter(prefix="/v0")
-router.include_router(extracted_router, dependencies=[Depends(has_read_access)])
-router.include_router(identity_router, dependencies=[Depends(has_write_access)])
-router.include_router(ingest_router, dependencies=[Depends(has_write_access)])
-router.include_router(ldap_router, dependencies=[Depends(has_read_access)])
-router.include_router(match_router, dependencies=[Depends(has_write_access)])
-router.include_router(merged_router, dependencies=[Depends(has_read_access)])
-router.include_router(orcid_router, dependencies=[Depends(has_read_access)])
-router.include_router(preview_router, dependencies=[Depends(has_read_access)])
-router.include_router(rules_router, dependencies=[Depends(has_write_access)])
-router.include_router(wikidata_router, dependencies=[Depends(has_read_access)])
+router.include_router(read_router)
+router.include_router(write_router)
+router.include_router(public_router)
 router.include_router(ldap_login_router)
-
-router.include_router(system_router)
+router.include_router(read_router_talking_to_ldap)
 
 app.include_router(router)
 app.add_exception_handler(BackendError, handle_detailed_error)

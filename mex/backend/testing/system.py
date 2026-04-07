@@ -1,18 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import HTTPException
 from starlette import status
 
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.security import has_write_access
 from mex.backend.settings import BackendSettings
+from mex.backend.testing.routers import database_deletion_router
 from mex.common.connector import CONNECTOR_STORE
 from mex.common.models import Status
 
-router = APIRouter()
 
-
-@router.delete(
+@database_deletion_router.delete(
     "/_system/graph",
-    dependencies=[Depends(has_write_access)],
     tags=["system"],
 )
 def flush_graph_database() -> Status:

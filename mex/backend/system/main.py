@@ -1,15 +1,13 @@
 from importlib.metadata import version
 
-from fastapi import APIRouter
 from fastapi.responses import PlainTextResponse
 
+from mex.backend.routers import public_router
 from mex.common.connector import CONNECTOR_STORE
 from mex.common.models import VersionStatus
 
-router = APIRouter()
 
-
-@router.get(
+@public_router.get(
     "/_system/check",
     tags=["system"],
 )
@@ -18,7 +16,7 @@ def check_system_status() -> VersionStatus:
     return VersionStatus(status="ok", version=version("mex-backend"))
 
 
-@router.get(
+@public_router.get(
     "/_system/metrics",
     response_class=PlainTextResponse,
     tags=["system"],

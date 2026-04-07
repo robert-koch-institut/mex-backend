@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Path, Query
+from fastapi import Path, Query
 from fastapi.exceptions import HTTPException
 from starlette import status
 
@@ -12,8 +12,8 @@ from mex.backend.merged.helpers import (
     get_merged_item_from_graph,
     search_merged_items_in_graph,
 )
+from mex.backend.routers import read_router, write_router
 from mex.backend.rules.helpers import get_rule_set_from_graph
-from mex.backend.security import has_write_access
 from mex.backend.types import MergedType, ReferenceFieldName
 from mex.common.models import (
     MERGED_MODEL_CLASSES_BY_NAME,
@@ -22,10 +22,8 @@ from mex.common.models import (
 )
 from mex.common.types import Identifier, Validation
 
-router = APIRouter()
 
-
-@router.get("/merged-item", tags=["editor"])
+@read_router.get("/merged-item", tags=["editor"])
 def search_merged_items(  # noqa: PLR0913
     q: Annotated[str, Query(max_length=100)] = "",
     identifier: Annotated[Identifier | None, Query()] = None,
@@ -55,7 +53,7 @@ def search_merged_items(  # noqa: PLR0913
     )
 
 
-@router.get("/merged-item/{identifier}", tags=["editor"])
+@read_router.get("/merged-item/{identifier}", tags=["editor"])
 def get_merged_item(identifier: Annotated[Identifier, Path()]) -> AnyMergedModel:
     """Return one merged item for the given `identifier`."""
     try:
@@ -64,11 +62,10 @@ def get_merged_item(identifier: Annotated[Identifier, Path()]) -> AnyMergedModel
         raise HTTPException(status.HTTP_404_NOT_FOUND) from error
 
 
-@router.delete(
+@write_router.delete(
     "/merged-item/{identifier}",
     status_code=status.HTTP_204_NO_CONTENT,
     tags=["editor"],
-    dependencies=[Depends(has_write_access)],
 )
 def delete_merged_item(
     identifier: Annotated[Identifier, Path()],

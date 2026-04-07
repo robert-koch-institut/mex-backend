@@ -1,17 +1,18 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Request
+from fastapi import Body, Request
 from pydantic import Field
 from starlette import status
 
 from mex.backend.graph.connector import GraphConnector
+from mex.backend.routers import write_router
 from mex.common.logging import logger
 from mex.common.models import AnyExtractedModel, AnyRuleSetResponse
 
-router = APIRouter()
 
-
-@router.post("/ingest", status_code=status.HTTP_204_NO_CONTENT, tags=["extractors"])
+@write_router.post(
+    "/ingest", status_code=status.HTTP_204_NO_CONTENT, tags=["extractors"]
+)
 async def ingest_items(
     request: Request,
     items: Annotated[
