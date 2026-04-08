@@ -46,7 +46,7 @@ def create_and_get_rule_set(
         referenced_identifiers=None,
         reference_field=None,
         skip=0,
-        limit=3,
+        limit=4,
     )
     return transform_raw_rules_to_rule_set_response(graph_result.one()["items"])
 
@@ -64,7 +64,7 @@ def get_rule_set_from_graph(
         referenced_identifiers=None,
         reference_field=None,
         skip=0,
-        limit=3,
+        limit=4,
     )
     if raw_rules := graph_result.one()["items"]:
         return transform_raw_rules_to_rule_set_response(raw_rules)

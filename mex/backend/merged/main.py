@@ -25,7 +25,7 @@ from mex.common.types import Identifier, PublishingTarget, Validation
 router = APIRouter()
 
 
-@router.get("/merged-item", tags=["editor"])
+@router.get("/merged-item/{publishing_target}", tags=["editor"])
 def search_merged_items(  # noqa: PLR0913
     publishing_target: PublishingTarget,
     q: Annotated[str, Query(max_length=100)] = "",
@@ -57,7 +57,7 @@ def search_merged_items(  # noqa: PLR0913
     )
 
 
-@router.get("/merged-item/{identifier}", tags=["editor"])
+@router.get("/merged-item/{identifier}/{publishing_target}", tags=["editor"])
 def get_merged_item(
     identifier: Annotated[Identifier, Path()],
     publishing_target: PublishingTarget,

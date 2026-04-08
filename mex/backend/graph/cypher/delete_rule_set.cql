@@ -1,4 +1,4 @@
-<# Delete a rule-set (all 3 rules) by stableTargetId.
+<# Delete a rule-set (all 4 rules) by stableTargetId.
 
 Deletes all additive, subtractive, preventive, and workflow rules connected to the
 given stableTargetId, along with their nested items (text/link) and outbound connections

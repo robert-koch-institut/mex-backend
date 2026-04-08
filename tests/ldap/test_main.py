@@ -8,14 +8,16 @@ if TYPE_CHECKING:  # pragma: no cover
     from fastapi.testclient import TestClient
 
 
-def test_get_merged_person_from_login(
+def test_get_preview_person_from_login(
     client_with_basic_auth_write_permission: TestClient,
 ) -> None:
     with (
         patch("mex.backend.security.Connection") as mock_connection,
         patch("mex.backend.ldap.main.LDAPConnector.get") as mock_ldap_connector_get,
         patch("mex.backend.ldap.main.get_provider") as mock_get_provider,
-        patch("mex.backend.ldap.main.get_merged_item") as mock_get_merged_item,
+        patch(
+            "mex.backend.ldap.main.search_preview_items"
+        ) as mock_search_preview_items,
     ):
         mocked_connection = mock_connection.return_value.__enter__.return_value
         mocked_connection.server.check_availability.return_value = True
@@ -39,10 +41,10 @@ def test_get_merged_person_from_login(
             identifier=MergedPersonIdentifier("bFQoRhcVH5DHUI"),
             entityType="MergedPerson",
         )
-        mock_get_merged_item.return_value = mock_person
+        mock_search_preview_items.return_value = mock_person
 
         response = client_with_basic_auth_write_permission.post(
-            "/v0/merged-person-from-login",
+            "/v0/preview-person-from-login",
         )
         assert response.status_code == 200
         result = response.json()

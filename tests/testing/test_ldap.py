@@ -10,17 +10,17 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 @pytest.mark.integration
-def test_get_merged_person_from_login_success(
+def test_get_preview_person_from_login_success(
     client_with_basic_auth_write_permission: TestClient,
 ) -> None:
     response = client_with_basic_auth_write_permission.post(
-        "/v0/merged-person-from-login"
+        "/v0/preview-person-from-login"
     )
     assert response.status_code == status.HTTP_200_OK, response.text
     data = response.json()
     assert data["email"] == ["Writer@rki.com"]
     assert data["fullName"] == ["Writer"]
-    assert data["$type"] == "MergedPerson"
+    assert data["$type"] == "PreviewPerson"
 
 
 @pytest.mark.integration

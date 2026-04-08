@@ -89,7 +89,7 @@ def merge_search_result_item(
             identifier=Identifier(item["identifier"]),
             extracted_items=extracted_items,
             rule_set=rule_set,
-            validation=validation,
+            validation=validation,  # type: ignore[arg-type]
             publishing_target=publishing_target,
         )
     except MergingError, ValidationError:
@@ -101,6 +101,7 @@ def merge_search_result_item(
 @overload
 def search_merged_items_in_graph(
     *,
+    publishing_target: PublishingTarget | None,
     query_string: str | None = None,
     identifier: str | None = None,
     entity_type: Sequence[str] | None = None,
@@ -109,13 +110,13 @@ def search_merged_items_in_graph(
     skip: int = 0,
     limit: int = 100,
     validation: Literal[Validation.LENIENT] = Validation.LENIENT,
-    publishing_target: PublishingTarget | None,
 ) -> PaginatedItemsContainer[AnyPreviewModel]: ...
 
 
 @overload
 def search_merged_items_in_graph(
     *,
+    publishing_target: PublishingTarget,
     query_string: str | None = None,
     identifier: str | None = None,
     entity_type: Sequence[str] | None = None,
@@ -124,13 +125,13 @@ def search_merged_items_in_graph(
     skip: int = 0,
     limit: int = 100,
     validation: Literal[Validation.STRICT] = Validation.STRICT,
-    publishing_target: PublishingTarget,
 ) -> PaginatedItemsContainer[AnyMergedModel]: ...
 
 
 @overload
 def search_merged_items_in_graph(
     *,
+    publishing_target: PublishingTarget,
     query_string: str | None = None,
     identifier: str | None = None,
     entity_type: Sequence[str] | None = None,
@@ -139,12 +140,12 @@ def search_merged_items_in_graph(
     skip: int = 0,
     limit: int = 100,
     validation: Literal[Validation.IGNORE] = Validation.IGNORE,
-    publishing_target: PublishingTarget,
 ) -> PaginatedItemsContainer[AnyMergedModel]: ...
 
 
 def search_merged_items_in_graph(  # noqa: PLR0913
     *,
+    publishing_target: PublishingTarget | None,
     query_string: str | None = None,
     identifier: str | None = None,
     entity_type: Sequence[str] | None = None,
@@ -155,11 +156,11 @@ def search_merged_items_in_graph(  # noqa: PLR0913
     validation: Literal[
         Validation.STRICT, Validation.LENIENT, Validation.IGNORE
     ] = Validation.STRICT,
-    publishing_target: PublishingTarget | None,
 ) -> PaginatedItemsContainer[AnyPreviewModel] | PaginatedItemsContainer[AnyMergedModel]:
     """Search for merged items.
 
     Args:
+        publishing_target: target to which the merged item is to be published
         query_string: Full text search query term
         identifier: Optional merged item identifier filter
         entity_type: Optional entity type filter
@@ -171,7 +172,6 @@ def search_merged_items_in_graph(  # noqa: PLR0913
             the lengths of lists by default, set this to `LENIENT` to avoid this and
             return a "preview" of a merged item instead of a valid merged item,
             or set this to `IGNORE` to return None in case of validation errors.
-        publishing_target: target to which the merged item is to be published
 
     Raises:
         MergingError: When the given items cannot be merged
@@ -195,7 +195,9 @@ def search_merged_items_in_graph(  # noqa: PLR0913
         for item in result["items"]
         if (
             merged_model := merge_search_result_item(
-                item, validation, publishing_target
+                item,
+                validation,  # type: ignore[arg-type]
+                publishing_target,
             )
         )
     ]

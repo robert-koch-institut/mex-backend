@@ -80,7 +80,7 @@ def test_search_merged_items_mocked(
         }
     ]
 
-    response = client_with_api_key_read_permission.get("/v0/merged-item")
+    response = client_with_api_key_read_permission.get("/v0/merged-item/datenkompass")
     assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == {
         "items": [
@@ -382,7 +382,9 @@ def test_search_merged_items(
     query_string: str,
     expected: dict[str, Any],
 ) -> None:
-    response = client_with_api_key_read_permission.get(f"/v0/merged-item{query_string}")
+    response = client_with_api_key_read_permission.get(
+        f"/v0/merged-item/invenio{query_string}"
+    )
     assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == expected
 
@@ -393,7 +395,7 @@ def test_search_merged_items_skip_on_validation_error(
     loaded_dummy_data: DummyData,
 ) -> None:
     response = client_with_api_key_read_permission.get(
-        "/v0/merged-item?entityType=MergedOrganizationalUnit"
+        "/v0/merged-item/datenkompass?entityType=MergedOrganizationalUnit"
     )
     assert response.status_code == status.HTTP_200_OK, response.text
     assert len(response.json()["items"]) == 3
@@ -407,7 +409,7 @@ def test_search_merged_items_skip_on_validation_error(
         ),
     )
     response = client_with_api_key_read_permission.get(
-        "/v0/merged-item?entityType=MergedOrganizationalUnit"
+        "/v0/merged-item/datenkompass?entityType=MergedOrganizationalUnit"
     )
     assert response.status_code == status.HTTP_200_OK, response.text
     # expect org unit 2 to be filtered out (only unit 1 and 3 remain)
@@ -447,7 +449,7 @@ def test_search_merged_items_in_graph_bad_request(
     client_with_api_key_read_permission: TestClient,
 ) -> None:
     response = client_with_api_key_read_permission.get(
-        "/v0/merged-item?referenceField=hadPrimarySource"
+        "/v0/merged-item/invenio?referenceField=hadPrimarySource"
     )
     assert response.status_code == status.HTTP_400_BAD_REQUEST, response.text
     assert (
@@ -471,7 +473,7 @@ def test_get_merged_item(
         publishing_target=PublishingTarget("datenkompass"),
     )
     response = client_with_api_key_read_permission.get(
-        f"/v0/merged-item/{merged_organization.identifier}"
+        f"/v0/merged-item/{merged_organization.identifier}/invenio"
     )
     assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == merged_organization.model_dump(by_alias=True, mode="json")
@@ -482,7 +484,7 @@ def test_get_merged_item_not_found(
     client_with_api_key_read_permission: TestClient,
 ) -> None:
     response = client_with_api_key_read_permission.get(
-        "/v0/merged-item/notARealIdentifier"
+        "/v0/merged-item/notARealIdentifier/datenkompass"
     )
     assert response.status_code == status.HTTP_404_NOT_FOUND, response.text
 
@@ -531,7 +533,7 @@ def test_delete_merged_item(
 
     # Verify item is deleted
     get_response = client_with_api_key_write_permission.get(
-        f"/v0/merged-item/{item.stableTargetId}"
+        f"/v0/merged-item/{item.stableTargetId}/datenkompass"
     )
     assert get_response.status_code == status.HTTP_404_NOT_FOUND, response.text
 
@@ -597,7 +599,7 @@ def test_delete_merged_item_fails(  # noqa: PLR0913
 
     # Item should still exist (deletion failed)
     get_response = client_with_api_key_write_permission.get(
-        f"/v0/merged-item/{item.stableTargetId}"
+        f"/v0/merged-item/{item.stableTargetId}/datenkompass"
     )
     assert get_response.status_code == status_code_after, response.text
 

@@ -686,7 +686,7 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
                         "stableTargetId": ["StandaloneRule"],
                     }
                 ],
-                "total": 6,
+                "total": 8,
             },
             id="get-all-rules-when-filtering-for-primary-source-mex-editor",
         ),
@@ -708,7 +708,7 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
                         "stableTargetId": ["StandaloneRule"],
                     }
                 ],
-                "total": 6,
+                "total": 8,
             },
             id="get-all-rules-when-filtering-for-primary-source-mex-editor-and-another-primary-source",
         ),
@@ -1049,6 +1049,13 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                                 "entityType": "SubtractiveOrganizationalUnit",
                                 "stableTargetId": ["StandaloneRule"],
                             },
+                            {
+                                "entityType": "WorkflowOrganizationalUnit",
+                                "forbiddenPublishingTarget": [],
+                                "stableTargetId": [
+                                    "StandaloneRule",
+                                ],
+                            },
                         ],
                         "entityType": "MergedOrganizationalUnit",
                         "identifier": "StandaloneRule",
@@ -1085,6 +1092,11 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                             {
                                 "email": [],
                                 "entityType": "SubtractiveOrganizationalUnit",
+                                "stableTargetId": ["StandaloneRule"],
+                            },
+                            {
+                                "entityType": "WorkflowOrganizationalUnit",
+                                "forbiddenPublishingTarget": [],
                                 "stableTargetId": ["StandaloneRule"],
                             },
                         ],
@@ -1331,6 +1343,13 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                                         "language": "en",
                                         "value": "Unit 1.6",
                                     },
+                                ],
+                            },
+                            {
+                                "entityType": "WorkflowOrganizationalUnit",
+                                "forbiddenPublishingTarget": [],
+                                "stableTargetId": [
+                                    "bFQoRhcVH5DHUz",
                                 ],
                             },
                         ],
