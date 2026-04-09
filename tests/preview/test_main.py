@@ -502,3 +502,33 @@ def test_search_preview_items_in_graph_bad_request(
         "Must provide referencedIdentifier AND referenceField or neither."
         in response.text
     )
+
+
+@pytest.mark.integration
+@pytest.mark.usefixtures("loaded_dummy_data")
+def test_get_preview_item_success(
+    client_with_api_key_read_permission: TestClient,
+) -> None:
+    """Test retrieving a preview item by identifier."""
+    response = client_with_api_key_read_permission.get(
+        "/v0/preview-item/bFQoRhcVH5DHUx"
+    )
+    assert response.status_code == status.HTTP_200_OK, response.text
+    data = response.json()
+    assert "items" in data
+    assert "total" in data
+    assert data["total"] == 1
+    assert len(data["items"]) == 1
+    assert data["items"][0]["identifier"] == "bFQoRhcVH5DHUx"
+
+
+@pytest.mark.integration
+@pytest.mark.usefixtures("loaded_dummy_data")
+def test_get_preview_item_not_found(
+    client_with_api_key_read_permission: TestClient,
+) -> None:
+    """Test that 404 is raised when preview item does not exist."""
+    response = client_with_api_key_read_permission.get(
+        "/v0/preview-item/thisIdDoesNotExist"
+    )
+    assert response.status_code == status.HTTP_404_NOT_FOUND, response.text
