@@ -45,7 +45,7 @@ def preview_item(
 @router.get("/preview-item/{identifier}", tags=["editor"])
 def get_preview_item(
     identifier: Annotated[Identifier, Path()],
-) -> PaginatedItemsContainer[AnyPreviewModel]:
+) -> AnyPreviewModel:
     """Get the preview for an item by its identifier."""
     result = search_merged_items_in_graph(
         identifier=identifier,
@@ -53,7 +53,7 @@ def get_preview_item(
     )
     if result.total == 0:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
-    return result
+    return result.items[0]
 
 
 @router.get("/preview-item", tags=["editor"])

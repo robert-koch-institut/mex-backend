@@ -515,11 +515,8 @@ def test_get_preview_item_success(
     )
     assert response.status_code == status.HTTP_200_OK, response.text
     data = response.json()
-    assert "items" in data
-    assert "total" in data
-    assert data["total"] == 1
-    assert len(data["items"]) == 1
-    assert data["items"][0]["identifier"] == "bFQoRhcVH5DHUx"
+    assert data["$type"] == "PreviewOrganizationalUnit"
+    assert data["identifier"] == "bFQoRhcVH5DHUx"
 
 
 @pytest.mark.integration
