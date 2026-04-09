@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
-from mex.common.models import PreviewPerson
+from mex.common.models import PaginatedItemsContainer, PreviewPerson
 from mex.common.types import MergedPersonIdentifier
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -35,13 +35,18 @@ def test_get_preview_person_from_login(
         ]
         mock_get_provider.return_value = mock_provider
 
-        mock_person = PreviewPerson(
-            email=["person_1@example.com"],
-            fullName=["Bernd, Brot"],
-            identifier=MergedPersonIdentifier("bFQoRhcVH5DHUI"),
-            entityType="PreviewPerson",
+        mock_preview_items = PaginatedItemsContainer[PreviewPerson](
+            items=[
+                PreviewPerson(
+                    email=["person_1@example.com"],
+                    fullName=["Bernd, Brot"],
+                    identifier=MergedPersonIdentifier("bFQoRhcVH5DHUI"),
+                    entityType="PreviewPerson",
+                )
+            ],
+            total=1,
         )
-        mock_search_preview_items.return_value = mock_person
+        mock_search_preview_items.return_value = mock_preview_items
 
         response = client_with_basic_auth_write_permission.post(
             "/v0/preview-person-from-login",
