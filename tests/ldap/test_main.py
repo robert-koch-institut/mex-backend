@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
-from mex.common.models import MergedPerson
+from mex.common.models import PreviewPerson
 from mex.common.types import MergedPersonIdentifier
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -35,11 +35,11 @@ def test_get_preview_person_from_login(
         ]
         mock_get_provider.return_value = mock_provider
 
-        mock_person = MergedPerson(
+        mock_person = PreviewPerson(
             email=["person_1@example.com"],
             fullName=["Bernd, Brot"],
             identifier=MergedPersonIdentifier("bFQoRhcVH5DHUI"),
-            entityType="MergedPerson",
+            entityType="PreviewPerson",
         )
         mock_search_preview_items.return_value = mock_person
 
