@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 
 from mex.backend.auxiliary.primary_source import extracted_primary_source_ldap
-from mex.backend.preview.main import search_preview_items
+from mex.backend.preview.main import get_preview_item
 from mex.backend.security import has_write_access_ldap
 from mex.common.identity import get_provider
 from mex.common.ldap.connector import LDAPConnector
@@ -34,7 +34,4 @@ def get_preview_person_from_login(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User is not authorized for MEx.",
         )
-    return cast(
-        "PreviewPerson",
-        search_preview_items(identifier=identities[0].stableTargetId).items[0],
-    )
+    return cast("PreviewPerson", get_preview_item(identities[0].stableTargetId))

@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
-from mex.common.models import PaginatedItemsContainer, PreviewPerson
+from mex.common.models import PreviewPerson
 from mex.common.types import MergedPersonIdentifier
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -15,9 +15,7 @@ def test_get_preview_person_from_login(
         patch("mex.backend.security.Connection") as mock_connection,
         patch("mex.backend.ldap.main.LDAPConnector.get") as mock_ldap_connector_get,
         patch("mex.backend.ldap.main.get_provider") as mock_get_provider,
-        patch(
-            "mex.backend.ldap.main.search_preview_items"
-        ) as mock_search_preview_items,
+        patch("mex.backend.ldap.main.get_preview_item") as mock_get_preview_item,
     ):
         mocked_connection = mock_connection.return_value.__enter__.return_value
         mocked_connection.server.check_availability.return_value = True
@@ -35,18 +33,13 @@ def test_get_preview_person_from_login(
         ]
         mock_get_provider.return_value = mock_provider
 
-        mock_preview_items = PaginatedItemsContainer[PreviewPerson](
-            items=[
-                PreviewPerson(
-                    email=["person_1@example.com"],
-                    fullName=["Bernd, Brot"],
-                    identifier=MergedPersonIdentifier("bFQoRhcVH5DHUI"),
-                    entityType="PreviewPerson",
-                )
-            ],
-            total=1,
+        mock_person = PreviewPerson(
+            email=["person_1@example.com"],
+            fullName=["Bernd, Brot"],
+            identifier=MergedPersonIdentifier("bFQoRhcVH5DHUI"),
+            entityType="PreviewPerson",
         )
-        mock_search_preview_items.return_value = mock_preview_items
+        mock_get_preview_item.return_value = mock_person
 
         response = client_with_basic_auth_write_permission.post(
             "/v0/preview-person-from-login",
