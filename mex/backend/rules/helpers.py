@@ -26,8 +26,9 @@ def create_and_get_rule_set(
     response_class = RULE_SET_RESPONSE_CLASSES_BY_NAME[response_class_name]
     rule_set_response = response_class(
         additive=rule_set.additive,
-        preventive=rule_set.preventive,
         subtractive=rule_set.subtractive,
+        preventive=rule_set.preventive,
+        workflow=rule_set.workflow,
         stableTargetId=stable_target_id,
     )
     deque(connector.ingest_items([rule_set_response]))
@@ -35,6 +36,7 @@ def create_and_get_rule_set(
         rule_set.additive.entityType,
         rule_set.subtractive.entityType,
         rule_set.preventive.entityType,
+        rule_set.workflow.entityType,
     ]
     graph_result = connector.fetch_rule_items(
         query_string=None,
@@ -44,7 +46,7 @@ def create_and_get_rule_set(
         referenced_identifiers=None,
         reference_field=None,
         skip=0,
-        limit=3,
+        limit=4,
     )
     return transform_raw_rules_to_rule_set_response(graph_result.one()["items"])
 
@@ -62,7 +64,7 @@ def get_rule_set_from_graph(
         referenced_identifiers=None,
         reference_field=None,
         skip=0,
-        limit=3,
+        limit=4,
     )
     if raw_rules := graph_result.one()["items"]:
         return transform_raw_rules_to_rule_set_response(raw_rules)

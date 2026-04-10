@@ -4,7 +4,10 @@ from fastapi import APIRouter, Body, HTTPException, status
 
 from mex.backend.match.helpers import match_item_in_graph
 from mex.common.exceptions import MExError
-from mex.common.types import AnyExtractedIdentifier, AnyMergedIdentifier
+from mex.common.types import (
+    AnyExtractedIdentifier,
+    AnyMergedIdentifier,
+)
 
 router = APIRouter()
 

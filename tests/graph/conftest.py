@@ -77,6 +77,14 @@ def organizational_unit_rule_set_ingest_result(
                 "nodeProps": {},
             }
         ],
+        [
+            {
+                "identifier": None,
+                "stableTargetId": dummy_data["unit_2_rule_set"].stableTargetId,
+                "entityType": "WorkflowOrganizationalUnit",
+                "nodeProps": {"forbiddenPublishingTarget": []},
+            }
+        ],
     ]
 
 
@@ -203,6 +211,29 @@ def organizational_unit_rule_set_ingest_call_expectation() -> list[object]:
                 "identifier": None,
                 "entityType": "PreventiveOrganizationalUnit",
                 "nodeProps": {},
+                "linkRels": [],
+                "createRels": [],
+            },
+        ),
+        call(
+            call(
+                "merge_item",
+                params=IngestParams(
+                    merged_label="MergedOrganizationalUnit",
+                    node_label="WorkflowOrganizationalUnit",
+                    used_referenced_labels=[],
+                    used_nested_labels=[],
+                    detach_node_edges=[],
+                    delete_node_edges=[],
+                    has_link_rels=False,
+                    has_create_rels=False,
+                ),
+            ),
+            data={
+                "stableTargetId": "UVCwaVgI6ZnD8zavnBkdz",
+                "identifier": None,
+                "entityType": "WorkflowOrganizationalUnit",
+                "nodeProps": {"forbiddenPublishingTarget": []},
                 "linkRels": [],
                 "createRels": [],
             },

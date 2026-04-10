@@ -1,45 +1,18 @@
 from collections.abc import Sequence
 from typing import Annotated
 
-from fastapi import APIRouter, Body, HTTPException, Path, Query
+from fastapi import APIRouter, HTTPException, Path, Query
 from starlette import status
 
-from mex.backend.extracted.helpers import get_extracted_items_from_graph
 from mex.backend.merged.helpers import search_merged_items_in_graph
 from mex.backend.types import MergedType, ReferenceFieldName
-from mex.common.merged.main import create_merged_item
 from mex.common.models import (
-    AnyMergedModel,
     AnyPreviewModel,
-    AnyRuleSetRequest,
     PaginatedItemsContainer,
 )
-from mex.common.transform import ensure_prefix
 from mex.common.types import Identifier, Validation
 
 router = APIRouter()
-
-
-@router.post("/preview-item/{identifier}", tags=["editor"])
-def preview_item(
-    identifier: Annotated[Identifier, Path()],
-    ruleSet: Annotated[AnyRuleSetRequest, Body(discriminator="entityType")],
-) -> AnyMergedModel:
-    """Preview the merging result when the given rule would be applied."""
-    # TODO(ND): Convert this endpoint to return previews instead of merged items.
-    #           This will allow editor users to see the resulting item, even if
-    #           cardinality validation failed for some fields.
-    #           We need to include any validation error alongside the preview though.
-    extracted_items = get_extracted_items_from_graph(
-        stable_target_id=identifier,
-        entity_type=[ensure_prefix(ruleSet.stemType, "Extracted")],
-    )
-    return create_merged_item(
-        identifier=identifier,
-        extracted_items=extracted_items,
-        rule_set=ruleSet,
-        validation=Validation.STRICT,
-    )
 
 
 @router.get("/preview-item/{identifier}", tags=["editor"])
@@ -50,6 +23,7 @@ def get_preview_item(
     result = search_merged_items_in_graph(
         identifier=identifier,
         validation=Validation.LENIENT,
+        publishing_target=None,
     )
     if result.total == 0:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -87,4 +61,5 @@ def search_preview_items(  # noqa: PLR0913
         skip=skip,
         limit=limit,
         validation=Validation.LENIENT,
+        publishing_target=None,
     )

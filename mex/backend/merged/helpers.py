@@ -10,7 +10,7 @@ from mex.backend.graph.exceptions import (
 from mex.backend.rules.transform import transform_raw_rules_to_rule_set_response
 from mex.common.exceptions import MergingError
 from mex.common.logging import logger
-from mex.common.merged.main import create_merged_item
+from mex.common.merged.main import create_merged_item_for_publishing_target
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     RULE_MODEL_CLASSES_BY_NAME,
@@ -19,7 +19,7 @@ from mex.common.models import (
     ExtractedModelTypeAdapter,
     PaginatedItemsContainer,
 )
-from mex.common.types import Identifier, Validation
+from mex.common.types import Identifier, PublishingTarget, Validation
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Sequence
@@ -29,6 +29,7 @@ if TYPE_CHECKING:  # pragma: no cover
 def merge_search_result_item(
     item: dict[str, Any],
     validation: Literal[Validation.LENIENT],
+    publishing_target: PublishingTarget | None,
 ) -> AnyPreviewModel: ...
 
 
@@ -36,6 +37,7 @@ def merge_search_result_item(
 def merge_search_result_item(
     item: dict[str, Any],
     validation: Literal[Validation.STRICT],
+    publishing_target: PublishingTarget,
 ) -> AnyMergedModel: ...
 
 
@@ -43,12 +45,14 @@ def merge_search_result_item(
 def merge_search_result_item(
     item: dict[str, Any],
     validation: Literal[Validation.IGNORE],
+    publishing_target: PublishingTarget,
 ) -> AnyMergedModel | None: ...
 
 
 def merge_search_result_item(
     item: dict[str, Any],
     validation: Literal[Validation.STRICT, Validation.LENIENT, Validation.IGNORE],
+    publishing_target: PublishingTarget | None,
 ) -> AnyPreviewModel | AnyMergedModel | None:
     """Merge a single search result into a merged item.
 
@@ -58,6 +62,7 @@ def merge_search_result_item(
             the lengths of lists by default, set this to `LENIENT` to avoid this and
             return a "preview" of a merged item instead of a valid merged item,
             or set this to `IGNORE` to return None in case of validation errors.
+        publishing_target: target to which the merged item is to be published
 
     Raises:
         MergingError: When the given items cannot be merged
@@ -80,11 +85,12 @@ def merge_search_result_item(
     else:
         rule_set = None
     try:
-        return create_merged_item(
+        return create_merged_item_for_publishing_target(
             identifier=Identifier(item["identifier"]),
             extracted_items=extracted_items,
             rule_set=rule_set,
-            validation=validation,
+            validation=validation,  # type: ignore[arg-type]
+            publishing_target=publishing_target,
         )
     except MergingError, ValidationError:
         if validation == Validation.STRICT:
@@ -95,6 +101,7 @@ def merge_search_result_item(
 @overload
 def search_merged_items_in_graph(
     *,
+    publishing_target: PublishingTarget | None,
     query_string: str | None = None,
     identifier: str | None = None,
     entity_type: Sequence[str] | None = None,
@@ -109,6 +116,7 @@ def search_merged_items_in_graph(
 @overload
 def search_merged_items_in_graph(
     *,
+    publishing_target: PublishingTarget,
     query_string: str | None = None,
     identifier: str | None = None,
     entity_type: Sequence[str] | None = None,
@@ -123,6 +131,7 @@ def search_merged_items_in_graph(
 @overload
 def search_merged_items_in_graph(
     *,
+    publishing_target: PublishingTarget,
     query_string: str | None = None,
     identifier: str | None = None,
     entity_type: Sequence[str] | None = None,
@@ -136,6 +145,7 @@ def search_merged_items_in_graph(
 
 def search_merged_items_in_graph(  # noqa: PLR0913
     *,
+    publishing_target: PublishingTarget | None,
     query_string: str | None = None,
     identifier: str | None = None,
     entity_type: Sequence[str] | None = None,
@@ -150,6 +160,7 @@ def search_merged_items_in_graph(  # noqa: PLR0913
     """Search for merged items.
 
     Args:
+        publishing_target: target to which the merged item is to be published
         query_string: Full text search query term
         identifier: Optional merged item identifier filter
         entity_type: Optional entity type filter
@@ -182,14 +193,23 @@ def search_merged_items_in_graph(  # noqa: PLR0913
     items = [
         merged_model
         for item in result["items"]
-        if (merged_model := merge_search_result_item(item, validation))
+        if (
+            merged_model := merge_search_result_item(
+                item,
+                validation,  # type: ignore[arg-type]
+                publishing_target,
+            )
+        )
     ]
     if validation == Validation.LENIENT:
         return PaginatedItemsContainer[AnyPreviewModel](items=items, total=total)
     return PaginatedItemsContainer[AnyMergedModel](items=items, total=total)
 
 
-def get_merged_item_from_graph(identifier: Identifier) -> AnyMergedModel:
+def get_merged_item_from_graph(
+    identifier: Identifier,
+    publishing_target: PublishingTarget,
+) -> AnyMergedModel:
     """Fetch and return the merged item for the given `identifier`."""
     connector = GraphConnector.get()
     result = connector.fetch_merged_items(
@@ -207,7 +227,11 @@ def get_merged_item_from_graph(identifier: Identifier) -> AnyMergedModel:
     if result["total"] != 1:
         msg = "Found multiple merged items."
         raise InconsistentGraphError(msg)
-    return merge_search_result_item(result["items"][0], Validation.STRICT)
+    return merge_search_result_item(
+        result["items"][0],
+        Validation.STRICT,
+        publishing_target,
+    )
 
 
 def delete_merged_item_from_graph(identifier: Identifier) -> None:

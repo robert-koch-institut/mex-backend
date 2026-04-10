@@ -1,21 +1,21 @@
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
-from mex.common.models import MergedPerson
+from mex.common.models import PreviewPerson
 from mex.common.types import MergedPersonIdentifier
 
 if TYPE_CHECKING:  # pragma: no cover
     from fastapi.testclient import TestClient
 
 
-def test_get_merged_person_from_login(
+def test_get_preview_person_from_login(
     client_with_basic_auth_write_permission: TestClient,
 ) -> None:
     with (
         patch("mex.backend.security.Connection") as mock_connection,
         patch("mex.backend.ldap.main.LDAPConnector.get") as mock_ldap_connector_get,
         patch("mex.backend.ldap.main.get_provider") as mock_get_provider,
-        patch("mex.backend.ldap.main.get_merged_item") as mock_get_merged_item,
+        patch("mex.backend.ldap.main.get_preview_item") as mock_get_preview_item,
     ):
         mocked_connection = mock_connection.return_value.__enter__.return_value
         mocked_connection.server.check_availability.return_value = True
@@ -33,16 +33,16 @@ def test_get_merged_person_from_login(
         ]
         mock_get_provider.return_value = mock_provider
 
-        mock_person = MergedPerson(
+        mock_person = PreviewPerson(
             email=["person_1@example.com"],
             fullName=["Bernd, Brot"],
             identifier=MergedPersonIdentifier("bFQoRhcVH5DHUI"),
-            entityType="MergedPerson",
+            entityType="PreviewPerson",
         )
-        mock_get_merged_item.return_value = mock_person
+        mock_get_preview_item.return_value = mock_person
 
         response = client_with_basic_auth_write_permission.post(
-            "/v0/merged-person-from-login",
+            "/v0/preview-person-from-login",
         )
         assert response.status_code == 200
         result = response.json()
