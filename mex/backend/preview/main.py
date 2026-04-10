@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Path, Query
 from starlette import status
 
 from mex.backend.merged.helpers import search_merged_items_in_graph
@@ -13,6 +13,21 @@ from mex.common.models import (
 from mex.common.types import Identifier, Validation
 
 router = APIRouter()
+
+
+@router.get("/preview-item/{identifier}", tags=["editor"])
+def get_preview_item(
+    identifier: Annotated[Identifier, Path()],
+) -> AnyPreviewModel:
+    """Get the preview for an item by its identifier."""
+    result = search_merged_items_in_graph(
+        identifier=identifier,
+        validation=Validation.LENIENT,
+        publishing_target=None,
+    )
+    if result.total == 0:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    return result.items[0]
 
 
 @router.get("/preview-item", tags=["editor"])
