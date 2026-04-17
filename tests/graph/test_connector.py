@@ -13,7 +13,7 @@ from mex.backend.graph.models import IngestParams
 from mex.backend.graph.query import Query
 from mex.backend.types import MergedType
 from mex.common.exceptions import MExError
-from mex.common.merged.main import create_merged_item
+from mex.common.merged.main import create_merged_item_for_publishing_target
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
@@ -22,7 +22,13 @@ from mex.common.models import (
     ExtractedOrganization,
     ExtractedOrganizationalUnit,
 )
-from mex.common.types import Identifier, Text, TextLanguage, Validation
+from mex.common.types import (
+    Identifier,
+    PublishingTarget,
+    Text,
+    TextLanguage,
+    Validation,
+)
 from tests.conftest import DummyData, MockedGraph, get_graph
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -680,7 +686,7 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
                         "stableTargetId": ["StandaloneRule"],
                     }
                 ],
-                "total": 6,
+                "total": 8,
             },
             id="get-all-rules-when-filtering-for-primary-source-mex-editor",
         ),
@@ -702,7 +708,7 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
                         "stableTargetId": ["StandaloneRule"],
                     }
                 ],
-                "total": 6,
+                "total": 8,
             },
             id="get-all-rules-when-filtering-for-primary-source-mex-editor-and-another-primary-source",
         ),
@@ -718,7 +724,7 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
                         "stableTargetId": ["StandaloneRule"],
                     }
                 ],
-                "total": 6,
+                "total": 8,
             },
             id="no-filters",
         ),
@@ -1043,6 +1049,13 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                                 "entityType": "SubtractiveOrganizationalUnit",
                                 "stableTargetId": ["StandaloneRule"],
                             },
+                            {
+                                "entityType": "WorkflowOrganizationalUnit",
+                                "forbiddenPublishingTarget": [],
+                                "stableTargetId": [
+                                    "StandaloneRule",
+                                ],
+                            },
                         ],
                         "entityType": "MergedOrganizationalUnit",
                         "identifier": "StandaloneRule",
@@ -1079,6 +1092,11 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                             {
                                 "email": [],
                                 "entityType": "SubtractiveOrganizationalUnit",
+                                "stableTargetId": ["StandaloneRule"],
+                            },
+                            {
+                                "entityType": "WorkflowOrganizationalUnit",
+                                "forbiddenPublishingTarget": [],
                                 "stableTargetId": ["StandaloneRule"],
                             },
                         ],
@@ -1325,6 +1343,13 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                                         "language": "en",
                                         "value": "Unit 1.6",
                                     },
+                                ],
+                            },
+                            {
+                                "entityType": "WorkflowOrganizationalUnit",
+                                "forbiddenPublishingTarget": [],
+                                "stableTargetId": [
+                                    "bFQoRhcVH5DHUz",
                                 ],
                             },
                         ],
@@ -1908,15 +1933,16 @@ def test_mocked_graph_ingests_extracted_models(
 def test_graph_match_item_preconditions_pass(loaded_dummy_data: DummyData) -> None:
     graph = GraphConnector.get()
     extracted = loaded_dummy_data["unit_2"]
-    merged = create_merged_item(
+    preview = create_merged_item_for_publishing_target(
         loaded_dummy_data["unit_1"].stableTargetId,
         [loaded_dummy_data["unit_1"]],
         None,
-        Validation.STRICT,
+        Validation.LENIENT,
+        publishing_target=PublishingTarget("datenkompass"),
     )
 
     with pytest.raises(NotImplementedError):
-        graph.match_item(extracted, merged)
+        graph.match_item(extracted, preview)
 
 
 @pytest.mark.parametrize(
