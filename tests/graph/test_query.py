@@ -8,22 +8,18 @@ from mex.backend.graph.query import QueryBuilder, render_constraints
 def query_builder() -> QueryBuilder:
     builder = QueryBuilder.get()
     builder._env.globals.update(
-        extracted_labels=[
-            "ExtractedPerson",
-            "ExtractedVariable",
-            "ExtractedDistribution",
-        ],
-        merged_labels=["MergedPerson", "MergedVariable", "MergedDistribution"],
-        nested_labels=["Link", "Text", "Location"],
-        rule_labels=["AdditivePerson", "AdditiveVariable", "AdditiveDistribution"],
-        extracted_or_rule_labels=[
-            "ExtractedPerson",
-            "ExtractedVariable",
-            "ExtractedDistribution",
-            "AdditivePerson",
-            "AdditiveVariable",
-            "AdditiveDistribution",
-        ],
+        any_extracted_label="ExtractedPerson|ExtractedVariable|ExtractedDistribution",
+        any_merged_label="MergedPerson|MergedVariable|MergedDistribution",
+        any_nested_label="Link|Text|Location",
+        any_rule_label="AdditivePerson|AdditiveVariable|AdditiveDistribution",
+        any_extracted_or_rule_label=(
+            "ExtractedPerson|"
+            "ExtractedVariable|"
+            "ExtractedDistribution|"
+            "AdditivePerson|"
+            "AdditiveVariable|"
+            "AdditiveDistribution"
+        ),
     )
     return builder
 

@@ -18,7 +18,6 @@ from mex.backend.graph.connector import GraphConnector
 from mex.backend.main import app
 from mex.backend.settings import BackendSettings
 from mex.backend.testing.main import app as testing_app
-from mex.backend.types import APIKeyDatabase
 from mex.common.connector import CONNECTOR_STORE
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -36,7 +35,6 @@ from mex.common.models import (
 from mex.common.transform import MExEncoder
 from mex.common.types import (
     Identifier,
-    IdentityProvider,
     Link,
     Text,
     TextLanguage,
@@ -48,11 +46,20 @@ pytest_plugins = ("mex.common.testing.plugin",)
 
 
 @pytest.fixture(autouse=True)
-def settings() -> BackendSettings:
+def settings(
+    monkeypatch: MonkeyPatch,
+    isolate_settings: None,  # noqa: ARG001
+) -> BackendSettings:
     """Load the settings for this pytest session."""
     settings = BackendSettings.get()
-    settings.backend_api_key_database = APIKeyDatabase(
-        read="read_key", write="write_key"
+    monkeypatch.setenv(
+        "MEX_BACKEND_API_KEY_DATABASE",
+        json.dumps(
+            {
+                "read": ["read_key"],
+                "write": ["write_key"],
+            }
+        ),
     )
     return settings
 
@@ -189,21 +196,6 @@ def isolate_identifier_seeds(monkeypatch: MonkeyPatch) -> None:
 
 
 @pytest.fixture(autouse=True)
-def set_identity_provider(
-    is_integration_test: bool,  # noqa: FBT001
-    monkeypatch: MonkeyPatch,
-) -> None:
-    """Ensure the identifier provider is set correctly for unit and int tests."""
-    # TODO(ND): yuck, all this needs cleaning up after MX-1596
-    settings = BackendSettings.get()
-    if is_integration_test:
-        monkeypatch.setitem(settings.model_config, "validate_assignment", False)  # noqa: FBT003
-        monkeypatch.setattr(settings, "identity_provider", IdentityProvider.GRAPH)
-    else:
-        monkeypatch.setattr(settings, "identity_provider", IdentityProvider.MEMORY)
-
-
-@pytest.fixture(autouse=True)
 def isolate_graph_database(
     is_integration_test: bool,  # noqa: FBT001
     settings: BackendSettings,
@@ -291,7 +283,7 @@ DummyDataName = Literal[
 
 @pytest.fixture
 def dummy_data(
-    set_identity_provider: None,  # noqa: ARG001
+    settings: BackendSettings,  # noqa: ARG001
 ) -> DummyData:
     """Create interlinked dummy data and return a lookup by memorable names."""
     primary_source_1 = ExtractedPrimarySource(

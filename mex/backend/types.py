@@ -6,7 +6,6 @@ from mex.common.fields import ALL_REFERENCE_FIELD_NAMES
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
-    BaseModel,
 )
 from mex.common.transform import dromedary_to_snake
 
@@ -24,13 +23,6 @@ class APIKey(SecretStr):
     def __repr__(self) -> str:
         """Return a secure representation of this key."""
         return f"APIKey('{self}')"
-
-
-class APIKeyDatabase(BaseModel):
-    """A lookup from access level to list of allowed APIKeys."""
-
-    read: list[APIKey] = []
-    write: list[APIKey] = []
 
 
 class DynamicStrEnum(EnumMeta):

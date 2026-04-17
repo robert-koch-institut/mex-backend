@@ -1,6 +1,6 @@
 import re
 from collections import deque
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import Mock, call
 
 import pytest
@@ -11,7 +11,6 @@ from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import IngestionError, MatchingError
 from mex.backend.graph.models import IngestParams
 from mex.backend.graph.query import Query
-from mex.backend.settings import BackendSettings
 from mex.backend.types import MergedType
 from mex.common.exceptions import MExError
 from mex.common.merged.main import create_merged_item
@@ -25,6 +24,9 @@ from mex.common.models import (
 )
 from mex.common.types import Identifier, Text, TextLanguage, Validation
 from tests.conftest import DummyData, MockedGraph, get_graph
+
+if TYPE_CHECKING:  # pragma: no cover
+    from mex.backend.settings import BackendSettings
 
 
 @pytest.fixture
@@ -198,13 +200,13 @@ def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
             params=IngestParams(
                 merged_label="MergedPrimarySource",
                 node_label="ExtractedPrimarySource",
-                all_referenced_labels=[
+                used_referenced_labels=[
                     "MergedContactPoint",
                     "MergedOrganizationalUnit",
                     "MergedPerson",
                     "MergedPrimarySource",
                 ],
-                all_nested_labels=["Link", "Text"],
+                used_nested_labels=["Link", "Text"],
                 detach_node_edges=["contact", "hadPrimarySource", "unitInCharge"],
                 delete_node_edges=[
                     "alternativeTitle",
@@ -580,7 +582,7 @@ def test_fetch_extracted_items(
     }
     query_kwargs = query_parameter_defaults | query_parameters
     graph = GraphConnector.get()
-    result = graph.fetch_extracted_items(**query_kwargs)
+    result = graph.fetch_extracted_items(**query_kwargs)  # type: ignore[arg-type]
 
     assert result.one() == expected
 
@@ -759,7 +761,7 @@ def test_fetch_rule_items(
     }
     query_kwargs = query_parameter_defaults | query_parameters
     graph = GraphConnector.get()
-    result = graph.fetch_rule_items(**query_kwargs)
+    result = graph.fetch_rule_items(**query_kwargs)  # type: ignore[arg-type]
 
     assert result.one() == expected
 
@@ -1354,7 +1356,7 @@ def test_fetch_merged_items(
     query_kwargs = query_parameter_defaults | query_parameters
     graph = GraphConnector.get()
 
-    result = graph.fetch_merged_items(**query_kwargs)
+    result = graph.fetch_merged_items(**query_kwargs)  # type: ignore[arg-type]
 
     assert result.one() == expected
 
@@ -1972,16 +1974,17 @@ def test_graph_match_item_preconditions_pass(loaded_dummy_data: DummyData) -> No
 )
 @pytest.mark.integration
 @pytest.mark.usefixtures("loaded_dummy_data")
-def test_graph_match_item_preconditions_failed(
+def test_graph_match_item_preconditions_failed(  # noqa: PLR0913
     monkeypatch: MonkeyPatch,
     extracted_identifier: Identifier,
     merged_identifier: Identifier,
     expected_failed: str,
+    settings: BackendSettings,
     request: FixtureRequest,
 ) -> None:
     if "entity type not allowed" in request.node.name:
         monkeypatch.setattr(
-            BackendSettings.get(),
+            settings,
             "non_matchable_types",
             [MergedType("MergedOrganizationalUnit")],
         )
@@ -2040,10 +2043,9 @@ def test_mocked_graph_delete_rule_set(mocked_graph: MockedGraph) -> None:
 
 @pytest.mark.integration
 @pytest.mark.usefixtures("loaded_dummy_data")
-def test_connector_flush(monkeypatch: MonkeyPatch) -> None:
+def test_connector_flush(monkeypatch: MonkeyPatch, settings: BackendSettings) -> None:
     assert len(get_graph()) >= 10
 
-    settings = BackendSettings.get()
     monkeypatch.setattr(settings, "debug", True)
     graph = GraphConnector.get()
     graph.flush()
@@ -2052,9 +2054,9 @@ def test_connector_flush(monkeypatch: MonkeyPatch) -> None:
 
 
 @pytest.mark.integration
-def test_connector_flush_fails(monkeypatch: MonkeyPatch) -> None:
-    settings = BackendSettings.get()
-
+def test_connector_flush_fails(
+    monkeypatch: MonkeyPatch, settings: BackendSettings
+) -> None:
     monkeypatch.setattr(settings, "debug", False)
     graph = GraphConnector.get()
 

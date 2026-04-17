@@ -6,7 +6,7 @@ Backend server for the RKI metadata exchange.
 [![cve-scan](https://github.com/robert-koch-institut/mex-backend/actions/workflows/cve-scan.yml/badge.svg)](https://github.com/robert-koch-institut/mex-backend/actions/workflows/cve-scan.yml)
 [![documentation](https://github.com/robert-koch-institut/mex-backend/actions/workflows/documentation.yml/badge.svg)](https://robert-koch-institut.github.io/mex-backend)
 [![linting](https://github.com/robert-koch-institut/mex-backend/actions/workflows/linting.yml/badge.svg)](https://github.com/robert-koch-institut/mex-backend/actions/workflows/linting.yml)
-[![open-code](https://github.com/robert-koch-institut/mex-backend/actions/workflows/open-code.yml/badge.svg)](https://gitlab.opencode.de/robert-koch-institut/mex/mex-backend)
+[![opencode](https://github.com/robert-koch-institut/mex-backend/actions/workflows/opencode.yml/badge.svg)](https://gitlab.opencode.de/robert-koch-institut/mex/mex-backend)
 [![testing](https://github.com/robert-koch-institut/mex-backend/actions/workflows/testing.yml/badge.svg)](https://github.com/robert-koch-institut/mex-backend/actions/workflows/testing.yml)
 
 ## Project

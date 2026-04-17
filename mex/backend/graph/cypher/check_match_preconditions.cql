@@ -6,9 +6,9 @@ Passed preconditions return `true`, failed preconditions `false` and unverifiabl
 preconditions return `null`.
 
 Globals:
-    extracted_labels: List of all extracted class labels
-    merged_labels: List of all merged class labels
-    rule_labels: List of all rule class labels
+    any_extracted_label: pipe delimited sequence of all extracted class labels?
+    any_merged_label: pipe delimited sequence of all merged class labels
+    any_rule_label: pipe delimited sequence of all rule class labels
 
 Args:
     extracted_identifier: Identifier of the extracted item to be matched
@@ -23,10 +23,10 @@ Returns:
     same_merged_type: Optional boolean indicating the items have the same stem types
     matching_of_type_is_allowed: Optional boolean indicating if matching is allowed for the type of the merged items
 -#>
-OPTIONAL MATCH (extracted:<<extracted_labels|join("|")>> {identifier: $extracted_identifier})
-OPTIONAL MATCH (extracted)-[:stableTargetId]->(old_merged:<<merged_labels|join("|")>>)
-OPTIONAL MATCH (old_merged)<-[:stableTargetId]-(old_rules:<<rule_labels|join("|")>>)
-OPTIONAL MATCH (new_merged:<<merged_labels|join("|")>> {identifier: $merged_identifier})
+OPTIONAL MATCH (extracted:<<any_extracted_label>> {identifier: $extracted_identifier})
+OPTIONAL MATCH (extracted)-[:stableTargetId]->(old_merged:<<any_merged_label>>)
+OPTIONAL MATCH (old_merged)<-[:stableTargetId]-(old_rules:<<any_rule_label>>)
+OPTIONAL MATCH (new_merged:<<any_merged_label>> {identifier: $merged_identifier})
 WITH
    count(DISTINCT extracted) = 1 AS extracted_exists,
    count(old_rules) = 3 AS old_rules_exist,

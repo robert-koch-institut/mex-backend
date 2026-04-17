@@ -1,21 +1,21 @@
 [project]
 name = "mex-backend"
-version = "1.7.2"
+version = "1.8.0"
 description = "Backend server for the RKI metadata exchange."
 authors = [{ name = "MEx Team", email = "mex@rki.de" }]
 readme = { file = "README.md", content-type = "text/markdown" }
-license = { file = "LICENSE" }
+license = "MIT"
 urls = { Repository = "https://github.com/robert-koch-institut/mex-backend" }
 requires-python = ">=3.14,<3.15"
 dependencies = [
     "backoff>=2.2,<3",
     "fastapi>=0.135,<0.136",
     "jinja2>=3.1,<4",
-    "mex-common>=1.16.1,<1.17",
+    "mex-common>=1.18,<1.19",
     "neo4j>=6.1,<7",
     "pydantic>=2,<3",
-    "starlette>=0.50,<1",
-    "uvicorn[standard]>=0.40,<1",
+    "starlette>=1,<2",
+    "uvicorn[standard]>=0.42,<1",
     "valkey>=6.1,<7",
 ]
 
@@ -138,7 +138,10 @@ select = ["ALL"]
 "reflex" = "rx"
 
 [tool.ruff.lint.flake8-type-checking]
-runtime-evaluated-base-classes = ["pydantic.BaseModel"]
+runtime-evaluated-base-classes = [
+    "pydantic.BaseModel",
+    "mex.common.models.BaseModel"
+]
 runtime-evaluated-decorators = [
     "fastapi.APIRouter.delete",
     "fastapi.APIRouter.get",

@@ -50,7 +50,7 @@ CALL (main, data) {
 <# connect main node to referenced merged items -#>
 CALL (main, data) {
     UNWIND data.linkRels AS linkRel
-    MATCH (linkTarget:<<params.all_referenced_labels|join("|")>> {identifier: linkRel.nodeProps.identifier})
+    MATCH (linkTarget:<<params.used_referenced_labels|join("|")>> {identifier: linkRel.nodeProps.identifier})
     MERGE (main)-[newLinkEdge:$(linkRel.edgeLabel) {position: linkRel.edgeProps.position}]->(linkTarget)
     RETURN collect(newLinkEdge) as newLinkEdges
 }
@@ -59,7 +59,7 @@ CALL (main, data) {
 <% if params.has_create_rels -%>
 <# delete referenced Text/Link nodes and their edges that are not in newCreateEdges -#>
 CALL (main, newCreateEdges) {
-    OPTIONAL MATCH (main)-[gcEdge:<<params.delete_node_edges|join("|")>>]->(gcNode:<<params.all_nested_labels|join("|")>>)
+    OPTIONAL MATCH (main)-[gcEdge:<<params.delete_node_edges|join("|")>>]->(gcNode:<<params.used_nested_labels|join("|")>>)
         WHERE NOT gcEdge IN newCreateEdges
     DETACH DELETE gcNode
 }
@@ -68,7 +68,7 @@ CALL (main, newCreateEdges) {
 <% if params.has_link_rels -%>
 <# delete edges to merged nodes that are not in newLinkEdges -#>
 CALL (main, newLinkEdges) {
-    OPTIONAL MATCH (main)-[gcEdge:<<params.detach_node_edges|join("|")>>]->(:<<params.all_referenced_labels|join("|")>>)
+    OPTIONAL MATCH (main)-[gcEdge:<<params.detach_node_edges|join("|")>>]->(:<<params.used_referenced_labels|join("|")>>)
     WHERE NOT gcEdge IN newLinkEdges
     DELETE gcEdge
 }
@@ -77,7 +77,7 @@ CALL (main, newLinkEdges) {
 <% if params.has_create_rels -%>
 <# get all relations to nested items -#>
 CALL (main) {
-    MATCH (main)-[createEdge]->(createNode:<<params.all_nested_labels|join("|")>>)
+    MATCH (main)-[createEdge]->(createNode:<<params.used_nested_labels|join("|")>>)
     ORDER BY type(createEdge), createEdge.position
     RETURN collect(
         {
@@ -93,7 +93,7 @@ CALL (main) {
 <# get all relations to merged items that are not of relation type "stableTargetId" -#>
 <% if params.has_link_rels -%>
 CALL (main) {
-    MATCH (main)-[linkEdge]->(linkNode:<<params.all_referenced_labels|join("|")>>)
+    MATCH (main)-[linkEdge]->(linkNode:<<params.used_referenced_labels|join("|")>>)
     WHERE type(linkEdge) <> "stableTargetId"
     ORDER BY type(linkEdge), linkEdge.position
     RETURN collect(

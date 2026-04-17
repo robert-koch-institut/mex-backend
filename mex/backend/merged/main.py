@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from typing import Annotated
 
-from fastapi import APIRouter, Path, Query
+from fastapi import APIRouter, Depends, Path, Query
 from fastapi.exceptions import HTTPException
 from starlette import status
 
@@ -13,6 +13,7 @@ from mex.backend.merged.helpers import (
     search_merged_items_in_graph,
 )
 from mex.backend.rules.helpers import get_rule_set_from_graph
+from mex.backend.security import has_write_access
 from mex.backend.types import MergedType, ReferenceFieldName
 from mex.common.models import (
     MERGED_MODEL_CLASSES_BY_NAME,
@@ -29,8 +30,10 @@ def search_merged_items(  # noqa: PLR0913
     q: Annotated[str, Query(max_length=100)] = "",
     identifier: Annotated[Identifier | None, Query()] = None,
     entityType: Annotated[Sequence[MergedType], Query(max_length=len(MergedType))] = [],
-    referencedIdentifier: Annotated[Sequence[Identifier] | None, Query()] = None,
-    referenceField: Annotated[ReferenceFieldName | None, Query()] = None,
+    referencedIdentifier: Annotated[
+        Sequence[Identifier] | None, Query(max_length=100, deprecated=True)
+    ] = None,
+    referenceField: Annotated[ReferenceFieldName | None, Query(deprecated=True)] = None,
     skip: Annotated[int, Query(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> PaginatedItemsContainer[AnyMergedModel]:
@@ -62,7 +65,10 @@ def get_merged_item(identifier: Annotated[Identifier, Path()]) -> AnyMergedModel
 
 
 @router.delete(
-    "/merged-item/{identifier}", status_code=status.HTTP_204_NO_CONTENT, tags=["editor"]
+    "/merged-item/{identifier}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    tags=["editor"],
+    dependencies=[Depends(has_write_access)],
 )
 def delete_merged_item(
     identifier: Annotated[Identifier, Path()],
