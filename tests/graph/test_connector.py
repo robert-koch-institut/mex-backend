@@ -8,10 +8,13 @@ from pytest import FixtureRequest, MonkeyPatch
 
 from mex.backend.graph import connector as connector_module
 from mex.backend.graph.connector import GraphConnector
+from mex.backend.graph.constants import NO_REFERENCE_SENTINEL
 from mex.backend.graph.exceptions import IngestionError, MatchingError
 from mex.backend.graph.models import IngestParams
 from mex.backend.graph.query import Query
-from mex.backend.types import MergedType
+from mex.backend.models import ReferenceFilter
+from mex.backend.settings import BackendSettings
+from mex.backend.types import MergedType, ReferenceFieldName
 from mex.common.exceptions import MExError
 from mex.common.merged.main import create_merged_item
 from mex.common.models import (
@@ -270,10 +273,13 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
     result = graph.fetch_extracted_items(
         query_string="my-query",
         identifier=None,
-        stable_target_id=Identifier.generate(99),
         entity_type=["ExtractedFoo", "ExtractedBar", "ExtractedBatz"],
-        referenced_identifiers=None,
-        reference_field=None,
+        reference_filters=[
+            ReferenceFilter(
+                field=ReferenceFieldName("stableTargetId"),
+                identifiers=[Identifier.generate(99)],
+            )
+        ],
         skip=10,
         limit=100,
     )
@@ -283,9 +289,8 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
             "fetch_extracted_or_rule_items",
             filter_by_query_string=True,
             filter_by_identifier=False,
-            filter_by_stable_target_id=True,
-            filter_by_referenced_identifiers=False,
-            reference_field=None,
+            filter_by_references=True,
+            reference_fields=["stableTargetId"],
         ),
         {
             "labels": [
@@ -295,10 +300,15 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
             ],
             "limit": 100,
             "query_string": "my-query",
-            "referenced_identifiers": None,
+            "reference_filters": [
+                {
+                    "field": "stableTargetId",
+                    "identifiers": [str(Identifier.generate(99))],
+                }
+            ],
+            "reference_fields": ["stableTargetId"],
             "skip": 10,
             "identifier": None,
-            "stable_target_id": "bFQoRhcVH5DHV1",
         },
     )
 
@@ -314,11 +324,63 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
     }
 
 
+@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
+    mocked_graph: MockedGraph,
+) -> None:
+    mocked_graph.return_value = [{"items": [], "total": 0}]
+    graph = GraphConnector.get()
+    graph.fetch_extracted_items(
+        query_string=None,
+        identifier=None,
+        entity_type=["ExtractedOrganization"],
+        reference_filters=[
+            ReferenceFilter(
+                field=ReferenceFieldName("hadPrimarySource"),
+                identifiers=[None],
+            )
+        ],
+        skip=0,
+        limit=10,
+    )
+
+    assert mocked_graph.call_args_list[-1] == call(
+        call(
+            "fetch_extracted_or_rule_items",
+            filter_by_query_string=False,
+            filter_by_identifier=False,
+            filter_by_references=True,
+            reference_fields=["hadPrimarySource"],
+        ),
+        {
+            "query_string": None,
+            "identifier": None,
+            "labels": ["ExtractedOrganization"],
+            "limit": 10,
+            "reference_filters": [
+                {
+                    "field": "hadPrimarySource",
+                    "identifiers": [NO_REFERENCE_SENTINEL],
+                }
+            ],
+            "reference_fields": ["hadPrimarySource"],
+            "skip": 0,
+        },
+    )
+
+
 @pytest.mark.parametrize(
     ("query_parameters", "expected"),
     [
         pytest.param(
-            {"stable_target_id": "thisIdDoesNotExist"},
+            {
+                "reference_filters": [
+                    ReferenceFilter(
+                        field=ReferenceFieldName("stableTargetId"),
+                        identifiers=["thisIdDoesNotExist"],
+                    )
+                ],
+            },
             {"items": [], "total": 0},
             id="id-not-found",
         ),
@@ -329,16 +391,24 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
         ),
         pytest.param(
             {
-                "referenced_identifiers": [MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID],
-                "reference_field": "hadPrimarySource",
+                "reference_filters": [
+                    ReferenceFilter(
+                        field=ReferenceFieldName("hadPrimarySource"),
+                        identifiers=[MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID],
+                    )
+                ],
             },
             {"items": [], "total": 0},
             id="no-items-with-primary-source-mex-editor",
         ),
         pytest.param(
             {
-                "referenced_identifiers": ["bFQoRhcVH5DHUt"],
-                "reference_field": "hadPrimarySource",
+                "reference_filters": [
+                    ReferenceFilter(
+                        field=ReferenceFieldName("hadPrimarySource"),
+                        identifiers=["bFQoRhcVH5DHUt"],
+                    )
+                ],
                 "limit": 1,
             },
             {
@@ -367,11 +437,15 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
         ),
         pytest.param(
             {
-                "referenced_identifiers": [
-                    MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
-                    "bFQoRhcVH5DHUt",
+                "reference_filters": [
+                    ReferenceFilter(
+                        field=ReferenceFieldName("hadPrimarySource"),
+                        identifiers=[
+                            MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
+                            "bFQoRhcVH5DHUt",
+                        ],
+                    )
                 ],
-                "reference_field": "hadPrimarySource",
                 "limit": 1,
             },
             {
@@ -573,16 +647,14 @@ def test_fetch_extracted_items(
     query_parameter_defaults = {
         "query_string": None,
         "identifier": None,
-        "stable_target_id": None,
         "entity_type": None,
-        "referenced_identifiers": None,
-        "reference_field": None,
+        "reference_filters": None,
         "skip": 0,
         "limit": 10,
     }
     query_kwargs = query_parameter_defaults | query_parameters
     graph = GraphConnector.get()
-    result = graph.fetch_extracted_items(**query_kwargs)  # type: ignore[arg-type]
+    result = graph.fetch_extracted_items(**query_kwargs)
 
     assert result.one() == expected
 
@@ -608,10 +680,13 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
     result = graph.fetch_rule_items(
         query_string="my-query",
         identifier=None,
-        stable_target_id=Identifier.generate(99),
         entity_type=["AdditiveFoo", "SubtractiveBar", "PreventiveBatz"],
-        referenced_identifiers=None,
-        reference_field=None,
+        reference_filters=[
+            ReferenceFilter(
+                field=ReferenceFieldName("stableTargetId"),
+                identifiers=[Identifier.generate(99)],
+            )
+        ],
         skip=10,
         limit=100,
     )
@@ -621,9 +696,8 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
             "fetch_extracted_or_rule_items",
             filter_by_query_string=True,
             filter_by_identifier=False,
-            filter_by_stable_target_id=True,
-            filter_by_referenced_identifiers=False,
-            reference_field=None,
+            filter_by_references=True,
+            reference_fields=["stableTargetId"],
         ),
         {
             "labels": [
@@ -633,10 +707,15 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
             ],
             "limit": 100,
             "query_string": "my-query",
-            "referenced_identifiers": None,
+            "reference_filters": [
+                {
+                    "field": "stableTargetId",
+                    "identifiers": [str(Identifier.generate(99))],
+                }
+            ],
+            "reference_fields": ["stableTargetId"],
             "skip": 10,
             "identifier": None,
-            "stable_target_id": "bFQoRhcVH5DHV1",
         },
     )
 
@@ -656,7 +735,14 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
     ("query_parameters", "expected"),
     [
         pytest.param(
-            {"stable_target_id": "thisIdDoesNotExist"},
+            {
+                "reference_filters": [
+                    ReferenceFilter(
+                        field=ReferenceFieldName("stableTargetId"),
+                        identifiers=["thisIdDoesNotExist"],
+                    )
+                ],
+            },
             {"items": [], "total": 0},
             id="id-not-found",
         ),
@@ -667,8 +753,12 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
         ),
         pytest.param(
             {
-                "referenced_identifiers": [MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID],
-                "reference_field": "hadPrimarySource",
+                "reference_filters": [
+                    ReferenceFilter(
+                        field=ReferenceFieldName("hadPrimarySource"),
+                        identifiers=[MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID],
+                    )
+                ],
             },
             {
                 "items": [
@@ -686,11 +776,15 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
         ),
         pytest.param(
             {
-                "referenced_identifiers": [
-                    MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
-                    "thisIdDoesNotExist",
+                "reference_filters": [
+                    ReferenceFilter(
+                        field=ReferenceFieldName("hadPrimarySource"),
+                        identifiers=[
+                            MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
+                            "thisIdDoesNotExist",
+                        ],
+                    )
                 ],
-                "reference_field": "hadPrimarySource",
             },
             {
                 "items": [
@@ -752,16 +846,14 @@ def test_fetch_rule_items(
     query_parameter_defaults = {
         "query_string": None,
         "identifier": None,
-        "stable_target_id": None,
         "entity_type": None,
-        "referenced_identifiers": None,
-        "reference_field": None,
+        "reference_filters": None,
         "skip": 0,
         "limit": 1,
     }
     query_kwargs = query_parameter_defaults | query_parameters
     graph = GraphConnector.get()
-    result = graph.fetch_rule_items(**query_kwargs)  # type: ignore[arg-type]
+    result = graph.fetch_rule_items(**query_kwargs)
 
     assert result.one() == expected
 
@@ -773,10 +865,13 @@ def test_fetch_rule_items_empty() -> None:
     result = graph.fetch_rule_items(
         query_string=None,
         identifier=None,
-        stable_target_id="thisIdDoesNotExist",
         entity_type=None,
-        referenced_identifiers=None,
-        reference_field=None,
+        reference_filters=[
+            ReferenceFilter(
+                field=ReferenceFieldName("stableTargetId"),
+                identifiers=["thisIdDoesNotExist"],
+            )
+        ],
         skip=0,
         limit=1,
     )
@@ -830,8 +925,12 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
         query_string="my-query",
         identifier=Identifier.generate(99),
         entity_type=["MergedFoo", "MergedBar", "MergedBatz"],
-        referenced_identifiers=[Identifier.generate(100)],
-        reference_field="hadPrimarySource",
+        reference_filters=[
+            ReferenceFilter(
+                field=ReferenceFieldName("hadPrimarySource"),
+                identifiers=[Identifier.generate(100)],
+            )
+        ],
         skip=10,
         limit=100,
     )
@@ -841,9 +940,8 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
             "fetch_merged_items",
             filter_by_query_string=True,
             filter_by_identifier=True,
-            filter_by_referenced_identifiers=True,
-            filter_items_with_rules=False,
-            reference_field="hadPrimarySource",
+            filter_by_references=True,
+            reference_fields=["hadPrimarySource"],
         ),
         {
             "labels": [
@@ -853,7 +951,13 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
             ],
             "limit": 100,
             "query_string": "my-query",
-            "referenced_identifiers": ["bFQoRhcVH5DHV2"],
+            "reference_filters": [
+                {
+                    "field": "hadPrimarySource",
+                    "identifiers": [str(Identifier.generate(100))],
+                }
+            ],
+            "reference_fields": ["hadPrimarySource"],
             "skip": 10,
             "identifier": "bFQoRhcVH5DHV1",
         },
@@ -879,21 +983,6 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
         ],
         "total": 1,
     }
-
-
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey", "mocked_graph")
-def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
-    graph = GraphConnector.get()
-    with pytest.raises(ValueError, match="Invalid field name"):
-        graph.fetch_merged_items(
-            query_string="ok-query",
-            identifier=Identifier.generate(99),
-            entity_type=["MergedFoo"],
-            referenced_identifiers=[Identifier.generate(100)],
-            reference_field="Robert'); DROP TABLE Students;--",
-            skip=10,
-            limit=10,
-        )
 
 
 @pytest.mark.parametrize(
@@ -980,8 +1069,12 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
         ),
         pytest.param(
             {
-                "referenced_identifiers": ["bFQoRhcVH5DHUt"],
-                "reference_field": "hadPrimarySource",
+                "reference_filters": [
+                    ReferenceFilter(
+                        field=ReferenceFieldName("hadPrimarySource"),
+                        identifiers=["bFQoRhcVH5DHUt"],
+                    )
+                ],
                 "limit": 1,
             },
             {
@@ -1019,8 +1112,12 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
         ),
         pytest.param(
             {
-                "referenced_identifiers": [MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID],
-                "reference_field": "hadPrimarySource",
+                "reference_filters": [
+                    ReferenceFilter(
+                        field=ReferenceFieldName("hadPrimarySource"),
+                        identifiers=[MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID],
+                    )
+                ],
                 "limit": 1,
             },
             {
@@ -1054,11 +1151,15 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
         ),
         pytest.param(
             {
-                "referenced_identifiers": [
-                    MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
-                    "bFQoRhcVH5DHUr",
+                "reference_filters": [
+                    ReferenceFilter(
+                        field=ReferenceFieldName("hadPrimarySource"),
+                        identifiers=[
+                            MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
+                            "bFQoRhcVH5DHUr",  # ps-1
+                        ],
+                    )
                 ],
-                "reference_field": "hadPrimarySource",
                 "limit": 1,
             },
             {
@@ -1086,15 +1187,19 @@ def test_mocked_graph_fetch_merged_items_invalid_field_name() -> None:
                         "identifier": "StandaloneRule",
                     }
                 ],
-                "total": 6,
+                "total": 6,  # returns 4 from ps-1 and 2 from mex-editor
             },
-            id="filter-for-had-primary-sources-mex-editor-and-primary-source-x-returns-4-from-x-and-2-from-editor",
+            id="filter-for-had-primary-sources-mex-editor-and-primary-source-ps-1",
         ),
         pytest.param(
             {
                 "query_string": "Unit",
-                "referenced_identifiers": ["bFQoRhcVH5DHUt"],
-                "reference_field": "hadPrimarySource",
+                "reference_filters": [
+                    ReferenceFilter(
+                        field=ReferenceFieldName("hadPrimarySource"),
+                        identifiers=["bFQoRhcVH5DHUt"],
+                    )
+                ],
                 "limit": 1,
             },
             {
@@ -1348,15 +1453,14 @@ def test_fetch_merged_items(
         "query_string": None,
         "identifier": None,
         "entity_type": None,
-        "referenced_identifiers": None,
-        "reference_field": None,
+        "reference_filters": None,
         "skip": 0,
         "limit": 10,
     }
     query_kwargs = query_parameter_defaults | query_parameters
     graph = GraphConnector.get()
 
-    result = graph.fetch_merged_items(**query_kwargs)  # type: ignore[arg-type]
+    result = graph.fetch_merged_items(**query_kwargs)
 
     assert result.one() == expected
 

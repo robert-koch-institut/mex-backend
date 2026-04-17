@@ -387,6 +387,351 @@ def test_search_merged_items(
     assert response.json() == expected
 
 
+@pytest.mark.parametrize(
+    ("payload", "expected"),
+    [
+        pytest.param(
+            {"limit": 1},
+            {
+                "items": [
+                    {
+                        "$type": "MergedPrimarySource",
+                        "alternativeTitle": [],
+                        "contact": [],
+                        "description": [],
+                        "documentation": [],
+                        "identifier": "00000000000000",
+                        "locatedAt": [],
+                        "supersededBy": None,
+                        "title": [],
+                        "unitInCharge": [],
+                        "version": None,
+                    }
+                ],
+                "total": 12,
+            },
+            id="limit-1",
+        ),
+        pytest.param(
+            {"limit": 1, "skip": 9},
+            {
+                "items": [
+                    {
+                        "$type": "MergedOrganization",
+                        "alternativeName": [],
+                        "geprisId": [],
+                        "gndId": [],
+                        "identifier": "bFQoRhcVH5DHUv",
+                        "isniId": [],
+                        "officialName": [{"language": "de", "value": "RKI"}],
+                        "rorId": [],
+                        "shortName": [],
+                        "supersededBy": None,
+                        "viafId": [],
+                        "wikidataId": [],
+                    }
+                ],
+                "total": 12,
+            },
+            id="skip-9",
+        ),
+        pytest.param(
+            {"entityType": ["MergedContactPoint"]},
+            {
+                "items": [
+                    {
+                        "$type": "MergedContactPoint",
+                        "email": ["info@contact-point.one"],
+                        "identifier": "bFQoRhcVH5DHUB",
+                        "supersededBy": None,
+                    },
+                    {
+                        "$type": "MergedContactPoint",
+                        "email": ["help@contact-point.two"],
+                        "identifier": "bFQoRhcVH5DHUD",
+                        "supersededBy": None,
+                    },
+                ],
+                "total": 2,
+            },
+            id="entity-type-contact-points",
+        ),
+        pytest.param(
+            {"q": "cool"},
+            {
+                "items": [
+                    {
+                        "$type": "MergedPrimarySource",
+                        "alternativeTitle": [],
+                        "contact": [],
+                        "description": [],
+                        "documentation": [],
+                        "identifier": "bFQoRhcVH5DHUt",
+                        "locatedAt": [],
+                        "supersededBy": None,
+                        "title": [],
+                        "unitInCharge": [],
+                        "version": "Cool Version v2.13",
+                    }
+                ],
+                "total": 1,
+            },
+            id="full-text-search",
+        ),
+        pytest.param(
+            {"identifier": "bFQoRhcVH5DHUx"},
+            {
+                "items": [
+                    {
+                        "$type": "MergedOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "identifier": "bFQoRhcVH5DHUx",
+                        "name": [{"language": "en", "value": "Unit 1"}],
+                        "parentUnit": None,
+                        "shortName": [],
+                        "supersededBy": None,
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [
+                            {"language": None, "title": None, "url": "https://ou-1"}
+                        ],
+                    }
+                ],
+                "total": 1,
+            },
+            id="identifier-filter-extracted-only",
+        ),
+        pytest.param(
+            {"identifier": "StandaloneRule"},
+            {
+                "items": [
+                    {
+                        "$type": "MergedOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": ["1.7@rki.de"],
+                        "identifier": "StandaloneRule",
+                        "name": [{"language": "de", "value": "Abteilung 1.7"}],
+                        "parentUnit": "bFQoRhcVH5DHUx",
+                        "shortName": [],
+                        "supersededBy": None,
+                        "unitOf": [],
+                        "website": [],
+                    }
+                ],
+                "total": 1,
+            },
+            id="identifier-filter-rule-set-only",
+        ),
+        pytest.param(
+            {"identifier": "bFQoRhcVH5DHUz"},
+            {
+                "items": [
+                    {
+                        "$type": "MergedOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "identifier": "bFQoRhcVH5DHUz",
+                        "name": [{"language": "de", "value": "Abteilung 1.6"}],
+                        "parentUnit": "bFQoRhcVH5DHUx",
+                        "shortName": [],
+                        "supersededBy": None,
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [
+                            {
+                                "language": None,
+                                "title": "Unit Homepage",
+                                "url": "https://unit-1-6",
+                            }
+                        ],
+                    }
+                ],
+                "total": 1,
+            },
+            id="identifier-filter-extracted-and-ruleset",
+        ),
+        pytest.param(
+            {
+                "referenceFilters": [
+                    {"field": "hadPrimarySource", "identifiers": ["bFQoRhcVH5DHUt"]}
+                ]
+            },
+            {
+                "items": [
+                    {
+                        "$type": "MergedOrganization",
+                        "alternativeName": [],
+                        "geprisId": [],
+                        "gndId": [],
+                        "identifier": "bFQoRhcVH5DHUF",
+                        "isniId": [],
+                        "officialName": [
+                            {"language": "de", "value": "RKI"},
+                            {"language": "en", "value": "Robert Koch Institute"},
+                        ],
+                        "rorId": [],
+                        "shortName": [],
+                        "supersededBy": None,
+                        "viafId": [],
+                        "wikidataId": [],
+                    },
+                    {
+                        "$type": "MergedOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "identifier": "bFQoRhcVH5DHUx",
+                        "name": [{"language": "en", "value": "Unit 1"}],
+                        "parentUnit": None,
+                        "shortName": [],
+                        "supersededBy": None,
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [
+                            {"language": None, "title": None, "url": "https://ou-1"}
+                        ],
+                    },
+                    {
+                        "$type": "MergedOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "identifier": "bFQoRhcVH5DHUz",
+                        "name": [{"language": "de", "value": "Abteilung 1.6"}],
+                        "parentUnit": "bFQoRhcVH5DHUx",
+                        "shortName": [],
+                        "supersededBy": None,
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [
+                            {
+                                "language": None,
+                                "title": "Unit Homepage",
+                                "url": "https://unit-1-6",
+                            }
+                        ],
+                    },
+                ],
+                "total": 3,
+            },
+            id="referenced-id-filter",
+        ),
+        pytest.param(
+            {
+                "referenceFilters": [
+                    {"field": "hadPrimarySource", "identifiers": ["00000000000002"]}
+                ]
+            },
+            {
+                "items": [
+                    {
+                        "$type": "MergedOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": ["1.7@rki.de"],
+                        "identifier": "StandaloneRule",
+                        "name": [{"language": "de", "value": "Abteilung 1.7"}],
+                        "parentUnit": "bFQoRhcVH5DHUx",
+                        "shortName": [],
+                        "supersededBy": None,
+                        "unitOf": [],
+                        "website": [],
+                    },
+                    {
+                        "$type": "MergedOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "identifier": "bFQoRhcVH5DHUz",
+                        "name": [{"language": "de", "value": "Abteilung 1.6"}],
+                        "parentUnit": "bFQoRhcVH5DHUx",
+                        "shortName": [],
+                        "supersededBy": None,
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [
+                            {
+                                "language": None,
+                                "title": "Unit Homepage",
+                                "url": "https://unit-1-6",
+                            }
+                        ],
+                    },
+                ],
+                "total": 2,
+            },
+            id="had-primary-source-mex-editor-filter",
+        ),
+        pytest.param(
+            {"identifier": "thisIdDoesNotExist"},
+            {"items": [], "total": 0},
+            id="identifier-not-found",
+        ),
+        pytest.param(
+            {"q": "queryNotFound"},
+            {"items": [], "total": 0},
+            id="full-text-not-found",
+        ),
+        pytest.param(
+            {
+                "referenceFilters": [
+                    {
+                        "field": "hadPrimarySource",
+                        "identifiers": ["bFQoRhcVH5DHUt"],
+                    },
+                    {
+                        "field": "unitOf",
+                        "identifiers": ["bFQoRhcVH5DHUv"],
+                    },
+                ]
+            },
+            {
+                "items": [
+                    {
+                        "$type": "MergedOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "identifier": "bFQoRhcVH5DHUx",
+                        "name": [{"language": "en", "value": "Unit 1"}],
+                        "parentUnit": None,
+                        "shortName": [],
+                        "supersededBy": None,
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [
+                            {"language": None, "title": None, "url": "https://ou-1"}
+                        ],
+                    },
+                    {
+                        "$type": "MergedOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "identifier": "bFQoRhcVH5DHUz",
+                        "name": [{"language": "de", "value": "Abteilung 1.6"}],
+                        "parentUnit": "bFQoRhcVH5DHUx",
+                        "shortName": [],
+                        "supersededBy": None,
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [
+                            {
+                                "language": None,
+                                "title": "Unit Homepage",
+                                "url": "https://unit-1-6",
+                            }
+                        ],
+                    },
+                ],
+                "total": 2,
+            },
+            id="multiple-reference-filters-and",
+        ),
+    ],
+)
+@pytest.mark.usefixtures("loaded_dummy_data")
+@pytest.mark.integration
+def test_search_merged_items_advanced(
+    client_with_api_key_read_permission: TestClient,
+    payload: dict[str, Any],
+    expected: dict[str, Any],
+) -> None:
+    response = client_with_api_key_read_permission.post(
+        "/v0/merged-item/_search", json=payload
+    )
+    assert response.status_code == status.HTTP_200_OK, response.text
+    assert response.json() == expected
+
+
 @pytest.mark.integration
 def test_search_merged_items_skip_on_validation_error(
     client_with_api_key_read_permission: TestClient,
@@ -440,6 +785,21 @@ def test_search_merged_items_skip_on_validation_error(
         ],
         "total": 3,  # the total still contains the filtered-out items :/
     }
+
+
+@pytest.mark.integration
+def test_search_merged_items_invalid_reference_field_filter(
+    client_with_api_key_read_permission: TestClient,
+) -> None:
+    response = client_with_api_key_read_permission.post(
+        "/v0/merged-item/_search",
+        json={"referenceFilters": [{"field": "description", "identifiers": ["x"]}]},
+    )
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT, response.text
+    assert (
+        "Input should be 'accessPlatform', 'accessService', 'affiliation'"  # ...
+        in response.text
+    )
 
 
 @pytest.mark.integration

@@ -9,7 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- new POST endpoints for advanced search of extracted, preview and merged items
+- new reference filters syntax that allows chaining multiple filters with AND condition
+
 ### Changes
+
+- simplified search queries using jinja macros that are individually testable
 
 ### Deprecated
 
@@ -23,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- add preview item by stableTargetid endpoint
+- add preview item by stableTargetId endpoint
 - add slapd LDAP mock server to compose and CI
 - add `mocked_ldap` fixture variant running against slapd when a search base is set
 - add LDAP mock data in `assets/raw-data/ldap/` with persons and functional accounts

@@ -8,7 +8,7 @@ from neo4j import ResultSummary as Neo4jResultSummary
 from pytest import MonkeyPatch
 
 from mex.backend.graph.exceptions import MultipleResultsFoundError, NoResultFoundError
-from mex.backend.graph.models import Result
+from mex.backend.graph.models import GraphRel, IngestData, Result
 from mex.common.testing import Joker
 
 
@@ -143,3 +143,40 @@ def test_log_notifications(
     mock_warning.assert_called_once_with("%r", warning_status)
     mock_info.assert_called_once_with("%r", info_status)
     mock_debug.assert_called_once_with("%r", debug_status)
+
+
+def test_ingest_data_metadata() -> None:
+    data = IngestData(
+        stableTargetId="stid-1",
+        identifier="id-1",
+        entityType="ExtractedActivity",
+        nodeProps={"title": "t", "description": "d", "start": "2024"},
+        linkRels=[
+            GraphRel(
+                edgeLabel="hadPrimarySource",
+                edgeProps={"position": 0},
+                nodeLabels=["MergedPrimarySource"],
+                nodeProps={"identifier": "ps-1"},
+            ),
+        ],
+        createRels=[
+            GraphRel(
+                edgeLabel="title",
+                edgeProps={"position": 0},
+                nodeLabels=["Text"],
+                nodeProps={"value": "t", "language": "en"},
+            ),
+            GraphRel(
+                edgeLabel="title",
+                edgeProps={"position": 1},
+                nodeLabels=["Text"],
+                nodeProps={"value": "t2", "language": "de"},
+            ),
+        ],
+    )
+    assert data.metadata() == {
+        "createRels": 2,
+        "identifier": "id-1",
+        "linkRels": 1,
+        "props": 3,
+    }
