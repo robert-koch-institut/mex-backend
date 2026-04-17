@@ -1,4 +1,5 @@
 import json
+import logging
 from base64 import b64encode
 from collections import deque
 from functools import partial
@@ -9,7 +10,7 @@ from unittest.mock import MagicMock, Mock
 import pytest
 from fastapi.testclient import TestClient
 from neo4j import Driver, Session, SummaryCounters, Transaction
-from pytest import FixtureRequest, MonkeyPatch
+from pytest import FixtureRequest, LogCaptureFixture, MonkeyPatch
 from valkey import Valkey
 
 from mex.artificial.helpers import create_artificial_items_and_rule_sets
@@ -19,6 +20,7 @@ from mex.backend.main import app
 from mex.backend.settings import BackendSettings
 from mex.backend.testing.main import app as testing_app
 from mex.common.connector import CONNECTOR_STORE
+from mex.common.logging import logger
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     AdditiveOrganizationalUnit,
@@ -35,6 +37,7 @@ from mex.common.models import (
 from mex.common.transform import MExEncoder
 from mex.common.types import (
     Identifier,
+    IdentityProvider,
     Link,
     Text,
     TextLanguage,
@@ -47,11 +50,13 @@ pytest_plugins = ("mex.common.testing.plugin",)
 
 @pytest.fixture(autouse=True)
 def settings(
+    caplog: LogCaptureFixture,
     monkeypatch: MonkeyPatch,
+    is_integration_test: bool,  # noqa: FBT001
+    log_level: int,
     isolate_settings: None,  # noqa: ARG001
 ) -> BackendSettings:
     """Load the settings for this pytest session."""
-    settings = BackendSettings.get()
     monkeypatch.setenv(
         "MEX_BACKEND_API_KEY_DATABASE",
         json.dumps(
@@ -61,7 +66,38 @@ def settings(
             }
         ),
     )
-    return settings
+    if is_integration_test:
+        monkeypatch.setenv(
+            "MEX_IDENTITY_PROVIDER",
+            IdentityProvider.GRAPH.value,
+        )
+    else:
+        monkeypatch.setenv(
+            "MEX_IDENTITY_PROVIDER",
+            IdentityProvider.MEMORY.value,
+        )
+    # temporarily reduce log-level because the settings emit their configuration
+    # on every instantiation or value-change. this would flood the test logs with noise,
+    # especially because this fixture is used by *every* test.
+    with caplog.at_level(log_level, logger=logger.name):
+        return BackendSettings.get()
+
+
+@pytest.fixture
+def log_level(request: FixtureRequest) -> int:
+    """Returns a sensible log-level for the current pytest verbosity.
+
+    This can be controlled by adding more "v"s to `pytest -v`.
+    """
+    levels_by_verbosity = {
+        0: logging.ERROR,  # always shown
+        1: logging.WARNING,  # -v
+        2: logging.INFO,  # -vv
+    }
+    return levels_by_verbosity.get(
+        request.config.option.verbose,
+        logging.DEBUG,  # `-vvv` and above
+    )
 
 
 @pytest.fixture
