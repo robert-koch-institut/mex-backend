@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from mex.backend.types import APIKey, APIUserPassword
+from mex.backend.types import APIKey
 
 
 class APIKeyDatabase(BaseModel):
@@ -8,10 +8,3 @@ class APIKeyDatabase(BaseModel):
 
     read: list[APIKey] = []
     write: list[APIKey] = []
-
-
-class APIUserDatabase(BaseModel):
-    """Database containing usernames and passwords for backend API."""
-
-    read: dict[str, APIUserPassword] = {}
-    write: dict[str, APIUserPassword] = {}

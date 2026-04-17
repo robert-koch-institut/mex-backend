@@ -66,15 +66,6 @@ def settings(
             }
         ),
     )
-    monkeypatch.setenv(
-        "MEX_BACKEND_API_USER_DATABASE",
-        json.dumps(
-            {
-                "read": {"Reader": "read_password"},
-                "write": {"Writer": "write_password"},
-            }
-        ),
-    )
     if is_integration_test:
         monkeypatch.setenv(
             "MEX_IDENTITY_PROVIDER",
@@ -127,15 +118,6 @@ def client_with_api_key_write_permission(client: TestClient) -> TestClient:
 def client_with_api_key_read_permission(client: TestClient) -> TestClient:
     """Return a fastAPI test client with read permission granted by API key."""
     client.headers.update({"X-API-Key": "read_key"})
-    return client
-
-
-@pytest.fixture
-def client_with_basic_auth_read_permission(client: TestClient) -> TestClient:
-    """Return a fastAPI test client with read permission granted by basic auth."""
-    client.headers.update(
-        {"Authorization": f"Basic {b64encode(b'Reader:read_password').decode()}"}
-    )
     return client
 
 
