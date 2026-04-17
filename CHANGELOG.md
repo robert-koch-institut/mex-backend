@@ -11,6 +11,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - new POST endpoints for advanced search of extracted, preview and merged items
 - new reference filters syntax that allows chaining multiple filters with AND condition
+
+### Changes
+
+- simplified search queries using jinja macros that are individually testable
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [1.8.0] - 2026-04-01
+
+### Added
+
+- add preview item by stableTargetId endpoint
 - add slapd LDAP mock server to compose and CI
 - add `mocked_ldap` fixture variant running against slapd when a search base is set
 - add LDAP mock data in `assets/raw-data/ldap/` with persons and functional accounts
@@ -18,7 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- simplified search queries using jinja macros that are individually testable
+- updated template to https://github.com/robert-koch-institut/mex-template/commit/43f715
+- `/ldap` has offset param (allow pagination)
+- updated mex-common to 1.18.1
 - update dependency requests to v2.33.0
 - updated template to https://github.com/robert-koch-institut/mex-template/commit/172aac
 - updated template to https://github.com/robert-koch-institut/mex-template/commit/491e2d
@@ -30,15 +50,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - deprecate `stableTargetId`, `referenceField` and `referencedIdentifier` filter params
 
-### Removed
-
 ### Fixed
 
 - sort ldap endpoint results by `identifierInPrimarySource` for deterministic ordering
 
 ### Security
 
+- require write access for DELETE `/v0/merged-item/{identifier}` endpoint
+  reported by Simon Weber, Volker Schönefeld, Chiara Fliegner of Machine Spirits
+  see https://www.machinespirits.com/advisory/93212f
+
 ## [1.7.2] - 2026-03-13
+
+**🚨 SECURITY: DO NOT USE** - faulty delete permissions (MX-2252), use 1.8+ instead
 
 ### Removed
 
@@ -50,6 +74,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.7.1] - 2026-03-10
 
+**🚨 SECURITY: DO NOT USE** - faulty delete permissions (MX-2252), use 1.8+ instead
+
 ### Changes
 
 - upgraded neo4j to 2026.01
@@ -57,6 +83,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - updated template to https://github.com/robert-koch-institut/mex-template/commit/0c16a6
 
 ## [1.7.0] - 2026-03-02
+
+**🚨 SECURITY: DO NOT USE** - faulty delete permissions (MX-2252), use 1.8+ instead
 
 ### Added
 
@@ -69,6 +97,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.6.0] - 2026-02-24
 
+**🚨 SECURITY: DO NOT USE** - faulty delete permissions (MX-2252), use 1.8+ instead
+
 ### Added
 
 - automatically ingest primary source for mex-editor into database
@@ -76,6 +106,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   hadPrimarySource field returns rule items
 
 ## [1.5.0] - 2026-02-19
+
+**🚨 SECURITY: DO NOT USE** - faulty delete permissions (MX-2252), use 1.8+ instead
 
 ### Changes
 
@@ -96,6 +128,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - collect distinct rule items inside the merged item query
 
 ## [1.4.0] - 2026-02-02
+
+**🚨 SECURITY: DO NOT USE** - faulty delete permissions (MX-2252), use 1.8+ instead
 
 ### Changes
 
@@ -119,6 +153,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.3.0] - 2025-11-20
 
+**🚨 SECURITY: DO NOT USE** - faulty delete permissions (MX-2252), use 1.8+ instead
+
 ### Added
 
 - delete_rule_set endpoint
@@ -134,6 +170,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - mex.bat test command
 
 ## [1.2.0] - 2025-10-23
+
+**🚨 SECURITY: DO NOT USE** - faulty delete permissions (MX-2252), use 1.8+ instead
 
 ### Added
 

@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Path, Query
+from fastapi import APIRouter, Body, Depends, Path, Query
 from fastapi.exceptions import HTTPException
 from starlette import status
 
@@ -14,6 +14,7 @@ from mex.backend.merged.helpers import (
 )
 from mex.backend.models import ReferenceFilter
 from mex.backend.rules.helpers import get_rule_set_from_graph
+from mex.backend.security import has_write_access
 from mex.backend.types import MergedType, ReferenceFieldName
 from mex.common.models import (
     MERGED_MODEL_CLASSES_BY_NAME,
@@ -102,7 +103,10 @@ def get_merged_item(identifier: Annotated[Identifier, Path()]) -> AnyMergedModel
 
 
 @router.delete(
-    "/merged-item/{identifier}", status_code=status.HTTP_204_NO_CONTENT, tags=["editor"]
+    "/merged-item/{identifier}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    tags=["editor"],
+    dependencies=[Depends(has_write_access)],
 )
 def delete_merged_item(
     identifier: Annotated[Identifier, Path()],

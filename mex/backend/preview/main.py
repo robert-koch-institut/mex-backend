@@ -69,6 +69,20 @@ def preview_item(
     )
 
 
+@router.get("/preview-item/{identifier}", tags=["editor"])
+def get_preview_item(
+    identifier: Annotated[Identifier, Path()],
+) -> AnyPreviewModel:
+    """Get the preview for an item by its identifier."""
+    result = search_merged_items_in_graph(
+        identifier=identifier,
+        validation=Validation.LENIENT,
+    )
+    if result.total == 0:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    return result.items[0]
+
+
 @router.get("/preview-item", tags=["editor"])
 def search_preview_items(  # noqa: PLR0913
     q: Annotated[str, Query(max_length=100)] = "",

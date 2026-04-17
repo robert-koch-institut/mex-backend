@@ -959,3 +959,15 @@ def test_delete_merged_item_fails(  # noqa: PLR0913
         f"/v0/merged-item/{item.stableTargetId}"
     )
     assert get_response.status_code == status_code_after, response.text
+
+
+@pytest.mark.integration
+def test_delete_merged_item_forbidden_for_read_only(
+    client_with_api_key_read_permission: TestClient,
+    loaded_dummy_data: DummyData,
+) -> None:
+    item = loaded_dummy_data["activity_1"]
+    response = client_with_api_key_read_permission.delete(
+        f"/v0/merged-item/{item.stableTargetId}?include_rule_set=true"
+    )
+    assert response.status_code == status.HTTP_403_FORBIDDEN, response.text
