@@ -52,6 +52,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 - require write access for DELETE `/v0/merged-item/{identifier}` endpoint
+  reported by Simon Weber, Volker Schönefeld, Chiara Fliegner of Machine Spirits
+  see https://www.machinespirits.com/advisory/93212f
 
 ## [1.7.2] - 2026-03-13
 
