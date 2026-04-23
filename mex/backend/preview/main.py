@@ -1,10 +1,11 @@
 from collections.abc import Sequence
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Path, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from starlette import status
 
 from mex.backend.merged.helpers import search_merged_items_in_graph
+from mex.backend.security import has_read_access
 from mex.backend.types import MergedType, ReferenceFieldName
 from mex.common.models import (
     AnyPreviewModel,
@@ -15,7 +16,11 @@ from mex.common.types import Identifier, Validation
 router = APIRouter()
 
 
-@router.get("/preview-item/{identifier}", tags=["editor"])
+@router.get(
+    "/preview-item/{identifier}",
+    tags=["editor"],
+    dependencies=[Depends(has_read_access)],
+)
 def get_preview_item(
     identifier: Annotated[Identifier, Path()],
 ) -> AnyPreviewModel:
@@ -30,7 +35,7 @@ def get_preview_item(
     return result.items[0]
 
 
-@router.get("/preview-item", tags=["editor"])
+@router.get("/preview-item", tags=["editor"], dependencies=[Depends(has_read_access)])
 def search_preview_items(  # noqa: PLR0913
     q: Annotated[str, Query(max_length=100)] = "",
     identifier: Annotated[Identifier | None, Query()] = None,

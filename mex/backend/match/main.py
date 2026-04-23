@@ -1,8 +1,9 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Body, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, status
 
 from mex.backend.match.helpers import match_item_in_graph
+from mex.backend.security import has_write_access
 from mex.common.exceptions import MExError
 from mex.common.types import (
     AnyExtractedIdentifier,
@@ -12,7 +13,11 @@ from mex.common.types import (
 router = APIRouter()
 
 
-@router.post("/match", status_code=status.HTTP_204_NO_CONTENT)
+@router.post(
+    "/match",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(has_write_access)],
+)
 def match_item(
     extractedIdentifier: Annotated[AnyExtractedIdentifier, Body()],
     mergedIdentifier: Annotated[AnyMergedIdentifier, Body()],

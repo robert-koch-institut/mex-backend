@@ -13,7 +13,7 @@ from mex.backend.merged.helpers import (
     search_merged_items_in_graph,
 )
 from mex.backend.rules.helpers import get_rule_set_from_graph
-from mex.backend.security import has_write_access
+from mex.backend.security import has_read_access, has_write_access
 from mex.backend.types import MergedType, ReferenceFieldName
 from mex.common.models import (
     MERGED_MODEL_CLASSES_BY_NAME,
@@ -25,7 +25,11 @@ from mex.common.types import Identifier, PublishingTarget, Validation
 router = APIRouter()
 
 
-@router.get("/merged-item/{publishing_target}", tags=["editor"])
+@router.get(
+    "/merged-item/{publishing_target}",
+    tags=["editor"],
+    dependencies=[Depends(has_read_access)],
+)
 def search_merged_items(  # noqa: PLR0913
     publishing_target: PublishingTarget,
     q: Annotated[str, Query(max_length=100)] = "",
@@ -57,7 +61,11 @@ def search_merged_items(  # noqa: PLR0913
     )
 
 
-@router.get("/merged-item/{identifier}/{publishing_target}", tags=["editor"])
+@router.get(
+    "/merged-item/{identifier/{publishing_target}",
+    tags=["editor"],
+    dependencies=[Depends(has_read_access)],
+)
 def get_merged_item(
     identifier: Annotated[Identifier, Path()],
     publishing_target: PublishingTarget,

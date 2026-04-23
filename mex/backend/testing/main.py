@@ -1,5 +1,5 @@
 import uvicorn
-from fastapi import APIRouter, Depends, FastAPI
+from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic_core import SchemaError, ValidationError
 
@@ -18,7 +18,6 @@ from mex.backend.main import lifespan
 from mex.backend.merged.main import router as merged_router
 from mex.backend.preview.main import router as preview_router
 from mex.backend.rules.main import router as rules_router
-from mex.backend.security import has_read_access, has_write_access
 from mex.backend.settings import BackendSettings
 from mex.backend.system.main import router as system_router
 from mex.backend.testing.ldap import router as ldap_login_router
@@ -42,14 +41,14 @@ app = FastAPI(
     version="v0",
 )
 router = APIRouter(prefix="/v0")
-router.include_router(extracted_router, dependencies=[Depends(has_read_access)])
-router.include_router(identity_router, dependencies=[Depends(has_write_access)])
-router.include_router(ingest_router, dependencies=[Depends(has_write_access)])
-router.include_router(merged_router, dependencies=[Depends(has_read_access)])
-router.include_router(orcid_router, dependencies=[Depends(has_read_access)])
-router.include_router(preview_router, dependencies=[Depends(has_read_access)])
-router.include_router(rules_router, dependencies=[Depends(has_write_access)])
-router.include_router(wikidata_router, dependencies=[Depends(has_read_access)])
+router.include_router(extracted_router)
+router.include_router(identity_router)
+router.include_router(ingest_router)
+router.include_router(merged_router)
+router.include_router(orcid_router)
+router.include_router(preview_router)
+router.include_router(rules_router)
+router.include_router(wikidata_router)
 router.include_router(ldap_login_router)
 
 router.include_router(system_router)

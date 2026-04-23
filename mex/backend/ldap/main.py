@@ -5,7 +5,7 @@ from starlette import status
 
 from mex.backend.auxiliary.primary_source import extracted_primary_source_ldap
 from mex.backend.preview.main import get_preview_item
-from mex.backend.security import has_write_access_ldap
+from mex.backend.security import is_ldap_authenticated
 from mex.common.identity import get_provider
 from mex.common.ldap.connector import LDAPConnector
 from mex.common.models import PreviewPerson
@@ -16,7 +16,7 @@ router = APIRouter()
 
 @router.post("/preview-person-from-login", tags=["editor"])
 def get_preview_person_from_login(
-    username: Annotated[str, Depends(has_write_access_ldap)],
+    username: Annotated[str, Depends(is_ldap_authenticated)],
 ) -> PreviewPerson:
     """Return the preview person from the ldap information and verify the login."""
     ldap_connector = LDAPConnector.get()
