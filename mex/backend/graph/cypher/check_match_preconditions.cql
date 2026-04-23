@@ -29,7 +29,7 @@ OPTIONAL MATCH (old_merged)<-[:stableTargetId]-(old_rules:<<any_rule_label>>)
 OPTIONAL MATCH (new_merged:<<any_merged_label>> {identifier: $merged_identifier})
 WITH
    count(DISTINCT extracted) = 1 AS extracted_exists,
-   count(old_rules) = 3 AS old_rules_exist,
+   count(old_rules) = 4 AS old_rules_exist,
    count(DISTINCT new_merged) = 1 AS merged_exists,
    elementId(old_merged) <> elementId(new_merged) AS not_self_match,
    labels(old_merged) = labels(new_merged) AS same_merged_type,

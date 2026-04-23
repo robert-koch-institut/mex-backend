@@ -11,8 +11,8 @@ from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     ExtractedContactPoint,
     ExtractedPerson,
-    MergedPerson,
     PaginatedItemsContainer,
+    PreviewPerson,
 )
 from mex.common.types import Validation
 
@@ -21,11 +21,11 @@ DEFAULT_LDAP_QUERY = "mex@rki.de"
 router = APIRouter()
 
 
-@router.post("/merged-person-from-login")
-def get_merged_person_from_login(
+@router.post("/preview-person-from-login")
+def get_preview_person_from_login(
     username: Annotated[str, Depends(is_ldap_authenticated_mocked)],
-) -> MergedPerson:
-    """Return a mocked merged person from the login LDAP information."""
+) -> PreviewPerson:
+    """Return a mocked preview person from the login LDAP information."""
     person = ExtractedPerson(
         hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
         identifierInPrimarySource=username,
@@ -44,7 +44,8 @@ def get_merged_person_from_login(
         referenced_identifiers=None,
         skip=0,
         limit=1,
-        validation=Validation.IGNORE,
+        validation=Validation.LENIENT,
+        publishing_target=None,
     )
     return result.items[0]  # type: ignore [return-value]
 
