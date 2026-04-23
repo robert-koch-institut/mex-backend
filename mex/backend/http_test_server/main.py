@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any
 
 import uvicorn
 from fastapi import APIRouter, FastAPI
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 
 from mex.backend.exceptions import (
     BackendError,
@@ -82,6 +82,13 @@ def get_http_test_server(endpoint_name: str, test_data_path: str) -> FileRespons
     mimetype, _ = mimetypes.guess_file_type(found_file)
 
     return FileResponse(found_file, media_type=mimetype)
+
+
+# TODO @MX-2250: fix endpoint
+@router.head("/http-test-server/{_:path}")
+def head_http_test_server(_: str) -> Response:
+    """HEAD endpoint for checking availibility."""
+    return Response(status_code=200)
 
 
 app.include_router(router)
