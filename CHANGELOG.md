@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- move authentication to endpoints to make auth level more explicit and obvious to
+  developers
+
 ### Deprecated
 
 ### Removed
