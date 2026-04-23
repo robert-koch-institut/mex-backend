@@ -19,10 +19,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [1.8.1] - 2026-04-23
+
+### Changes
+
+- move authentication to endpoints to make auth level more explicit and obvious to
+  developers
+
 ## [1.8.0] - 2026-04-01
 
 ### Added
 
+- add preview item by stableTargetid endpoint
 - add slapd LDAP mock server to compose and CI
 - add `mocked_ldap` fixture variant running against slapd when a search base is set
 - add LDAP mock data in `assets/raw-data/ldap/` with persons and functional accounts
@@ -51,6 +59,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 - require write access for DELETE `/v0/merged-item/{identifier}` endpoint
+  reported by Simon Weber, Volker Schönefeld, Chiara Fliegner of Machine Spirits
+  see https://www.machinespirits.com/advisory/93212f
 
 ## [1.7.2] - 2026-03-13
 

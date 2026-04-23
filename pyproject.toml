@@ -1,6 +1,6 @@
 [project]
 name = "mex-backend"
-version = "1.8.0"
+version = "1.8.1"
 description = "Backend server for the RKI metadata exchange."
 authors = [{ name = "MEx Team", email = "mex@rki.de" }]
 readme = { file = "README.md", content-type = "text/markdown" }
@@ -11,7 +11,7 @@ dependencies = [
     "backoff>=2.2,<3",
     "fastapi>=0.135,<0.136",
     "jinja2>=3.1,<4",
-    "mex-common>=1.18,<1.19",
+    "mex-common>=1.19,<1.20",
     "neo4j>=6.1,<7",
     "pydantic>=2,<3",
     "starlette>=1,<2",

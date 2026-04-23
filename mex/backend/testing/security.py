@@ -10,10 +10,10 @@ X_API_KEY = APIKeyHeader(name="X-API-Key", auto_error=False)
 HTTP_BASIC_AUTH = HTTPBasic(auto_error=False)
 
 
-def has_write_access_ldap_mocked(
+def is_ldap_authenticated_mocked(
     credentials: Annotated[HTTPBasicCredentials, Depends(HTTP_BASIC_AUTH)],
 ) -> str:
-    """Mocked function to verify if provided credentials have LDAP write access.
+    """Mocked function to authenticate against LDAP.
 
     Args:
         credentials: username and password
