@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 
 from mex.backend.extracted.helpers import get_extracted_item_from_graph
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.preview.main import search_preview_items
+from mex.backend.preview.main import get_preview_item
 from mex.backend.rules.helpers import get_rule_set_from_graph
 from mex.common.models import RULE_SET_RESPONSE_CLASSES_BY_NAME
 from mex.common.transform import ensure_postfix
@@ -22,7 +22,7 @@ def match_item_in_graph(
     """Match an extracted item to a merged item in the graph database."""
     connector = GraphConnector.get()
     extracted_item = get_extracted_item_from_graph(extracted_identifier)
-    preview_item = search_preview_items(identifier=merged_identifier).items[0]
+    preview_item = get_preview_item(identifier=merged_identifier)
 
     # ensure that the old merged item has a rule set
     if not (rule_set := get_rule_set_from_graph(extracted_item.stableTargetId)):
