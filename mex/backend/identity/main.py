@@ -1,8 +1,9 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Query
+from fastapi import APIRouter, Body, Depends, Query
 
 from mex.backend.identity.provider import GraphIdentityProvider
+from mex.backend.security import has_read_access, has_write_access
 from mex.common.identity import Identity
 from mex.common.models import PaginatedItemsContainer
 from mex.common.types import Identifier, MergedPrimarySourceIdentifier
@@ -10,7 +11,7 @@ from mex.common.types import Identifier, MergedPrimarySourceIdentifier
 router = APIRouter()
 
 
-@router.post("/identity", tags=["extractors"])
+@router.post("/identity", tags=["extractors"], dependencies=[Depends(has_write_access)])
 def assign_identity(
     hadPrimarySource: Annotated[MergedPrimarySourceIdentifier, Body()],
     identifierInPrimarySource: Annotated[str, Body()],
@@ -23,7 +24,7 @@ def assign_identity(
     )
 
 
-@router.get("/identity", tags=["extractors"])
+@router.get("/identity", tags=["extractors"], dependencies=[Depends(has_read_access)])
 def fetch_identity(
     hadPrimarySource: Annotated[Identifier | None, Query()] = None,
     identifierInPrimarySource: Annotated[str | None, Query()] = None,

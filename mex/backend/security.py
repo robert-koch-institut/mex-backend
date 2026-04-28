@@ -72,10 +72,10 @@ def has_read_access(
         raise HTTPException(status_code=403, detail="Unauthorized API Key.")
 
 
-def has_write_access_ldap(
+def is_ldap_authenticated(
     credentials: Annotated[HTTPBasicCredentials, Depends(HTTP_BASIC_AUTH)],
 ) -> str:
-    """Verify if provided credentials have LDAP write access.
+    """Authenticate against LDAP.
 
     Raises:
         HTTPException if credentials have no LDAP write access or are missing.

@@ -1,10 +1,11 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 
 from mex.backend.auxiliary.organigram import extracted_organizational_units
 from mex.backend.auxiliary.primary_source import extracted_primary_source_ldap
 from mex.backend.auxiliary.wikidata import extracted_organization_rki
+from mex.backend.security import has_read_access
 from mex.common.ldap.connector import LDAPConnector
 from mex.common.ldap.transform import (
     transform_any_ldap_actor_to_extracted_persons_or_contact_points,
@@ -20,7 +21,7 @@ DEFAULT_LDAP_QUERY = "mex@rki.de"
 router = APIRouter()
 
 
-@router.get("/ldap", tags=["auxiliary"])
+@router.get("/ldap", tags=["auxiliary"], dependencies=[Depends(has_read_access)])
 def search_persons_or_contact_points_in_ldap(
     q: Annotated[str, Query(max_length=1000)] = DEFAULT_LDAP_QUERY,
     offset: Annotated[int, Query(ge=0, le=10e10)] = 0,
