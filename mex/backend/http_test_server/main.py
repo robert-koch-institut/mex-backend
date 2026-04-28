@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any
 
 import uvicorn
 from fastapi import APIRouter, FastAPI
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, RedirectResponse, Response
 
 from mex.backend.exceptions import (
     BackendError,
@@ -58,8 +58,16 @@ app = FastAPI(
 router = APIRouter(prefix="/v0")
 
 
-@router.get("/http-test-server/{endpoint_name}/{test_data_path:path}")
-def get_http_test_server(endpoint_name: str, test_data_path: str) -> FileResponse:
+@router.post("/http-test-server/datscha_web/login.php")
+def post_datscha_web_login() -> RedirectResponse:
+    """Login logic for datscha web."""
+    return RedirectResponse("verzeichnis.php")
+
+
+@router.api_route(
+    "/http-test-server/{endpoint_name}/{test_data_path:path}", methods=["GET", "POST"]
+)
+def http_test_server(endpoint_name: str, test_data_path: str) -> FileResponse:
     """Return http server test data defined in mex-assets."""
     settings = HttpTestServerSettings.get()
     path_to_file_without_ext = (
@@ -84,7 +92,6 @@ def get_http_test_server(endpoint_name: str, test_data_path: str) -> FileRespons
     return FileResponse(found_file, media_type=mimetype)
 
 
-# TODO @MX-2250: fix endpoint
 @router.head("/http-test-server/{_:path}")
 def head_http_test_server(_: str) -> Response:
     """HEAD endpoint for checking availibility."""
