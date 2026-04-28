@@ -27,7 +27,7 @@ class HttpTestServerSettings(BaseSettings):
         validation_alias="MEX_HTTP_TEST_SERVER_ROOT_PATH",
     )
     http_test_server_test_data_directory: AssetsPath = Field(
-        AssetsPath("http-test-server-data"),
+        AssetsPath("test-data/http-test-server"),
         description="Directory that the http_test_server should return test data from.",
         validation_alias="MEX_HTTP_TEST_SERVER_TEST_DATA_DIRECTORY",
     )
