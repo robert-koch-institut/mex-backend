@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Path, Query
+from fastapi import APIRouter, Body, Depends, Path, Query
 from fastapi.exceptions import HTTPException
 from starlette import status
 
@@ -11,6 +11,7 @@ from mex.backend.extracted.helpers import (
 )
 from mex.backend.graph.exceptions import NoResultFoundError
 from mex.backend.models import ReferenceFilter
+from mex.backend.security import has_read_access
 from mex.backend.types import ExtractedType, ReferenceFieldName
 from mex.common.models import AnyExtractedModel, PaginatedItemsContainer
 from mex.common.types import Identifier
@@ -18,7 +19,7 @@ from mex.common.types import Identifier
 router = APIRouter()
 
 
-@router.get("/extracted-item", tags=["editor"])
+@router.get("/extracted-item", tags=["editor"], dependencies=[Depends(has_read_access)])
 def search_extracted_items(  # noqa: PLR0913
     q: Annotated[str, Query(max_length=100)] = "",
     stableTargetId: Annotated[
@@ -98,7 +99,11 @@ def search_extracted_items_advanced(
     )
 
 
-@router.get("/extracted-item/{identifier}", tags=["editor"])
+@router.get(
+    "/extracted-item/{identifier}",
+    tags=["editor"],
+    dependencies=[Depends(has_read_access)],
+)
 def get_extracted_item(identifier: Annotated[Identifier, Path()]) -> AnyExtractedModel:
     """Return one extracted item for the given `identifier`."""
     try:
