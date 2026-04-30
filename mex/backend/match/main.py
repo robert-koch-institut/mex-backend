@@ -13,6 +13,7 @@ router = APIRouter()
 @router.post(
     "/match",
     status_code=status.HTTP_204_NO_CONTENT,
+    tags=["editor"],
     dependencies=[Depends(has_write_access)],
 )
 def match_item(

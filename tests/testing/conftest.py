@@ -1,5 +1,3 @@
-from base64 import b64encode
-
 import pytest
 from fastapi.testclient import TestClient
 
@@ -14,9 +12,7 @@ def client() -> TestClient:
 
 
 @pytest.fixture
-def client_with_basic_auth_write_permission(client: TestClient) -> TestClient:
-    """Return a fastAPI test client with write permission granted by basic auth."""
-    client.headers.update(
-        {"Authorization": f"Basic {b64encode(b'Writer:write_password').decode()}"}
-    )
+def client_with_bearer_write_permission(client: TestClient) -> TestClient:
+    """Return a fastAPI test client with write permission granted by Bearer token."""
+    client.headers.update({"Authorization": "Bearer Writer"})
     return client

@@ -1,55 +1,21 @@
-from collections import deque
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 
-from mex.backend.graph.connector import GraphConnector
-from mex.backend.merged.helpers import search_merged_items_in_graph
-from mex.backend.security import has_read_access
-from mex.backend.testing.security import is_ldap_authenticated_mocked
+from mex.backend.testing.security import has_read_access_mocked
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     ExtractedContactPoint,
     ExtractedPerson,
-    MergedPerson,
     PaginatedItemsContainer,
 )
-from mex.common.types import Validation
 
 DEFAULT_LDAP_QUERY = "mex@rki.de"
 
 router = APIRouter()
 
 
-@router.post("/merged-person-from-login")
-def get_merged_person_from_login(
-    username: Annotated[str, Depends(is_ldap_authenticated_mocked)],
-) -> MergedPerson:
-    """Return a mocked merged person from the login LDAP information."""
-    person = ExtractedPerson(
-        hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-        identifierInPrimarySource=username,
-        fullName=[username],
-        email=[f"{username}@rki.com"],
-        orcidId=["https://orcid.org/1234-5678-9012-345"],
-    )
-    connector = GraphConnector.get()
-    deque(connector.ingest_items([person]))
-
-    result = search_merged_items_in_graph(
-        query_string=username,
-        identifier=None,
-        entity_type=["MergedPerson"],
-        reference_field=None,
-        referenced_identifiers=None,
-        skip=0,
-        limit=1,
-        validation=Validation.IGNORE,
-    )
-    return result.items[0]  # type: ignore [return-value]
-
-
-@router.get("/ldap", tags=["auxiliary"], dependencies=[Depends(has_read_access)])
+@router.get("/ldap", tags=["auxiliary"], dependencies=[Depends(has_read_access_mocked)])
 def search_persons_or_contact_points_in_ldap(
     q: Annotated[str, Query(max_length=1000)] = DEFAULT_LDAP_QUERY,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
