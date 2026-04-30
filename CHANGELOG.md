@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Deprecated
 
+- deprecate `stableTargetId`, `referenceField` and `referencedIdentifier` filter params
+
 ### Removed
 
 - remove unused POST /preview/identifier endpoint
