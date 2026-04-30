@@ -1,10 +1,10 @@
 <# Fetch merged items including their nested objects and referenced identifiers.
 
 Globals:
-    any_extracted_or_rule_label: Pipe-delimited sequence of all extracted and rule class labels
-    any_merged_label: Pipe-delimited sequence of all merged class labels
-    any_nested_label: Pipe-delimited sequence of labels for all nestable objects
-    any_rule_label: Pipe-delimited sequence of all rule class labels
+    any_extracted_or_rule_label: pipe delimited sequence of all extracted and rule class labels
+    any_merged_label: pipe delimited sequence of all merged class labels
+    any_nested_label: pipe delimited sequence of labels for all nestable objects
+    any_rule_label: pipe delimited sequence of all rule class labels
 
 Jinja:
     filter_by_query_string: Whether the final query should accept a full text query string

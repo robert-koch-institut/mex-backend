@@ -6,10 +6,10 @@ referenced by other items), Neo4j will throw an error when trying to delete the 
 item. Therefore referenced merged item can not be deleted by this endpoint.
 
 Globals:
-    any_extracted_label: Pipe-delimited sequence of all extracted class labels
-    any_merged_label: Pipe-delimited sequence of all merged class labels
-    any_rule_label: Pipe-delimited sequence of all rule class labels
-    any_nested_label: Pipe-delimited sequence of labels for all nestable objects
+    any_extracted_label: pipe delimited sequence of all extracted class labels
+    any_merged_label: pipe delimited sequence of all merged class labels
+    any_rule_label: pipe delimited sequence of all rule class labels
+    any_nested_label: pipe delimited sequence of labels for all nestable objects
 
 Args:
     identifier: Identifier of the merged item to be deleted
