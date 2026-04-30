@@ -3,11 +3,13 @@ from typing import TYPE_CHECKING, TypedDict, cast
 
 from pydantic_core import ErrorDetails
 
+from mex.backend.graph.constants import NO_REFERENCE_SENTINEL
 from mex.backend.graph.models import (
     ExtractedPrimarySourceWithHardcodedIdentifiers,
     GraphRel,
     IngestData,
 )
+from mex.backend.types import ReferenceFieldName
 from mex.common.fields import (
     FINAL_FIELDS_BY_CLASS_NAME,
     LINK_FIELDS_BY_CLASS_NAME,
@@ -16,12 +18,21 @@ from mex.common.fields import (
     REFERENCED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME,
     TEXT_FIELDS_BY_CLASS_NAME,
 )
-from mex.common.models import AnyExtractedModel, AnyRuleModel, AnyRuleSetResponse
+from mex.common.models import (
+    MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    AnyExtractedModel,
+    AnyRuleModel,
+    AnyRuleSetResponse,
+)
 from mex.common.transform import clean_dict, to_key_and_values
 from mex.common.types import AnyPrimitiveType, Link, Text
 
 if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Sequence
+
     from neo4j.exceptions import Neo4jError
+
+    from mex.backend.models import RawReferenceFilter, ReferenceFilter
 
 
 class _SearchResultReference(TypedDict):
@@ -45,6 +56,54 @@ def expand_references_in_search_result(
     sorted_refs = sorted(refs, key=lambda ref: (ref["label"], ref["position"]))
     groups = groupby(sorted_refs, lambda ref: ref["label"])
     return {label: [ref["value"] for ref in group] for label, group in groups}
+
+
+def transform_reference_filters_to_raw_filters(
+    reference_filters: Sequence[ReferenceFilter] | None,
+) -> list[RawReferenceFilter]:
+    """Convert reference filters to raw dicts for cypher query parameters.
+
+    Replaces the MEX editor primary source identifier and None values with
+    a sentinel so the cypher query can match nodes without that relationship.
+
+    Args:
+        reference_filters: Optional sequence of reference filters
+
+    Returns:
+        List of dictionaries containing field name and sanitized identifiers
+    """
+    reference_filter_list = reference_filters or []
+    return [
+        {
+            "field": str(reference_filter.field.value),
+            "identifiers": [
+                NO_REFERENCE_SENTINEL
+                if (
+                    ref_id == MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID
+                    and reference_filter.field == ReferenceFieldName("hadPrimarySource")
+                )
+                or ref_id is None
+                else str(ref_id)
+                for ref_id in reference_filter.identifiers
+            ],
+        }
+        for reference_filter in reference_filter_list
+    ]
+
+
+def transform_reference_filters_to_raw_fields(
+    reference_filters: Sequence[ReferenceFilter] | None,
+) -> list[str]:
+    """Extract raw field names from reference filters.
+
+    Args:
+        reference_filters: Optional sequence of reference filters
+
+    Returns:
+        List of field names
+    """
+    reference_filter_list = reference_filters or []
+    return [str(f.field.value) for f in reference_filter_list]
 
 
 def transform_model_into_ingest_data(

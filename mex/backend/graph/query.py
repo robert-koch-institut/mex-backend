@@ -11,6 +11,7 @@ from jinja2 import (
 )
 from pydantic import StringConstraints, validate_call
 
+from mex.backend.graph.constants import NO_REFERENCE_SENTINEL
 from mex.backend.graph.models import IngestParams
 from mex.backend.settings import BackendSettings
 from mex.common.connector import BaseConnector
@@ -100,6 +101,7 @@ class QueryBuilder(BaseConnector):
             any_extracted_or_rule_label="|".join(
                 chain(EXTRACTED_MODEL_CLASSES_BY_NAME, RULE_MODEL_CLASSES_BY_NAME)
             ),
+            no_reference=NO_REFERENCE_SENTINEL,
         )
         self.get_ingest_query_for_entity_type = cache(
             self._get_ingest_query_for_entity_type

@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Final
 
 from fastapi import Depends
 from fastapi.security import APIKeyHeader, HTTPBasic, HTTPBasicCredentials
@@ -6,8 +6,8 @@ from ldap3.utils.dn import escape_rdn
 
 from mex.backend.security import check_header_for_authorization_method
 
-X_API_KEY = APIKeyHeader(name="X-API-Key", auto_error=False)
-HTTP_BASIC_AUTH = HTTPBasic(auto_error=False)
+X_API_KEY: Final = APIKeyHeader(name="X-API-Key", auto_error=False)
+HTTP_BASIC_AUTH: Final = HTTPBasic(auto_error=False)
 
 
 def is_ldap_authenticated_mocked(

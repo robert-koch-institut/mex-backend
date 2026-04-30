@@ -115,60 +115,68 @@ YIELD currentStatus;"""
             True,
             r"""CALL () {
     OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
-    YIELD node AS hit, score
-    CALL (hit) {
-        MATCH (hit:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
-        RETURN hit as extracted_or_rule_node, merged_node
-    UNION
-        MATCH (hit:Link|Text|Location)<-[]-(extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
-        RETURN extracted_or_rule_node, merged_node
-    }
-    WITH DISTINCT extracted_or_rule_node, merged_node
+YIELD node AS hit, score
+CALL (hit) {
+    MATCH (hit:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
+    RETURN hit as extracted_or_rule_node, merged_node
+UNION
+    MATCH (hit:Link|Text|Location)<-[]-(extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
+    RETURN extracted_or_rule_node, merged_node
+}
+WITH DISTINCT extracted_or_rule_node, merged_node
     WHERE
         ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
         AND extracted_or_rule_node.identifier = $identifier
-        AND merged_node.identifier = $stable_target_id
-    OPTIONAL MATCH (extracted_or_rule_node)-[:hadPrimarySource]->(referenced_node_to_filter_by:MergedPerson|MergedVariable|MergedDistribution)
-    WITH merged_node, extracted_or_rule_node, referenced_node_to_filter_by
-    WHERE
-        (
-            (referenced_node_to_filter_by.identifier IN $referenced_identifiers)
-            OR
-            (
-                referenced_node_to_filter_by IS NULL
-                AND
-                any(identifier IN $referenced_identifiers WHERE identifier IS NULL)
-            )
-        )
-    RETURN COUNT(extracted_or_rule_node) AS total
+        AND EXISTS {OPTIONAL MATCH (extracted_or_rule_node)-[reference:hadPrimarySource]->(referenced_merged_node:MergedPerson|MergedVariable|MergedDistribution)
+WITH
+    merged_node,
+    extracted_or_rule_node,
+    collect(CASE WHEN reference IS NOT NULL THEN type(reference) END) AS found_fields,
+    collect(CASE WHEN reference IS NOT NULL
+        THEN {field: type(reference), identifier: referenced_merged_node.identifier} END
+    ) AS existing_refs
+WITH
+    merged_node,
+    extracted_or_rule_node,
+    existing_refs +
+    [f IN $reference_fields WHERE NOT f IN found_fields | {field: f, identifier: "__NO_REF__"}]
+    AS ref_matches
+WHERE ALL(rf IN $reference_filters WHERE
+    ANY(m IN ref_matches WHERE m.field = rf.field AND m.identifier IN rf.identifiers)
+)}
+    RETURN COUNT(DISTINCT extracted_or_rule_node) AS total
 }
 CALL () {
     OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
-    YIELD node AS hit, score
-    CALL (hit) {
-        MATCH (hit:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
-        RETURN hit as extracted_or_rule_node, merged_node
-    UNION
-        MATCH (hit:Link|Text|Location)<-[]-(extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
-        RETURN extracted_or_rule_node, merged_node
-    }
-    WITH DISTINCT extracted_or_rule_node, merged_node
+YIELD node AS hit, score
+CALL (hit) {
+    MATCH (hit:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
+    RETURN hit as extracted_or_rule_node, merged_node
+UNION
+    MATCH (hit:Link|Text|Location)<-[]-(extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
+    RETURN extracted_or_rule_node, merged_node
+}
+WITH DISTINCT extracted_or_rule_node, merged_node
     WHERE
         ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
         AND extracted_or_rule_node.identifier = $identifier
-        AND merged_node.identifier = $stable_target_id
-    OPTIONAL MATCH (extracted_or_rule_node)-[:hadPrimarySource]->(referenced_node_to_filter_by:MergedPerson|MergedVariable|MergedDistribution)
-    WITH merged_node, extracted_or_rule_node, referenced_node_to_filter_by
-    WHERE
-        (
-            (referenced_node_to_filter_by.identifier IN $referenced_identifiers)
-            OR
-            (
-                referenced_node_to_filter_by IS NULL
-                AND
-                any(identifier IN $referenced_identifiers WHERE identifier IS NULL)
-            )
-        )
+        AND EXISTS {OPTIONAL MATCH (extracted_or_rule_node)-[reference:hadPrimarySource]->(referenced_merged_node:MergedPerson|MergedVariable|MergedDistribution)
+WITH
+    merged_node,
+    extracted_or_rule_node,
+    collect(CASE WHEN reference IS NOT NULL THEN type(reference) END) AS found_fields,
+    collect(CASE WHEN reference IS NOT NULL
+        THEN {field: type(reference), identifier: referenced_merged_node.identifier} END
+    ) AS existing_refs
+WITH
+    merged_node,
+    extracted_or_rule_node,
+    existing_refs +
+    [f IN $reference_fields WHERE NOT f IN found_fields | {field: f, identifier: "__NO_REF__"}]
+    AS ref_matches
+WHERE ALL(rf IN $reference_filters WHERE
+    ANY(m IN ref_matches WHERE m.field = rf.field AND m.identifier IN rf.identifiers)
+)}
     ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
     SKIP $skip
     LIMIT $limit
@@ -179,7 +187,7 @@ CALL () {
             {value: referenced_merged_node.identifier, position:r.position, label: type(r)}
         ] + [
             (extracted_or_rule_node)-[r]->(referenced_nested_node:Link|Text|Location) |
-            {value: properties(referenced_nested_node), position:r.position , label: type(r)}
+            {value: properties(referenced_nested_node), position:r.position, label: type(r)}
         ] AS refs
     WITH
         collect(
@@ -196,7 +204,7 @@ RETURN items, total;""",
     OPTIONAL MATCH (extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
     WHERE
         ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
-    RETURN COUNT(extracted_or_rule_node) AS total
+    RETURN COUNT(DISTINCT extracted_or_rule_node) AS total
 }
 CALL () {
     OPTIONAL MATCH (extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
@@ -212,7 +220,7 @@ CALL () {
             {value: referenced_merged_node.identifier, position:r.position, label: type(r)}
         ] + [
             (extracted_or_rule_node)-[r]->(referenced_nested_node:Link|Text|Location) |
-            {value: properties(referenced_nested_node), position:r.position , label: type(r)}
+            {value: properties(referenced_nested_node), position:r.position, label: type(r)}
         ] AS refs
     WITH
         collect(
@@ -233,9 +241,8 @@ def test_fetch_extracted_or_rule_items(
     query = query_builder.fetch_extracted_or_rule_items(
         filter_by_query_string=enable_filters,
         filter_by_identifier=enable_filters,
-        filter_by_stable_target_id=enable_filters,
-        filter_by_referenced_identifiers=enable_filters,
-        reference_field="hadPrimarySource",
+        filter_by_references=enable_filters,
+        reference_fields=["hadPrimarySource"],
     )
     assert query.render() == expected
 
@@ -244,8 +251,7 @@ def test_fetch_extracted_or_rule_items(
     (
         "filter_by_query_string",
         "filter_by_identifier",
-        "filter_by_referenced_identifiers",
-        "filter_items_with_rules",
+        "filter_by_references",
         "expected",
     ),
     [
@@ -253,60 +259,75 @@ def test_fetch_extracted_or_rule_items(
             True,
             True,
             True,
-            True,
             r"""CALL () {
     OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
-    YIELD node AS hit, score
-    CALL (hit) {
-        MATCH (hit:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
-        RETURN hit as extracted_or_rule_node, merged_node
-    UNION
-        MATCH (hit:Link|Text|Location)<-[]-(extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
-        RETURN extracted_or_rule_node, merged_node
-    }
-    WITH DISTINCT merged_node AS merged_node
+YIELD node AS hit, score
+CALL (hit) {
+    MATCH (hit:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
+    RETURN hit as extracted_or_rule_node, merged_node
+UNION
+    MATCH (hit:Link|Text|Location)<-[]-(extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
+    RETURN extracted_or_rule_node, merged_node
+}
+WITH DISTINCT extracted_or_rule_node, merged_node
     WHERE
         ANY(label IN labels(merged_node) WHERE label IN $labels)
         AND merged_node.identifier = $identifier
-    MATCH (merged_node)
-    WHERE
-        EXISTS {(merged_node)<-[:stableTargetId]-(:AdditivePerson|AdditiveVariable|AdditiveDistribution)}
-        OR
-        EXISTS {
-            MATCH (merged_node)<-[:stableTargetId]-()-[:hadPrimarySource]->(referenced_node_to_filter_by)
-            WHERE
-                referenced_node_to_filter_by.identifier IN $referenced_identifiers
-        }
-    RETURN COUNT(merged_node) AS total
+        AND EXISTS {OPTIONAL MATCH (extracted_or_rule_node)-[reference:hadPrimarySource]->(referenced_merged_node:MergedPerson|MergedVariable|MergedDistribution)
+WITH
+    merged_node,
+    extracted_or_rule_node,
+    collect(CASE WHEN reference IS NOT NULL THEN type(reference) END) AS found_fields,
+    collect(CASE WHEN reference IS NOT NULL
+        THEN {field: type(reference), identifier: referenced_merged_node.identifier} END
+    ) AS existing_refs
+WITH
+    merged_node,
+    extracted_or_rule_node,
+    existing_refs +
+    [f IN $reference_fields WHERE NOT f IN found_fields | {field: f, identifier: "__NO_REF__"}]
+    AS ref_matches
+WHERE ALL(rf IN $reference_filters WHERE
+    ANY(m IN ref_matches WHERE m.field = rf.field AND m.identifier IN rf.identifiers)
+)}
+    RETURN COUNT(DISTINCT merged_node) AS total
 }
 CALL () {
     OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
-    YIELD node AS hit, score
-    CALL (hit) {
-        MATCH (hit:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
-        RETURN hit as extracted_or_rule_node, merged_node
-    UNION
-        MATCH (hit:Link|Text|Location)<-[]-(extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
-        RETURN extracted_or_rule_node, merged_node
-    }
-    WITH DISTINCT merged_node AS merged_node
+YIELD node AS hit, score
+CALL (hit) {
+    MATCH (hit:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
+    RETURN hit as extracted_or_rule_node, merged_node
+UNION
+    MATCH (hit:Link|Text|Location)<-[]-(extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
+    RETURN extracted_or_rule_node, merged_node
+}
+WITH DISTINCT extracted_or_rule_node, merged_node
     WHERE
         ANY(label IN labels(merged_node) WHERE label IN $labels)
         AND merged_node.identifier = $identifier
-    MATCH (merged_node)
-    WHERE
-        EXISTS {(merged_node)<-[:stableTargetId]-(:AdditivePerson|AdditiveVariable|AdditiveDistribution)}
-        OR
-        EXISTS {
-            MATCH (merged_node)<-[:stableTargetId]-()-[:hadPrimarySource]->(referenced_node_to_filter_by)
-            WHERE
-                referenced_node_to_filter_by.identifier IN $referenced_identifiers
-        }
+        AND EXISTS {OPTIONAL MATCH (extracted_or_rule_node)-[reference:hadPrimarySource]->(referenced_merged_node:MergedPerson|MergedVariable|MergedDistribution)
+WITH
+    merged_node,
+    extracted_or_rule_node,
+    collect(CASE WHEN reference IS NOT NULL THEN type(reference) END) AS found_fields,
+    collect(CASE WHEN reference IS NOT NULL
+        THEN {field: type(reference), identifier: referenced_merged_node.identifier} END
+    ) AS existing_refs
+WITH
+    merged_node,
+    extracted_or_rule_node,
+    existing_refs +
+    [f IN $reference_fields WHERE NOT f IN found_fields | {field: f, identifier: "__NO_REF__"}]
+    AS ref_matches
+WHERE ALL(rf IN $reference_filters WHERE
+    ANY(m IN ref_matches WHERE m.field = rf.field AND m.identifier IN rf.identifiers)
+)}
+    WITH DISTINCT merged_node
     ORDER BY merged_node.identifier ASC
     SKIP $skip
     LIMIT $limit
-    OPTIONAL MATCH (extracted_or_rule_node)-[:stableTargetId]->(merged_node)
-    ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
+    MATCH (extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node)
     WITH
         extracted_or_rule_node,
         merged_node,
@@ -315,8 +336,9 @@ CALL () {
             {value: referenced_merged_node.identifier, position:r.position, label: type(r)}
         ] + [
             (extracted_or_rule_node)-[r]->(referenced_nested_node:Link|Text|Location) |
-            {value: properties(referenced_nested_node), position:r.position , label: type(r)}
+            {value: properties(referenced_nested_node), position:r.position, label: type(r)}
         ] AS refs
+    ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
     WITH
         merged_node,
         collect(
@@ -335,22 +357,21 @@ RETURN items, total;""",
             False,
             False,
             False,
-            False,
             r"""CALL () {
-    OPTIONAL MATCH (merged_node:MergedPerson|MergedVariable|MergedDistribution)
+    OPTIONAL MATCH (extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
     WHERE
         ANY(label IN labels(merged_node) WHERE label IN $labels)
-    RETURN COUNT(merged_node) AS total
+    RETURN COUNT(DISTINCT merged_node) AS total
 }
 CALL () {
-    OPTIONAL MATCH (merged_node:MergedPerson|MergedVariable|MergedDistribution)
+    OPTIONAL MATCH (extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
     WHERE
         ANY(label IN labels(merged_node) WHERE label IN $labels)
+    WITH DISTINCT merged_node
     ORDER BY merged_node.identifier ASC
     SKIP $skip
     LIMIT $limit
-    OPTIONAL MATCH (extracted_or_rule_node)-[:stableTargetId]->(merged_node)
-    ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
+    MATCH (extracted_or_rule_node:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node)
     WITH
         extracted_or_rule_node,
         merged_node,
@@ -359,8 +380,9 @@ CALL () {
             {value: referenced_merged_node.identifier, position:r.position, label: type(r)}
         ] + [
             (extracted_or_rule_node)-[r]->(referenced_nested_node:Link|Text|Location) |
-            {value: properties(referenced_nested_node), position:r.position , label: type(r)}
+            {value: properties(referenced_nested_node), position:r.position, label: type(r)}
         ] AS refs
+    ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
     WITH
         merged_node,
         collect(
@@ -377,20 +399,18 @@ RETURN items, total;""",
         ),
     ],
 )
-def test_fetch_merged_items(  # noqa: PLR0913
+def test_fetch_merged_items(
     query_builder: QueryBuilder,
     filter_by_query_string: bool,  # noqa: FBT001
     filter_by_identifier: bool,  # noqa: FBT001
-    filter_by_referenced_identifiers: bool,  # noqa: FBT001
-    filter_items_with_rules: bool,  # noqa: FBT001
+    filter_by_references: bool,  # noqa: FBT001
     expected: str,
 ) -> None:
     query = query_builder.fetch_merged_items(
         filter_by_query_string=filter_by_query_string,
         filter_by_identifier=filter_by_identifier,
-        filter_by_referenced_identifiers=filter_by_referenced_identifiers,
-        filter_items_with_rules=filter_items_with_rules,
-        reference_field="hadPrimarySource",
+        filter_by_references=filter_by_references,
+        reference_fields=["hadPrimarySource"],
     )
     assert query.render() == expected
 

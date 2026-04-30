@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Final
 
 from fastapi import APIRouter, Depends, Query
 
@@ -8,7 +8,7 @@ from mex.common.models import ExtractedPerson, PaginatedItemsContainer
 from mex.common.orcid.extract import search_records_by_name
 from mex.common.orcid.transform import transform_orcid_person_to_mex_person
 
-DEFAULT_ORCID_QUERY = '"Maxi Musterperson"'
+DEFAULT_ORCID_QUERY: Final = '"Maxi Musterperson"'
 
 router = APIRouter()
 
