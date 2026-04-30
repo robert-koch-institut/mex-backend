@@ -1,5 +1,5 @@
 from secrets import compare_digest
-from typing import Annotated
+from typing import Annotated, Final
 from urllib.parse import urlsplit
 
 from fastapi import Depends, Header, HTTPException
@@ -13,8 +13,8 @@ from mex.backend.settings import BackendSettings
 from mex.backend.types import APIKey
 from mex.common.logging import logger
 
-X_API_KEY = APIKeyHeader(name="X-API-Key", auto_error=False)
-HTTP_BASIC_AUTH = HTTPBasic(auto_error=False)
+X_API_KEY: Final = APIKeyHeader(name="X-API-Key", auto_error=False)
+HTTP_BASIC_AUTH: Final = HTTPBasic(auto_error=False)
 
 
 def check_header_for_authorization_method(

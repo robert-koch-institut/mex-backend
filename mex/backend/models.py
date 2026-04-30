@@ -1,8 +1,12 @@
-from typing import Annotated
+from typing import Annotated, TypedDict
 
 from pydantic import BaseModel, Field
 
-from mex.backend.types import APIKey, APIUserPassword, ReferenceFieldName
+from mex.backend.types import (
+    APIKey,
+    APIUserPassword,
+    ReferenceFieldName,
+)
 from mex.common.types import Identifier
 
 
@@ -25,3 +29,14 @@ class ReferenceFilter(BaseModel):
 
     field: ReferenceFieldName
     identifiers: Annotated[list[Identifier | None], Field(min_length=1, max_length=100)]
+
+
+class RawReferenceFilter(TypedDict):
+    """Reference filter in raw dictionary form to be used as cypher parameter.
+
+    The MEX editor primary source identifier and None values are replaced with
+    a sentinel so the cypher query can match nodes without that relationship.
+    """
+
+    field: str
+    identifiers: list[str]

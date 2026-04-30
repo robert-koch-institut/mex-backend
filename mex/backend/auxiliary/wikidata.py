@@ -1,5 +1,5 @@
 from collections import deque
-from typing import Annotated, cast
+from typing import Annotated, Final, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -21,7 +21,7 @@ from mex.common.wikidata.transform import (
     transform_wikidata_organizations_to_extracted_organizations,
 )
 
-RKI_WIKIDATA_ID = "Q679041"
+RKI_WIKIDATA_ID: Final = "Q679041"
 
 router = APIRouter()
 

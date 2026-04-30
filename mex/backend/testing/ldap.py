@@ -1,5 +1,5 @@
 from collections import deque
-from typing import Annotated, cast
+from typing import Annotated, Final, cast
 
 from fastapi import APIRouter, Depends, Query
 
@@ -16,7 +16,7 @@ from mex.common.models import (
 )
 from mex.common.types import Validation
 
-DEFAULT_LDAP_QUERY = "mex@rki.de"
+DEFAULT_LDAP_QUERY: Final = "mex@rki.de"
 
 router = APIRouter()
 

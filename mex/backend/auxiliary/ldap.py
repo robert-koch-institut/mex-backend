@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Final
 
 from fastapi import APIRouter, Depends, Query
 
@@ -16,7 +16,7 @@ from mex.common.models import (
     PaginatedItemsContainer,
 )
 
-DEFAULT_LDAP_QUERY = "mex@rki.de"
+DEFAULT_LDAP_QUERY: Final = "mex@rki.de"
 
 router = APIRouter()
 

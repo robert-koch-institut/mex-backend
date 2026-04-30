@@ -32,7 +32,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
     from neo4j.exceptions import Neo4jError
 
-    from mex.backend.models import ReferenceFilter
+    from mex.backend.models import RawReferenceFilter, ReferenceFilter
 
 
 class _SearchResultReference(TypedDict):
@@ -60,11 +60,11 @@ def expand_references_in_search_result(
 
 def transform_reference_filters_to_raw_filters(
     reference_filters: Sequence[ReferenceFilter] | None,
-) -> list[dict[str, list[str] | str]]:
-    """Convert reference filters to raw dicts for Cypher query parameters.
+) -> list[RawReferenceFilter]:
+    """Convert reference filters to raw dicts for cypher query parameters.
 
     Replaces the MEX editor primary source identifier and None values with
-    a sentinel so the Cypher query can match nodes without that relationship.
+    a sentinel so the cypher query can match nodes without that relationship.
 
     Args:
         reference_filters: Optional sequence of reference filters

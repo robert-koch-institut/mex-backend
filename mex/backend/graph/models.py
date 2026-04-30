@@ -1,5 +1,5 @@
 from functools import cache
-from typing import TYPE_CHECKING, Annotated, Any, Literal, cast
+from typing import TYPE_CHECKING, Annotated, Any, Final, Literal, cast
 
 from neo4j import NotificationSeverity
 from neo4j import Result as Neo4jResult
@@ -46,13 +46,13 @@ class ExtractedPrimarySourceWithHardcodedIdentifiers(BasePrimarySource, Extracte
     stableTargetId: MergedPrimarySourceIdentifier
 
 
-MEX_PRIMARY_SOURCE = ExtractedPrimarySourceWithHardcodedIdentifiers(
+MEX_PRIMARY_SOURCE: Final = ExtractedPrimarySourceWithHardcodedIdentifiers(
     hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     identifier=MEX_PRIMARY_SOURCE_IDENTIFIER,
     identifierInPrimarySource=MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
     stableTargetId=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
 )
-MEX_EDITOR_PRIMARY_SOURCE = ExtractedPrimarySourceWithHardcodedIdentifiers(
+MEX_EDITOR_PRIMARY_SOURCE: Final = ExtractedPrimarySourceWithHardcodedIdentifiers(
     hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     identifier=MEX_EDITOR_PRIMARY_SOURCE_IDENTIFIER,
     identifierInPrimarySource=MEX_EDITOR_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
