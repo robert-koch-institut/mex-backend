@@ -15,11 +15,10 @@ DEFAULT_LDAP_QUERY = "mex@rki.de"
 router = APIRouter()
 
 
-@router.get("/ldap", tags=["auxiliary"])
+@router.get("/ldap", tags=["auxiliary"], dependencies=[Depends(has_read_access_mocked)])
 def search_persons_or_contact_points_in_ldap(
     q: Annotated[str, Query(max_length=1000)] = DEFAULT_LDAP_QUERY,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
-    _: Annotated[None, Depends(has_read_access_mocked)] = None,
 ) -> PaginatedItemsContainer[ExtractedPerson | ExtractedContactPoint]:
     """Search for person or contact points in LDAP and return mocked data for testing.
 

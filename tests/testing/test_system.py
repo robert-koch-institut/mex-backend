@@ -4,10 +4,10 @@ import pytest
 from pytest import MonkeyPatch
 from starlette import status
 
-from mex.backend.settings import BackendSettings
-
 if TYPE_CHECKING:  # pragma: no cover
     from fastapi.testclient import TestClient
+
+    from mex.backend.settings import BackendSettings
 
 
 @pytest.mark.integration
@@ -37,9 +37,9 @@ def test_flush_graph_database_refused(
 @pytest.mark.integration
 def test_flush_graph_database(
     client_with_api_key_write_permission: TestClient,
+    settings: BackendSettings,
     monkeypatch: MonkeyPatch,
 ) -> None:
-    settings = BackendSettings.get()
     monkeypatch.setattr(settings, "debug", True)
     response = client_with_api_key_write_permission.delete("/v0/_system/graph")
     assert response.status_code == status.HTTP_200_OK, response.text

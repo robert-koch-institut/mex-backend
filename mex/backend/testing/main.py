@@ -1,5 +1,5 @@
 import uvicorn
-from fastapi import APIRouter, Depends, FastAPI
+from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic_core import SchemaError, ValidationError
 
@@ -53,18 +53,17 @@ app.dependency_overrides[has_read_access] = has_read_access_mocked
 app.dependency_overrides[has_write_access] = has_write_access_mocked
 
 router = APIRouter(prefix="/v0")
-router.include_router(extracted_router, dependencies=[Depends(has_read_access)])
-router.include_router(identity_router, dependencies=[Depends(has_write_access)])
-router.include_router(ingest_router, dependencies=[Depends(has_write_access)])
+router.include_router(extracted_router)
+router.include_router(identity_router)
+router.include_router(ingest_router)
 router.include_router(testing_ldap_router)
-router.include_router(merged_router, dependencies=[Depends(has_read_access)])
-router.include_router(orcid_router, dependencies=[Depends(has_read_access)])
-router.include_router(preview_router, dependencies=[Depends(has_read_access)])
-router.include_router(rules_router, dependencies=[Depends(has_write_access)])
-router.include_router(wikidata_router, dependencies=[Depends(has_read_access)])
+router.include_router(merged_router)
+router.include_router(orcid_router)
+router.include_router(preview_router)
+router.include_router(rules_router)
+router.include_router(wikidata_router)
 router.include_router(testing_user_router)
 router.include_router(oauth_router)
-
 router.include_router(system_router)
 router.include_router(testing_system_router)
 

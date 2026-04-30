@@ -1,12 +1,11 @@
 from enum import Enum, EnumMeta, _EnumDict
 
-from pydantic import ConfigDict, SecretStr, field_validator
+from pydantic import BaseModel, ConfigDict, SecretStr, field_validator
 
 from mex.common.fields import ALL_REFERENCE_FIELD_NAMES
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
-    BaseModel,
 )
 from mex.common.transform import dromedary_to_snake
 

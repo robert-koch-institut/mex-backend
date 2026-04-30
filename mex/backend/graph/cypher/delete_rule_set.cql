@@ -4,9 +4,9 @@ Deletes all additive, subtractive, and preventive rules connected to the given
 stableTargetId, along with their nested items (text/link) and outbound connections.
 
 Globals:
-    merged_labels: List of all merged class labels
-    rule_labels: List of all rule class labels
-    nested_labels: List of labels for all nestable objects
+    any_merged_label: pipe delimited sequence of all merged class labels
+    any_rule_label: pipe delimited sequence of all rule class labels
+    any_nested_label: pipe delimited sequence of labels for all nestable objects
 
 Args:
     stable_target_id: stableTargetId of the merged item whose rules to delete
@@ -16,10 +16,10 @@ Returns:
     deleted_nested_count: Number of nested items deleted
 -#>
 
-MATCH (merged:<<merged_labels|join("|")>> {identifier: $stable_target_id})
-OPTIONAL MATCH (merged)<-[:stableTargetId]-(rule:<<rule_labels|join("|")>>)
+MATCH (merged:<<any_merged_label>> {identifier: $stable_target_id})
+OPTIONAL MATCH (merged)<-[:stableTargetId]-(rule:<<any_rule_label>>)
 OPTIONAL MATCH (rule)-[outbound]->()
-OPTIONAL MATCH (rule)-[]->(nested:<<nested_labels|join("|")>>)
+OPTIONAL MATCH (rule)-[]->(nested:<<any_nested_label>>)
 
 DETACH DELETE nested
 DELETE outbound

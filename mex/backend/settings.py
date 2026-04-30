@@ -2,7 +2,8 @@ from typing import Self
 
 from pydantic import AnyHttpUrl, Field, SecretStr, model_validator
 
-from mex.backend.types import APIKeyDatabase, MergedType, OIDCGroupsDatabase
+from mex.backend.models import APIKeyDatabase
+from mex.backend.types import MergedType, OIDCGroupsDatabase
 from mex.common.settings import BaseSettings
 
 

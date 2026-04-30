@@ -13,6 +13,7 @@ employeeID: abc
 sAMAccountName: MaxM
 objectGUID: 00000000-0000-4000-8000-0000000001b0
 department: FG99
+mail: MaxM@ldapmock.local
 uid: MaxM
 userPassword: MaxM_password
 mail: MaxM@ldapmock.local
@@ -32,6 +33,7 @@ employeeID: def
 sAMAccountName: MoritzE
 objectGUID: 00000000-0000-4000-8000-000000000315
 department: FG99
+mail: MoritzE@ldapmock.local
 uid: MoritzE
 userPassword: MoritzE_password
 mail: MoritzE@ldapmock.local
@@ -51,6 +53,7 @@ employeeID: ghi
 sAMAccountName: MoritzM
 objectGUID: 00000000-0000-4000-8000-000000000141
 department: FG99
+mail: MoritzM@ldapmock.local
 uid: MoritzM
 userPassword: MoritzM_password
 mail: MoritzM@ldapmock.local
