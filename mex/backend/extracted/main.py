@@ -78,7 +78,9 @@ def search_extracted_items(  # noqa: PLR0913
     )
 
 
-@router.post("/extracted-item/_search", tags=["editor"])
+@router.post(
+    "/extracted-item/_search", tags=["editor"], dependencies=[Depends(has_read_access)]
+)
 def search_extracted_items_advanced(
     q: Annotated[str, Body(max_length=100)] = "",
     entityType: Annotated[

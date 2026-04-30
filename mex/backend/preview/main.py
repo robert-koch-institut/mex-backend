@@ -83,7 +83,9 @@ def search_preview_items(  # noqa: PLR0913
     )
 
 
-@router.post("/preview-item/_search", tags=["editor"])
+@router.post(
+    "/preview-item/_search", tags=["editor"], dependencies=[Depends(has_read_access)]
+)
 def search_preview_items_advanced(  # noqa: PLR0913
     q: Annotated[str, Body(max_length=100)] = "",
     identifier: Annotated[Identifier | None, Body()] = None,
