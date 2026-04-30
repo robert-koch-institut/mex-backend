@@ -644,7 +644,7 @@ def test_fetch_extracted_items(
     query_parameters: dict[str, Any],
     expected: dict[str, Any],
 ) -> None:
-    query_parameter_defaults = {
+    query_parameter_defaults: dict[str, Any] = {
         "query_string": None,
         "identifier": None,
         "entity_type": None,
@@ -843,7 +843,7 @@ def test_fetch_rule_items(
     query_parameters: dict[str, Any],
     expected: dict[str, Any],
 ) -> None:
-    query_parameter_defaults = {
+    query_parameter_defaults: dict[str, Any] = {
         "query_string": None,
         "identifier": None,
         "entity_type": None,
@@ -1449,7 +1449,7 @@ def test_fetch_merged_items(
     query_parameters: dict[str, Any],
     expected: dict[str, Any],
 ) -> None:
-    query_parameter_defaults = {
+    query_parameter_defaults: dict[str, Any] = {
         "query_string": None,
         "identifier": None,
         "entity_type": None,
