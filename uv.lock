@@ -508,7 +508,7 @@ wheels = [
 [[package]]
 name = "mex-artificial"
 version = "1.4.1"
-source = { registry = "https://pypi.org/simple" }
+source = { git = "https://github.com/robert-koch-institut/mex-artificial.git?branch=feature%2Fmx-2233_new_workflow_rule#c18b9097712c106faebf85438233248522572998" }
 dependencies = [
     { name = "annotated-types" },
     { name = "faker" },
@@ -516,10 +516,6 @@ dependencies = [
     { name = "pydantic" },
     { name = "rich" },
     { name = "typer" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/59/03/5f21f7c0bd53297bb9fc583d0de9dc5253976769b31b4920ca88b00cdb3f/mex_artificial-1.4.1.tar.gz", hash = "sha256:0d095067c9f2e134d98f8828cdacdeb11b4fea475470f0dc49341c9c59828b79", size = 11811, upload-time = "2026-04-01T13:38:37.062Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/f5/68/db3f1f7d5c7b6440a9dffe52ef42b2179117973725003b14625e47e10330/mex_artificial-1.4.1-py3-none-any.whl", hash = "sha256:cd5f296dcf711c88f9b912113deb029739c05b55c87878163495c8d99cd5f786", size = 12943, upload-time = "2026-04-01T13:38:35.907Z" },
 ]
 
 [[package]]
@@ -530,6 +526,7 @@ dependencies = [
     { name = "backoff" },
     { name = "fastapi" },
     { name = "jinja2" },
+    { name = "mex-artificial" },
     { name = "mex-common" },
     { name = "neo4j" },
     { name = "pydantic" },
@@ -560,7 +557,8 @@ requires-dist = [
     { name = "backoff", specifier = ">=2.2,<3" },
     { name = "fastapi", specifier = ">=0.135,<0.136" },
     { name = "jinja2", specifier = ">=3.1,<4" },
-    { name = "mex-common", specifier = ">=1.19,<1.20" },
+    { name = "mex-artificial", git = "https://github.com/robert-koch-institut/mex-artificial.git?branch=feature%2Fmx-2233_new_workflow_rule" },
+    { name = "mex-common", git = "https://github.com/robert-koch-institut/mex-common.git?branch=feature%2Fmx-2132-create-publishing-rule" },
     { name = "neo4j", specifier = ">=6.1,<7" },
     { name = "pydantic", specifier = ">=2,<3" },
     { name = "starlette", specifier = ">=1,<2" },
@@ -572,7 +570,7 @@ requires-dist = [
 dev = [
     { name = "httpx", specifier = ">=0.28" },
     { name = "ipdb", specifier = ">=0.13" },
-    { name = "mex-artificial", specifier = ">=1.4" },
+    { name = "mex-artificial", git = "https://github.com/robert-koch-institut/mex-artificial.git?branch=feature%2Fmx-2233_new_workflow_rule" },
     { name = "mypy", specifier = ">=1" },
     { name = "pytest", specifier = ">=9" },
     { name = "pytest-cov", specifier = ">=6" },
@@ -588,7 +586,7 @@ dev = [
 [[package]]
 name = "mex-common"
 version = "1.19.0"
-source = { registry = "https://pypi.org/simple" }
+source = { git = "https://github.com/robert-koch-institut/mex-common.git?branch=feature%2Fmx-2132-create-publishing-rule#deb172740d9e86efd9d3fefc1adb65b695d7ba88" }
 dependencies = [
     { name = "backoff" },
     { name = "click" },
@@ -604,10 +602,6 @@ dependencies = [
     { name = "pytz" },
     { name = "requests" },
     { name = "tabulate" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/08/4e/8fe74a2e803c135f8e3f6ad842f906493c43d25dcad132d3f2efe8dfd475/mex_common-1.19.0.tar.gz", hash = "sha256:5426ffd6e0fbfcb15dac851c6704372d903fd231c5e2ee8cffe9b607741a6197", size = 90249, upload-time = "2026-04-17T11:59:45.04Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/85/d8/1b446e3e3f85f48cc6e19936878c2583d7d0d1f607e448e5eb6bee1fed81/mex_common-1.19.0-py3-none-any.whl", hash = "sha256:f895ea3a7ba4b2760b603fdb6f159385cf3f8da8d080b8d344e9aabd37f57b39", size = 137345, upload-time = "2026-04-17T11:59:43.581Z" },
 ]
 
 [[package]]
