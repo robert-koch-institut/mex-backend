@@ -62,7 +62,7 @@ def search_merged_items(  # noqa: PLR0913
 
 
 @router.get(
-    "/merged-item/{identifier/{publishing_target}",
+    "/merged-item/{identifier}/{publishing_target}",
     tags=["editor"],
     dependencies=[Depends(has_read_access)],
 )
