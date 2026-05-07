@@ -12,61 +12,36 @@ from mex.backend.settings import BackendSettings
 from mex.backend.types import APIKey
 from mex.common.logging import logger
 
-X_API_KEY = APIKeyHeader(name="X-API-Key", auto_error=False)
-HTTP_BASIC_AUTH = HTTPBasic(auto_error=False)
-
-
-def check_header_for_authorization_method(
-    credentials: Annotated[
-        HTTPBasicCredentials | None, Depends(HTTP_BASIC_AUTH)
-    ] = None,
-) -> None:
-    """Check authorization header for credentials.
-
-    Raises:
-        HTTPException if credentials are missing from header.
-
-    Args:
-        credentials: username and password
-    """
-    if not credentials:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing credentials.",
-            headers={"WWW-Authenticate": "Basic"},
-        )
+X_API_KEY = APIKeyHeader(name="X-API-Key")
+HTTP_BASIC_AUTH = HTTPBasic()
 
 
 def has_write_access(
-    api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
+    api_key: Annotated[str, Depends(X_API_KEY)],
 ) -> None:
     """Verify if provided api key has write access.
 
     Raises:
-        HTTPException if no header or provided APIKey has no write access.
+        HTTPException if APIKey has no write access.
 
     Args:
         api_key: the API key
     """
-    if not api_key:
-        raise HTTPException(status_code=401, detail="Missing X-API-Key header.")
     if APIKey(api_key) not in BackendSettings.get().backend_api_key_database.write:
         raise HTTPException(status_code=403, detail="Unauthorized API Key.")
 
 
 def has_read_access(
-    api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
+    api_key: Annotated[str, Depends(X_API_KEY)],
 ) -> None:
     """Verify if api key has read access or write access.
 
     Raises:
-        HTTPException if no header or provided APIKey has no read access.
+        HTTPException if APIKey has no read access.
 
     Args:
         api_key: the API key
     """
-    if not api_key:
-        raise HTTPException(status_code=401, detail="Missing X-API-Key header.")
     db = BackendSettings.get().backend_api_key_database
     if APIKey(api_key) not in db.read and APIKey(api_key) not in db.write:
         raise HTTPException(status_code=403, detail="Unauthorized API Key.")
@@ -78,12 +53,14 @@ def is_ldap_authenticated(
     """Authenticate against LDAP.
 
     Raises:
-        HTTPException if credentials have no LDAP write access or are missing.
+        HTTPException if credentials have no LDAP write access.
 
     Args:
         credentials: username and password
+
+    Returns:
+        username
     """
-    check_header_for_authorization_method(credentials=credentials)
     settings = BackendSettings.get()
     url = urlsplit(settings.ldap_url.get_secret_value())
     host = str(url.hostname)

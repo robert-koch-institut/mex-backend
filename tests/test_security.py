@@ -1,11 +1,15 @@
+from typing import Annotated
 from unittest.mock import patch
 
 import pytest
-from fastapi import HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.security import HTTPBasicCredentials
 from ldap3.core.exceptions import LDAPBindError
+from starlette.testclient import TestClient
 
 from mex.backend.security import (
+    HTTP_BASIC_AUTH,
+    X_API_KEY,
     has_read_access,
     has_write_access,
     is_ldap_authenticated,
@@ -21,11 +25,68 @@ user_wrong_pw = HTTPBasicCredentials(
 )
 
 
+app = FastAPI()
+
+
+@app.get("/test_x_api_key_dependency")
+def route_for_testing_x_api_key_dependency(
+    auth: Annotated[str, Depends(X_API_KEY)], expected_x_api_key: str
+) -> dict[str, str]:
+    assert auth == expected_x_api_key
+    return {"status": "ok"}
+
+
+@app.get("/test_http_basic_auth_dependency")
+def route_for_testing_http_basic_auth_dependency(
+    credentials: Annotated[HTTPBasicCredentials, Depends(HTTP_BASIC_AUTH)],
+    expected_username: str,
+    expected_password: str,
+) -> dict[str, str]:
+    assert credentials.username == expected_username
+    assert credentials.password == expected_password
+    return {"status": "ok"}
+
+
+client = TestClient(
+    app,
+)
+
+
+def test_missing_x_api_key_header_returns_401() -> None:
+    response = client.get("/test_x_api_key_dependency")  # No X-API-Key header
+    assert response.status_code == 401, response.text
+
+
+def test_present_x_api_key_header_returns_200() -> None:
+    key = "foo"
+    response = client.get(
+        "/test_x_api_key_dependency",
+        params={"expected_x_api_key": key},
+        headers={"X-API-Key": key},
+    )
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
+def test_missing_http_basic_auth_returns_401() -> None:
+    response = client.get("/test_http_basic_auth_dependency")  # No X-API-Key header
+    assert response.status_code == 401, response.text
+
+
+def test_present_http_basic_auth_returns_200() -> None:
+    username = "foo"
+    password = "bar"  # noqa: S105
+    response = client.get(
+        "/test_http_basic_auth_dependency",
+        params={"expected_username": username, "expected_password": password},
+        auth=(username, password),
+    )
+    assert response.status_code == 200, response.text
+    assert response.json() == {"status": "ok"}
+
+
 def test_has_write_access_with_api_key() -> None:
     has_write_access("write_key")
-    with pytest.raises(HTTPException) as error:
-        has_write_access(None)
-    assert "Missing X-API-Key" in error.value.detail
 
     with pytest.raises(HTTPException) as error:
         has_write_access("read_key")
@@ -43,10 +104,6 @@ def test_has_read_access_with_api_key() -> None:
     with pytest.raises(HTTPException) as error:
         has_read_access("moop")
     assert "Unauthorized API Key" in error.value.detail
-
-    with pytest.raises(HTTPException) as error:
-        has_read_access(None)
-    assert "Missing X-API-Key" in error.value.detail
 
 
 def test_is_ldap_authenticated_success() -> None:
