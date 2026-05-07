@@ -43,7 +43,9 @@ def has_read_access(
         api_key: the API key
     """
     db = BackendSettings.get().backend_api_key_database
-    if APIKey(api_key) not in db.read and APIKey(api_key) not in db.write:
+    can_read = APIKey(api_key) in db.read
+    can_write = APIKey(api_key) in db.write
+    if not (can_read or can_write):
         raise HTTPException(status_code=403, detail="Unauthorized API Key.")
 
 
