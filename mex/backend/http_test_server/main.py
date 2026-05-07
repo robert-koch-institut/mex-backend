@@ -25,7 +25,6 @@ teardown_tasks: list[Callable[[], Any]] = [
 ]
 
 
-
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     """Async context manager to execute startup and teardown of the FastAPI app."""
@@ -110,7 +109,6 @@ def main() -> None:  # pragma: no cover
     Loads configuration from HttpTestServerSettings and starts the HTTP test server
     on the configured host and port.
     """
-
     settings = HttpTestServerSettings.get()
     uvicorn.run(
         "mex.backend.http_test_server.main:app",
