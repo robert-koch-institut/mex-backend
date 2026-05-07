@@ -31,6 +31,8 @@ ENV PYTHONOPTIMIZE=1
 
 ENV MEX_BACKEND_HOST=0.0.0.0
 
+ENV MEX_HTTP_TEST_SERVER_HOST=0.0.0.0
+
 WORKDIR /app
 
 COPY --from=builder /build/wheels /wheels

@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any
 
 import uvicorn
-from fastapi import APIRouter, FastAPI
+from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.responses import FileResponse, RedirectResponse, Response
 
 from mex.backend.exceptions import (
@@ -23,6 +23,7 @@ startup_tasks: list[Callable[[], Any]] = [
 teardown_tasks: list[Callable[[], Any]] = [
     CONNECTOR_STORE.reset,
 ]
+
 
 
 @asynccontextmanager
@@ -65,13 +66,13 @@ def post_datscha_web_login() -> RedirectResponse:
 
 
 @router.api_route(
-    "/http-test-server/{endpoint_name}/{test_data_path:path}", methods=["GET", "POST"]
+    "/http-test-server/{test_data_path:path}", methods=["GET", "POST"]
 )
-def http_test_server(endpoint_name: str, test_data_path: str) -> FileResponse:
+def http_test_server(test_data_path: str) -> FileResponse:
     """Return http server test data defined in mex-assets."""
     settings = HttpTestServerSettings.get()
     path_to_file_without_ext = (
-        settings.http_test_server_test_data_directory / endpoint_name / test_data_path
+        settings.http_test_server_test_data_directory / test_data_path
     )
 
     found_files = list(
@@ -80,11 +81,11 @@ def http_test_server(endpoint_name: str, test_data_path: str) -> FileResponse:
 
     len_found_files = len(found_files)
     if len_found_files == 0:
-        msg = "No files found"
-        raise BackendError(msg)
+        msg= f"No files found for '/http-test-server/{test_data_path}'" 
+        raise HTTPException(status_code=404, detail=msg)
     if len_found_files > 1:
-        msg = "Too many files found"
-        raise BackendError(msg)
+        msg = f"Too many files found for '/http-test-server/{test_data_path}'"
+        raise HTTPException(status_code=404, detail=msg)
 
     found_file = found_files[0]
     mimetype, _ = mimetypes.guess_file_type(found_file)
@@ -109,6 +110,7 @@ def main() -> None:  # pragma: no cover
     Loads configuration from HttpTestServerSettings and starts the HTTP test server
     on the configured host and port.
     """
+
     settings = HttpTestServerSettings.get()
     uvicorn.run(
         "mex.backend.http_test_server.main:app",
