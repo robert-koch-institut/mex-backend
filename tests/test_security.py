@@ -15,13 +15,9 @@ from mex.backend.security import (
     is_ldap_authenticated,
 )
 
-write_credentials = HTTPBasicCredentials(
-    username="Writer",
-    password="write_password",  # noqa: S106
-)
-user_wrong_pw = HTTPBasicCredentials(
-    username="Writer",
-    password="wrong_password",  # noqa: S106
+ldap_credentials = HTTPBasicCredentials(
+    username="ldap_user",
+    password="ldap_user_password",  # noqa: S106
 )
 
 
@@ -74,12 +70,13 @@ def test_missing_http_basic_auth_returns_401() -> None:
 
 
 def test_present_http_basic_auth_returns_200() -> None:
-    username = "foo"
-    password = "bar"  # noqa: S105
     response = client.get(
         "/test_http_basic_auth_dependency",
-        params={"expected_username": username, "expected_password": password},
-        auth=(username, password),
+        params={
+            "expected_username": ldap_credentials.username,
+            "expected_password": ldap_credentials.password,
+        },
+        auth=(ldap_credentials.username, ldap_credentials.password),
     )
     assert response.status_code == 200, response.text
     assert response.json() == {"status": "ok"}
@@ -114,12 +111,16 @@ def test_is_ldap_authenticated_success() -> None:
         with patch("mex.backend.security.Connection") as mock_connection:
             mocked_connection = mock_connection.return_value.__enter__.return_value
             mocked_connection.server.check_availability.return_value = True
-            assert write_credentials.username == is_ldap_authenticated(
-                credentials=write_credentials
+            assert ldap_credentials.username == is_ldap_authenticated(
+                credentials=ldap_credentials
             )
 
 
 def test_is_ldap_authenticated_bind_error() -> None:
+    user_wrong_pw = HTTPBasicCredentials(
+        username="ldap_user",
+        password="wrong_password",  # noqa: S106
+    )
     with patch("mex.backend.security.BackendSettings.get") as mock_settings:
         mock_settings.return_value.ldap_url.get_secret_value.return_value = (
             "ldaps://ldap.example.com:636"
@@ -142,6 +143,6 @@ def test_is_ldap_authenticated_server_not_available() -> None:
             mocked_connection = mock_connection.return_value.__enter__.return_value
             mocked_connection.server.check_availability.return_value = False
             with pytest.raises(HTTPException) as error:
-                is_ldap_authenticated(credentials=write_credentials)
+                is_ldap_authenticated(credentials=ldap_credentials)
             assert error.value.status_code == 503
             assert "LDAP server not available." in error.value.detail
