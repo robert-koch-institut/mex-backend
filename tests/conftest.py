@@ -1,6 +1,5 @@
 import json
 import logging
-from base64 import b64encode
 from collections import deque
 from functools import partial
 from itertools import count
@@ -122,11 +121,9 @@ def client_with_api_key_read_permission(client: TestClient) -> TestClient:
 
 
 @pytest.fixture
-def client_with_basic_auth_write_permission(client: TestClient) -> TestClient:
+def client_that_is_ldap_authenticated(client: TestClient) -> TestClient:
     """Return a fastAPI test client with write permission granted by basic auth."""
-    client.headers.update(
-        {"Authorization": f"Basic {b64encode(b'Writer:write_password').decode()}"}
-    )
+    client.auth = ("Writer", "write_password")
     return client
 
 
