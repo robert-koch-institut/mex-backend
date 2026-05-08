@@ -6,9 +6,6 @@ import uvicorn
 from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.responses import FileResponse, RedirectResponse, Response
 
-from mex.backend.exceptions import (
-    BackendError,
-)
 from mex.backend.http_test_server.settings import HttpTestServerSettings
 from mex.backend.logging import UVICORN_LOGGING_CONFIG
 from mex.common.cli import entrypoint
@@ -57,6 +54,9 @@ app = FastAPI(
 
 router = APIRouter(prefix="/v0")
 
+# add csv manually to avoid return application/vnd.ms-excel on local windows machines
+mimetypes.add_type("text/csv", ".csv")
+
 
 @router.post("/http-test-server/datscha_web/login.php")
 def post_datscha_web_login() -> RedirectResponse:
@@ -64,26 +64,22 @@ def post_datscha_web_login() -> RedirectResponse:
     return RedirectResponse("verzeichnis.php")
 
 
-@router.api_route(
-    "/http-test-server/{test_data_path:path}", methods=["GET", "POST"]
-)
+@router.api_route("/http-test-server/{test_data_path:path}", methods=["GET", "POST"])
 def http_test_server(test_data_path: str) -> FileResponse:
     """Return http server test data defined in mex-assets."""
     settings = HttpTestServerSettings.get()
     path_to_file_without_ext = (
         settings.http_test_server_test_data_directory / test_data_path
     )
-
     found_files = list(
         path_to_file_without_ext.parent.glob(path_to_file_without_ext.name + ".*")
     )
-
     len_found_files = len(found_files)
     if len_found_files == 0:
-        msg= f"No files found for '/http-test-server/{test_data_path}'" 
+        msg = "No files found"
         raise HTTPException(status_code=404, detail=msg)
     if len_found_files > 1:
-        msg = f"Too many files found for '/http-test-server/{test_data_path}'"
+        msg = "Too many files found"
         raise HTTPException(status_code=404, detail=msg)
 
     found_file = found_files[0]
