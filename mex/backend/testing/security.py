@@ -1,13 +1,12 @@
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 from fastapi import Depends
-from fastapi.security import APIKeyHeader, HTTPBasic, HTTPBasicCredentials
 from ldap3.utils.dn import escape_rdn
 
-from mex.backend.security import check_header_for_authorization_method
+from mex.backend.security import HTTP_BASIC_AUTH
 
-X_API_KEY = APIKeyHeader(name="X-API-Key", auto_error=False)
-HTTP_BASIC_AUTH = HTTPBasic(auto_error=False)
+if TYPE_CHECKING:
+    from fastapi.security import HTTPBasicCredentials
 
 
 def is_ldap_authenticated_mocked(
@@ -18,6 +17,4 @@ def is_ldap_authenticated_mocked(
     Args:
         credentials: username and password
     """
-    check_header_for_authorization_method(credentials=credentials)
-
     return escape_rdn(credentials.username.split("@")[0])
