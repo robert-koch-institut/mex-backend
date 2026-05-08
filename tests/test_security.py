@@ -54,6 +54,7 @@ def test_missing_x_api_key_header_returns_401() -> None:
 
 
 def test_present_x_api_key_header_returns_200() -> None:
+    """Only tests if header is correctly set, not if the credentials are valid."""
     key = "foo"
     response = client.get(
         "/test_x_api_key_dependency",
@@ -65,11 +66,12 @@ def test_present_x_api_key_header_returns_200() -> None:
 
 
 def test_missing_http_basic_auth_returns_401() -> None:
-    response = client.get("/test_http_basic_auth_dependency")  # No X-API-Key header
+    response = client.get("/test_http_basic_auth_dependency")  # No Basic auth header
     assert response.status_code == 401, response.text
 
 
 def test_present_http_basic_auth_returns_200() -> None:
+    """Only tests if header is correctly set, not if the credentials are valid."""
     response = client.get(
         "/test_http_basic_auth_dependency",
         params={
