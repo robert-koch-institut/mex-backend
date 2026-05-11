@@ -560,7 +560,7 @@ requires-dist = [
     { name = "backoff", specifier = ">=2.2,<3" },
     { name = "fastapi", specifier = ">=0.135,<0.136" },
     { name = "jinja2", specifier = ">=3.1,<4" },
-    { name = "mex-common", specifier = ">=1.19,<1.20" },
+    { name = "mex-common", editable = "../mex-common" },
     { name = "neo4j", specifier = ">=6.1,<7" },
     { name = "pydantic", specifier = ">=2,<3" },
     { name = "starlette", specifier = ">=1,<2" },
@@ -588,7 +588,7 @@ dev = [
 [[package]]
 name = "mex-common"
 version = "1.19.0"
-source = { registry = "https://pypi.org/simple" }
+source = { editable = "../mex-common" }
 dependencies = [
     { name = "backoff" },
     { name = "click" },
@@ -605,10 +605,43 @@ dependencies = [
     { name = "requests" },
     { name = "tabulate" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/08/4e/8fe74a2e803c135f8e3f6ad842f906493c43d25dcad132d3f2efe8dfd475/mex_common-1.19.0.tar.gz", hash = "sha256:5426ffd6e0fbfcb15dac851c6704372d903fd231c5e2ee8cffe9b607741a6197", size = 90249, upload-time = "2026-04-17T11:59:45.04Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/85/d8/1b446e3e3f85f48cc6e19936878c2583d7d0d1f607e448e5eb6bee1fed81/mex_common-1.19.0-py3-none-any.whl", hash = "sha256:f895ea3a7ba4b2760b603fdb6f159385cf3f8da8d080b8d344e9aabd37f57b39", size = 137345, upload-time = "2026-04-17T11:59:43.581Z" },
+
+[package.metadata]
+requires-dist = [
+    { name = "backoff", specifier = ">=2,<3" },
+    { name = "click", specifier = ">=8,<9" },
+    { name = "langdetect", specifier = ">=1,<2" },
+    { name = "ldap3", specifier = ">=2,<3" },
+    { name = "mex-model", specifier = ">=4.10,<4.11" },
+    { name = "networkx", specifier = ">=3" },
+    { name = "numpy", specifier = ">=2,<3" },
+    { name = "pandas", specifier = ">=3,<4" },
+    { name = "pyarrow", specifier = ">=23,<24" },
+    { name = "pydantic", specifier = ">=2,<3" },
+    { name = "pydantic-settings", specifier = ">=2.13,<2.14" },
+    { name = "pytz", specifier = ">=2025" },
+    { name = "requests", specifier = ">=2,<3" },
+    { name = "tabulate", specifier = ">=0.9" },
 ]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "ipdb", specifier = ">=0.13" },
+    { name = "mypy", specifier = ">=1" },
+    { name = "pandas-stubs" },
+    { name = "pytest", specifier = ">=8" },
+    { name = "pytest-cov", specifier = ">=6" },
+    { name = "pytest-random-order", specifier = ">=1" },
+    { name = "pytest-xdist", specifier = ">=3" },
+    { name = "ruff", specifier = ">=0.15" },
+    { name = "sphinx", specifier = ">=9" },
+    { name = "types-ldap3" },
+    { name = "types-networkx" },
+    { name = "types-pytz" },
+    { name = "types-requests" },
+    { name = "types-tabulate" },
+]
+fuzzing = [{ name = "mex-artificial" }]
 
 [[package]]
 name = "mex-model"

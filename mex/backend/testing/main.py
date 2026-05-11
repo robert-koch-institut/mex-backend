@@ -17,6 +17,7 @@ from mex.backend.logging import UVICORN_LOGGING_CONFIG
 from mex.backend.main import lifespan
 from mex.backend.merged.main import router as merged_router
 from mex.backend.preview.main import router as preview_router
+from mex.backend.publishable_merged.main import router as publishable_merged_router
 from mex.backend.rules.main import router as rules_router
 from mex.backend.settings import BackendSettings
 from mex.backend.system.main import router as system_router
@@ -47,6 +48,7 @@ router.include_router(ingest_router)
 router.include_router(merged_router)
 router.include_router(orcid_router)
 router.include_router(preview_router)
+router.include_router(publishable_merged_router)
 router.include_router(rules_router)
 router.include_router(wikidata_router)
 router.include_router(ldap_login_router)

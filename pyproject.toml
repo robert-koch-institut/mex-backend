@@ -164,3 +164,6 @@ packages = ["mex"]
 
 [tool.hatch.build.targets.sdist]
 packages = ["mex"]
+
+[tool.uv.sources]
+mex-common = { path = "../mex-common", editable = true }
