@@ -9,7 +9,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 def test_get_merged_person_from_login(
-    client_with_basic_auth_write_permission: TestClient,
+    client_that_is_ldap_authenticated: TestClient,
 ) -> None:
     with (
         patch("mex.backend.security.Connection") as mock_connection,
@@ -41,7 +41,7 @@ def test_get_merged_person_from_login(
         )
         mock_get_merged_item.return_value = mock_person
 
-        response = client_with_basic_auth_write_permission.post(
+        response = client_that_is_ldap_authenticated.post(
             "/v0/merged-person-from-login",
         )
         assert response.status_code == 200
