@@ -13,8 +13,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- updated template to https://github.com/robert-koch-institut/mex-template/commit/dd987e
-
 ### Deprecated
 
 ### Removed
@@ -25,6 +23,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [2.0.0] - 2026-05-12
+
+### Added
+
+- http-test-server set up for mex-etl-srv
+
+### Changes
+
+- updated template to https://github.com/robert-koch-institut/mex-template/commit/dd987e
+
+### Removed
+
+- BREAKING: removed basic-auth, only API keys and ldap auth remain
 
 ## [1.8.1] - 2026-04-23
 
