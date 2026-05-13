@@ -560,7 +560,7 @@ requires-dist = [
     { name = "backoff", specifier = ">=2.2,<3" },
     { name = "fastapi", specifier = ">=0.135,<0.136" },
     { name = "jinja2", specifier = ">=3.1,<4" },
-    { name = "mex-common", editable = "../mex-common" },
+    { name = "mex-common", git = "https://github.com/robert-koch-institut/mex-common.git?branch=feature%2Fmx-2132-create-publishing-rule" },
     { name = "neo4j", specifier = ">=6.1,<7" },
     { name = "pydantic", specifier = ">=2,<3" },
     { name = "starlette", specifier = ">=1,<2" },
@@ -588,7 +588,7 @@ dev = [
 [[package]]
 name = "mex-common"
 version = "1.19.0"
-source = { editable = "../mex-common" }
+source = { git = "https://github.com/robert-koch-institut/mex-common.git?branch=feature%2Fmx-2132-create-publishing-rule#910ae0f5001eafdcb2305cb166b7263391baa40c" }
 dependencies = [
     { name = "backoff" },
     { name = "click" },
@@ -605,43 +605,6 @@ dependencies = [
     { name = "requests" },
     { name = "tabulate" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "backoff", specifier = ">=2,<3" },
-    { name = "click", specifier = ">=8,<9" },
-    { name = "langdetect", specifier = ">=1,<2" },
-    { name = "ldap3", specifier = ">=2,<3" },
-    { name = "mex-model", specifier = ">=4.10,<4.11" },
-    { name = "networkx", specifier = ">=3" },
-    { name = "numpy", specifier = ">=2,<3" },
-    { name = "pandas", specifier = ">=3,<4" },
-    { name = "pyarrow", specifier = ">=23,<24" },
-    { name = "pydantic", specifier = ">=2,<3" },
-    { name = "pydantic-settings", specifier = ">=2.13,<2.14" },
-    { name = "pytz", specifier = ">=2025" },
-    { name = "requests", specifier = ">=2,<3" },
-    { name = "tabulate", specifier = ">=0.9" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "ipdb", specifier = ">=0.13" },
-    { name = "mypy", specifier = ">=1" },
-    { name = "pandas-stubs" },
-    { name = "pytest", specifier = ">=8" },
-    { name = "pytest-cov", specifier = ">=6" },
-    { name = "pytest-random-order", specifier = ">=1" },
-    { name = "pytest-xdist", specifier = ">=3" },
-    { name = "ruff", specifier = ">=0.15" },
-    { name = "sphinx", specifier = ">=9" },
-    { name = "types-ldap3" },
-    { name = "types-networkx" },
-    { name = "types-pytz" },
-    { name = "types-requests" },
-    { name = "types-tabulate" },
-]
-fuzzing = [{ name = "mex-artificial" }]
 
 [[package]]
 name = "mex-model"
