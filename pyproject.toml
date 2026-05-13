@@ -11,6 +11,7 @@ dependencies = [
     "backoff>=2.2,<3",
     "fastapi>=0.135,<0.136",
     "jinja2>=3.1,<4",
+    "mex-artificial",
     "mex-common>=1.19,<1.20",
     "neo4j>=6.1,<7",
     "pydantic>=2,<3",
@@ -165,3 +166,7 @@ packages = ["mex"]
 
 [tool.hatch.build.targets.sdist]
 packages = ["mex"]
+
+[tool.uv.sources]
+mex-common = { git = "https://github.com/robert-koch-institut/mex-common.git", branch = "feature/mx-2132-create-publishing-rule" }
+mex-artificial = { git = "https://github.com/robert-koch-institut/mex-artificial.git", branch = "feature/mx-2233_new_workflow_rule" }

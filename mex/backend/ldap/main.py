@@ -4,21 +4,21 @@ from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 
 from mex.backend.auxiliary.primary_source import extracted_primary_source_ldap
-from mex.backend.merged.main import get_merged_item
+from mex.backend.preview.main import get_preview_item
 from mex.backend.security import is_ldap_authenticated
 from mex.common.identity import get_provider
 from mex.common.ldap.connector import LDAPConnector
-from mex.common.models import MergedPerson
+from mex.common.models import PreviewPerson
 from mex.common.types import MergedPrimarySourceIdentifier
 
 router = APIRouter()
 
 
-@router.post("/merged-person-from-login", tags=["editor"])
-def get_merged_person_from_login(
+@router.post("/preview-person-from-login", tags=["editor"])
+def get_preview_person_from_login(
     username: Annotated[str, Depends(is_ldap_authenticated)],
-) -> MergedPerson:
-    """Return the merged person from the ldap information and verify the login."""
+) -> PreviewPerson:
+    """Return the preview person from the ldap information and verify the login."""
     ldap_connector = LDAPConnector.get()
     ldap_person = ldap_connector.get_person(sam_account_name=username)
     provider = get_provider()
@@ -34,4 +34,4 @@ def get_merged_person_from_login(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User is not authorized for MEx.",
         )
-    return cast("MergedPerson", get_merged_item(identities[0].stableTargetId))
+    return cast("PreviewPerson", get_preview_item(identities[0].stableTargetId))

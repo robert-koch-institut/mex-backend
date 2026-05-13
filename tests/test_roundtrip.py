@@ -7,7 +7,7 @@ from mex.backend.graph.models import (
     MEX_PRIMARY_SOURCE,
 )
 from mex.backend.merged.helpers import search_merged_items_in_graph
-from mex.common.merged.main import create_merged_item
+from mex.common.merged.main import create_merged_item_for_publishing_target
 from mex.common.models import (
     MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -17,7 +17,7 @@ from mex.common.models import (
     ExtractedPrimarySource,
     PaginatedItemsContainer,
 )
-from mex.common.types import Validation
+from mex.common.types import PublishingTarget, Validation
 
 if TYPE_CHECKING:  # pragma: no cover
     from tests.conftest import DummyData
@@ -29,7 +29,13 @@ def merged_dummy_data(dummy_data: DummyData) -> dict[str, AnyMergedModel]:
 
     def _merge_single(item: AnyExtractedModel | AnyRuleSetResponse) -> AnyMergedModel:
         assert isinstance(item, AnyExtractedModel)
-        return create_merged_item(item.stableTargetId, [item], None, Validation.STRICT)
+        return create_merged_item_for_publishing_target(
+            item.stableTargetId,
+            [item],
+            None,
+            Validation.STRICT,
+            PublishingTarget("invenio"),
+        )
 
     return {
         "primary_source_1": _merge_single(dummy_data["primary_source_1"]),
@@ -39,17 +45,19 @@ def merged_dummy_data(dummy_data: DummyData) -> dict[str, AnyMergedModel]:
         "organization_1": _merge_single(dummy_data["organization_1"]),
         "organization_2": _merge_single(dummy_data["organization_2"]),
         "unit_1": _merge_single(dummy_data["unit_1"]),
-        "unit_2": create_merged_item(
+        "unit_2": create_merged_item_for_publishing_target(
             dummy_data["unit_2"].stableTargetId,
             [dummy_data["unit_2"]],
             dummy_data["unit_2_rule_set"],
             Validation.STRICT,
+            PublishingTarget("invenio"),
         ),
-        "unit_3": create_merged_item(
+        "unit_3": create_merged_item_for_publishing_target(
             dummy_data["unit_3_standalone_rule_set"].stableTargetId,
             [],
             dummy_data["unit_3_standalone_rule_set"],
             Validation.STRICT,
+            PublishingTarget("invenio"),
         ),
         "activity_1": _merge_single(dummy_data["activity_1"]),
     }
@@ -62,23 +70,26 @@ def test_graph_ingest_and_query_roundtrip(
 ) -> None:
     seeded_and_dummy = [
         *merged_dummy_data.values(),
-        create_merged_item(
+        create_merged_item_for_publishing_target(
             MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
             [cast("ExtractedPrimarySource", MEX_PRIMARY_SOURCE)],
             None,
             Validation.STRICT,
+            PublishingTarget("datenkompass"),
         ),
-        create_merged_item(
+        create_merged_item_for_publishing_target(
             MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
             [cast("ExtractedPrimarySource", MEX_EDITOR_PRIMARY_SOURCE)],
             None,
             Validation.STRICT,
+            PublishingTarget("datenkompass"),
         ),
     ]
     expected_models = sorted(seeded_and_dummy, key=lambda x: x.identifier)
 
     fetched_container = search_merged_items_in_graph(
         limit=len(expected_models),
+        publishing_target=PublishingTarget("invenio"),
     )
     expected_container = PaginatedItemsContainer[AnyMergedModel](
         items=[e.model_dump() for e in expected_models], total=len(expected_models)

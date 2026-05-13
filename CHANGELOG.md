@@ -9,11 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- BREAKING: New workflow rule, needs a publishing target for fetching merged items
+
 ### Changes
 
 ### Deprecated
 
 ### Removed
+
+- removed Preview-item post endpoint
+- BREAKING: removed basic-auth, only API keys and ldap auth remain
 
 ### Fixed
 
