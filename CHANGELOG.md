@@ -9,11 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- new publishing endpoint using new workflow rule
+
 ### Changes
 
 ### Deprecated
 
 ### Removed
+
+- removed Preview-item post endpoint
 
 ### Fixed
 
