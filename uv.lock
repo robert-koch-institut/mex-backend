@@ -560,7 +560,7 @@ requires-dist = [
     { name = "backoff", specifier = ">=2.2,<3" },
     { name = "fastapi", specifier = ">=0.135,<0.136" },
     { name = "jinja2", specifier = ">=3.1,<4" },
-    { name = "mex-common", specifier = ">=1.19,<1.20" },
+    { name = "mex-common", git = "https://github.com/robert-koch-institut/mex-common.git?branch=feature%2Fmx-2132-create-publishing-rule" },
     { name = "neo4j", specifier = ">=6.1,<7" },
     { name = "pydantic", specifier = ">=2,<3" },
     { name = "starlette", specifier = ">=1,<2" },
@@ -588,7 +588,7 @@ dev = [
 [[package]]
 name = "mex-common"
 version = "1.19.0"
-source = { registry = "https://pypi.org/simple" }
+source = { git = "https://github.com/robert-koch-institut/mex-common.git?branch=feature%2Fmx-2132-create-publishing-rule#910ae0f5001eafdcb2305cb166b7263391baa40c" }
 dependencies = [
     { name = "backoff" },
     { name = "click" },
@@ -604,10 +604,6 @@ dependencies = [
     { name = "pytz" },
     { name = "requests" },
     { name = "tabulate" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/08/4e/8fe74a2e803c135f8e3f6ad842f906493c43d25dcad132d3f2efe8dfd475/mex_common-1.19.0.tar.gz", hash = "sha256:5426ffd6e0fbfcb15dac851c6704372d903fd231c5e2ee8cffe9b607741a6197", size = 90249, upload-time = "2026-04-17T11:59:45.04Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/85/d8/1b446e3e3f85f48cc6e19936878c2583d7d0d1f607e448e5eb6bee1fed81/mex_common-1.19.0-py3-none-any.whl", hash = "sha256:f895ea3a7ba4b2760b603fdb6f159385cf3f8da8d080b8d344e9aabd37f57b39", size = 137345, upload-time = "2026-04-17T11:59:43.581Z" },
 ]
 
 [[package]]
