@@ -14,7 +14,7 @@ from mex.common.models import (
     AnyMergedModel,
     PaginatedItemsContainer,
 )
-from mex.common.types import Identifier, PublishingTarget, Validation
+from mex.common.types import Identifier, PublishingTarget
 
 router = APIRouter()
 
@@ -48,6 +48,5 @@ def search_publishable_merged_items(  # noqa: PLR0913
         reference_field=str(referenceField.value) if referenceField else None,
         skip=skip,
         limit=limit,
-        validation=Validation.IGNORE,
         publishing_target=publishingTarget,
     )

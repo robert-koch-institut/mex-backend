@@ -1,16 +1,15 @@
-from typing import TYPE_CHECKING, Any, Literal, overload
+from typing import TYPE_CHECKING, Any
 
 from pydantic import ValidationError
 
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.rules.transform import transform_raw_rules_to_rule_set_response
 from mex.common.exceptions import MergingError
-from mex.common.merged.main import create_publishable_merged_item
+from mex.common.merged.main import create_merged_item, is_item_publishable
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     RULE_MODEL_CLASSES_BY_NAME,
     AnyMergedModel,
-    AnyPreviewModel,
     ExtractedModelTypeAdapter,
     PaginatedItemsContainer,
 )
@@ -20,32 +19,10 @@ if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Sequence
 
 
-@overload
 def merge_publishable_search_result_item(
     item: dict[str, Any],
-    validation: Literal[Validation.LENIENT],
-) -> AnyPreviewModel: ...
-
-
-@overload
-def merge_publishable_search_result_item(
-    item: dict[str, Any],
-    validation: Literal[Validation.STRICT],
-) -> AnyMergedModel: ...
-
-
-@overload
-def merge_publishable_search_result_item(
-    item: dict[str, Any],
-    validation: Literal[Validation.IGNORE],
-) -> AnyMergedModel | None: ...
-
-
-def merge_publishable_search_result_item(
-    item: dict[str, Any],
-    validation: Literal[Validation.STRICT, Validation.LENIENT, Validation.IGNORE],
     publishing_target: PublishingTarget,
-) -> AnyPreviewModel | AnyMergedModel | None:
+) -> AnyMergedModel | None:
     """Merge a single search result into a merged item.
 
     Args:
@@ -77,17 +54,16 @@ def merge_publishable_search_result_item(
     else:
         rule_set = None
     try:
-        return create_publishable_merged_item(
-            identifier=Identifier(item["identifier"]),
-            extracted_items=extracted_items,
-            rule_set=rule_set,
-            validation=validation,
-            publishing_target=publishing_target,
-        )
+        if is_item_publishable(rule_set, publishing_target):
+            return create_merged_item(
+                identifier=Identifier(item["identifier"]),
+                extracted_items=extracted_items,
+                rule_set=rule_set,
+                validation=Validation.IGNORE,
+            )
+        return None  # noqa: TRY300
     except MergingError, ValidationError:
-        if validation == Validation.STRICT:
-            raise
-    return None
+        return None
 
 
 def search_publishable_merged_items_in_graph(  # noqa: PLR0913
@@ -99,11 +75,8 @@ def search_publishable_merged_items_in_graph(  # noqa: PLR0913
     reference_field: str | None = None,
     skip: int = 0,
     limit: int = 100,
-    validation: Literal[
-        Validation.STRICT, Validation.LENIENT, Validation.IGNORE
-    ] = Validation.STRICT,
     publishing_target: PublishingTarget,
-) -> PaginatedItemsContainer[AnyPreviewModel] | PaginatedItemsContainer[AnyMergedModel]:
+) -> PaginatedItemsContainer[AnyMergedModel]:
     """Search for merged items.
 
     Args:
@@ -114,10 +87,6 @@ def search_publishable_merged_items_in_graph(  # noqa: PLR0913
         reference_field: Optional field name to filter for
         skip: How many items to skip for pagination
         limit: How many items to return at most
-        validation: Merged items validate the existence of required fields and
-            the lengths of lists by default, set this to `LENIENT` to avoid this and
-            return a "preview" of a merged item instead of a valid merged item,
-            or set this to `IGNORE` to return None in case of validation errors.
         publishing_target: Target to which the items are published.
 
     Raises:
@@ -142,10 +111,8 @@ def search_publishable_merged_items_in_graph(  # noqa: PLR0913
         for item in result["items"]
         if (
             merged_model := merge_publishable_search_result_item(
-                item, validation, publishing_target
+                item, publishing_target
             )
         )
     ]
-    if validation == Validation.LENIENT:
-        return PaginatedItemsContainer[AnyPreviewModel](items=items, total=total)
     return PaginatedItemsContainer[AnyMergedModel](items=items, total=total)
