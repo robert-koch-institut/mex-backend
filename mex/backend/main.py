@@ -21,6 +21,7 @@ from mex.backend.ldap.main import router as ldap_login_router
 from mex.backend.logging import UVICORN_LOGGING_CONFIG
 from mex.backend.match.main import router as match_router
 from mex.backend.merged.main import router as merged_router
+from mex.backend.migration import add_workflow_rule_to_all_rule_sets_on_db
 from mex.backend.preview.main import router as preview_router
 from mex.backend.publishable_merged.main import router as publishable_merged_router
 from mex.backend.rules.main import router as rules_router
@@ -35,6 +36,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 startup_tasks: list[Callable[[], Any]] = [
     BackendSettings.get,
+    add_workflow_rule_to_all_rule_sets_on_db,
 ]
 teardown_tasks: list[Callable[[], Any]] = [
     CONNECTOR_STORE.reset,
