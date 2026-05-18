@@ -53,15 +53,15 @@ def merge_publishable_search_result_item(
         rule_set = transform_raw_rules_to_rule_set_response(raw_rules)
     else:
         rule_set = None
+    if not is_item_publishable(rule_set, publishing_target):
+        return None
     try:
-        if is_item_publishable(rule_set, publishing_target):
-            return create_merged_item(
-                identifier=Identifier(item["identifier"]),
-                extracted_items=extracted_items,
-                rule_set=rule_set,
-                validation=Validation.IGNORE,
-            )
-        return None  # noqa: TRY300
+        return create_merged_item(
+            identifier=Identifier(item["identifier"]),
+            extracted_items=extracted_items,
+            rule_set=rule_set,
+            validation=Validation.IGNORE,
+        )
     except MergingError, ValidationError:
         return None
 
