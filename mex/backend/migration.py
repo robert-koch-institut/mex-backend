@@ -1,3 +1,4 @@
+from collections import deque
 from typing import TYPE_CHECKING, Any
 
 from mex.backend.graph.exceptions import InconsistentGraphError
@@ -28,7 +29,7 @@ def add_workflow_rule_to_all_rule_sets_on_db() -> None:
             continue
         rule_set = transform_three_raw_rules_to_rule_set_response(raw_rules)
 
-        connector.ingest_items([rule_set])
+        deque(connector.ingest_items([rule_set]))
 
 
 def get_all_raw_rules(connector: GraphConnector) -> Generator[list[dict[str, Any]]]:
