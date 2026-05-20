@@ -2,6 +2,7 @@ from collections import deque
 from typing import TYPE_CHECKING, Any
 
 from mex.backend.graph.exceptions import InconsistentGraphError
+from mex.common.logging import logger
 from mex.common.models import (
     RULE_MODEL_CLASSES_BY_TYPE_BY_NAME,
     RULE_SET_RESPONSE_CLASSES_BY_NAME,
@@ -30,6 +31,7 @@ def add_workflow_rule_to_all_rule_sets_on_db() -> None:
         rule_set = transform_three_raw_rules_to_rule_set_response(raw_rules)
 
         deque(connector.ingest_items([rule_set]))
+    logger.info("migration add_workflow_rule_to_all_rule_sets_on_db complete")
 
 
 def get_all_raw_rules(connector: GraphConnector) -> Generator[list[dict[str, Any]]]:
@@ -106,3 +108,8 @@ def transform_three_raw_rules_to_rule_set_response(
     response_class_name = ensure_postfix(stem_types[0], "RuleSetResponse")
     response_class = RULE_SET_RESPONSE_CLASSES_BY_NAME[response_class_name]
     return response_class.model_validate(response)  # here an empty workflow rule is set
+
+
+def migrate() -> None:
+    """Run migrations."""
+    add_workflow_rule_to_all_rule_sets_on_db()
