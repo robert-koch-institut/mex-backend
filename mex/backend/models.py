@@ -4,7 +4,6 @@ from pydantic import BaseModel, Field
 
 from mex.backend.types import (
     APIKey,
-    APIUserPassword,
     ReferenceFieldName,
 )
 from mex.common.types import Identifier
@@ -15,13 +14,6 @@ class APIKeyDatabase(BaseModel):
 
     read: list[APIKey] = []
     write: list[APIKey] = []
-
-
-class APIUserDatabase(BaseModel):
-    """Database containing usernames and passwords for backend API."""
-
-    read: dict[str, APIUserPassword] = {}
-    write: dict[str, APIUserPassword] = {}
 
 
 class ReferenceFilter(BaseModel):

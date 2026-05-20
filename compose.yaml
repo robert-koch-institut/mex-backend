@@ -14,6 +14,7 @@ services:
       interval: 60s
       timeout: 5s
       retries: 5
+    entrypoint: backend
   neo4j:
     image: neo4j:2026.02-community
     environment:
@@ -49,3 +50,9 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+  http-test-server:
+    build:
+      context: .
+    ports:
+      - 8088:8088
+    entrypoint: http-test-server

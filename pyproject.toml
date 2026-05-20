@@ -1,6 +1,6 @@
 [project]
 name = "mex-backend"
-version = "1.8.1"
+version = "2.0.0"
 description = "Backend server for the RKI metadata exchange."
 authors = [{ name = "MEx Team", email = "mex@rki.de" }]
 readme = { file = "README.md", content-type = "text/markdown" }
@@ -39,6 +39,7 @@ dev = [
 [project.scripts]
 backend = "mex.backend.main:main"
 testing-backend = "mex.backend.testing.main:main"
+http-test-server = "mex.backend.http_test_server.main:main"
 
 [tool.cruft]
 template = "https://github.com/robert-koch-institut/mex-template"

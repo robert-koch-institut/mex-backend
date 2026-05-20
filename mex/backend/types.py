@@ -25,10 +25,6 @@ class APIKey(SecretStr):
         return f"APIKey('{self}')"
 
 
-class APIUserPassword(SecretStr):
-    """An API password used for basic authentication along with a username."""
-
-
 class DynamicStrEnum(EnumMeta):
     """Metaclass to dynamically populate an enumeration from a list of strings."""
 
