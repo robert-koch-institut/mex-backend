@@ -1,12 +1,11 @@
 from functools import cache
-from typing import TYPE_CHECKING, Annotated, Any, Final, Literal, cast
+from typing import TYPE_CHECKING, Annotated, Any, Final, Literal, TypedDict, cast
 
 from neo4j import NotificationSeverity
 from neo4j import Result as Neo4jResult
 from neo4j._data import RecordExporter
 from neo4j.graph import Relationship
 from pydantic import BaseModel, Field, field_validator
-from typing_extensions import TypedDict
 
 from mex.backend.graph.exceptions import MultipleResultsFoundError, NoResultFoundError
 from mex.backend.logging import LOGGING_LINE_LENGTH
@@ -206,3 +205,10 @@ class IngestParams(BaseModel):
     delete_node_edges: list[str]
     has_link_rels: bool
     has_create_rels: bool
+
+
+class RawReferenceFilter(TypedDict):
+    """Reference filter in raw dictionary form to be used as cypher parameter."""
+
+    field: str
+    identifiers: list[str]

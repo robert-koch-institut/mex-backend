@@ -32,7 +32,8 @@ if TYPE_CHECKING:  # pragma: no cover
 
     from neo4j.exceptions import Neo4jError
 
-    from mex.backend.models import RawReferenceFilter, ReferenceFilter
+    from mex.backend.graph.models import RawReferenceFilter
+    from mex.backend.models import ReferenceFilter
 
 
 class _SearchResultReference(TypedDict):
