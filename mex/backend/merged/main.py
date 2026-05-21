@@ -50,7 +50,11 @@ def search_merged_items(  # noqa: PLR0913
     skip: Annotated[int, Query(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> PaginatedItemsContainer[AnyMergedModel]:
-    """Search for merged items by query text or by type and identifier."""
+    """Search for merged items using simple filters.
+
+    For complex queries combining multiple reference filters, use POST
+    /merged-item/_search
+    """
     reference_filters = build_reference_filters(referenceField, referencedIdentifier)
     return search_merged_items_in_graph(
         query_string=q,
@@ -75,7 +79,12 @@ def search_merged_items_advanced(  # noqa: PLR0913
     skip: Annotated[int, Body(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Body(ge=1, le=100)] = 10,
 ) -> PaginatedItemsContainer[AnyMergedModel]:
-    """Search for merged items with advanced search filters."""
+    """Search for merged items with advanced filter combinations.
+
+    Use this endpoint for:
+    - Multiple reference filters combined with AND logic, e.g. hadPrimarySource AND
+      unitOf
+    """
     return search_merged_items_in_graph(
         query_string=q,
         identifier=identifier,

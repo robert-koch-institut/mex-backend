@@ -58,7 +58,10 @@ def search_preview_items(  # noqa: PLR0913
     skip: Annotated[int, Query(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> PaginatedItemsContainer[AnyPreviewModel]:
-    """Search for merged item previews by query text or by type and identifier.
+    """Search for merged item previews using simple filters.
+
+    For complex queries combining multiple reference filters, use POST
+    /preview-item/_search
 
     In contrast to `/merged-item`, this endpoint does not validate the existence
     of required fields or the length restrictions of lists.
@@ -87,7 +90,11 @@ def search_preview_items_advanced(  # noqa: PLR0913
     skip: Annotated[int, Body(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Body(ge=1, le=100)] = 10,
 ) -> PaginatedItemsContainer[AnyPreviewModel]:
-    """Search for merged item previews with advanced search filters.
+    """Search for merged item previews with advanced filter combinations.
+
+    Use this endpoint for:
+    - Multiple reference filters combined with AND logic, e.g. hadPrimarySource AND
+      unitOf
 
     In contrast to `/merged-item/_search`, this endpoint does not validate the existence
     of required fields or the length restrictions of lists.

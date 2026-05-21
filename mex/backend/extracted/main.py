@@ -51,7 +51,11 @@ def search_extracted_items(  # noqa: PLR0913
     skip: Annotated[int, Query(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> PaginatedItemsContainer[AnyExtractedModel]:
-    """Search for extracted items by query text or by type and id."""
+    """Search for extracted items using simple filters.
+
+    For complex queries combining multiple reference filters, use POST
+    /extracted-item/_search
+    """
     reference_filters = build_reference_filters(
         referenceField, referencedIdentifier, stableTargetId
     )
@@ -78,7 +82,12 @@ def search_extracted_items_advanced(
     skip: Annotated[int, Body(ge=0, le=10e10)] = 0,
     limit: Annotated[int, Body(ge=1, le=100)] = 10,
 ) -> PaginatedItemsContainer[AnyExtractedModel]:
-    """Search for extracted items with advanced search filters."""
+    """Search for extracted items with advanced filter combinations.
+
+    Use this endpoint for:
+    - Multiple reference filters combined with AND logic, e.g. hadPrimarySource AND
+      unitOf
+    """
     return search_extracted_items_in_graph(
         query_string=q,
         entity_type=[str(t.value) for t in entityType or ExtractedType],
