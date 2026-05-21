@@ -14,6 +14,11 @@ Jinja:
 
 Args:
     query_string: Full text query string (only when filter_by_query_string is enabled)
+
+Returns:
+    - extracted_or_rule_node: node (label: any_extracted_or_rule_label)
+    - merged_node: node (label: any_merged_label)
+      connected via [:stableTargetId] relationship
 -#>
 <% macro match_or_search_nodes() -%>
 <%- if filter_by_query_string -%>

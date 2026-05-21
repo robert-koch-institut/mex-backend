@@ -13,6 +13,21 @@ Jinja:
 Args:
     extracted_or_rule_node: The node whose outgoing references to check
     merged_node: The merged node associated with the extracted or rule node
+
+Returns:
+    ref_matches (List[Dict]): Aggregated reference data with structure:
+        [
+            {
+                "field": str (Reference relationship type (from reference_fields))
+                "identifier": str (Referenced node identifier or "<<no_reference>>" sentinel)
+            },
+            ...
+        ]
+
+    Query result: Filtered rows containing:
+        - merged_node: The merged node entity
+        - extracted_or_rule_node: The filtered source node
+        - ref_matches: Reference matches list (as above)
 -#>
 <% macro check_reference_filters() -%>
 OPTIONAL MATCH (extracted_or_rule_node)-[reference:<<reference_fields|join("|")>>]->(referenced_merged_node:<<any_merged_label>>)

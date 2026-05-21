@@ -9,6 +9,25 @@ Globals:
 
 Args:
     extracted_or_rule_node: The node whose outgoing references and nested objects to collect
+
+Returns:
+    A list of maps with the following structure:
+
+    For merged node references:
+        [{
+            "value": str (identifier of the referenced merged node),
+            "position": int (position attribute from the relationship),
+            "label": str (type of the relationship)
+        }, ...]
+
+    For nested node references:
+        [{
+            "value": dict (properties map of the referenced nested node),
+            "position": int (position attribute from the relationship),
+            "label": str (type of the relationship)
+        }, ...]
+
+    The returned list combines both merged and nested references in a single output
 -#>
 <% macro collect_references_and_nested() -%>
 [
