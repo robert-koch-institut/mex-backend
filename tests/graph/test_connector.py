@@ -2008,7 +2008,6 @@ def test_mocked_graph_ingests_extracted_models(
 
 
 @pytest.mark.integration
-@pytest.mark.usefixtures("loaded_dummy_data")
 def test_graph_match_item_preconditions_pass(loaded_dummy_data: DummyData) -> None:
     graph = GraphConnector.get()
     extracted = loaded_dummy_data["unit_2"]

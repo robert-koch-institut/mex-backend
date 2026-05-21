@@ -206,16 +206,15 @@ def test_match_or_search_nodes_search(
 
 
 @pytest.mark.integration
-@pytest.mark.usefixtures("loaded_dummy_data")
 def test_collect_references_and_nested(
     integration_query_builder: QueryBuilder,
-    dummy_data: DummyData,
+    loaded_dummy_data: DummyData,
 ) -> None:
     query = integration_query_builder.test_collect_references_and_nested()
     connector = GraphConnector.get()
     result = connector.commit(
         query,
-        identifier=str(dummy_data["activity_1"].identifier),
+        identifier=str(loaded_dummy_data["activity_1"].identifier),
     )
     row = result.one()
     refs = row["refs"]
@@ -225,7 +224,6 @@ def test_collect_references_and_nested(
 
 
 @pytest.mark.integration
-@pytest.mark.usefixtures("loaded_dummy_data")
 @pytest.mark.parametrize(
     ("reference_fields", "make_filters", "expected_count"),
     [
@@ -343,7 +341,7 @@ def test_collect_references_and_nested(
 )
 def test_filter_nodes_by_reference_filters(
     integration_query_builder: QueryBuilder,
-    dummy_data: DummyData,
+    loaded_dummy_data: DummyData,
     reference_fields: list[str],
     make_filters: Callable[[DummyData], list[dict[str, object]]],
     expected_count: int,
@@ -355,7 +353,7 @@ def test_filter_nodes_by_reference_filters(
     result = connector.commit(
         query,
         reference_fields=reference_fields,
-        reference_filters=make_filters(dummy_data),
+        reference_filters=make_filters(loaded_dummy_data),
     )
     rows = result.all()
     assert len(rows) == expected_count
