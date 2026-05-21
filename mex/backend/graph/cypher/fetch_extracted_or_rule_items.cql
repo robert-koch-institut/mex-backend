@@ -32,14 +32,16 @@ Returns:
 
 CALL () {
     <% block match_clause -%>
-    <<match_or_search_nodes()>>
+    <<match_or_search_nodes()|indent(4)>>
     WHERE
         ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
         <%- if filter_by_identifier %>
         AND extracted_or_rule_node.identifier = $identifier
         <%- endif %>
         <%- if filter_by_references %>
-        AND EXISTS {<<filter_nodes_by_reference_filters()>>}
+        AND EXISTS {
+            <<filter_nodes_by_reference_filters()|indent(12)>>
+        }
         <%- endif %>
     <%- endblock %>
     RETURN COUNT(DISTINCT extracted_or_rule_node) AS total
