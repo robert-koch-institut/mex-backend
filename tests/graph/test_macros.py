@@ -6,7 +6,11 @@ from pytest import MonkeyPatch
 
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.constants import NO_REFERENCE_SENTINEL
-from mex.backend.graph.models import MEX_EDITOR_PRIMARY_SOURCE, MEX_PRIMARY_SOURCE
+from mex.backend.graph.models import (
+    MEX_EDITOR_PRIMARY_SOURCE,
+    MEX_PRIMARY_SOURCE,
+    RawReferenceFilter,
+)
 from mex.backend.graph.query import QueryBuilder
 from mex.common.models.base.rules import RuleSet
 
@@ -343,7 +347,7 @@ def test_filter_nodes_by_reference_filters(
     integration_query_builder: QueryBuilder,
     loaded_dummy_data: DummyData,
     reference_fields: list[str],
-    make_filters: Callable[[DummyData], list[dict[str, object]]],
+    make_filters: Callable[[DummyData], list[RawReferenceFilter]],
     expected_count: int,
 ) -> None:
     query = integration_query_builder.test_filter_nodes_by_reference_filters(
