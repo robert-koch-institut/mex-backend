@@ -341,6 +341,21 @@ def test_collect_references_and_nested(
             0,
             id="multiple fields valid and nonexistent and no_reference_sentinel",
         ),
+        pytest.param(
+            ["hadPrimarySource", "responsibleUnit"],
+            lambda d: [
+                {
+                    "field": "hadPrimarySource",
+                    "identifiers": [d["primary_source_1"].stableTargetId],
+                },
+                {
+                    "field": "responsibleUnit",
+                    "identifiers": [d["unit_1"].stableTargetId],
+                },
+            ],
+            1,
+            id="multiple fields valid and valid",
+        ),
     ],
 )
 def test_filter_nodes_by_reference_filters(
