@@ -52,20 +52,14 @@ def search_extracted_items(  # noqa: PLR0913
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> PaginatedItemsContainer[AnyExtractedModel]:
     """Search for extracted items by query text or by type and id."""
-    reference_filters = build_reference_filters(referenceField, referencedIdentifier)
-
-    if stableTargetId:
-        stable_target_id_filter = ReferenceFilter(
-            field=ReferenceFieldName("stableTargetId"),
-            identifiers=[stableTargetId],
-        )
-        if stable_target_id_filter not in reference_filters:
-            reference_filters.append(stable_target_id_filter)
+    reference_filters = build_reference_filters(
+        referenceField, referencedIdentifier, stableTargetId
+    )
 
     return search_extracted_items_in_graph(
         query_string=q,
         entity_type=[str(t.value) for t in entityType or ExtractedType],
-        reference_filters=reference_filters or None,
+        reference_filters=reference_filters,
         skip=skip,
         limit=limit,
     )
