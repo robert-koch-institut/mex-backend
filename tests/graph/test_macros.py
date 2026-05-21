@@ -339,7 +339,7 @@ def test_collect_references_and_nested(
                 },
             ],
             0,
-            id="multiple fields valid nonexistent and no_reference_sentinel",
+            id="multiple fields valid and nonexistent and no_reference_sentinel",
         ),
     ],
 )
