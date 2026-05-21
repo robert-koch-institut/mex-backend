@@ -7,6 +7,7 @@ from starlette import status
 
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import DeletionFailedError, NoResultFoundError
+from mex.backend.helpers import build_reference_filters
 from mex.backend.merged.helpers import (
     delete_merged_item_from_graph,
     get_merged_item_from_graph,
@@ -50,16 +51,7 @@ def search_merged_items(  # noqa: PLR0913
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> PaginatedItemsContainer[AnyMergedModel]:
     """Search for merged items by query text or by type and identifier."""
-    reference_filters: Sequence[ReferenceFilter] | None
-    if not referencedIdentifier and not referenceField:
-        reference_filters = None
-    elif referencedIdentifier and referenceField:
-        reference_filters = [
-            ReferenceFilter(field=referenceField, identifiers=referencedIdentifier)
-        ]
-    else:
-        msg = "Must provide referencedIdentifier AND referenceField or neither."
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, msg)
+    reference_filters = build_reference_filters(referenceField, referencedIdentifier)
     return search_merged_items_in_graph(
         query_string=q,
         identifier=identifier,

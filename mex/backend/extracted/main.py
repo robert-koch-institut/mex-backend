@@ -10,6 +10,7 @@ from mex.backend.extracted.helpers import (
     search_extracted_items_in_graph,
 )
 from mex.backend.graph.exceptions import NoResultFoundError
+from mex.backend.helpers import build_reference_filters
 from mex.backend.models import ReferenceFilter
 from mex.backend.security import has_read_access
 from mex.backend.types import ExtractedType, ReferenceFieldName
@@ -51,15 +52,7 @@ def search_extracted_items(  # noqa: PLR0913
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> PaginatedItemsContainer[AnyExtractedModel]:
     """Search for extracted items by query text or by type and id."""
-    if referencedIdentifier and referenceField:
-        reference_filters = [
-            ReferenceFilter(field=referenceField, identifiers=referencedIdentifier)
-        ]
-    elif not referencedIdentifier and not referenceField:
-        reference_filters = []
-    else:
-        msg = "Must provide referencedIdentifier AND referenceField or neither."
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, msg)
+    reference_filters = build_reference_filters(referenceField, referencedIdentifier)
 
     if stableTargetId:
         stable_target_id_filter = ReferenceFilter(

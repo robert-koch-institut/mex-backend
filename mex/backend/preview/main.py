@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Body, Depends, HTTPException, Path, Query
 from starlette import status
 
+from mex.backend.helpers import build_reference_filters
 from mex.backend.merged.helpers import search_merged_items_in_graph
 from mex.backend.models import ReferenceFilter
 from mex.backend.security import has_read_access
@@ -62,16 +63,7 @@ def search_preview_items(  # noqa: PLR0913
     In contrast to `/merged-item`, this endpoint does not validate the existence
     of required fields or the length restrictions of lists.
     """
-    reference_filters: Sequence[ReferenceFilter] | None
-    if not referencedIdentifier and not referenceField:
-        reference_filters = None
-    elif referencedIdentifier and referenceField:
-        reference_filters = [
-            ReferenceFilter(field=referenceField, identifiers=referencedIdentifier)
-        ]
-    else:
-        msg = "Must provide referencedIdentifier AND referenceField or neither."
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, msg)
+    reference_filters = build_reference_filters(referenceField, referencedIdentifier)
     return search_merged_items_in_graph(
         query_string=q,
         identifier=identifier,
