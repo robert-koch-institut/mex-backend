@@ -101,10 +101,10 @@ RETURN [
     )
 
 
-def test_render_check_reference_filters(
+def test_render_filter_nodes_by_reference_filters(
     query_builder: QueryBuilder,
 ) -> None:
-    query = query_builder.test_check_reference_filters(
+    query = query_builder.test_filter_nodes_by_reference_filters(
         reference_fields=["hadPrimarySource", "unitOf"],
     )
     assert (
@@ -341,14 +341,14 @@ def test_collect_references_and_nested(
         ),
     ],
 )
-def test_check_reference_filters(
+def test_filter_nodes_by_reference_filters(
     integration_query_builder: QueryBuilder,
     dummy_data: DummyData,
     reference_fields: list[str],
     make_filters: Callable[[DummyData], list[dict[str, object]]],
     expected_count: int,
 ) -> None:
-    query = integration_query_builder.test_check_reference_filters(
+    query = integration_query_builder.test_filter_nodes_by_reference_filters(
         reference_fields=reference_fields,
     )
     connector = GraphConnector.get()

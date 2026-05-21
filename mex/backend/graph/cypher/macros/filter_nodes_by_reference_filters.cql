@@ -29,7 +29,7 @@ Returns:
         - extracted_or_rule_node: The filtered source node
         - ref_matches: Reference matches list (as above)
 -#>
-<% macro check_reference_filters() -%>
+<% macro filter_nodes_by_reference_filters() -%>
 OPTIONAL MATCH (extracted_or_rule_node)-[reference:<<reference_fields|join("|")>>]->(referenced_merged_node:<<any_merged_label>>)
 WITH
     merged_node,

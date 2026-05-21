@@ -27,7 +27,7 @@ Returns:
         *nodeProps: All other properties of the node
 -#>
 <% from "macros/match_or_search_nodes.cql" import match_or_search_nodes with context -%>
-<% from "macros/check_reference_filters.cql" import check_reference_filters with context -%>
+<% from "macros/filter_nodes_by_reference_filters.cql" import filter_nodes_by_reference_filters with context -%>
 <% from "macros/collect_references_and_nested.cql" import collect_references_and_nested with context -%>
 
 CALL () {
@@ -39,7 +39,7 @@ CALL () {
         AND extracted_or_rule_node.identifier = $identifier
         <%- endif %>
         <%- if filter_by_references %>
-        AND EXISTS {<<check_reference_filters()>>}
+        AND EXISTS {<<filter_nodes_by_reference_filters()>>}
         <%- endif %>
     <%- endblock %>
     RETURN COUNT(DISTINCT extracted_or_rule_node) AS total
