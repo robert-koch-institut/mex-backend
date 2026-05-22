@@ -2,13 +2,20 @@ from unittest.mock import Mock
 
 import pytest
 
+from mex.backend.graph.constants import NO_REFERENCE_SENTINEL
 from mex.backend.graph.models import GraphRel, IngestData
 from mex.backend.graph.transform import (
     _SearchResultReference,
     expand_references_in_search_result,
     get_error_details_from_neo4j_error,
+    transform_reference_filters_to_raw_fields,
+    transform_reference_filters_to_raw_filters,
     validate_ingested_data,
 )
+from mex.backend.models import ReferenceFilter
+from mex.backend.types import ReferenceFieldName
+from mex.common.models import MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID
+from mex.common.types import Identifier
 
 
 def test_expand_references_in_search_result() -> None:
@@ -75,6 +82,59 @@ def test_expand_references_in_search_result() -> None:
         "title": [{"language": "de", "value": "Aktivität 1"}],
         "website": [{"title": "Activity Homepage", "url": "https://activity-1"}],
     }
+
+
+def test_transform_reference_filters_to_raw_filters() -> None:
+    filters = [
+        ReferenceFilter(
+            field=ReferenceFieldName("contact"),
+            identifiers=[Identifier.generate(seed=42)],
+        ),
+        ReferenceFilter(
+            field=ReferenceFieldName("hadPrimarySource"),
+            identifiers=[MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID, None],
+        ),
+    ]
+
+    raw_filters = transform_reference_filters_to_raw_filters(filters)
+
+    assert raw_filters == [
+        {
+            "field": "contact",
+            "identifiers": [str(Identifier.generate(seed=42))],
+        },
+        {
+            "field": "hadPrimarySource",
+            "identifiers": [NO_REFERENCE_SENTINEL, NO_REFERENCE_SENTINEL],
+        },
+    ]
+
+
+def test_transform_reference_filters_to_raw_filters_empty() -> None:
+    assert transform_reference_filters_to_raw_filters(None) == []
+    assert transform_reference_filters_to_raw_filters([]) == []
+
+
+def test_transform_reference_filters_to_raw_fields() -> None:
+    filters = [
+        ReferenceFilter(
+            field=ReferenceFieldName("contact"),
+            identifiers=[Identifier.generate(seed=42)],
+        ),
+        ReferenceFilter(
+            field=ReferenceFieldName("hadPrimarySource"),
+            identifiers=[None],
+        ),
+    ]
+
+    raw_fields = transform_reference_filters_to_raw_fields(filters)
+
+    assert raw_fields == ["contact", "hadPrimarySource"]
+
+
+def test_transform_reference_filters_to_raw_fields_empty() -> None:
+    assert transform_reference_filters_to_raw_fields(None) == []
+    assert transform_reference_filters_to_raw_fields([]) == []
 
 
 def _make_ingest_data(**overrides: object) -> IngestData:
