@@ -2,6 +2,8 @@ import pytest
 
 from mex.backend.auxiliary.organigram import extracted_organizational_units
 from mex.backend.extracted.helpers import search_extracted_items_in_graph
+from mex.backend.models import ReferenceFilter
+from mex.backend.types import ReferenceFieldName
 from mex.common.models import ExtractedOrganizationalUnit
 from mex.common.types import Text, TextLanguage
 from tests.conftest import get_graph
@@ -64,14 +66,29 @@ def test_extracted_organizational_units() -> None:
 
     # check org units are ingested into graph
     ingested_org_unit_1 = search_extracted_items_in_graph(
-        stable_target_id=expected_result[0].stableTargetId,
+        reference_filters=[
+            ReferenceFilter(
+                field=ReferenceFieldName("stableTargetId"),
+                identifiers=[expected_result[0].stableTargetId],
+            )
+        ],
     )
     assert ingested_org_unit_1.total == 1, get_graph()
     ingested_org_unit_2 = search_extracted_items_in_graph(
-        stable_target_id=expected_result[1].stableTargetId,
+        reference_filters=[
+            ReferenceFilter(
+                field=ReferenceFieldName("stableTargetId"),
+                identifiers=[expected_result[1].stableTargetId],
+            )
+        ],
     )
     assert ingested_org_unit_2.total == 1, get_graph()
     ingested_org_unit_3 = search_extracted_items_in_graph(
-        stable_target_id=expected_result[2].stableTargetId,
+        reference_filters=[
+            ReferenceFilter(
+                field=ReferenceFieldName("stableTargetId"),
+                identifiers=[expected_result[2].stableTargetId],
+            )
+        ],
     )
     assert ingested_org_unit_3.total == 1, get_graph()

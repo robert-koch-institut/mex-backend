@@ -50,8 +50,7 @@ def get_all_merged_item_results(connector: GraphConnector) -> Generator[dict[str
         query_string=None,
         identifier=None,
         entity_type=None,
-        referenced_identifiers=None,
-        reference_field=None,
+        reference_filters=None,
         skip=0,
         limit=1,
     )
@@ -62,8 +61,7 @@ def get_all_merged_item_results(connector: GraphConnector) -> Generator[dict[str
             query_string=None,
             identifier=None,
             entity_type=None,
-            referenced_identifiers=None,
-            reference_field=None,
+            reference_filters=None,
             skip=item_counter,
             limit=item_number_limit,
         )

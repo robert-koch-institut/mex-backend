@@ -18,6 +18,8 @@ from mex.common.types import Identifier, PublishingTarget, Validation
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Sequence
 
+    from mex.backend.models import ReferenceFilter
+
 
 def merge_publishable_search_result_item(
     item: dict[str, Any],
@@ -71,8 +73,7 @@ def search_publishable_merged_items_in_graph(  # noqa: PLR0913
     query_string: str | None = None,
     identifier: str | None = None,
     entity_type: Sequence[str] | None = None,
-    referenced_identifiers: Sequence[str] | None = None,
-    reference_field: str | None = None,
+    reference_filters: Sequence[ReferenceFilter] | None = None,
     skip: int = 0,
     limit: int = 100,
     publishing_target: PublishingTarget,
@@ -83,8 +84,7 @@ def search_publishable_merged_items_in_graph(  # noqa: PLR0913
         query_string: Full text search query term
         identifier: Optional merged item identifier filter
         entity_type: Optional entity type filter
-        referenced_identifiers: Optional merged item identifiers filter
-        reference_field: Optional field name to filter for
+        reference_filters: Optional reference field filters
         skip: How many items to skip for pagination
         limit: How many items to return at most
         publishing_target: Target to which the items are published.
@@ -100,8 +100,7 @@ def search_publishable_merged_items_in_graph(  # noqa: PLR0913
         query_string=query_string,
         identifier=identifier,
         entity_type=entity_type,
-        referenced_identifiers=referenced_identifiers,
-        reference_field=reference_field,
+        reference_filters=reference_filters,
         skip=skip,
         limit=limit,
     )

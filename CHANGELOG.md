@@ -30,6 +30,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [2.1.0] - 2026-05-26
+
+### Added
+
+- new POST endpoints for advanced search of extracted, preview and merged items
+- new reference filters syntax that allows chaining multiple filters with AND condition
+
+### Changes
+
+- simplified search queries using jinja macros that are individually testable
+
+### Deprecated
+
+- deprecate `stableTargetId`, `referenceField` and `referencedIdentifier` filter params
+
+### Removed
+
+- remove unused POST /preview/identifier endpoint
+
 ## [2.0.0] - 2026-05-12
 
 ### Added

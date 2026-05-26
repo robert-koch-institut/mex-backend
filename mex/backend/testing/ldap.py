@@ -1,5 +1,5 @@
 from collections import deque
-from typing import Annotated
+from typing import Annotated, Final, cast
 
 from fastapi import APIRouter, Depends, Query
 
@@ -16,7 +16,7 @@ from mex.common.models import (
 )
 from mex.common.types import Validation
 
-DEFAULT_LDAP_QUERY = "mex@rki.de"
+DEFAULT_LDAP_QUERY: Final = "mex@rki.de"
 
 router = APIRouter()
 
@@ -40,13 +40,12 @@ def get_merged_person_from_login(
         query_string=username,
         identifier=None,
         entity_type=["MergedPerson"],
-        reference_field=None,
-        referenced_identifiers=None,
+        reference_filters=None,
         skip=0,
         limit=1,
         validation=Validation.IGNORE,
     )
-    return result.items[0]  # type: ignore [return-value]
+    return cast("MergedPerson", result.items[0])
 
 
 @router.get("/ldap", tags=["auxiliary"], dependencies=[Depends(has_read_access)])
