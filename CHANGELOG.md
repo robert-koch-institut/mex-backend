@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changes
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [2.1.0] - 2026-05-26
+
+### Added
+
 - new POST endpoints for advanced search of extracted, preview and merged items
 - new reference filters syntax that allows chaining multiple filters with AND condition
 
@@ -23,10 +37,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - remove unused POST /preview/identifier endpoint
-
-### Fixed
-
-### Security
 
 ## [2.0.0] - 2026-05-12
 
