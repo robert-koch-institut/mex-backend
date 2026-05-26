@@ -1,9 +1,11 @@
 from collections import deque
 from typing import TYPE_CHECKING, Any
 
+from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import InconsistentGraphError
 from mex.common.logging import logger
 from mex.common.models import (
+    RULE_MODEL_CLASSES_BY_NAME,
     RULE_MODEL_CLASSES_BY_TYPE_BY_NAME,
     RULE_SET_RESPONSE_CLASSES_BY_NAME,
     AnyRuleModel,
@@ -13,10 +15,6 @@ from mex.common.transform import ensure_postfix
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Generator, Sequence
-
-
-from mex.backend.graph.connector import GraphConnector
-from mex.common.models import RULE_MODEL_CLASSES_BY_NAME
 
 
 def add_workflow_rule_to_all_rule_sets_on_db() -> None:
