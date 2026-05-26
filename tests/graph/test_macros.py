@@ -164,7 +164,7 @@ def test_match_or_search_nodes_match(
     rows = result.all()
 
     seeded_extracted_or_rule_item_count = sum(
-        3 if isinstance(v, RuleSet) else 1
+        4 if isinstance(v, RuleSet) else 1
         for v in [
             *loaded_dummy_data.values(),
             MEX_PRIMARY_SOURCE,
@@ -261,7 +261,7 @@ def test_collect_references_and_nested(
                     "identifiers": [NO_REFERENCE_SENTINEL],
                 },
             ],
-            6,
+            8,
             id="single field no_reference_sentinel",
         ),
         pytest.param(
@@ -275,7 +275,7 @@ def test_collect_references_and_nested(
                     ],
                 },
             ],
-            10,
+            12,
             id="single field no_reference_sentinel or valid",
         ),
         pytest.param(

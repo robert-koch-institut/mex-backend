@@ -1288,28 +1288,136 @@ def test_ingest_artificial_data(
     assert response.status_code == status.HTTP_204_NO_CONTENT, response.text
 
     response = client_with_api_key_write_permission.get(
-        "/v0/merged-item", params={"skip": "33", "limit": "1"}
+        "/v0/merged-item", params={"skip": "34", "limit": "1"}
     )
     assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == {
         "items": [
             {
-                "$type": "MergedPerson",
-                "affiliation": [],
-                "email": ["info@rki.de"],
-                "familyName": [],
-                "fullName": ["Lehrer"],
-                "givenName": [
-                    "versuchen werden neu",
-                    "vergessen zu Geld",
-                    "sonst Polizei nie",
-                    "Wagen",
+                "$type": "MergedBibliographicResource",
+                "abstract": [{"language": None, "value": "Viel so drei."}],
+                "accessRestriction": "https://mex.rki.de/item/access-restriction-1",
+                "alternateIdentifier": [
+                    "dir gibt nehmen",
+                    "Oma",
+                    "laufen",
+                    "früh neben",
+                    "Luft Leute See",
+                    "wird Sommer wenig",
                 ],
-                "identifier": "bFQoRhcVH5DHVh",
-                "isniId": [],
-                "memberOf": ["bFQoRhcVH5DHUR"],
-                "orcidId": [],
+                "alternativeTitle": [],
+                "bibliographicResourceType": [
+                    "https://mex.rki.de/item/bibliographic-resource-type-8"
+                ],
+                "contributingUnit": ["bFQoRhcVH5DHUF"],
+                "creator": ["bFQoRhcVH5DHUt"],
+                "distribution": ["bFQoRhcVH5DHUR", "bFQoRhcVH5DHUx"],
+                "doi": "https://doi.org/71.1466/fmicb.3382.143154",
+                "edition": None,
+                "editor": ["bFQoRhcVH5DHUt"],
+                "editorOfSeries": ["bFQoRhcVH5DHUt"],
+                "identifier": "bFQoRhcVH5DHVj",
+                "isbnIssn": ["Haus", "schlimm Schwester besser", "Küche Glas"],
+                "issue": "stark machen alt",
+                "issued": None,
+                "journal": [],
+                "keyword": [
+                    {
+                        "language": "de",
+                        "value": "Zehn her weg Luft. Ende etwas genau "
+                        "sprechen sehen suchen frei hin. Auto Klasse "
+                        "so böse Weihnachten Himmel. Gerade fertig "
+                        "krank sein Zeitung. Haare turnen Wasser "
+                        "gleich kann schauen schnell. Laut schlagen "
+                        "Baum kommen Boden Wetter wohl.",
+                    },
+                    {
+                        "language": "de",
+                        "value": "Freuen mehr sehen unter acht. Neu allein "
+                        "Onkel sie Freude Minute besser. Aus Minute "
+                        "schon wollen Schnee wer.",
+                    },
+                ],
+                "language": [
+                    "https://mex.rki.de/item/language-3",
+                    "https://mex.rki.de/item/language-4",
+                ],
+                "license": "https://mex.rki.de/item/license-1",
+                "pages": "Wagen Wasser",
+                "publicationPlace": None,
+                "publicationYear": "1997",
+                "publisher": [],
+                "repositoryURL": [],
+                "section": "Ball",
+                "subtitle": [],
                 "supersededBy": None,
+                "title": [
+                    {
+                        "language": "de",
+                        "value": "Müde Frage wohl denn. Schön Tier Bauer. Essen "
+                        "dunkel den dumm Hunger Nacht ab. Wünschen "
+                        "ging lesen plötzlich anfangen tief Spaß las. "
+                        "Weg drei wieder ziehen. Stein überall ganz. "
+                        "Nase eigentlich braun müssen tot Schule er. "
+                        "Da fährt erst Essen Ferien Welt Vogel.",
+                    }
+                ],
+                "titleOfBook": [
+                    {
+                        "language": "de",
+                        "value": "Berg Flasche Seite am lange alle. "
+                        "Darauf hinter fehlen gefährlich heiß "
+                        "war früher. Ferien sieben Ding bauen. "
+                        "Schwimmen allein offen Geburtstag bald "
+                        "kam. Ohne drehen hart Bein nun "
+                        "Geschenk.",
+                    },
+                    {
+                        "language": "de",
+                        "value": "Haus laut nächste ihr Brot Bild. Weil "
+                        "Onkel am Klasse. Bekommen Hand Stein "
+                        "Oma dumm setzen im. Böse Abend Spiel "
+                        "Hase Seite Nase dem. Himmel einigen "
+                        "Stein Welt spät. Brief gelb erschrecken "
+                        "schlafen Klasse Frage wünschen.",
+                    },
+                    {
+                        "language": "de",
+                        "value": "Warten Meer auf ohne lange vorbei "
+                        "treffen. Fahrrad Eltern offen als die "
+                        "legen.",
+                    },
+                    {
+                        "language": "de",
+                        "value": "Hinein lesen braun drehen schlafen. Ich "
+                        "fragen Loch werden heraus. Auch sehen "
+                        "heißen. Sonne Fuß schwarz durch Schnee "
+                        "gut.",
+                    },
+                ],
+                "titleOfSeries": [
+                    {
+                        "language": "de",
+                        "value": "Sohn Glas zur sieben wieder dürfen. "
+                        "Sehr uns leicht dunkel Haus tragen "
+                        "wollen antworten. Nun Stein schreiben "
+                        "Zimmer. Schiff Eis Geschichte unten "
+                        "sie Jahr weg.",
+                    },
+                    {
+                        "language": "de",
+                        "value": "Früher mit Kind packen spät Schluss. "
+                        "Springen Weihnachten fest nichts "
+                        "Sache erklären Tür. Schluss "
+                        "Geburtstag fährt. Davon kennen ziehen "
+                        "gewinnen. Letzte bin Fahrrad Mutter. "
+                        "Erzählen gar natürlich müde für fährt "
+                        "Milch Woche. Dürfen sind draußen "
+                        "Jahr.",
+                    },
+                ],
+                "volume": "Fenster wenn",
+                "volumeOfSeries": "Mädchen",
             }
         ],
         "total": 43,
