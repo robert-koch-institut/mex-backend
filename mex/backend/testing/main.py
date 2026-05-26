@@ -16,6 +16,7 @@ from mex.backend.ingest.main import router as ingest_router
 from mex.backend.logging import UVICORN_LOGGING_CONFIG
 from mex.backend.main import lifespan
 from mex.backend.merged.main import router as merged_router
+from mex.backend.migration import migrate
 from mex.backend.preview.main import router as preview_router
 from mex.backend.publishable_merged.main import router as publishable_merged_router
 from mex.backend.rules.main import router as rules_router
@@ -80,6 +81,7 @@ def main() -> None:  # pragma: no cover
     """
     settings = BackendSettings.get()
     settings.debug = True
+    migrate()
     uvicorn.run(
         "mex.backend.testing.main:app",
         host=settings.backend_host,
