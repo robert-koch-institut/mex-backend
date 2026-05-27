@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- new endpoints for retrieving publishable merged items
+    - GET /publishable-merged-item/
+    - POST /publishable-merged-item/_search
+    - endpoints require a publishing target and check for each item if it is publishable
+      to the respective target
+- migration logic to add workflow rule to rule sets in database
+- BREAKING: rule sets endpoints return workflow rule (4 rules in total)
+    - they also accept it, but silently set the default if none is submitted
+    - this rule defines forbidden targets for publishing of merged items
+    - This change affects what kind of data is stored in database and might therefore
+      have unexpected side effects
+    - If your repo depends on mex-common AND on mex-backend, make sure to update both to
+      versions that include the workflow rule
+
 ### Changes
 
 ### Deprecated

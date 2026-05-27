@@ -30,6 +30,7 @@ def create_and_get_rule_set(
         additive=rule_set.additive,
         preventive=rule_set.preventive,
         subtractive=rule_set.subtractive,
+        workflow=rule_set.workflow,
         stableTargetId=stable_target_id,
     )
     deque(connector.ingest_items([rule_set_response]))
@@ -57,7 +58,7 @@ def get_rule_set_from_graph(
             )
         ],
         skip=0,
-        limit=3,
+        limit=4,
     )
     if raw_rules := graph_result.one()["items"]:
         return transform_raw_rules_to_rule_set_response(raw_rules)
