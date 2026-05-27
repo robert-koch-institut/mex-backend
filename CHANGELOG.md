@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changes
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [3.0.0] - 2026-05-27
+
+### Added
+
 - new endpoints for retrieving publishable merged items
     - GET /publishable-merged-item/
     - POST /publishable-merged-item/_search
@@ -22,16 +36,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
       have unexpected side effects
     - If your repo depends on mex-common AND on mex-backend, make sure to update both to
       versions that include the workflow rule
-
-### Changes
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
 
 ## [2.1.0] - 2026-05-26
 
