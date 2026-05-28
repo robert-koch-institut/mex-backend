@@ -39,6 +39,7 @@ dev = [
 [project.scripts]
 backend = "mex.backend.main:main"
 testing-backend = "mex.backend.testing.main:main"
+backend-seed = "mex.backend.seed.main:main"
 
 [tool.cruft]
 template = "https://github.com/robert-koch-institut/mex-template"
