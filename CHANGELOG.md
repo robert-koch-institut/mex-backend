@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- seed script to fill the backend / database with artificial data: tests\seed\test_main.py and integrations test: tests\seed\test_main.py
 
 ### Changes
 
