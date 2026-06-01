@@ -11,7 +11,7 @@ from mex.backend.settings import BackendSettings
 @click.option("--count", default=25, type=int)
 @click.option("--seed", default=1, type=int)
 @click.option("--chattiness", default=8, type=int)
-@click.option("--locale", default="de_DE")
+@click.option("--locale", default="de_DE", type=str)
 def main(
     count: int,
     seed: int,

@@ -8,15 +8,16 @@ from tests.conftest import get_graph
 
 @pytest.mark.integration
 def test_seed_entrypoint_ingests_artificial_data() -> None:
-    """Seed entrypoint should ingest artificial data into neo4j."""
+    """Run the seed entrypoint and checks items are ingested into DB."""
     count = 25
     seed = 1
     chattiness = 4
+    locale = "de_DE"
 
     expected_items = [
         item
         for container in create_artificial_items_and_rule_sets(
-            locale="de_DE",
+            locale=locale,
             seed=seed,
             count=count,
             chattiness=chattiness,
@@ -35,6 +36,8 @@ def test_seed_entrypoint_ingests_artificial_data() -> None:
             str(seed),
             "--chattiness",
             str(chattiness),
+            "--locale",
+            locale,
         ],
     )
 
