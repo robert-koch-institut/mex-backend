@@ -51,4 +51,5 @@ def test_seed_entrypoint_ingests_artificial_data() -> None:
         str(item.identifier) for item in expected_items if hasattr(item, "identifier")
     }
 
+    assert len(graph_identifiers) > 0
     assert expected_identifiers <= graph_identifiers

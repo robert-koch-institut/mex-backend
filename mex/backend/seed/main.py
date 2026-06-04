@@ -18,7 +18,14 @@ def main(
     chattiness: int,
     locale: str,
 ) -> None:
-    """Entrypoint for seed script."""
+    """Seed the backend database with artificial test data.
+
+    Args:
+        count: Number of items to generate.
+        seed: Random seed.
+        chattiness: Verbosity level.
+        locale: Language/ Region code ("de_DE").
+    """
     BackendSettings.get()
     data = [
         item
