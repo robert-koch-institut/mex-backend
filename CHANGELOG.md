@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- seed script to fill the backend / database with artificial data. entrypoint can be
+    invoked with "uv run backend-seed"
 
 ### Changes
 
