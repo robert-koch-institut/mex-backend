@@ -38,6 +38,28 @@
             "pinDigests": true
         },
         {
+            "description": "Group all GitHub Actions updates into a single PR",
+            "groupName": "github-actions",
+            "matchManagers": [
+                "github-actions"
+            ]
+        },
+        {
+            "description": "Group all non-major Python updates into a single PR",
+            "groupName": "python non-major",
+            "matchCurrentVersion": "!/^0/",
+            "matchManagers": [
+                "pep621",
+                "pip_requirements"
+            ],
+            "matchUpdateTypes": [
+                "minor",
+                "patch",
+                "pin",
+                "digest"
+            ]
+        },
+        {
             "description": "Immediately apply updates of mex packages",
             "matchPackageNames": [
                 "mex-*"
