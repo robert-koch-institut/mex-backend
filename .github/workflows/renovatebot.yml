@@ -2,7 +2,7 @@ name: Renovate
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
   schedule:
     - cron: "14 3 * * 1-5"
   workflow_dispatch:
@@ -29,6 +29,8 @@ jobs:
         env:
           RENOVATE_GIT_PRIVATE_KEY: ${{ secrets.MEX_PLAIN_SIGNING_KEY }}
           RENOVATE_REPOSITORIES: ${{ github.repository }}
+          RENOVATE_DRY_RUN: full
+          LOG_LEVEL: debug
         with:
           configurationFile: renovate.json
           token: ${{ secrets.MEX_RENOVATE_TOKEN }}
