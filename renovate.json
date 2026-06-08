@@ -60,7 +60,8 @@
             ]
         },
         {
-            "description": "Immediately apply updates of mex packages",
+            "description": "Immediately apply updates of mex packages, in dedicated PR",
+            "groupName": null,
             "matchPackageNames": [
                 "mex-*"
             ],
@@ -68,6 +69,9 @@
         }
     ],
     "prFooter": "",
+    "pre-commit": {
+        "enabled": true
+    },
     "vulnerabilityAlerts": {
         "enabled": true
     }
