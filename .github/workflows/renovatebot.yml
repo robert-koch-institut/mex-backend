@@ -30,6 +30,8 @@ jobs:
           RENOVATE_GIT_PRIVATE_KEY: ${{ secrets.MEX_PLAIN_SIGNING_KEY }}
           RENOVATE_REPOSITORIES: ${{ github.repository }}
           RENOVATE_DRY_RUN: full
+          RENOVATE_BASE_BRANCH_PATTERNS: '["feature/renovate-clean-up"]'
+          RENOVATE_USE_BASE_BRANCH_CONFIG: merge
           LOG_LEVEL: debug
         with:
           configurationFile: renovate.json
