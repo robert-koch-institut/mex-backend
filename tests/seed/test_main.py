@@ -52,5 +52,5 @@ def test_seed_entrypoint_ingests_artificial_data() -> None:
     }
 
     assert len(graph_identifiers) > 0
-   # graph_identifiers contains all IDs of expected_identifiers + IDs of merged items
-    assert expected_identifiers <= graph_identifiers 
+    # graph_identifiers contains all IDs of expected_identifiers + IDs of merged items
+    assert expected_identifiers <= graph_identifiers
