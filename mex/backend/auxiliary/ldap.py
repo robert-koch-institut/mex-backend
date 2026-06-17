@@ -47,7 +47,7 @@ def search_persons_or_contact_points_in_ldap(
             ldap_actors.items,
             extracted_organizational_units(),
             extracted_primary_source_ldap().stableTargetId,
-            extracted_organization_rki(),
+            extracted_organization_rki().stableTargetId,
         )
     )
     return PaginatedItemsContainer[ExtractedPerson | ExtractedContactPoint](

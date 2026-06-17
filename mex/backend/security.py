@@ -12,30 +12,16 @@ from mex.backend.settings import BackendSettings
 from mex.backend.types import APIKey, OIDCClaims
 from mex.common.logging import logger
 
-X_API_KEY = APIKeyHeader(name="X-API-Key", auto_error=False)
-
-
-def make_oauth2_scheme() -> OAuth2AuthorizationCodeBearer:
-    """Build the OAuth2 scheme with authorizationUrl from current settings."""
-    issuer_url = str(BackendSettings.get().oidc_issuer_url).rstrip("/")
-    return OAuth2AuthorizationCodeBearer(
-        authorizationUrl=f"{issuer_url}/auth",
-        tokenUrl="/v0/oauth/token",
-        scopes={
-            "openid": "OpenID Connect",
-            "profile": "User profile",
-            "groups": "Group membership",
-            "email": "Email address",
-        },
-        auto_error=False,
-    )
-
-
+X_API_KEY = APIKeyHeader(
+    name="X-API-Key",
+    auto_error=False,
+)
 SWAGGER_UI_INIT_OAUTH = {
     "clientId": "mex-backend",
     "scopes": "openid profile groups email",
     "usePkceWithAuthorizationCodeGrant": True,
 }
+
 
 _jwks_client: PyJWKClient | None = None
 _jwks_lock = threading.Lock()
@@ -101,6 +87,22 @@ def _verify_jwt(token: str) -> OIDCClaims:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token claims.",
             ) from e
+
+
+def make_oauth2_scheme() -> OAuth2AuthorizationCodeBearer:
+    """Build the OAuth2 scheme with authorizationUrl from current settings."""
+    issuer_url = str(BackendSettings.get().oidc_issuer_url).rstrip("/")
+    return OAuth2AuthorizationCodeBearer(
+        authorizationUrl=f"{issuer_url}/auth",
+        tokenUrl="/v0/oauth/token",
+        scopes={
+            "openid": "OpenID Connect",
+            "profile": "User profile",
+            "groups": "Group membership",
+            "email": "Email address",
+        },
+        auto_error=False,
+    )
 
 
 def has_read_access(
