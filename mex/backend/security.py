@@ -1,4 +1,4 @@
-import threading
+from functools import lru_cache
 from typing import Annotated, Any
 
 import jwt
@@ -23,18 +23,23 @@ SWAGGER_UI_INIT_OAUTH = {
 }
 
 
-_jwks_client: PyJWKClient | None = None
-_jwks_lock = threading.Lock()
+@lru_cache(maxsize=1)
+def _get_jwks_client(jwks_uri: str) -> PyJWKClient:
+    """Return a process-wide JWKS client for the given URI.
 
+    The client is memoised so its internal signing-key cache (TTL set via
+    ``lifespan``) survives across requests. ``maxsize=1`` ensures that if the
+    issuer URL changes (e.g. settings reload in tests), the stale client is
+    evicted instead of leaking. ``lru_cache`` is thread-safe, so no explicit
+    lock is needed.
 
-def _get_jwks_client() -> PyJWKClient:
-    global _jwks_client  # noqa: PLW0603
-    issuer = str(BackendSettings.get().oidc_issuer_url)
-    jwks_uri = f"{issuer}/keys"
-    with _jwks_lock:
-        if _jwks_client is None or _jwks_client.uri != jwks_uri:
-            _jwks_client = PyJWKClient(jwks_uri, lifespan=3600)
-    return _jwks_client
+    Args:
+        jwks_uri: Absolute URL of the OIDC provider's JWKS endpoint.
+
+    Returns:
+        A ``PyJWKClient`` pointing at ``jwks_uri``.
+    """
+    return PyJWKClient(jwks_uri, lifespan=3600)
 
 
 def _verify_jwt(token: str) -> OIDCClaims:
@@ -52,7 +57,8 @@ def _verify_jwt(token: str) -> OIDCClaims:
         Parsed and validated OIDC claims
     """
     try:
-        client = _get_jwks_client()
+        issuer = str(BackendSettings.get().oidc_issuer_url)
+        client = _get_jwks_client(f"{issuer}/keys")
         signing_key = client.get_signing_key_from_jwt(token)
     except Exception as e:
         logger.error("JWKS fetch/key lookup failed: %s", e)
