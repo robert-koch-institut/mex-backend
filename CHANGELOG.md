@@ -9,12 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- add Dex OIDC provider to compose and CI, federating to slapd via LDAP
+- add dex OIDC provider to compose and CI, federating to slapd via LDAP
 - add `GET /v0/user/me` returning the `MergedPerson` for the authenticated OIDC user
+- seed script to fill the backend / database with artificial data. entrypoint can be
+  invoked with "uv run backend-seed"
 
 ### Changes
 
 - settings validation: validate that valkey url is set if parallelized
+- updated template to https://github.com/robert-koch-institut/mex-template/commit/1d816d
+- updated template to https://github.com/robert-koch-institut/mex-template/commit/57105a
 
 ### Deprecated
 
@@ -25,6 +29,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [3.0.0] - 2026-05-27
+
+### Added
+
+- new endpoints for retrieving publishable merged items
+    - GET /publishable-merged-item/
+    - POST /publishable-merged-item/_search
+    - endpoints require a publishing target and check for each item if it is publishable
+      to the respective target
+- migration logic to add workflow rule to rule sets in database
+- BREAKING: rule sets endpoints return workflow rule (4 rules in total)
+    - they also accept it, but silently set the default if none is submitted
+    - this rule defines forbidden targets for publishing of merged items
+    - This change affects what kind of data is stored in database and might therefore
+      have unexpected side effects
+    - If your repo depends on mex-common AND on mex-backend, make sure to update both to
+      versions that include the workflow rule
+
+## [2.1.0] - 2026-05-26
+
+### Added
+
+- new POST endpoints for advanced search of extracted, preview and merged items
+- new reference filters syntax that allows chaining multiple filters with AND condition
+
+### Changes
+
+- simplified search queries using jinja macros that are individually testable
+
+### Deprecated
+
+- deprecate `stableTargetId`, `referenceField` and `referencedIdentifier` filter params
+
+### Removed
+
+- remove unused POST /preview/identifier endpoint
+
+## [2.0.0] - 2026-05-12
+
+### Added
+
+- http-test-server set up for mex-etl-srv
+
+### Changes
+
+- updated template to https://github.com/robert-koch-institut/mex-template/commit/dd987e
+
+### Removed
+
+- BREAKING: removed basic-auth, only API keys and ldap auth remain
 
 ## [1.8.1] - 2026-04-23
 

@@ -28,6 +28,10 @@ from mex.common.types import TextLanguage
                     "entityType": "PreventivePerson",
                     "stableTargetId": ["00000000000005"],
                 },
+                {
+                    "entityType": "WorkflowResource",
+                    "stableTargetId": ["00000000000005"],
+                },
             ],
             "inconsistent rule item stem types",
             id="incompatible-types",
@@ -35,20 +39,24 @@ from mex.common.types import TextLanguage
         pytest.param(
             [
                 {
-                    "entityType": "PreventiveVariable",
+                    "entityType": "AdditiveVariable",
                     "stableTargetId": ["00000000000001"],
                 },
                 {
-                    "entityType": "PreventiveVariable",
+                    "entityType": "SubtractiveVariable",
                     "stableTargetId": ["00000000000002"],
                 },
                 {
                     "entityType": "PreventiveVariable",
                     "stableTargetId": ["00000000000003"],
                 },
+                {
+                    "entityType": "WorkflowVariable",
+                    "stableTargetId": ["00000000000004"],
+                },
             ],
             "inconsistent rule item stableTargetIds: "
-            "00000000000001, 00000000000002, 00000000000003",
+            "00000000000001, 00000000000002, 00000000000003, 00000000000004",
             id="incompatible-ids",
         ),
         pytest.param(
@@ -68,6 +76,11 @@ from mex.common.types import TextLanguage
                     "stableTargetId": ["00000000000007"],
                     "containedBy": ["00000000000042"],
                 },
+                {
+                    "entityType": "WorkflowVariableGroup",
+                    "stableTargetId": ["00000000000007"],
+                    "forbiddenPublishingTarget": [],
+                },
             ],
             {
                 "additive": {
@@ -85,6 +98,10 @@ from mex.common.types import TextLanguage
                     "entityType": "PreventiveVariableGroup",
                     "containedBy": ["00000000000042"],
                     "label": [],
+                },
+                "workflow": {
+                    "entityType": "WorkflowVariableGroup",
+                    "forbiddenPublishingTarget": [],
                 },
                 "entityType": "VariableGroupRuleSetResponse",
                 "stableTargetId": "00000000000007",

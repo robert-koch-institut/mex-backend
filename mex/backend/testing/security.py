@@ -19,7 +19,7 @@ def has_read_access_mocked(
     api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
     token: Annotated[str | None, Depends(OAUTH2_SCHEME)] = None,
 ) -> None:
-    """Mocked read access — validates API keys normally, accepts any Bearer token."""
+    """Mocked read access - validates API keys normally, accepts any Bearer token."""
     if api_key:
         db = BackendSettings.get().backend_api_key_database
         if APIKey(api_key) not in db.read and APIKey(api_key) not in db.write:
@@ -34,7 +34,7 @@ def has_write_access_mocked(
     api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
     token: Annotated[str | None, Depends(OAUTH2_SCHEME)] = None,
 ) -> None:
-    """Mocked write access — validates API keys normally, accepts any Bearer token."""
+    """Mocked write access - validates API keys normally, accepts any Bearer token."""
     if api_key:
         if APIKey(api_key) not in BackendSettings.get().backend_api_key_database.write:
             raise HTTPException(status_code=403, detail="Unauthorized API Key.")
@@ -47,7 +47,7 @@ def has_write_access_mocked(
 def has_oidc_access_mocked(
     token: Annotated[str | None, Depends(OAUTH2_SCHEME)] = None,
 ) -> str:
-    """Mocked OIDC access — returns Bearer token value as username.
+    """Mocked OIDC access - returns Bearer token value as username.
 
     Raises:
         HTTPException 401 if no Bearer header is present.

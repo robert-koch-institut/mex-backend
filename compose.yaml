@@ -14,8 +14,9 @@ services:
       interval: 60s
       timeout: 5s
       retries: 5
+    entrypoint: backend
   neo4j:
-    image: neo4j:2026.02-community
+    image: neo4j:2026.05-community
     environment:
       - NEO4J_AUTH=neo4j/password
       - NEO4J_dbms_usage__report_enabled=false
@@ -28,7 +29,7 @@ services:
       retries: 5
       start_period: 30s
   valkey:
-    image: valkey/valkey:9.0.3
+    image: valkey/valkey:9.1.0
     ports:
       - 6379:6379
     healthcheck:
@@ -65,3 +66,9 @@ services:
       timeout: 5s
       retries: 5
       start_period: 15s
+  http-test-server:
+    build:
+      context: .
+    ports:
+      - 8088:8088
+    entrypoint: http-test-server

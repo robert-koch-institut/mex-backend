@@ -24,6 +24,11 @@ OAUTH2_SCHEME = OAuth2AuthorizationCodeBearer(
     },
     auto_error=False,
 )
+SWAGGER_UI_INIT_OAUTH = {
+    "clientId": "mex-backend",
+    "scopes": "openid profile groups email",
+    "usePkceWithAuthorizationCodeGrant": True,
+}
 
 _jwks_client: PyJWKClient | None = None
 _jwks_lock = threading.Lock()
@@ -43,7 +48,7 @@ def _verify_jwt(token: str) -> OIDCClaims:
     """Verify JWT signature and return parsed claims.
 
     Raises:
-        HTTPException 503 if JWKS fetch or key lookup fails (Dex down).
+        HTTPException 503 if JWKS fetch or key lookup fails (dex down).
         HTTPException 401 if token is expired, has invalid signature, wrong aud/iss,
             or claims do not match the expected schema.
 
@@ -179,7 +184,7 @@ def has_oidc_access(
             invalid, or lacks group membership.
 
     Args:
-        api_key: the API key (rejected — OIDC-only endpoint)
+        api_key: the API key (rejected - OIDC-only endpoint)
         token: Bearer JWT string
 
     Returns:

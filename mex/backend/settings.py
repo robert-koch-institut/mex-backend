@@ -87,7 +87,7 @@ class BackendSettings(BaseSettings):
     )
     oidc_client_id: str = Field(
         "mex-backend",
-        description="Expected 'aud' claim in OIDC JWTs (must match Dex client id).",
+        description="Expected 'aud' claim in OIDC JWTs (must match dex client id).",
         validation_alias="MEX_OIDC_CLIENT_ID",
     )
     oidc_algorithms: list[str] = Field(

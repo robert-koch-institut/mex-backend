@@ -4,6 +4,7 @@ from unittest.mock import Mock
 
 import pytest
 from pydantic import BaseModel, ValidationError
+from pydantic.version import version_short as pydantic_major_minor_version
 from starlette import status
 
 from mex.backend.exceptions import handle_detailed_error, handle_uncaught_exception
@@ -84,10 +85,10 @@ except InconsistentGraphError as error:
         pytest.param(
             validation_error,
             {
-                "message": """1 validation error for DummyModel
+                "message": f"""1 validation error for DummyModel
 numbers
   Input should be a valid list [type=list_type, input_value='foo', input_type=str]
-    For further information visit https://errors.pydantic.dev/2.12/v/list_type""",
+    For further information visit https://errors.pydantic.dev/{pydantic_major_minor_version()}/v/list_type""",
                 "debug": {
                     "errors": [
                         {
@@ -95,7 +96,7 @@ numbers
                             "loc": ["numbers"],
                             "msg": "Input should be a valid list",
                             "input": "foo",
-                            "url": "https://errors.pydantic.dev/2.12/v/list_type",
+                            "url": f"https://errors.pydantic.dev/{pydantic_major_minor_version()}/v/list_type",
                         }
                     ],
                     "scope": MOCK_REQUEST_SCOPE,
@@ -114,7 +115,7 @@ numbers
                             "loc": ["numbers"],
                             "msg": "Input should be a valid list",
                             "input": "foo",
-                            "url": "https://errors.pydantic.dev/2.12/v/list_type",
+                            "url": f"https://errors.pydantic.dev/{pydantic_major_minor_version()}/v/list_type",
                         }
                     ],
                     "scope": MOCK_REQUEST_SCOPE,

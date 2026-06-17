@@ -198,6 +198,16 @@ def test_search_merged_items_in_graph() -> None:
                                         },
                                     ],
                                 },
+                                {
+                                    "entityType": "WorkflowOrganizationalUnit",
+                                    "_refs": [
+                                        {
+                                            "label": "stableTargetId",
+                                            "position": 0,
+                                            "value": "e5rfAc2p5zV39WUVZeAR1",
+                                        },
+                                    ],
+                                },
                             ],
                             "entityType": "MergedOrganizationalUnit",
                             "identifier": "e5rfAc2p5zV39WUVZeAR1",
@@ -218,7 +228,7 @@ def test_search_merged_items_in_graph() -> None:
                 ],
                 "total": 1,
             },
-            id="three-rules",
+            id="four-rules",
         ),
     ],
 )
