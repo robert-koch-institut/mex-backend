@@ -18,7 +18,7 @@ router = APIRouter()
 def get_current_user(
     username: Annotated[str, Depends(has_oidc_access)],
 ) -> MergedPerson:
-    """Return the MergedPerson for the currently authenticated OIDC user."""
+    """Return the merged person for the currently authenticated OIDC user."""
     ldap_connector = LDAPConnector.get()
     ldap_person = ldap_connector.get_person(sam_account_name=username)
     provider = get_provider()

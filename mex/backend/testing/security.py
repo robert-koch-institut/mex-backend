@@ -8,16 +8,21 @@ from mex.backend.settings import BackendSettings
 from mex.backend.types import APIKey
 
 X_API_KEY = APIKeyHeader(name="X-API-Key", auto_error=False)
-OAUTH2_SCHEME = OAuth2AuthorizationCodeBearer(
-    authorizationUrl="http://localhost:5556/dex/auth",
-    tokenUrl="/v0/oauth/token",
-    auto_error=False,
-)
+
+
+def make_oauth2_scheme_mocked() -> OAuth2AuthorizationCodeBearer:
+    """Build the mocked OAuth2 scheme with authorizationUrl from current settings."""
+    issuer_url = str(BackendSettings.get().oidc_issuer_url).rstrip("/")
+    return OAuth2AuthorizationCodeBearer(
+        authorizationUrl=f"{issuer_url}/auth",
+        tokenUrl="/v0/oauth/token",
+        auto_error=False,
+    )
 
 
 def has_read_access_mocked(
     api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
-    token: Annotated[str | None, Depends(OAUTH2_SCHEME)] = None,
+    token: Annotated[str | None, Depends(make_oauth2_scheme_mocked)] = None,
 ) -> None:
     """Mocked read access - validates API keys normally, accepts any Bearer token."""
     if api_key:
@@ -32,7 +37,7 @@ def has_read_access_mocked(
 
 def has_write_access_mocked(
     api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
-    token: Annotated[str | None, Depends(OAUTH2_SCHEME)] = None,
+    token: Annotated[str | None, Depends(make_oauth2_scheme_mocked)] = None,
 ) -> None:
     """Mocked write access - validates API keys normally, accepts any Bearer token."""
     if api_key:
@@ -45,7 +50,7 @@ def has_write_access_mocked(
 
 
 def has_oidc_access_mocked(
-    token: Annotated[str | None, Depends(OAUTH2_SCHEME)] = None,
+    token: Annotated[str | None, Depends(make_oauth2_scheme_mocked)] = None,
 ) -> str:
     """Mocked OIDC access - returns Bearer token value as username.
 

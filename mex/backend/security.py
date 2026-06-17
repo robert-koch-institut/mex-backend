@@ -13,17 +13,24 @@ from mex.backend.types import APIKey, OIDCClaims
 from mex.common.logging import logger
 
 X_API_KEY = APIKeyHeader(name="X-API-Key", auto_error=False)
-OAUTH2_SCHEME = OAuth2AuthorizationCodeBearer(
-    authorizationUrl="http://localhost:5556/dex/auth",
-    tokenUrl="/v0/oauth/token",
-    scopes={
-        "openid": "OpenID Connect",
-        "profile": "User profile",
-        "groups": "Group membership",
-        "email": "Email address",
-    },
-    auto_error=False,
-)
+
+
+def make_oauth2_scheme() -> OAuth2AuthorizationCodeBearer:
+    """Build the OAuth2 scheme with authorizationUrl from current settings."""
+    issuer_url = str(BackendSettings.get().oidc_issuer_url).rstrip("/")
+    return OAuth2AuthorizationCodeBearer(
+        authorizationUrl=f"{issuer_url}/auth",
+        tokenUrl="/v0/oauth/token",
+        scopes={
+            "openid": "OpenID Connect",
+            "profile": "User profile",
+            "groups": "Group membership",
+            "email": "Email address",
+        },
+        auto_error=False,
+    )
+
+
 SWAGGER_UI_INIT_OAUTH = {
     "clientId": "mex-backend",
     "scopes": "openid profile groups email",
@@ -98,7 +105,7 @@ def _verify_jwt(token: str) -> OIDCClaims:
 
 def has_read_access(
     api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
-    token: Annotated[str | None, Depends(OAUTH2_SCHEME)] = None,
+    token: Annotated[str | None, Depends(make_oauth2_scheme)] = None,
 ) -> None:
     """Accept X-API-Key OR Bearer JWT with read or write group membership.
 
@@ -141,7 +148,7 @@ def has_read_access(
 
 def has_write_access(
     api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
-    token: Annotated[str | None, Depends(OAUTH2_SCHEME)] = None,
+    token: Annotated[str | None, Depends(make_oauth2_scheme)] = None,
 ) -> None:
     """Accept X-API-Key OR Bearer JWT with write group membership.
 
@@ -173,7 +180,7 @@ def has_write_access(
 
 def has_oidc_access(
     api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
-    token: Annotated[str | None, Depends(OAUTH2_SCHEME)] = None,
+    token: Annotated[str | None, Depends(make_oauth2_scheme)] = None,
 ) -> str:
     """Accept Bearer JWT with read or write group membership; return preferred_username.
 

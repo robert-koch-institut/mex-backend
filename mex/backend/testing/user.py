@@ -20,7 +20,7 @@ router = APIRouter()
 def get_current_testing_user(
     username: Annotated[str, Depends(has_oidc_access_mocked)],
 ) -> MergedPerson:
-    """Return a mocked MergedPerson for the testing app."""
+    """Return a mocked merged person for the testing app."""
     person = ExtractedPerson(
         hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
         identifierInPrimarySource=username,
