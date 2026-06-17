@@ -16,7 +16,6 @@ department: FG99
 mail: MaxM@ldapmock.local
 uid: MaxM
 userPassword: MaxM_password
-mail: MaxM@ldapmock.local
 
 # Moritz Example
 dn: uid=MoritzE,dc=ldapmock,dc=local
@@ -36,7 +35,6 @@ department: FG99
 mail: MoritzE@ldapmock.local
 uid: MoritzE
 userPassword: MoritzE_password
-mail: MoritzE@ldapmock.local
 
 # Moritz Mueller
 dn: uid=MoritzM,dc=ldapmock,dc=local
@@ -56,7 +54,6 @@ department: FG99
 mail: MoritzM@ldapmock.local
 uid: MoritzM
 userPassword: MoritzM_password
-mail: MoritzM@ldapmock.local
 
 # Funktion Organizational Unit
 dn: OU=Funktion,dc=ldapmock,dc=local
