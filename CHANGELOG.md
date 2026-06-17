@@ -8,13 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - seed script to fill the backend / database with artificial data. entrypoint can be
-    invoked with "uv run backend-seed"
+  invoked with "uv run backend-seed"
 
 ### Changes
 
 - updated template to https://github.com/robert-koch-institut/mex-template/commit/1d816d
-
 - updated template to https://github.com/robert-koch-institut/mex-template/commit/57105a
 
 ### Deprecated
