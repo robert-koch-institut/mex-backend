@@ -9,13 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- seed script to fill the backend / database with artificial data. entrypoint can be
-  invoked with "uv run backend-seed"
-
 ### Changes
-
-- updated template to https://github.com/robert-koch-institut/mex-template/commit/1d816d
-- updated template to https://github.com/robert-koch-institut/mex-template/commit/57105a
 
 ### Deprecated
 
@@ -24,6 +18,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [3.1.0] - 2026-06-19
+
+### Added
+
+- seed script to fill the backend / database with artificial data. entrypoint can be
+  invoked with "uv run backend-seed"
+
+### Changes
+
+- updated template to https://github.com/robert-koch-institut/mex-template/commit/1d816d
+- updated template to https://github.com/robert-koch-institut/mex-template/commit/57105a
 
 ## [3.0.0] - 2026-05-27
 
