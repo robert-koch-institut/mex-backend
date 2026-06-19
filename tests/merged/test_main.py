@@ -8,6 +8,8 @@ from mex.backend.rules.helpers import update_and_get_rule_set
 from mex.common.merged.main import create_merged_item
 from mex.common.models import (
     MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    ActivityRuleSetRequest,
+    AdditiveActivity,
     ExtractedOrganizationalUnit,
     OrganizationalUnitRuleSetRequest,
     SubtractiveOrganizationalUnit,
@@ -730,6 +732,67 @@ def test_search_merged_items_advanced(
     )
     assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == expected
+
+
+@pytest.mark.integration
+def test_search_merged_items_reference_filter_combination_across_components(
+    client_with_api_key_read_permission: TestClient,
+    loaded_dummy_data: DummyData,
+) -> None:
+    # when multiple reference filters are combined (AND), the references may live on
+    # different components of the same merged item: e.g. `contact` comes from the
+    # extracted activity, while `involvedUnit` was added by an editor via an additive
+    # rule. each filter matches the merged item on its own, so their AND-combination
+    # must match it too.
+    activity = loaded_dummy_data["activity_1"]
+    unit_1 = loaded_dummy_data["unit_1"]
+    contact_point_1 = loaded_dummy_data["contact_point_1"]
+
+    # editor adds involvedUnit to the activity via an additive rule
+    update_and_get_rule_set(
+        rule_set=ActivityRuleSetRequest(
+            additive=AdditiveActivity(involvedUnit=[unit_1.stableTargetId]),
+        ),
+        stable_target_id=activity.stableTargetId,
+    )
+
+    # sanity check: each filter matches the merged activity on its own
+    for reference_filter in (
+        {"field": "contact", "identifiers": [str(contact_point_1.stableTargetId)]},
+        {"field": "involvedUnit", "identifiers": [str(unit_1.stableTargetId)]},
+    ):
+        response = client_with_api_key_read_permission.post(
+            "/v0/merged-item/_search",
+            json={"referenceFilters": [reference_filter]},
+        )
+        assert response.status_code == status.HTTP_200_OK, response.text
+        assert [item["identifier"] for item in response.json()["items"]] == [
+            str(activity.stableTargetId)
+        ], reference_filter
+
+    # combining the extracted `contact` filter with the rule-added `involvedUnit`
+    # filter must still match the merged activity
+    response = client_with_api_key_read_permission.post(
+        "/v0/merged-item/_search",
+        json={
+            "referenceFilters": [
+                {
+                    "field": "contact",
+                    "identifiers": [str(contact_point_1.stableTargetId)],
+                },
+                {
+                    "field": "involvedUnit",
+                    "identifiers": [str(unit_1.stableTargetId)],
+                },
+            ]
+        },
+    )
+    assert response.status_code == status.HTTP_200_OK, response.text
+    body = response.json()
+    assert body["total"] == 1
+    assert [item["identifier"] for item in body["items"]] == [
+        str(activity.stableTargetId)
+    ]
 
 
 @pytest.mark.integration
