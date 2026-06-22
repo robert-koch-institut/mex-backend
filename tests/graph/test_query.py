@@ -128,17 +128,16 @@ YIELD currentStatus;"""
         ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
         AND extracted_or_rule_node.identifier = $identifier
         AND EXISTS {
-            OPTIONAL MATCH (extracted_or_rule_node)-[reference:hadPrimarySource]->(referenced_merged_node:MergedPerson|MergedVariable|MergedDistribution)
+            MATCH (component:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node)
+            OPTIONAL MATCH (component)-[reference:hadPrimarySource]->(referenced_merged_node:MergedPerson|MergedVariable|MergedDistribution)
             WITH
                 merged_node,
-                extracted_or_rule_node,
                 collect(CASE WHEN reference IS NOT NULL THEN type(reference) END) AS found_fields,
                 collect(CASE WHEN reference IS NOT NULL
                     THEN {field: type(reference), identifier: referenced_merged_node.identifier} END
                 ) AS existing_refs
             WITH
                 merged_node,
-                extracted_or_rule_node,
                 existing_refs +
                 [f IN $reference_fields WHERE NOT f IN found_fields | {field: f, identifier: "__NO_REF__"}]
                 AS ref_matches
@@ -163,17 +162,16 @@ CALL () {
         ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
         AND extracted_or_rule_node.identifier = $identifier
         AND EXISTS {
-            OPTIONAL MATCH (extracted_or_rule_node)-[reference:hadPrimarySource]->(referenced_merged_node:MergedPerson|MergedVariable|MergedDistribution)
+            MATCH (component:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node)
+            OPTIONAL MATCH (component)-[reference:hadPrimarySource]->(referenced_merged_node:MergedPerson|MergedVariable|MergedDistribution)
             WITH
                 merged_node,
-                extracted_or_rule_node,
                 collect(CASE WHEN reference IS NOT NULL THEN type(reference) END) AS found_fields,
                 collect(CASE WHEN reference IS NOT NULL
                     THEN {field: type(reference), identifier: referenced_merged_node.identifier} END
                 ) AS existing_refs
             WITH
                 merged_node,
-                extracted_or_rule_node,
                 existing_refs +
                 [f IN $reference_fields WHERE NOT f IN found_fields | {field: f, identifier: "__NO_REF__"}]
                 AS ref_matches
@@ -278,17 +276,16 @@ def test_fetch_extracted_or_rule_items(
         ANY(label IN labels(merged_node) WHERE label IN $labels)
         AND merged_node.identifier = $identifier
         AND EXISTS {
-            OPTIONAL MATCH (extracted_or_rule_node)-[reference:hadPrimarySource]->(referenced_merged_node:MergedPerson|MergedVariable|MergedDistribution)
+            MATCH (component:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node)
+            OPTIONAL MATCH (component)-[reference:hadPrimarySource]->(referenced_merged_node:MergedPerson|MergedVariable|MergedDistribution)
             WITH
                 merged_node,
-                extracted_or_rule_node,
                 collect(CASE WHEN reference IS NOT NULL THEN type(reference) END) AS found_fields,
                 collect(CASE WHEN reference IS NOT NULL
                     THEN {field: type(reference), identifier: referenced_merged_node.identifier} END
                 ) AS existing_refs
             WITH
                 merged_node,
-                extracted_or_rule_node,
                 existing_refs +
                 [f IN $reference_fields WHERE NOT f IN found_fields | {field: f, identifier: "__NO_REF__"}]
                 AS ref_matches
@@ -313,17 +310,16 @@ CALL () {
         ANY(label IN labels(merged_node) WHERE label IN $labels)
         AND merged_node.identifier = $identifier
         AND EXISTS {
-            OPTIONAL MATCH (extracted_or_rule_node)-[reference:hadPrimarySource]->(referenced_merged_node:MergedPerson|MergedVariable|MergedDistribution)
+            MATCH (component:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node)
+            OPTIONAL MATCH (component)-[reference:hadPrimarySource]->(referenced_merged_node:MergedPerson|MergedVariable|MergedDistribution)
             WITH
                 merged_node,
-                extracted_or_rule_node,
                 collect(CASE WHEN reference IS NOT NULL THEN type(reference) END) AS found_fields,
                 collect(CASE WHEN reference IS NOT NULL
                     THEN {field: type(reference), identifier: referenced_merged_node.identifier} END
                 ) AS existing_refs
             WITH
                 merged_node,
-                extracted_or_rule_node,
                 existing_refs +
                 [f IN $reference_fields WHERE NOT f IN found_fields | {field: f, identifier: "__NO_REF__"}]
                 AS ref_matches

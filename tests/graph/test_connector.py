@@ -775,7 +775,7 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
                         "stableTargetId": ["StandaloneRule"],
                     }
                 ],
-                "total": 8,
+                "total": 4,
             },
             id="get-all-rules-when-filtering-for-primary-source-mex-editor",
         ),
@@ -801,7 +801,7 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
                         "stableTargetId": ["StandaloneRule"],
                     }
                 ],
-                "total": 8,
+                "total": 4,
             },
             id="get-all-rules-when-filtering-for-primary-source-mex-editor-and-another-primary-source",
         ),
@@ -1157,7 +1157,7 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
                         "identifier": "StandaloneRule",
                     }
                 ],
-                "total": 2,
+                "total": 1,
             },
             id="primary-source-mex-editor-filter",
         ),
@@ -1204,7 +1204,7 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
                         "identifier": "StandaloneRule",
                     }
                 ],
-                "total": 6,  # returns 4 from ps-1 and 2 from mex-editor
+                "total": 5,  # returns 4 from ps-1 and 1 source-less item from mex-editor
             },
             id="filter-for-had-primary-sources-mex-editor-and-primary-source-ps-1",
         ),
