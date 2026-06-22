@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- applied belated template updates to setup files to minimize the cruft diff
+
 ### Deprecated
 
 ### Removed
@@ -18,8 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - advanced search now matches merged items when AND-combined reference filters span
-  multiple components, e.g. an extracted reference plus an editor/rule-added reference;
-  null/"mex-editor" reference filters now mean "no component has this field"
+  multiple components, e.g. an extracted reference plus an editor/rule-added reference
+- BREAKING: null/"mex-editor" reference filters now mean "no component has this field",
+  e.g. hadPrimarySource="mex-editor" now exclusively returns editor-only items now
+  instead of items that also have rules
 
 ### Security
 

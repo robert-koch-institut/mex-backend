@@ -1204,7 +1204,7 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
                         "identifier": "StandaloneRule",
                     }
                 ],
-                "total": 5,  # returns 4 from ps-1 and 1 source-less item from mex-editor
+                "total": 5,  # returns 4 from ps-1 and 1 standalone item from mex-editor
             },
             id="filter-for-had-primary-sources-mex-editor-and-primary-source-ps-1",
         ),
