@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- advanced search now matches merged items when AND-combined reference filters span
+  multiple components, e.g. an extracted reference plus an editor/rule-added reference;
+  null/"mex-editor" reference filters now mean "no component has this field"
+
 ### Security
 
 ## [3.1.0] - 2026-06-19
