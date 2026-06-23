@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- update fastapi to 0.137.2
+- update mex-common to 3.0.0
+- update mex-model to 5.0.1
 - updated template to https://github.com/robert-koch-institut/mex-template/commit/11612b
 
 ### Deprecated
