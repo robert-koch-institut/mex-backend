@@ -1,6 +1,7 @@
+from functools import lru_cache
 from typing import Annotated
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Request
 from fastapi.security import APIKeyHeader, OAuth2AuthorizationCodeBearer
 from starlette import status
 
@@ -10,9 +11,9 @@ from mex.backend.types import APIKey
 X_API_KEY = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 
-def make_oauth2_scheme_mocked() -> OAuth2AuthorizationCodeBearer:
-    """Build the mocked OAuth2 scheme with authorizationUrl from current settings."""
-    issuer_url = str(BackendSettings.get().oidc_issuer_url).rstrip("/")
+@lru_cache(maxsize=1)
+def _build_oauth2_scheme_mocked(issuer_url: str) -> OAuth2AuthorizationCodeBearer:
+    """Build (and memoise) the mocked OAuth2 scheme for the given issuer URL."""
     return OAuth2AuthorizationCodeBearer(
         authorizationUrl=f"{issuer_url}/auth",
         tokenUrl="/v0/oauth/token",
@@ -20,9 +21,15 @@ def make_oauth2_scheme_mocked() -> OAuth2AuthorizationCodeBearer:
     )
 
 
+async def oauth2_scheme_mocked(request: Request) -> str | None:
+    """Extract the Bearer token from the request via the mocked OAuth2 scheme."""
+    issuer_url = str(BackendSettings.get().oidc_issuer_url).rstrip("/")
+    return await _build_oauth2_scheme_mocked(issuer_url)(request)
+
+
 def has_read_access_mocked(
     api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
-    token: Annotated[str | None, Depends(make_oauth2_scheme_mocked)] = None,
+    token: Annotated[str | None, Depends(oauth2_scheme_mocked)] = None,
 ) -> None:
     """Mocked read access - validates API keys normally, accepts any Bearer token."""
     if api_key:
@@ -37,7 +44,7 @@ def has_read_access_mocked(
 
 def has_write_access_mocked(
     api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
-    token: Annotated[str | None, Depends(make_oauth2_scheme_mocked)] = None,
+    token: Annotated[str | None, Depends(oauth2_scheme_mocked)] = None,
 ) -> None:
     """Mocked write access - validates API keys normally, accepts any Bearer token."""
     if api_key:
@@ -50,7 +57,7 @@ def has_write_access_mocked(
 
 
 def has_oidc_access_mocked(
-    token: Annotated[str | None, Depends(make_oauth2_scheme_mocked)] = None,
+    token: Annotated[str | None, Depends(oauth2_scheme_mocked)] = None,
 ) -> str:
     """Mocked OIDC access - returns Bearer token value as username.
 

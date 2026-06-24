@@ -2,7 +2,7 @@ from functools import lru_cache
 from typing import Annotated, Any
 
 import jwt
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Request
 from fastapi.security import APIKeyHeader, OAuth2AuthorizationCodeBearer
 from jwt import PyJWKClient
 from pydantic import ValidationError
@@ -95,9 +95,14 @@ def _verify_jwt(token: str) -> OIDCClaims:
             ) from e
 
 
-def make_oauth2_scheme() -> OAuth2AuthorizationCodeBearer:
-    """Build the OAuth2 scheme with authorizationUrl from current settings."""
-    issuer_url = str(BackendSettings.get().oidc_issuer_url).rstrip("/")
+@lru_cache(maxsize=1)
+def _build_oauth2_scheme(issuer_url: str) -> OAuth2AuthorizationCodeBearer:
+    """Build (and memoise) the OAuth2 scheme for the given issuer URL.
+
+    ``maxsize=1`` evicts the stale scheme if the issuer URL changes (e.g. on a
+    settings reload in tests), so the scheme always reflects current settings
+    without re-reading them at import time.
+    """
     return OAuth2AuthorizationCodeBearer(
         authorizationUrl=f"{issuer_url}/auth",
         tokenUrl="/v0/oauth/token",
@@ -111,9 +116,21 @@ def make_oauth2_scheme() -> OAuth2AuthorizationCodeBearer:
     )
 
 
+async def oauth2_scheme(request: Request) -> str | None:
+    """Extract the Bearer token from the request via the OAuth2 scheme.
+
+    Settings are read lazily here (not at import) so test fixtures can configure
+    the issuer URL before the first request. The scheme must be invoked against
+    the ``Request`` to return the raw token string; injecting the scheme object
+    itself as a dependency would yield the object instead of the token.
+    """
+    issuer_url = str(BackendSettings.get().oidc_issuer_url).rstrip("/")
+    return await _build_oauth2_scheme(issuer_url)(request)
+
+
 def has_read_access(
     api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
-    token: Annotated[str | None, Depends(make_oauth2_scheme)] = None,
+    token: Annotated[str | None, Depends(oauth2_scheme)] = None,
 ) -> None:
     """Accept X-API-Key OR Bearer JWT with read or write group membership.
 
@@ -156,7 +173,7 @@ def has_read_access(
 
 def has_write_access(
     api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
-    token: Annotated[str | None, Depends(make_oauth2_scheme)] = None,
+    token: Annotated[str | None, Depends(oauth2_scheme)] = None,
 ) -> None:
     """Accept X-API-Key OR Bearer JWT with write group membership.
 
@@ -188,7 +205,7 @@ def has_write_access(
 
 def has_oidc_access(
     api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
-    token: Annotated[str | None, Depends(make_oauth2_scheme)] = None,
+    token: Annotated[str | None, Depends(oauth2_scheme)] = None,
 ) -> str:
     """Accept Bearer JWT with read or write group membership; return preferred_username.
 

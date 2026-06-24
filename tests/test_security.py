@@ -109,7 +109,7 @@ def test_has_oidc_access_missing_preferred_username() -> None:
     with mock_jwks, mock_decode, pytest.raises(HTTPException) as exc:
         has_oidc_access(token=FAKE_TOKEN)
     assert exc.value.status_code == 401
-    assert "Invalid token claims" in exc.value.detail
+    assert "preferred_username" in exc.value.detail
 
 
 def test_has_oidc_access_read_group_success() -> None:
