@@ -17,11 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- advanced search now matches merged items when AND-combined reference filters span
-  multiple components, e.g. an extracted reference plus an editor/rule-added reference
-- a hadPrimarySource="mex-editor" reference filter now matches items that were
-  touched in the editor, i.e. that have any rule component (rule-only items and
-  edited extracted items alike)
+- advanced search now matches items when AND-combined reference filters span across
+  multiple components, e.g. an extracted reference plus a rule-added reference
 
 ### Security
 
