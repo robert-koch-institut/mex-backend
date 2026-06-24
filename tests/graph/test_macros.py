@@ -130,8 +130,7 @@ WITH
     + CASE
         WHEN "hadPrimarySource" IN $reference_fields
          AND EXISTS {
-            (editor_component)-[:stableTargetId]->(merged_node)
-            WHERE NOT (editor_component)-[:hadPrimarySource]->()
+            MATCH (component:<<any_extracted_or_rule_label>>)-[:stableTargetId]->(merged_node)
         }
         THEN [{field: "hadPrimarySource", identifier: "00000000000002"}]
         ELSE []

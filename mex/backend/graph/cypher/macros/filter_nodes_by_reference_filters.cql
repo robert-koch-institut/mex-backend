@@ -6,12 +6,6 @@ are satisfied across the combined references. This ensures filters match even
 when the referenced values live on different components, e.g. one reference on
 the extracted item and another added by an editor via a rule.
 
-The "mex-editor" primary source alias matches items "touched in the editor",
-i.e. items with a rule component. By the data-model invariant (extracted items
-always carry a hadPrimarySource, rule items never do), this is detected as a
-component lacking a hadPrimarySource edge, for which we inject a synthetic
-hadPrimarySource match to the editor primary source's stable target id.
-
 Globals:
     any_extracted_or_rule_label: List of all extracted and rule class labels
     any_merged_label: List of all merged class labels
@@ -45,11 +39,11 @@ WITH
     merged_node,
     existing_refs
     + [f IN $reference_fields WHERE NOT f IN found_fields | {field: f, identifier: "<<no_reference>>"}]
+    <# TODO(ND): remove this crutch as soon as we add hadPrimarySource to our rules. -#>
     + CASE
         WHEN "hadPrimarySource" IN $reference_fields
          AND EXISTS {
-            (editor_component)-[:stableTargetId]->(merged_node)
-            WHERE NOT (editor_component)-[:hadPrimarySource]->()
+            MATCH (component:<<any_extracted_or_rule_label>>)-[:stableTargetId]->(merged_node)
         }
         THEN [{field: "hadPrimarySource", identifier: "<<mex_editor_primary_source>>"}]
         ELSE []

@@ -63,9 +63,7 @@ def transform_reference_filters_to_raw_filters(
     """Convert reference filters to raw dicts for cypher query parameters.
 
     A ``None`` identifier is replaced with the no-reference sentinel so the cypher
-    query can match items without that relationship; concrete identifiers pass
-    through unchanged (this includes the mex-editor primary source stable target
-    id, which the filter macro injects for items touched in the editor).
+    query can match items without that relationship.
 
     Args:
         reference_filters: Optional sequence of reference filters
