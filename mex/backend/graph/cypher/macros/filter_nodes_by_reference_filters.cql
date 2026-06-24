@@ -48,9 +48,9 @@ WITH
     + CASE
         WHEN "hadPrimarySource" IN $reference_fields
          AND EXISTS {
-                (editor_component)-[:stableTargetId]->(merged_node)
-                WHERE NOT (editor_component)-[:hadPrimarySource]->()
-             }
+            (editor_component)-[:stableTargetId]->(merged_node)
+            WHERE NOT (editor_component)-[:hadPrimarySource]->()
+        }
         THEN [{field: "hadPrimarySource", identifier: "<<mex_editor_primary_source>>"}]
         ELSE []
       END
