@@ -6,10 +6,17 @@ are satisfied across the combined references. This ensures filters match even
 when the referenced values live on different components, e.g. one reference on
 the extracted item and another added by an editor via a rule.
 
+The "mex-editor" primary source alias matches items "touched in the editor",
+i.e. items with a rule component. By the data-model invariant (extracted items
+always carry a hadPrimarySource, rule items never do), this is detected as a
+component lacking a hadPrimarySource edge, for which we inject a synthetic
+hadPrimarySource match to the editor primary source's stable target id.
+
 Globals:
     any_extracted_or_rule_label: List of all extracted and rule class labels
     any_merged_label: List of all merged class labels
     no_reference: Sentinel value for missing references
+    mex_editor_primary_source: Stable target id of the mex-editor primary source
 
 Jinja:
     reference_fields: List of relationship names to check
@@ -18,15 +25,9 @@ Args:
     merged_node: The merged node whose components' references to check
 
 Returns:
-    ref_matches (List[Dict]): Aggregated reference data with structure:
-        [
-            {
-                "field": str (Reference relationship type (from reference_fields))
-                "identifier": str (Referenced node identifier or "<<no_reference>>" sentinel)
-            },
-            ...
-        ]
-
+    ref_matches: Aggregated reference data with structure:
+        - field: Reference relationship type (from reference_fields)
+        - identifier: Referenced node identifier or "<<no_reference>>" sentinel
     Query result: Filtered rows containing:
         - merged_node: The merged node entity
         - ref_matches: Reference matches list (as above)
@@ -42,8 +43,17 @@ WITH
     ) AS existing_refs
 WITH
     merged_node,
-    existing_refs +
-    [f IN $reference_fields WHERE NOT f IN found_fields | {field: f, identifier: "<<no_reference>>"}]
+    existing_refs
+    + [f IN $reference_fields WHERE NOT f IN found_fields | {field: f, identifier: "<<no_reference>>"}]
+    + CASE
+        WHEN "hadPrimarySource" IN $reference_fields
+         AND EXISTS {
+                (editor_component)-[:stableTargetId]->(merged_node)
+                WHERE NOT (editor_component)-[:hadPrimarySource]->()
+             }
+        THEN [{field: "hadPrimarySource", identifier: "<<mex_editor_primary_source>>"}]
+        ELSE []
+      END
     AS ref_matches
 WHERE ALL(rf IN $reference_filters WHERE
     ANY(m IN ref_matches WHERE m.field = rf.field AND m.identifier IN rf.identifiers)

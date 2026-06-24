@@ -403,8 +403,22 @@ def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
                     )
                 ],
             },
-            {"items": [], "total": 0},
-            id="no-items-with-primary-source-mex-editor",
+            {
+                "items": [
+                    {
+                        "identifierInPrimarySource": "ou-1.6",
+                        "email": [],
+                        "entityType": "ExtractedOrganizationalUnit",
+                        "identifier": "bFQoRhcVH5DHUy",
+                        "hadPrimarySource": ["bFQoRhcVH5DHUt"],
+                        "name": [{"value": "Unit 1.6", "language": "en"}],
+                        "stableTargetId": ["bFQoRhcVH5DHUz"],
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                    }
+                ],
+                "total": 1,
+            },
+            id="extracted-items-of-items-touched-in-editor-when-filtering-for-primary-source-mex-editor",
         ),
         pytest.param(
             {
@@ -775,7 +789,7 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
                         "stableTargetId": ["StandaloneRule"],
                     }
                 ],
-                "total": 4,
+                "total": 8,
             },
             id="get-all-rules-when-filtering-for-primary-source-mex-editor",
         ),
@@ -801,7 +815,7 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
                         "stableTargetId": ["StandaloneRule"],
                     }
                 ],
-                "total": 4,
+                "total": 8,
             },
             id="get-all-rules-when-filtering-for-primary-source-mex-editor-and-another-primary-source",
         ),
@@ -1157,7 +1171,9 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
                         "identifier": "StandaloneRule",
                     }
                 ],
-                "total": 1,
+                # the standalone rule item and the edited unit are both touched in
+                # the editor
+                "total": 2,
             },
             id="primary-source-mex-editor-filter",
         ),
@@ -1204,7 +1220,9 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
                         "identifier": "StandaloneRule",
                     }
                 ],
-                "total": 5,  # returns 4 from ps-1 and 1 standalone item from mex-editor
+                # 4 from ps-1 plus 2 items touched in editor (standalone rule item
+                # and the edited unit) from mex-editor
+                "total": 6,
             },
             id="filter-for-had-primary-sources-mex-editor-and-primary-source-ps-1",
         ),

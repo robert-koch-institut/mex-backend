@@ -197,7 +197,25 @@ def test_search_extracted_items_mocked(
         ),
         pytest.param(
             f"?referencedIdentifier={MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID}&referenceField=hadPrimarySource",
-            {"items": [], "total": 0},
+            {
+                "items": [
+                    {
+                        "$type": "ExtractedOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "hadPrimarySource": "bFQoRhcVH5DHUt",
+                        "identifier": "bFQoRhcVH5DHUy",
+                        "identifierInPrimarySource": "ou-1.6",
+                        "name": [{"value": "Unit 1.6", "language": "en"}],
+                        "parentUnit": None,
+                        "shortName": [],
+                        "stableTargetId": "bFQoRhcVH5DHUz",
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [],
+                    }
+                ],
+                "total": 1,
+            },
             id="had-primary-source-mex-editor-filter",
         ),
         pytest.param(
@@ -366,7 +384,25 @@ def test_search_extracted_items(
                     }
                 ]
             },
-            {"items": [], "total": 0},
+            {
+                "items": [
+                    {
+                        "$type": "ExtractedOrganizationalUnit",
+                        "alternativeName": [],
+                        "email": [],
+                        "hadPrimarySource": "bFQoRhcVH5DHUt",
+                        "identifier": "bFQoRhcVH5DHUy",
+                        "identifierInPrimarySource": "ou-1.6",
+                        "name": [{"value": "Unit 1.6", "language": "en"}],
+                        "parentUnit": None,
+                        "shortName": [],
+                        "stableTargetId": "bFQoRhcVH5DHUz",
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                        "website": [],
+                    }
+                ],
+                "total": 1,
+            },
             id="had-primary-source-mex-editor-filter",
         ),
         pytest.param(

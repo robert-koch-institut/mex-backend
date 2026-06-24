@@ -88,7 +88,7 @@ def test_transform_reference_filters_to_raw_filters() -> None:
     filters = [
         ReferenceFilter(
             field=ReferenceFieldName("contact"),
-            identifiers=[Identifier.generate(seed=42)],
+            identifiers=[Identifier.generate(seed=42), None],
         ),
         ReferenceFilter(
             field=ReferenceFieldName("hadPrimarySource"),
@@ -99,13 +99,20 @@ def test_transform_reference_filters_to_raw_filters() -> None:
     raw_filters = transform_reference_filters_to_raw_filters(filters)
 
     assert raw_filters == [
+        # concrete identifiers pass through; null on a non-primary-source field
+        # means "no component has this field"
         {
             "field": "contact",
-            "identifiers": [str(Identifier.generate(seed=42))],
+            "identifiers": [str(Identifier.generate(seed=42)), NO_REFERENCE_SENTINEL],
         },
+        # concrete identifiers (incl. the mex-editor primary source id) pass
+        # through; null is replaced with the no-reference sentinel like any field
         {
             "field": "hadPrimarySource",
-            "identifiers": [NO_REFERENCE_SENTINEL, NO_REFERENCE_SENTINEL],
+            "identifiers": [
+                str(MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID),
+                NO_REFERENCE_SENTINEL,
+            ],
         },
     ]
 

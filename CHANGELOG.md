@@ -21,9 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - advanced search now matches merged items when AND-combined reference filters span
   multiple components, e.g. an extracted reference plus an editor/rule-added reference
-- BREAKING: null/"mex-editor" reference filters now mean "no component has this field",
-  e.g. hadPrimarySource="mex-editor" now exclusively returns editor-only items now
-  instead of items that also have rules
+- a hadPrimarySource="mex-editor" reference filter now matches items that were
+  touched in the editor, i.e. that have any rule component (rule-only items and
+  edited extracted items alike)
 
 ### Security
 

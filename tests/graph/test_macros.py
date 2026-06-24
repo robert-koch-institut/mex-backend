@@ -125,8 +125,17 @@ WITH
     ) AS existing_refs
 WITH
     merged_node,
-    existing_refs +
-    [f IN $reference_fields WHERE NOT f IN found_fields | {field: f, identifier: "__NO_REF__"}]
+    existing_refs
+    + [f IN $reference_fields WHERE NOT f IN found_fields | {field: f, identifier: "__NO_REF__"}]
+    + CASE
+        WHEN "hadPrimarySource" IN $reference_fields
+         AND EXISTS {
+                (editor_component)-[:stableTargetId]->(merged_node)
+                WHERE NOT (editor_component)-[:hadPrimarySource]->()
+             }
+        THEN [{field: "hadPrimarySource", identifier: "00000000000002"}]
+        ELSE []
+      END
     AS ref_matches
 WHERE ALL(rf IN $reference_filters WHERE
     ANY(m IN ref_matches WHERE m.field = rf.field AND m.identifier IN rf.identifiers)
@@ -276,6 +285,17 @@ def test_collect_references_and_nested(
             ],
             5,
             id="single field no_reference_sentinel or valid",
+        ),
+        pytest.param(
+            ["hadPrimarySource"],
+            lambda _: [
+                {
+                    "field": "hadPrimarySource",
+                    "identifiers": [str(MEX_EDITOR_PRIMARY_SOURCE.stableTargetId)],
+                },
+            ],
+            2,
+            id="single field mex-editor matches items touched in editor",
         ),
         pytest.param(
             ["hadPrimarySource"],
