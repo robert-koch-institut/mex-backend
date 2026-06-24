@@ -12,7 +12,11 @@ ENV PIP_PROGRESS_BAR=off
 COPY . .
 
 RUN pip install --no-cache-dir -r requirements.txt
-RUN uv export --no-dev --no-editable | uv pip install --system --no-deps -r -
+RUN uv export --no-dev --no-hashes --output-file requirements.lock
+
+RUN pip wheel --no-cache-dir --wheel-dir /build/wheels -r requirements.lock
+RUN pip wheel --no-cache-dir --wheel-dir /build/wheels --no-deps .
+
 
 FROM python:3.14-slim
 
@@ -31,10 +35,26 @@ ENV MEX_HTTP_TEST_SERVER_HOST=0.0.0.0
 
 WORKDIR /app
 
-COPY --from=builder /usr/local/lib/python3.14/site-packages /usr/local/lib/python3.14/site-packages
-COPY --from=builder /usr/local/bin/backend /usr/local/bin/backend
+COPY --from=builder /build/wheels /wheels
 
-USER 10001
+RUN pip install --no-cache-dir \
+    --no-index \
+    --find-links=/wheels \
+    /wheels/*.whl \
+    && rm -rf /wheels
+
+
+    RUN adduser \
+    --disabled-password \
+    --gecos "" \
+    --shell "/sbin/nologin" \
+    --no-create-home \
+    --uid "10001" \
+    mex
+
+COPY --chown=mex assets assets
+
+USER mex
 
 EXPOSE 8080
 
