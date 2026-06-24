@@ -143,9 +143,9 @@ YIELD currentStatus;"""
                 + CASE
                     WHEN "hadPrimarySource" IN $reference_fields
                      AND EXISTS {
-                            (editor_component)-[:stableTargetId]->(merged_node)
-                            WHERE NOT (editor_component)-[:hadPrimarySource]->()
-                         }
+                        (editor_component)-[:stableTargetId]->(merged_node)
+                        WHERE NOT (editor_component)-[:hadPrimarySource]->()
+                    }
                     THEN [{field: "hadPrimarySource", identifier: "00000000000002"}]
                     ELSE []
                   END
@@ -186,9 +186,9 @@ CALL () {
                 + CASE
                     WHEN "hadPrimarySource" IN $reference_fields
                      AND EXISTS {
-                            (editor_component)-[:stableTargetId]->(merged_node)
-                            WHERE NOT (editor_component)-[:hadPrimarySource]->()
-                         }
+                        (editor_component)-[:stableTargetId]->(merged_node)
+                        WHERE NOT (editor_component)-[:hadPrimarySource]->()
+                    }
                     THEN [{field: "hadPrimarySource", identifier: "00000000000002"}]
                     ELSE []
                   END
@@ -309,9 +309,9 @@ def test_fetch_extracted_or_rule_items(
                 + CASE
                     WHEN "hadPrimarySource" IN $reference_fields
                      AND EXISTS {
-                            (editor_component)-[:stableTargetId]->(merged_node)
-                            WHERE NOT (editor_component)-[:hadPrimarySource]->()
-                         }
+                        (editor_component)-[:stableTargetId]->(merged_node)
+                        WHERE NOT (editor_component)-[:hadPrimarySource]->()
+                    }
                     THEN [{field: "hadPrimarySource", identifier: "00000000000002"}]
                     ELSE []
                   END
@@ -352,9 +352,9 @@ CALL () {
                 + CASE
                     WHEN "hadPrimarySource" IN $reference_fields
                      AND EXISTS {
-                            (editor_component)-[:stableTargetId]->(merged_node)
-                            WHERE NOT (editor_component)-[:hadPrimarySource]->()
-                         }
+                        (editor_component)-[:stableTargetId]->(merged_node)
+                        WHERE NOT (editor_component)-[:hadPrimarySource]->()
+                    }
                     THEN [{field: "hadPrimarySource", identifier: "00000000000002"}]
                     ELSE []
                   END
