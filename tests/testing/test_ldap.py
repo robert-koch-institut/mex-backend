@@ -11,9 +11,9 @@ if TYPE_CHECKING:  # pragma: no cover
 
 @pytest.mark.integration
 def test_search_persons_or_contact_points_in_ldap_success(
-    client_with_bearer_write_permission: TestClient,
+    testing_app_client_with_bearer_write_permission: TestClient,
 ) -> None:
-    response = client_with_bearer_write_permission.get(
+    response = testing_app_client_with_bearer_write_permission.get(
         "/v0/ldap", params={"q": "mex", "limit": 1}
     )
     assert response.status_code == status.HTTP_200_OK, response.text

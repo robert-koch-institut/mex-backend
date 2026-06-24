@@ -27,3 +27,12 @@ def testing_app_client_with_api_key_read_permission(
     """Return a fastAPI test client with read permission granted by API key."""
     testing_app_client.headers.update({"X-API-Key": "read_key"})
     return testing_app_client
+
+
+@pytest.fixture
+def testing_app_client_with_bearer_write_permission(
+    testing_app_client: TestClient,
+) -> TestClient:
+    """Return a fastAPI test client with write permission granted by Bearer token."""
+    testing_app_client.headers.update({"Authorization": "Bearer Writer"})
+    return testing_app_client
