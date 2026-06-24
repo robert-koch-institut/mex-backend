@@ -11,8 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- applied belated template updates to setup files to minimize the cruft diff
-
 ### Deprecated
 
 ### Removed
