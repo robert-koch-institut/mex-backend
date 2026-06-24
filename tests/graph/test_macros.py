@@ -39,6 +39,7 @@ def query_builder(monkeypatch: MonkeyPatch) -> QueryBuilder:
         "any_extracted_or_rule_label",
         "ExtractedThis|AdditiveThis",
     )
+    monkeypatch.setitem(builder._env.globals, "any_rule_label", "AdditiveThis")
     monkeypatch.setitem(builder._env.globals, "any_merged_label", "MergedThis")
     monkeypatch.setitem(builder._env.globals, "any_nested_label", "Link|Text")
     return builder
@@ -130,7 +131,7 @@ WITH
     + CASE
         WHEN "hadPrimarySource" IN $reference_fields
          AND EXISTS {
-            MATCH (component:<<any_extracted_or_rule_label>>)-[:stableTargetId]->(merged_node)
+            MATCH (component:AdditiveThis)-[:stableTargetId]->(merged_node)
         }
         THEN [{field: "hadPrimarySource", identifier: "00000000000002"}]
         ELSE []

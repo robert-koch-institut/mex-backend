@@ -8,6 +8,7 @@ the extracted item and another added by an editor via a rule.
 
 Globals:
     any_extracted_or_rule_label: List of all extracted and rule class labels
+    any_rule_label: List of all rule class labels
     any_merged_label: List of all merged class labels
     no_reference: Sentinel value for missing references
     mex_editor_primary_source: Stable target id of the mex-editor primary source
@@ -43,7 +44,7 @@ WITH
     + CASE
         WHEN "hadPrimarySource" IN $reference_fields
          AND EXISTS {
-            MATCH (component:<<any_extracted_or_rule_label>>)-[:stableTargetId]->(merged_node)
+            MATCH (component:<<any_rule_label>>)-[:stableTargetId]->(merged_node)
         }
         THEN [{field: "hadPrimarySource", identifier: "<<mex_editor_primary_source>>"}]
         ELSE []

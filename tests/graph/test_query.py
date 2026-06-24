@@ -143,7 +143,7 @@ YIELD currentStatus;"""
                 + CASE
                     WHEN "hadPrimarySource" IN $reference_fields
                      AND EXISTS {
-                        MATCH (component:<<any_extracted_or_rule_label>>)-[:stableTargetId]->(merged_node)
+                        MATCH (component:AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node)
                     }
                     THEN [{field: "hadPrimarySource", identifier: "00000000000002"}]
                     ELSE []
@@ -185,7 +185,7 @@ CALL () {
                 + CASE
                     WHEN "hadPrimarySource" IN $reference_fields
                      AND EXISTS {
-                        MATCH (component:<<any_extracted_or_rule_label>>)-[:stableTargetId]->(merged_node)
+                        MATCH (component:AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node)
                     }
                     THEN [{field: "hadPrimarySource", identifier: "00000000000002"}]
                     ELSE []
@@ -307,7 +307,7 @@ def test_fetch_extracted_or_rule_items(
                 + CASE
                     WHEN "hadPrimarySource" IN $reference_fields
                      AND EXISTS {
-                        MATCH (component:<<any_extracted_or_rule_label>>)-[:stableTargetId]->(merged_node)
+                        MATCH (component:AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node)
                     }
                     THEN [{field: "hadPrimarySource", identifier: "00000000000002"}]
                     ELSE []
@@ -349,7 +349,7 @@ CALL () {
                 + CASE
                     WHEN "hadPrimarySource" IN $reference_fields
                      AND EXISTS {
-                        MATCH (component:<<any_extracted_or_rule_label>>)-[:stableTargetId]->(merged_node)
+                        MATCH (component:AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node)
                     }
                     THEN [{field: "hadPrimarySource", identifier: "00000000000002"}]
                     ELSE []
