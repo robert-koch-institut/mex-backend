@@ -1,11 +1,11 @@
 fail_fast: false
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.16
+    rev: v0.15.17
     hooks:
       - id: ruff-check
         name: ruff-check
-        args: [--fix, --exit-non-zero-on-fix]
+        args: [ --fix, --exit-non-zero-on-fix ]
       - id: ruff-format
         name: ruff-format
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -13,7 +13,7 @@ repos:
     hooks:
       - id: pretty-format-json
         name: json
-        args: [--autofix, --indent=4, --no-ensure-ascii]
+        args: [ --autofix, --indent=4, --no-ensure-ascii ]
         exclude: .cruft.json
       - id: check-yaml
         name: yaml
@@ -25,17 +25,17 @@ repos:
       - id: fix-byte-order-marker
         name: byte-order
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.11.19
+    rev: 0.11.21
     hooks:
       - id: uv-lock
         name: uv
-        args: [--check]
+        args: [ --check ]
   - repo: local
     hooks:
-    - id: mypy
-      name: mypy
-      entry: uv run dmypy run --timeout 7200 -- mex tests
-      files: ^(mex|tests)/|pyproject\.toml$
-      language: system
-      pass_filenames: false
-      types: [python]
+      - id: mypy
+        name: mypy
+        entry: uv run dmypy run --timeout 7200 -- mex tests
+        files: ^(mex|tests)/|pyproject\.toml$
+        language: system
+        pass_filenames: false
+        types: [ python ]
