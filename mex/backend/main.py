@@ -17,16 +17,18 @@ from mex.backend.exceptions import (
 from mex.backend.extracted.main import router as extracted_router
 from mex.backend.identity.main import router as identity_router
 from mex.backend.ingest.main import router as ingest_router
-from mex.backend.ldap.main import router as ldap_login_router
 from mex.backend.logging import UVICORN_LOGGING_CONFIG
 from mex.backend.match.main import router as match_router
 from mex.backend.merged.main import router as merged_router
 from mex.backend.migration import migrate
+from mex.backend.oauth import router as oauth_router
 from mex.backend.preview.main import router as preview_router
 from mex.backend.publishable_merged.main import router as publishable_merged_router
 from mex.backend.rules.main import router as rules_router
+from mex.backend.security import SWAGGER_UI_INIT_OAUTH
 from mex.backend.settings import BackendSettings
 from mex.backend.system.main import router as system_router
+from mex.backend.user.main import router as user_router
 from mex.common.cli import entrypoint
 from mex.common.connector import CONNECTOR_STORE
 from mex.common.logging import logger
@@ -71,6 +73,7 @@ app = FastAPI(
     strict_content_type=False,
     lifespan=lifespan,
     version="v0",
+    swagger_ui_init_oauth=SWAGGER_UI_INIT_OAUTH,
 )
 router = APIRouter(prefix="/v0")
 router.include_router(extracted_router)
@@ -84,8 +87,8 @@ router.include_router(preview_router)
 router.include_router(publishable_merged_router)
 router.include_router(rules_router)
 router.include_router(wikidata_router)
-router.include_router(ldap_login_router)
-
+router.include_router(user_router)
+router.include_router(oauth_router)
 router.include_router(system_router)
 
 app.include_router(router)

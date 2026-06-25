@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- add dex OIDC provider to compose and CI, federating to slapd via LDAP
+- add `GET /v0/user/me` returning the `MergedPerson` for the authenticated OIDC user
+- seed script to fill the backend / database with artificial data. entrypoint can be
+  invoked with "uv run backend-seed"
+
 ### Changes
 
 - updated mex-common to 3.0.0
@@ -17,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Deprecated
 
 ### Removed
+
+- BREAKING: removed `POST /v0/merged-person-from-login` (replaced by `GET /v0/user/me`)
 
 ### Fixed
 
@@ -122,7 +129,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - updated template to https://github.com/robert-koch-institut/mex-template/commit/491e2d
 - clean up query builder global and ingest-param names
 - use neo4j and valkey from docker compose instead of re-configuring in testing.yml
-- settings validation: validate that valkey url is set if parallelized
+- seetings validation: validate that valkey url is set if parallelized
 
 ### Deprecated
 
