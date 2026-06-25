@@ -20,6 +20,7 @@ def query_builder() -> QueryBuilder:
             "AdditiveVariable|"
             "AdditiveDistribution"
         ),
+        rule_set_fields=["additive", "subtractive", "preventive", "workflow"],
     )
     return builder
 
@@ -500,6 +501,36 @@ def test_fetch_identities(
         filter_by_stable_target_id=filter_by_stable_target_id,
     )
     assert query.render() == expected
+
+
+def test_get_rule_set_response(query_builder: QueryBuilder) -> None:
+    query = query_builder.get_rule_set_response()
+    assert (
+        query.render()
+        == r"""MATCH (extracted_or_rule_node:AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:stableTargetId]->(merged_node:MergedPerson|MergedVariable|MergedDistribution)
+WHERE merged_node.identifier = $identifier
+WITH
+    merged_node,
+    extracted_or_rule_node,
+    [
+        (extracted_or_rule_node)-[r]->(referenced_merged_node:MergedPerson|MergedVariable|MergedDistribution) |
+        {value: referenced_merged_node.identifier, position:r.position, label: type(r)}
+    ] + [
+        (extracted_or_rule_node)-[r]->(referenced_nested_node:Link|Text|Location) |
+        {value: properties(referenced_nested_node), position:r.position, label: type(r)}
+    ] AS refs
+WITH
+    merged_node,
+    collect(
+        extracted_or_rule_node{.*, entityType: head(labels(extracted_or_rule_node)), _refs: refs}
+    ) AS rules
+RETURN
+    head([rule IN rules WHERE rule.entityType STARTS WITH "Additive"]) AS additive,
+    head([rule IN rules WHERE rule.entityType STARTS WITH "Subtractive"]) AS subtractive,
+    head([rule IN rules WHERE rule.entityType STARTS WITH "Preventive"]) AS preventive,
+    head([rule IN rules WHERE rule.entityType STARTS WITH "Workflow"]) AS workflow,
+    merged_node.identifier AS stableTargetId;"""
+    )
 
 
 def test_delete_rule_set(query_builder: QueryBuilder) -> None:

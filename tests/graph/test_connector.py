@@ -741,6 +741,86 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
     }
 
 
+@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+def test_mocked_graph_fetch_rule_set_response(mocked_graph: MockedGraph) -> None:
+    mocked_graph.return_value = [
+        {
+            "additive": {
+                "entityType": "AdditiveThis",
+                "inlineProperty": ["foo", "bar"],
+                "stableTargetId": ["thisIsAStableTargetId"],
+                "_refs": [
+                    {"value": "second", "position": 1, "label": "nestedProperty"},
+                    {"value": "first", "position": 0, "label": "nestedProperty"},
+                ],
+            },
+            "subtractive": None,
+            "preventive": None,
+            "workflow": None,
+            "stableTargetId": "thisIsAStableTargetId",
+        }
+    ]
+    graph = GraphConnector.get()
+    result = graph.fetch_rule_set_response("thisIsAStableTargetId")
+
+    assert mocked_graph.call_args_list[-1] == call(
+        call("get_rule_set_response"),
+        {"identifier": "thisIsAStableTargetId"},
+    )
+
+    assert result.one_or_none() == {
+        "additive": {
+            "entityType": "AdditiveThis",
+            "inlineProperty": ["foo", "bar"],
+            "nestedProperty": ["first", "second"],
+        },
+        "subtractive": None,
+        "preventive": None,
+        "workflow": None,
+        "stableTargetId": "thisIsAStableTargetId",
+    }
+
+
+@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+def test_mocked_graph_fetch_rule_set_response_not_found(
+    mocked_graph: MockedGraph,
+) -> None:
+    mocked_graph.return_value = []
+    graph = GraphConnector.get()
+    result = graph.fetch_rule_set_response("thisIdDoesNotExist")
+
+    assert result.one_or_none() is None
+
+
+@pytest.mark.usefixtures("loaded_dummy_data")
+@pytest.mark.integration
+def test_fetch_rule_set_response() -> None:
+    graph = GraphConnector.get()
+
+    result = graph.fetch_rule_set_response("StandaloneRule")
+
+    assert result.one_or_none() == {
+        "additive": {
+            "entityType": "AdditiveOrganizationalUnit",
+            "email": ["1.7@rki.de"],
+            "name": [{"language": "de", "value": "Abteilung 1.7"}],
+            "parentUnit": ["bFQoRhcVH5DHUx"],
+        },
+        "subtractive": {
+            "entityType": "SubtractiveOrganizationalUnit",
+            "email": [],
+        },
+        "preventive": {"entityType": "PreventiveOrganizationalUnit"},
+        "workflow": {
+            "entityType": "WorkflowOrganizationalUnit",
+            "forbiddenPublishingTarget": [],
+        },
+        "stableTargetId": "StandaloneRule",
+    }
+
+    assert graph.fetch_rule_set_response("thisIdDoesNotExist").one_or_none() is None
+
+
 @pytest.mark.parametrize(
     ("query_parameters", "expected"),
     [
