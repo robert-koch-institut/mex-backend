@@ -45,6 +45,7 @@ from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
     RULE_MODEL_CLASSES_BY_NAME,
+    RULE_MODEL_CLASSES_BY_TYPE_BY_NAME,
     AnyExtractedModel,
     AnyMergedModel,
     AnyRuleModel,
@@ -284,6 +285,32 @@ class GraphConnector(BaseConnector):
             skip=skip,
             limit=limit,
         )
+
+    def fetch_rule_set_response(self, stable_target_id: str) -> Result:
+        """Query the graph for the rule set belonging to one merged item.
+
+        Args:
+            stable_target_id: Identifier of the merged item whose rule set to fetch
+
+        Returns:
+            Graph result instance with a single `ruleSetResponse` record, or no
+            records when the merged item has no rule nodes
+        """
+        query_builder = QueryBuilder.get()
+        query = query_builder.get_rule_set_response()
+        result = self.commit(query, identifier=stable_target_id)
+        if record := result.one_or_none():
+            rule_set = record["ruleSetResponse"]
+            for field in RULE_MODEL_CLASSES_BY_TYPE_BY_NAME:
+                if (component := rule_set.get(field)) is not None:
+                    component.update(
+                        expand_references_in_search_result(component.pop("_refs"))
+                    )
+                    # stableTargetId is present both as a node property and as the
+                    # expanded stableTargetId relationship, but is not a field on
+                    # rule models, so drop it before the component is validated
+                    component.pop("stableTargetId", None)
+        return result
 
     def fetch_merged_items(  # noqa: PLR0913
         self,

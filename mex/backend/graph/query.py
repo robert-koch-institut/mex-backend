@@ -27,6 +27,7 @@ from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
     RULE_MODEL_CLASSES_BY_NAME,
+    RULE_MODEL_CLASSES_BY_TYPE_BY_NAME,
 )
 from mex.common.transform import (
     dromedary_to_kebab,
@@ -101,6 +102,7 @@ class QueryBuilder(BaseConnector):
             any_extracted_or_rule_label="|".join(
                 chain(EXTRACTED_MODEL_CLASSES_BY_NAME, RULE_MODEL_CLASSES_BY_NAME)
             ),
+            rule_fields=list(RULE_MODEL_CLASSES_BY_TYPE_BY_NAME),
             no_reference=NO_REFERENCE_SENTINEL,
         )
         self.get_ingest_query_for_entity_type = cache(
