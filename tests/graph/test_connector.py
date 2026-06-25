@@ -215,7 +215,12 @@ def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
                     "MergedPrimarySource",
                 ],
                 used_nested_labels=["Link", "Text"],
-                detach_node_edges=["contact", "hadPrimarySource", "unitInCharge"],
+                detach_node_edges=[
+                    "contact",
+                    "contributor",
+                    "hadPrimarySource",
+                    "unitInCharge",
+                ],
                 delete_node_edges=[
                     "alternativeTitle",
                     "description",

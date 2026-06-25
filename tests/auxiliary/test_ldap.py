@@ -72,6 +72,7 @@ def test_extracted_primary_source_ldap() -> None:
         "version": None,
         "alternativeTitle": [],
         "contact": [],
+        "contributor": [],
         "description": [],
         "documentation": [],
         "locatedAt": [],
