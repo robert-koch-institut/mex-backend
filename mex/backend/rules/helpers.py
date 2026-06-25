@@ -47,7 +47,7 @@ def get_rule_set_from_graph(
     connector = GraphConnector.get()
     result = connector.fetch_rule_set_response(stable_target_id)
     if record := result.one_or_none():
-        return transform_raw_rule_set_to_rule_set_response(record["ruleSetResponse"])
+        return transform_raw_rule_set_to_rule_set_response(record)
     return None
 
 

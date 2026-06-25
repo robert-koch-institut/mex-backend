@@ -740,21 +740,19 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
 def test_mocked_graph_fetch_rule_set_response(mocked_graph: MockedGraph) -> None:
     mocked_graph.return_value = [
         {
-            "ruleSetResponse": {
-                "additive": {
-                    "entityType": "AdditiveThis",
-                    "inlineProperty": ["foo", "bar"],
-                    "stableTargetId": ["thisIsAStableTargetId"],
-                    "_refs": [
-                        {"value": "second", "position": 1, "label": "nestedProperty"},
-                        {"value": "first", "position": 0, "label": "nestedProperty"},
-                    ],
-                },
-                "subtractive": None,
-                "preventive": None,
-                "workflow": None,
-                "stableTargetId": "thisIsAStableTargetId",
-            }
+            "additive": {
+                "entityType": "AdditiveThis",
+                "inlineProperty": ["foo", "bar"],
+                "stableTargetId": ["thisIsAStableTargetId"],
+                "_refs": [
+                    {"value": "second", "position": 1, "label": "nestedProperty"},
+                    {"value": "first", "position": 0, "label": "nestedProperty"},
+                ],
+            },
+            "subtractive": None,
+            "preventive": None,
+            "workflow": None,
+            "stableTargetId": "thisIsAStableTargetId",
         }
     ]
     graph = GraphConnector.get()
@@ -766,17 +764,15 @@ def test_mocked_graph_fetch_rule_set_response(mocked_graph: MockedGraph) -> None
     )
 
     assert result.one_or_none() == {
-        "ruleSetResponse": {
-            "additive": {
-                "entityType": "AdditiveThis",
-                "inlineProperty": ["foo", "bar"],
-                "nestedProperty": ["first", "second"],
-            },
-            "subtractive": None,
-            "preventive": None,
-            "workflow": None,
-            "stableTargetId": "thisIsAStableTargetId",
-        }
+        "additive": {
+            "entityType": "AdditiveThis",
+            "inlineProperty": ["foo", "bar"],
+            "nestedProperty": ["first", "second"],
+        },
+        "subtractive": None,
+        "preventive": None,
+        "workflow": None,
+        "stableTargetId": "thisIsAStableTargetId",
     }
 
 

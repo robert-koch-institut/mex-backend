@@ -293,16 +293,16 @@ class GraphConnector(BaseConnector):
             stable_target_id: Identifier of the merged item whose rule set to fetch
 
         Returns:
-            Graph result instance with a single `ruleSetResponse` record, or no
-            records when the merged item has no rule nodes
+            Graph result instance with a single rule-set-response shaped record
+            (one column per rule field plus stableTargetId), or no records when
+            the merged item has no rule nodes
         """
         query_builder = QueryBuilder.get()
         query = query_builder.get_rule_set_response()
         result = self.commit(query, identifier=stable_target_id)
         if record := result.one_or_none():
-            rule_set = record["ruleSetResponse"]
             for field in RULE_MODEL_CLASSES_BY_TYPE_BY_NAME:
-                if (component := rule_set.get(field)) is not None:
+                if (component := record.get(field)) is not None:
                     component.update(
                         expand_references_in_search_result(component.pop("_refs"))
                     )

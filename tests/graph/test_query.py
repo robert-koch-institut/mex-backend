@@ -20,7 +20,7 @@ def query_builder() -> QueryBuilder:
             "AdditiveVariable|"
             "AdditiveDistribution"
         ),
-        rule_fields=["additive", "subtractive", "preventive", "workflow"],
+        rule_set_fields=["additive", "subtractive", "preventive", "workflow"],
     )
     return builder
 
@@ -524,13 +524,12 @@ WITH
     collect(
         extracted_or_rule_node{.*, entityType: head(labels(extracted_or_rule_node)), _refs: refs}
     ) AS rules
-RETURN {
-    additive: head([rule IN rules WHERE rule.entityType STARTS WITH "Additive"]),
-    subtractive: head([rule IN rules WHERE rule.entityType STARTS WITH "Subtractive"]),
-    preventive: head([rule IN rules WHERE rule.entityType STARTS WITH "Preventive"]),
-    workflow: head([rule IN rules WHERE rule.entityType STARTS WITH "Workflow"]),
-    stableTargetId: merged_node.identifier
-} AS ruleSetResponse;"""
+RETURN
+    head([rule IN rules WHERE rule.entityType STARTS WITH "Additive"]) AS additive,
+    head([rule IN rules WHERE rule.entityType STARTS WITH "Subtractive"]) AS subtractive,
+    head([rule IN rules WHERE rule.entityType STARTS WITH "Preventive"]) AS preventive,
+    head([rule IN rules WHERE rule.entityType STARTS WITH "Workflow"]) AS workflow,
+    merged_node.identifier AS stableTargetId;"""
     )
 
 

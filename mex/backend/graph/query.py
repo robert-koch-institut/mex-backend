@@ -102,7 +102,7 @@ class QueryBuilder(BaseConnector):
             any_extracted_or_rule_label="|".join(
                 chain(EXTRACTED_MODEL_CLASSES_BY_NAME, RULE_MODEL_CLASSES_BY_NAME)
             ),
-            rule_fields=list(RULE_MODEL_CLASSES_BY_TYPE_BY_NAME),
+            rule_set_fields=list(RULE_MODEL_CLASSES_BY_TYPE_BY_NAME),
             no_reference=NO_REFERENCE_SENTINEL,
         )
         self.get_ingest_query_for_entity_type = cache(
