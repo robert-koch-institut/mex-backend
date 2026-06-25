@@ -51,13 +51,14 @@ run: image
 	# run the service as a docker container
 	@ echo running docker container mex-backend:${LATEST}; \
 	docker run \
+		--env MEX_BACKEND_HOST=0.0.0.0 \
 		--publish 8080:8080 \
 		rki/mex-backend:${LATEST}; \
 
-start: image
+start:
 	# start the service using docker compose
 	@ echo start mex-backend:${LATEST} with compose; \
-	docker compose up --remove-orphans; \
+	docker compose up --build --remove-orphans; \
 
 docs:
 	# use sphinx to auto-generate html docs from code
