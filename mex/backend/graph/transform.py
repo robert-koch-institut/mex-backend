@@ -9,7 +9,6 @@ from mex.backend.graph.models import (
     GraphRel,
     IngestData,
 )
-from mex.backend.types import ReferenceFieldName
 from mex.common.fields import (
     FINAL_FIELDS_BY_CLASS_NAME,
     LINK_FIELDS_BY_CLASS_NAME,
@@ -19,7 +18,6 @@ from mex.common.fields import (
     TEXT_FIELDS_BY_CLASS_NAME,
 )
 from mex.common.models import (
-    MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
     AnyExtractedModel,
     AnyRuleModel,
     AnyRuleSetResponse,
@@ -64,8 +62,8 @@ def transform_reference_filters_to_raw_filters(
 ) -> list[RawReferenceFilter]:
     """Convert reference filters to raw dicts for cypher query parameters.
 
-    Replaces the MEX editor primary source identifier and None values with
-    a sentinel so the cypher query can match nodes without that relationship.
+    A ``None`` identifier is replaced with the no-reference sentinel so the cypher
+    query can match items without that relationship.
 
     Args:
         reference_filters: Optional sequence of reference filters
@@ -78,13 +76,7 @@ def transform_reference_filters_to_raw_filters(
         {
             "field": str(reference_filter.field.value),
             "identifiers": [
-                NO_REFERENCE_SENTINEL
-                if (
-                    ref_id == MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID
-                    and reference_filter.field == ReferenceFieldName("hadPrimarySource")
-                )
-                or ref_id is None
-                else str(ref_id)
+                NO_REFERENCE_SENTINEL if ref_id is None else str(ref_id)
                 for ref_id in reference_filter.identifiers
             ],
         }

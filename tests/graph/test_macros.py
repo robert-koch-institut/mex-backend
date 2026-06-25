@@ -39,6 +39,7 @@ def query_builder(monkeypatch: MonkeyPatch) -> QueryBuilder:
         "any_extracted_or_rule_label",
         "ExtractedThis|AdditiveThis",
     )
+    monkeypatch.setitem(builder._env.globals, "any_rule_label", "AdditiveThis")
     monkeypatch.setitem(builder._env.globals, "any_merged_label", "MergedThis")
     monkeypatch.setitem(builder._env.globals, "any_nested_label", "Link|Text")
     return builder
@@ -114,25 +115,32 @@ def test_render_filter_nodes_by_reference_filters(
     assert (
         query.render()
         == """\
-MATCH (extracted_or_rule_node:ExtractedThis|AdditiveThis)-[:stableTargetId]->(merged_node:MergedThis)
-OPTIONAL MATCH (extracted_or_rule_node)-[reference:hadPrimarySource|unitOf]->(referenced_merged_node:MergedThis)
+MATCH (merged_node:MergedThis)
+MATCH (component:ExtractedThis|AdditiveThis)-[:stableTargetId]->(merged_node)
+OPTIONAL MATCH (component)-[reference:hadPrimarySource|unitOf]->(referenced_merged_node:MergedThis)
 WITH
     merged_node,
-    extracted_or_rule_node,
     collect(CASE WHEN reference IS NOT NULL THEN type(reference) END) AS found_fields,
     collect(CASE WHEN reference IS NOT NULL
         THEN {field: type(reference), identifier: referenced_merged_node.identifier} END
     ) AS existing_refs
 WITH
     merged_node,
-    extracted_or_rule_node,
-    existing_refs +
-    [f IN $reference_fields WHERE NOT f IN found_fields | {field: f, identifier: "__NO_REF__"}]
+    existing_refs
+    + [f IN $reference_fields WHERE NOT f IN found_fields | {field: f, identifier: "__NO_REF__"}]
+    + CASE
+        WHEN "hadPrimarySource" IN $reference_fields
+         AND EXISTS {
+            MATCH (component:AdditiveThis)-[:stableTargetId]->(merged_node)
+        }
+        THEN [{field: "hadPrimarySource", identifier: "00000000000002"}]
+        ELSE []
+      END
     AS ref_matches
 WHERE ALL(rf IN $reference_filters WHERE
     ANY(m IN ref_matches WHERE m.field = rf.field AND m.identifier IN rf.identifiers)
 )
-RETURN extracted_or_rule_node, merged_node;"""
+RETURN merged_node;"""
     )
 
 
@@ -261,7 +269,7 @@ def test_collect_references_and_nested(
                     "identifiers": [NO_REFERENCE_SENTINEL],
                 },
             ],
-            8,
+            1,
             id="single field no_reference_sentinel",
         ),
         pytest.param(
@@ -275,8 +283,19 @@ def test_collect_references_and_nested(
                     ],
                 },
             ],
-            12,
+            5,
             id="single field no_reference_sentinel or valid",
+        ),
+        pytest.param(
+            ["hadPrimarySource"],
+            lambda _: [
+                {
+                    "field": "hadPrimarySource",
+                    "identifiers": [str(MEX_EDITOR_PRIMARY_SOURCE.stableTargetId)],
+                },
+            ],
+            2,
+            id="single field mex-editor matches items touched in editor",
         ),
         pytest.param(
             ["hadPrimarySource"],

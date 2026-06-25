@@ -737,6 +737,54 @@ def test_search_merged_items_advanced(
 
 
 @pytest.mark.integration
+def test_search_merged_items_reference_filter_combination_across_components(
+    client_with_api_key_read_permission: TestClient,
+    loaded_dummy_data: DummyData,
+) -> None:
+    # when multiple reference filters are combined (AND), the references may live on
+    # different components of the same merged item: `unit_2` carries its
+    # `hadPrimarySource` on the extracted component, while `parentUnit` was added by
+    # an editor via an additive rule. each filter matches the merged item on its own,
+    # so their AND-combination must match it too.
+    unit_1 = loaded_dummy_data["unit_1"]
+    unit_2 = loaded_dummy_data["unit_2"]
+    primary_source_2 = loaded_dummy_data["primary_source_2"]
+
+    parent_unit_filter = {
+        "field": "parentUnit",
+        "identifiers": [str(unit_1.stableTargetId)],  # only on unit_2's additive rule
+    }
+    primary_source_filter = {
+        "field": "hadPrimarySource",
+        # only on unit_2's extracted component
+        "identifiers": [str(primary_source_2.stableTargetId)],
+    }
+
+    # sanity check: each filter matches the merged unit on its own
+    for reference_filter in (parent_unit_filter, primary_source_filter):
+        response = client_with_api_key_read_permission.post(
+            "/v0/merged-item/_search",
+            json={"referenceFilters": [reference_filter]},
+        )
+        assert response.status_code == status.HTTP_200_OK, response.text
+        identifiers = [item["identifier"] for item in response.json()["items"]]
+        assert str(unit_2.stableTargetId) in identifiers, reference_filter
+
+    # combining the rule-added `parentUnit` filter with the extracted
+    # `hadPrimarySource` filter must still match the merged unit -- and only it
+    response = client_with_api_key_read_permission.post(
+        "/v0/merged-item/_search",
+        json={"referenceFilters": [parent_unit_filter, primary_source_filter]},
+    )
+    assert response.status_code == status.HTTP_200_OK, response.text
+    body = response.json()
+    assert body["total"] == 1
+    assert [item["identifier"] for item in body["items"]] == [
+        str(unit_2.stableTargetId)
+    ]
+
+
+@pytest.mark.integration
 def test_search_merged_items_skip_on_validation_error(
     client_with_api_key_read_permission: TestClient,
     loaded_dummy_data: DummyData,
