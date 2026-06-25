@@ -9,8 +9,8 @@ Args:
     identifier: Identifier of the merged item whose rule set to fetch
 
 Returns:
-    A single record with one column per rule field plus the stable target id:
-        <rule_field>: rule item, or null if absent
+    A single record with one column per rule_set_field plus the stable target id:
+        <rule_set_field>: rule item, or null if absent
             entityType: Label of the node
             _refs: Values of nested objects as well as referenced identifiers
             *nodeProps: All other properties of the node

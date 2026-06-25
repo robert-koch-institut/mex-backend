@@ -56,8 +56,8 @@ def transform_raw_rule_set_to_rule_set_response(
     """Transform a rule-set-response shaped graph result into a rule set response.
 
     Args:
-        raw: Mapping with one rule item per rule field (or `None` when absent),
-            as produced by the `get_rule_set_response` query
+        raw: Mapping with one rule item per rule_set_field (or `None` when
+            absent), as produced by the `get_rule_set_response` query
 
     Returns:
         Validated rule set response

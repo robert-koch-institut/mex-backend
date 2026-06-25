@@ -787,6 +787,35 @@ def test_mocked_graph_fetch_rule_set_response_not_found(
     assert result.one_or_none() is None
 
 
+@pytest.mark.usefixtures("loaded_dummy_data")
+@pytest.mark.integration
+def test_fetch_rule_set_response() -> None:
+    graph = GraphConnector.get()
+
+    result = graph.fetch_rule_set_response("StandaloneRule")
+
+    assert result.one_or_none() == {
+        "additive": {
+            "entityType": "AdditiveOrganizationalUnit",
+            "email": ["1.7@rki.de"],
+            "name": [{"language": "de", "value": "Abteilung 1.7"}],
+            "parentUnit": ["bFQoRhcVH5DHUx"],
+        },
+        "subtractive": {
+            "entityType": "SubtractiveOrganizationalUnit",
+            "email": [],
+        },
+        "preventive": {"entityType": "PreventiveOrganizationalUnit"},
+        "workflow": {
+            "entityType": "WorkflowOrganizationalUnit",
+            "forbiddenPublishingTarget": [],
+        },
+        "stableTargetId": "StandaloneRule",
+    }
+
+    assert graph.fetch_rule_set_response("thisIdDoesNotExist").one_or_none() is None
+
+
 @pytest.mark.parametrize(
     ("query_parameters", "expected"),
     [

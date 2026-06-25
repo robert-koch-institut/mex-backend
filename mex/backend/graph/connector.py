@@ -294,8 +294,8 @@ class GraphConnector(BaseConnector):
 
         Returns:
             Graph result instance with a single rule-set-response shaped record
-            (one column per rule field plus stableTargetId), or no records when
-            the merged item has no rule nodes
+            (one column per rule_set_field plus stableTargetId), or no records
+            when the merged item has no rule nodes
         """
         query_builder = QueryBuilder.get()
         query = query_builder.get_rule_set_response()
@@ -308,7 +308,7 @@ class GraphConnector(BaseConnector):
                     )
                     # stableTargetId is present both as a node property and as the
                     # expanded stableTargetId relationship, but is not a field on
-                    # rule models, so drop it before the component is validated
+                    # rule models yet, so drop it before the component is validated
                     component.pop("stableTargetId", None)
         return result
 
