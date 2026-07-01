@@ -26,6 +26,7 @@ from mex.common.models import (
     EXTRACTED_AND_RULE_MODEL_CLASSES_BY_NAME,
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
+    MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
     RULE_MODEL_CLASSES_BY_NAME,
 )
 from mex.common.transform import (
@@ -102,6 +103,7 @@ class QueryBuilder(BaseConnector):
                 chain(EXTRACTED_MODEL_CLASSES_BY_NAME, RULE_MODEL_CLASSES_BY_NAME)
             ),
             no_reference=NO_REFERENCE_SENTINEL,
+            mex_editor_primary_source=str(MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID),
         )
         self.get_ingest_query_for_entity_type = cache(
             self._get_ingest_query_for_entity_type

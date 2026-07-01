@@ -408,15 +408,29 @@ def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
                     )
                 ],
             },
-            {"items": [], "total": 0},
-            id="no-items-with-primary-source-mex-editor",
+            {
+                "items": [
+                    {
+                        "identifierInPrimarySource": "ou-1.6",
+                        "email": [],
+                        "entityType": "ExtractedOrganizationalUnit",
+                        "identifier": "bFQoRhcVH5DHUy",
+                        "hadPrimarySource": ["bFQoRhcVH5DHUt"],
+                        "name": [{"value": "Unit 1.6", "language": "en"}],
+                        "stableTargetId": ["bFQoRhcVH5DHUz"],
+                        "unitOf": ["bFQoRhcVH5DHUv"],
+                    }
+                ],
+                "total": 1,
+            },
+            id="extracted-items-of-composite-when-filtering-for-primary-source-mex-editor",
         ),
         pytest.param(
             {
                 "reference_filters": [
                     ReferenceFilter(
                         field=ReferenceFieldName("hadPrimarySource"),
-                        identifiers=["bFQoRhcVH5DHUt"],
+                        identifiers=["bFQoRhcVH5DHUt"],  # primary_source_2
                     )
                 ],
                 "limit": 1,
@@ -443,7 +457,7 @@ def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
                 ],
                 "total": 3,
             },
-            id="get-all-extracted-items-connected-to-primary-source-x-when-filtering-for-primary-source-x",
+            id="get-all-extracted-items-connected-to-primary-source-ps2",
         ),
         pytest.param(
             {
@@ -480,7 +494,7 @@ def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
                 ],
                 "total": 3,
             },
-            id="get-all-extracted-items-connected-to-primary-source-x-when-filtering-for-primary-source-mex-editor-and-primary-source-x",
+            id="get-all-extracted-items-connected-to-either-referenced-primary-source",
         ),
         pytest.param(
             {"limit": 1},
@@ -1162,6 +1176,7 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
                         "identifier": "StandaloneRule",
                     }
                 ],
+                # the standalone rule item and the edited unit are both linked to editor
                 "total": 2,
             },
             id="primary-source-mex-editor-filter",
@@ -1209,7 +1224,9 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
                         "identifier": "StandaloneRule",
                     }
                 ],
-                "total": 6,  # returns 4 from ps-1 and 2 from mex-editor
+                # 4 from ps-1 plus 2 items touched in editor (standalone rule item
+                # and the edited unit) from mex-editor
+                "total": 6,
             },
             id="filter-for-had-primary-sources-mex-editor-and-primary-source-ps-1",
         ),
@@ -1492,6 +1509,58 @@ def test_fetch_merged_items(
     result = graph.fetch_merged_items(**query_kwargs)
 
     assert result.one() == expected
+
+
+@pytest.mark.integration
+def test_fetch_merged_items_reference_filter_combination_across_components(
+    loaded_dummy_data: DummyData,
+) -> None:
+    # when multiple reference filters are combined (AND), the references may live on
+    # different components of the same merged item: `unit_2` carries its
+    # `hadPrimarySource` on the extracted component, while `parentUnit` was added by
+    # an editor via an additive rule. each filter matches the merged item on its own,
+    # so their AND-combination must match it too.
+    unit_1 = loaded_dummy_data["unit_1"]
+    unit_2 = loaded_dummy_data["unit_2"]
+    primary_source_2 = loaded_dummy_data["primary_source_2"]
+    graph = GraphConnector.get()
+
+    parent_unit_filter = ReferenceFilter(
+        field=ReferenceFieldName("parentUnit"),
+        identifiers=[unit_1.stableTargetId],  # only on unit_2's additive rule
+    )
+    primary_source_filter = ReferenceFilter(
+        field=ReferenceFieldName("hadPrimarySource"),
+        identifiers=[primary_source_2.stableTargetId],  # only on unit_2's extracted
+    )
+
+    # sanity check: each filter matches the merged unit on its own
+    for reference_filter in (parent_unit_filter, primary_source_filter):
+        result = graph.fetch_merged_items(
+            query_string=None,
+            identifier=None,
+            entity_type=None,
+            reference_filters=[reference_filter],
+            skip=0,
+            limit=10,
+        ).one()
+        identifiers = [item["identifier"] for item in result["items"]]
+        assert str(unit_2.stableTargetId) in identifiers, reference_filter
+
+    # combining the rule-added `parentUnit` filter with the extracted
+    # `hadPrimarySource` filter must still match the merged unit -- and only it
+    result = graph.fetch_merged_items(
+        query_string=None,
+        identifier=None,
+        entity_type=None,
+        reference_filters=[parent_unit_filter, primary_source_filter],
+        skip=0,
+        limit=10,
+    ).one()
+    assert result["total"] == 1
+    assert [item["identifier"] for item in result["items"]] == [
+        str(unit_2.stableTargetId)
+    ]
 
 
 @pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
