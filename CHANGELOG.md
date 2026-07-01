@@ -11,8 +11,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - add dex OIDC provider to compose and CI, federating to slapd via LDAP
 - add `GET /v0/user/me` returning the `MergedPerson` for the authenticated OIDC user
-- seed script to fill the backend / database with artificial data. entrypoint can be
-  invoked with "uv run backend-seed"
+
+### Changes
+
+### Deprecated
+
+### Removed
+
+- BREAKING: removed `POST /v0/merged-person-from-login` (replaced by `GET /v0/user/me`)
+
+### Fixed
+
+### Security
+
+## [4.0.0] - 2026-07-01
 
 ### Changes
 
@@ -24,18 +36,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - updated mex-common to 3.0.0
 - updated template to https://github.com/robert-koch-institut/mex-template/commit/11612b
 
-### Deprecated
-
-### Removed
-
-- BREAKING: removed `POST /v0/merged-person-from-login` (replaced by `GET /v0/user/me`)
-
 ### Fixed
 
 - advanced search now matches items when AND-combined reference filters span across
   multiple components, e.g. an extracted reference plus a rule-added reference
-
-### Security
 
 ## [3.1.1] - 2026-06-19
 
@@ -121,7 +125,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- add preview item by stableTargetId endpoint
+- add preview item by stableTargetid endpoint
 - add slapd LDAP mock server to compose and CI
 - add `mocked_ldap` fixture variant running against slapd when a search base is set
 - add LDAP mock data in `assets/raw-data/ldap/` with persons and functional accounts
