@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [4.0.0] - 2026-07-01
+
+### Changes
+
 - update fastapi to 0.137.2
 - update mex-model to 5.0.1
 - applied belated template changes to docker and project files
@@ -19,16 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - updated mex-common to 3.0.0
 - updated template to https://github.com/robert-koch-institut/mex-template/commit/11612b
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 
 - advanced search now matches items when AND-combined reference filters span across
   multiple components, e.g. an extracted reference plus a rule-added reference
-
-### Security
 
 ## [3.1.1] - 2026-06-19
 
