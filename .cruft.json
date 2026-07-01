@@ -1,14 +1,14 @@
 {
   "template": "https://github.com/robert-koch-institut/mex-template",
-  "commit": "0d8c4782a38f66faeaa24cc853c191cc624a9dff",
-  "checkout": null,
+  "commit": "192830effd8041fcff795b110a3915093c96c00e",
+  "checkout": "1.3.0",
   "context": {
     "cookiecutter": {
       "project_name": "backend",
       "short_summary": "Backend server for the RKI metadata exchange.",
       "long_summary": "The `mex-backend` package is a multi-purpose backend application with an HTTP-API. It provides endpoints to ingest data from ETL-pipelines, for a metadata editor application, and for publishing pipelines to extract standardized data for use in upstream frontend applications.",
       "_template": "https://github.com/robert-koch-institut/mex-template",
-      "_commit": "0d8c4782a38f66faeaa24cc853c191cc624a9dff"
+      "_commit": "192830effd8041fcff795b110a3915093c96c00e"
     }
   },
   "directory": null
