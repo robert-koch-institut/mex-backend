@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- added missing testing-backend executable to final stage of docker image
+
 ### Security
 
 ## [4.0.0] - 2026-07-01
