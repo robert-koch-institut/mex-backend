@@ -14,7 +14,7 @@ if TYPE_CHECKING:  # pragma: no cover
 def test_flush_graph_database_unauthorized(testing_app_client: TestClient) -> None:
     response = testing_app_client.delete("/v0/_system/graph")
     assert response.status_code == status.HTTP_401_UNAUTHORIZED, response.text
-    assert response.json() == {"detail": "Not authenticated"}
+    assert response.json() == {"detail": "Missing credentials."}
 
 
 @pytest.mark.integration

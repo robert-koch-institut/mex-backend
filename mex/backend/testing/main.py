@@ -17,13 +17,21 @@ from mex.backend.logging import UVICORN_LOGGING_CONFIG
 from mex.backend.main import lifespan
 from mex.backend.merged.main import router as merged_router
 from mex.backend.migration import migrate
+from mex.backend.oauth import router as oauth_router
 from mex.backend.preview.main import router as preview_router
 from mex.backend.publishable_merged.main import router as publishable_merged_router
 from mex.backend.rules.main import router as rules_router
+from mex.backend.security import (
+    SWAGGER_UI_INIT_OAUTH,
+    has_read_access,
+    has_write_access,
+)
 from mex.backend.settings import BackendSettings
 from mex.backend.system.main import router as system_router
-from mex.backend.testing.ldap import router as ldap_login_router
+from mex.backend.testing.ldap import router as testing_ldap_router
+from mex.backend.testing.security import has_read_access_mocked, has_write_access_mocked
 from mex.backend.testing.system import router as testing_system_router
+from mex.backend.testing.user import router as testing_user_router
 from mex.common.cli import entrypoint
 
 app = FastAPI(
@@ -41,19 +49,24 @@ app = FastAPI(
     strict_content_type=False,
     lifespan=lifespan,
     version="v0",
+    swagger_ui_init_oauth=SWAGGER_UI_INIT_OAUTH,
 )
+app.dependency_overrides[has_read_access] = has_read_access_mocked
+app.dependency_overrides[has_write_access] = has_write_access_mocked
+
 router = APIRouter(prefix="/v0")
 router.include_router(extracted_router)
 router.include_router(identity_router)
 router.include_router(ingest_router)
+router.include_router(testing_ldap_router)
 router.include_router(merged_router)
 router.include_router(orcid_router)
 router.include_router(preview_router)
 router.include_router(publishable_merged_router)
 router.include_router(rules_router)
 router.include_router(wikidata_router)
-router.include_router(ldap_login_router)
-
+router.include_router(testing_user_router)
+router.include_router(oauth_router)
 router.include_router(system_router)
 router.include_router(testing_system_router)
 
