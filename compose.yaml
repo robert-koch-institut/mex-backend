@@ -7,14 +7,11 @@ services:
     environment:
       - MEX_GRAPH_URL=neo4j://neo4j:7687
       - MEX_BACKEND_VALKEY_URL=valkey://valkey:6379
-    expose:
-      - 8080
     healthcheck:
       test: [ "CMD", "curl", "http://0.0.0.0:8080/v0/_system/check" ]
       interval: 60s
       timeout: 5s
       retries: 5
-    entrypoint: backend
   neo4j:
     image: neo4j:2026.05-community
     environment:

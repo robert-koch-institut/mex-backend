@@ -7,30 +7,23 @@ from starlette import status
 if TYPE_CHECKING:  # pragma: no cover
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
-    from starlette.routing import Route
 
     from mex.backend.settings import BackendSettings
 
 
 def test_all_endpoints_require_authorization(entrypoint_app: TestClient) -> None:
     excluded_routes = [
-        "/openapi.json",
-        "/docs",
-        "/docs/oauth2-redirect",
-        "/redoc",
         "/v0/_system/check",
         "/v0/_system/metrics",
         "/v0/oauth/token",
     ]
     app = cast("FastAPI", entrypoint_app.app)
-    for route in cast("list[Route]", app.routes):
-        if route.methods and route.path not in excluded_routes:
-            for method in route.methods:
-                client_method = getattr(entrypoint_app, method.lower())
-                assert (
-                    client_method(route.path).status_code
-                    == status.HTTP_401_UNAUTHORIZED
-                )
+    for path, operations in app.openapi()["paths"].items():
+        if path in excluded_routes:
+            continue
+        for method in operations:
+            client_method = getattr(entrypoint_app, method.lower())
+            assert client_method(path).status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.integration
