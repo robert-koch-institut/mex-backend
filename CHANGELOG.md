@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- added dedicated get-rule-set query and connector method
+
 ### Changes
 
 ### Deprecated
