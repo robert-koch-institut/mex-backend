@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- move migration into script folder to unblock app start
 - added missing http-test-server executable to final stage of docker image
 
 ### Security
