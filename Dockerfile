@@ -34,6 +34,7 @@ WORKDIR /app
 COPY --from=builder /usr/local/lib/python3.14/site-packages /usr/local/lib/python3.14/site-packages
 COPY --from=builder /usr/local/bin/backend /usr/local/bin/backend
 COPY --from=builder /usr/local/bin/testing-backend /usr/local/bin/testing-backend
+COPY --from=builder /usr/local/bin/http-test-server /usr/local/bin/http-test-server
 
 USER 10001
 
