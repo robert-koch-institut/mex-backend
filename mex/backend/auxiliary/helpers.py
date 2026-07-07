@@ -1,11 +1,14 @@
 from collections import deque
 from functools import lru_cache
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
-from mex.backend.extracted.helpers import search_extracted_items_in_graph
+from mex.backend.auxiliary.constants import (
+    ORGANIGRAM_PRIMARY_SOURCE_NAME,
+    RKI_WIKIDATA_ID,
+    WIKIDATA_SOURCE_NAME,
+)
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import NoResultFoundError
-from mex.backend.models import ReferenceFilter
 from mex.common.logging import logger
 from mex.common.organigram.extract import extract_organigram_units
 from mex.common.organigram.transform import (
@@ -30,7 +33,7 @@ def cached_primary_source(name: str) -> ExtractedPrimarySource:
     """Ingest and return a primary source by name."""
     extracted_item = get_extracted_primary_source_by_name(name)
     if not extracted_item:
-        raise RuntimeError(name)
+        raise NoResultFoundError(name)
     connector = GraphConnector.get()
     deque(connector.ingest_items([extracted_item]))
     logger.info("ingested primary source %s", name)
@@ -43,7 +46,7 @@ def cached_organization(name: str) -> ExtractedOrganization:
     wikidata_organization = get_wikidata_organization(name)
     extracted_item = transform_wikidata_organization_to_extracted_organization(
         wikidata_organization,
-        cached_primary_source("wikidata").stableTargetId,
+        cached_primary_source(WIKIDATA_SOURCE_NAME).stableTargetId,
     )
     if not extracted_item:
         raise NoResultFoundError(name)
@@ -56,22 +59,14 @@ def cached_organization(name: str) -> ExtractedOrganization:
 def cached_organizational_units() -> list[ExtractedOrganizationalUnit]:
     """Auxiliary function to get ldap as primary resource and ingest org units."""
     organigram_units = extract_organigram_units()
-    organigram_primary_source = cached_primary_source("organigram")
+    if not organigram_units:
+        raise NoResultFoundError
+    organigram_primary_source = cached_primary_source(ORGANIGRAM_PRIMARY_SOURCE_NAME)
     extracted_units = transform_organigram_units_to_organizational_units(
         organigram_units,
         organigram_primary_source.stableTargetId,
-        cached_organization("RKI").stableTargetId,
+        cached_organization(RKI_WIKIDATA_ID).stableTargetId,
     )
     connector = GraphConnector.get()
     deque(connector.ingest_items(extracted_units))
-    unit_container = search_extracted_items_in_graph(
-        entity_type=["ExtractedOrganizationalUnit"],
-        reference_filters=[
-            ReferenceFilter(
-                field="hadPrimarySource",
-                identifiers=[organigram_primary_source.stableTargetId],
-            )
-        ],
-        limit=len(organigram_units),
-    )
-    return cast("list[ExtractedOrganizationalUnit]", unit_container.items)
+    return extracted_units

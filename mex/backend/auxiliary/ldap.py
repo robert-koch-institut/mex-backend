@@ -1,7 +1,12 @@
-from typing import Annotated, Final
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 
+from mex.backend.auxiliary.constants import (
+    DEFAULT_LDAP_QUERY,
+    LDAP_PRIMARY_SOURCE_NAME,
+    RKI_WIKIDATA_ID,
+)
 from mex.backend.auxiliary.helpers import (
     cached_organization,
     cached_organizational_units,
@@ -17,8 +22,6 @@ from mex.common.models import (
     ExtractedPerson,
     PaginatedItemsContainer,
 )
-
-DEFAULT_LDAP_QUERY: Final = "mex@rki.de"
 
 router = APIRouter()
 
@@ -49,8 +52,8 @@ def search_persons_or_contact_points_in_ldap(
         transform_any_ldap_actor_to_extracted_persons_or_contact_points(
             ldap_actors.items,
             cached_organizational_units(),
-            cached_primary_source("ldap").stableTargetId,
-            cached_organization("RKI").stableTargetId,
+            cached_primary_source(LDAP_PRIMARY_SOURCE_NAME).stableTargetId,
+            cached_organization(RKI_WIKIDATA_ID).stableTargetId,
         )
     )
     return PaginatedItemsContainer[ExtractedPerson | ExtractedContactPoint](

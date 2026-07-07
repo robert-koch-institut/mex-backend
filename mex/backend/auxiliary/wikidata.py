@@ -1,7 +1,8 @@
-from typing import Annotated, Final
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
+from mex.backend.auxiliary.constants import RKI_WIKIDATA_ID, WIKIDATA_SOURCE_NAME
 from mex.backend.auxiliary.helpers import cached_primary_source
 from mex.backend.security import has_read_access
 from mex.common.exceptions import EmptySearchResultError
@@ -10,8 +11,6 @@ from mex.common.wikidata.extract import get_wikidata_organization
 from mex.common.wikidata.transform import (
     transform_wikidata_organizations_to_extracted_organizations,
 )
-
-RKI_WIKIDATA_ID: Final = "Q679041"
 
 router = APIRouter()
 
@@ -37,7 +36,7 @@ def search_organizations_in_wikidata(
     extracted_organizations = list(
         transform_wikidata_organizations_to_extracted_organizations(
             wikidata_organizations,
-            cached_primary_source("wikidata").stableTargetId,
+            cached_primary_source(WIKIDATA_SOURCE_NAME).stableTargetId,
         )
     )
     return PaginatedItemsContainer[ExtractedOrganization](
