@@ -80,7 +80,7 @@ def merge_preview_items_with_all_required_fields_missing() -> None:
             collected_fields_per_item = [
                 field
                 for field in required_fields
-                if rule_set.preventive.__getattribute__(field)
+                if getattr(rule_set.preventive, field)
             ]
             if collected_fields_per_item:
                 if all(field in collected_fields_per_item for field in required_fields):
