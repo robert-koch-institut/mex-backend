@@ -21,7 +21,6 @@ from mex.backend.ldap.main import router as ldap_login_router
 from mex.backend.logging import UVICORN_LOGGING_CONFIG
 from mex.backend.match.main import router as match_router
 from mex.backend.merged.main import router as merged_router
-from mex.backend.migration import migrate
 from mex.backend.preview.main import router as preview_router
 from mex.backend.publishable_merged.main import router as publishable_merged_router
 from mex.backend.rules.main import router as rules_router
@@ -111,9 +110,6 @@ def main() -> None:  # pragma: no cover
     on the configured host and port.
     """
     settings = BackendSettings.get()
-
-    migrate()
-
     uvicorn.run(
         "mex.backend.main:app",
         host=settings.backend_host,
