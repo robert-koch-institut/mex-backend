@@ -2,7 +2,7 @@ from typing import Annotated, Final
 
 from fastapi import APIRouter, Depends, Query
 
-from mex.backend.auxiliary.primary_source import extracted_primary_source_orcid
+from mex.backend.auxiliary.helpers import cached_primary_source
 from mex.backend.security import has_read_access
 from mex.common.models import ExtractedPerson, PaginatedItemsContainer
 from mex.common.orcid.extract import search_records_by_name
@@ -37,7 +37,7 @@ def search_persons_in_orcid(
     extracted_persons = [
         transform_orcid_person_to_mex_person(
             person,
-            extracted_primary_source_orcid().stableTargetId,
+            cached_primary_source("orcid").stableTargetId,
         )
         for person in orcid_records.items
     ]

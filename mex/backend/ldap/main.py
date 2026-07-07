@@ -3,7 +3,7 @@ from typing import Annotated, cast
 from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 
-from mex.backend.auxiliary.primary_source import extracted_primary_source_ldap
+from mex.backend.auxiliary.helpers import cached_primary_source
 from mex.backend.merged.main import get_merged_item
 from mex.backend.security import is_ldap_authenticated
 from mex.common.identity import get_provider
@@ -22,7 +22,7 @@ def get_merged_person_from_login(
     ldap_connector = LDAPConnector.get()
     ldap_person = ldap_connector.get_person(sam_account_name=username)
     provider = get_provider()
-    primary_source_identities = extracted_primary_source_ldap()
+    primary_source_identities = cached_primary_source("ldap")
     identities = provider.fetch(
         identifier_in_primary_source=str(ldap_person.objectGUID),
         had_primary_source=MergedPrimarySourceIdentifier(

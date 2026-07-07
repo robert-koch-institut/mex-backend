@@ -2,9 +2,11 @@ from typing import Annotated, Final
 
 from fastapi import APIRouter, Depends, Query
 
-from mex.backend.auxiliary.organigram import extracted_organizational_units
-from mex.backend.auxiliary.primary_source import extracted_primary_source_ldap
-from mex.backend.auxiliary.wikidata import extracted_organization_rki
+from mex.backend.auxiliary.helpers import (
+    cached_organization,
+    cached_organizational_units,
+    cached_primary_source,
+)
 from mex.backend.security import has_read_access
 from mex.common.ldap.connector import LDAPConnector
 from mex.common.ldap.transform import (
@@ -38,16 +40,17 @@ def search_persons_or_contact_points_in_ldap(
         Paginated list of ExtractedPersons and ExtractedContactPoints
     """
     connector = LDAPConnector.get()
-
     ldap_actors = connector.get_persons_or_functional_accounts(
-        query=q, limit=limit, offset=offset
+        query=q,
+        limit=limit,
+        offset=offset,
     )
     extracted_persons_or_contact_points = (
         transform_any_ldap_actor_to_extracted_persons_or_contact_points(
             ldap_actors.items,
-            extracted_organizational_units(),
-            extracted_primary_source_ldap().stableTargetId,
-            extracted_organization_rki().stableTargetId,
+            cached_organizational_units(),
+            cached_primary_source("ldap").stableTargetId,
+            cached_organization("RKI").stableTargetId,
         )
     )
     return PaginatedItemsContainer[ExtractedPerson | ExtractedContactPoint](
