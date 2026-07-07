@@ -17,8 +17,9 @@ if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Generator, Sequence
 
 
-def add_workflow_rule_to_all_rule_sets_on_db() -> None:
+def add_workflow_rule_to_all_rule_sets() -> None:
     """Add workflow rule to all rule sets in database."""
+    logger.info("migration add_workflow_rule_to_all_rule_sets started")
     connector = GraphConnector.get()
 
     number_of_rules_after_migration = 4
@@ -29,7 +30,7 @@ def add_workflow_rule_to_all_rule_sets_on_db() -> None:
         rule_set = transform_three_raw_rules_to_rule_set_response(raw_rules)
 
         deque(connector.ingest_items([rule_set]))
-    logger.info("migration add_workflow_rule_to_all_rule_sets_on_db complete")
+    logger.info("migration add_workflow_rule_to_all_rule_sets complete")
 
 
 def get_all_raw_rules(connector: GraphConnector) -> Generator[list[dict[str, Any]]]:
@@ -106,6 +107,5 @@ def transform_three_raw_rules_to_rule_set_response(
     return response_class.model_validate(response)  # here an empty workflow rule is set
 
 
-def migrate() -> None:
-    """Run migrations."""
-    add_workflow_rule_to_all_rule_sets_on_db()
+if __name__ == "__main__":
+    add_workflow_rule_to_all_rule_sets()
