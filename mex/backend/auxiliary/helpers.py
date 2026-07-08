@@ -59,14 +59,15 @@ def cached_organization(name: str) -> ExtractedOrganization:
 def cached_organizational_units() -> list[ExtractedOrganizationalUnit]:
     """Auxiliary function to get ldap as primary resource and ingest org units."""
     organigram_units = extract_organigram_units()
-    if not organigram_units:
-        raise NoResultFoundError
     organigram_primary_source = cached_primary_source(ORGANIGRAM_PRIMARY_SOURCE_NAME)
     extracted_units = transform_organigram_units_to_organizational_units(
         organigram_units,
         organigram_primary_source.stableTargetId,
         cached_organization(RKI_WIKIDATA_ID).stableTargetId,
     )
+    if not extracted_units:
+        raise NoResultFoundError
     connector = GraphConnector.get()
     deque(connector.ingest_items(extracted_units))
+    logger.info("ingested organizational units")
     return extracted_units

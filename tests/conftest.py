@@ -221,13 +221,8 @@ def mocked_valkey(monkeypatch: MonkeyPatch) -> LocalCache | ValkeyCache:
 @pytest.fixture(autouse=True)
 def isolate_auxiliary_caches() -> None:
     """Clear the auxiliary helper caches to avoid cross-test pollution."""
-    # the auxiliary helpers cache extracted items across calls; clear them so that
-    # each test starts from a clean slate and ingests into its own graph state
     cached_primary_source.cache_clear()
     cached_organization.cache_clear()
-    # the seed primary sources are cached by assets-dir-agnostic lru_cache in
-    # mex-common; clear it so integration and unit tests don't leak each other's
-    # assets directory (which may define different primary source metadata)
     extract_seed_primary_sources.cache_clear()
 
 
