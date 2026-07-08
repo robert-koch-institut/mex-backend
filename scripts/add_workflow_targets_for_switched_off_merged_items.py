@@ -60,6 +60,8 @@ def merge_preview_items_with_all_required_fields_missing() -> None:
     connector_graph = GraphConnector.get()
     connector_backend = BackendApiConnector.get()
 
+    forbidden_targets = [PublishingTarget.INVENIO, PublishingTarget.DATENKOMPASS]
+
     for merged_class in MERGED_MODEL_CLASSES:
         if merged_class.stemType in ["PrimarySource", "Persons"]:
             continue  # these models don't have required fields
@@ -75,7 +77,6 @@ def merge_preview_items_with_all_required_fields_missing() -> None:
             if x != "identifier"
         ]
         for stid in broken_item_ids:
-            collected_fields_per_item = []
             rule_set = connector_backend.get_rule_set(stable_target_id=stid)
             collected_fields_per_item = [
                 field
@@ -84,9 +85,9 @@ def merge_preview_items_with_all_required_fields_missing() -> None:
             ]
             if collected_fields_per_item:
                 if all(field in collected_fields_per_item for field in required_fields):
-                    rule_set.workflow.forbiddenPublishingTarget.extend(
-                        [PublishingTarget.INVENIO, PublishingTarget.DATENKOMPASS]
-                    )
+                    for target in forbidden_targets:
+                        if target not in rule_set.workflow.forbiddenPublishingTarget:
+                            rule_set.workflow.forbiddenPublishingTarget.append(target)
                     deque(connector_graph.ingest_items([rule_set]))
                     logger.info(
                         f"MIGRATION - SUCCESS: workflow rule successfully populated "
