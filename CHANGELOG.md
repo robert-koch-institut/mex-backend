@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- script to set forbidden publishing targets for "toggled off" merged items
+
 ### Changes
 
 ### Deprecated
