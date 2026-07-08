@@ -14,6 +14,7 @@ router = APIRouter()
     "/match",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(has_write_access)],
+    tags=["editor"],
 )
 def match_item(
     extractedIdentifier: Annotated[AnyExtractedIdentifier, Body()],

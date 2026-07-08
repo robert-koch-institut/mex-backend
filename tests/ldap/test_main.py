@@ -16,6 +16,9 @@ def test_get_merged_person_from_login(
         patch("mex.backend.ldap.main.LDAPConnector.get") as mock_ldap_connector_get,
         patch("mex.backend.ldap.main.get_provider") as mock_get_provider,
         patch("mex.backend.ldap.main.get_merged_item") as mock_get_merged_item,
+        patch(
+            "mex.backend.ldap.main.cached_primary_source"
+        ) as mock_cached_primary_source,
     ):
         mocked_connection = mock_connection.return_value.__enter__.return_value
         mocked_connection.server.check_availability.return_value = True
@@ -25,8 +28,9 @@ def test_get_merged_person_from_login(
             objectGUID="bFQoRhcVH5DHUI"
         )
         mock_ldap_connector_get.return_value = mock_ldap_connector
-        mock_extracted_primary_source_ldap = MagicMock()
-        mock_extracted_primary_source_ldap.stableTargetId = "mocked-primary-source-id"
+        mock_cached_primary_source.return_value = MagicMock(
+            stableTargetId="mocked-primary-source-id"
+        )
         mock_provider = MagicMock()
         mock_provider.fetch.side_effect = [
             [MagicMock(stableTargetId="bFQoRhcVH5DHUI")],

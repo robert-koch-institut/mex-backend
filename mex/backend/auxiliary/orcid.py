@@ -1,14 +1,16 @@
-from typing import Annotated, Final
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 
-from mex.backend.auxiliary.primary_source import extracted_primary_source_orcid
+from mex.backend.auxiliary.constants import (
+    DEFAULT_ORCID_QUERY,
+    ORCID_PRIMARY_SOURCE_NAME,
+)
+from mex.backend.auxiliary.helpers import cached_primary_source
 from mex.backend.security import has_read_access
 from mex.common.models import ExtractedPerson, PaginatedItemsContainer
 from mex.common.orcid.extract import search_records_by_name
 from mex.common.orcid.transform import transform_orcid_person_to_mex_person
-
-DEFAULT_ORCID_QUERY: Final = '"Maxi Musterperson"'
 
 router = APIRouter()
 
@@ -37,7 +39,7 @@ def search_persons_in_orcid(
     extracted_persons = [
         transform_orcid_person_to_mex_person(
             person,
-            extracted_primary_source_orcid().stableTargetId,
+            cached_primary_source(ORCID_PRIMARY_SOURCE_NAME).stableTargetId,
         )
         for person in orcid_records.items
     ]
