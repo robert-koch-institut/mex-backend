@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING
 
 import pytest
-from pytest import MonkeyPatch
 from starlette import status
-
-from mex.backend.auxiliary import wikidata
-from mex.common.models import (
-    MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-    ExtractedPrimarySource,
-)
 
 if TYPE_CHECKING:  # pragma: no cover
     from fastapi.testclient import TestClient
@@ -17,18 +10,7 @@ if TYPE_CHECKING:  # pragma: no cover
 @pytest.mark.usefixtures("mocked_wikidata")
 def test_search_organization_in_wikidata_mocked(
     client_with_api_key_read_permission: TestClient,
-    monkeypatch: MonkeyPatch,
 ) -> None:
-    def extracted_primary_source_wikidata() -> ExtractedPrimarySource:
-        return ExtractedPrimarySource(
-            hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
-            identifierInPrimarySource="wikidata",
-        )
-
-    monkeypatch.setattr(
-        wikidata, "extracted_primary_source_wikidata", extracted_primary_source_wikidata
-    )
-
     response = client_with_api_key_read_permission.get(
         "/v0/wikidata", params={"q": "Q679041"}
     )

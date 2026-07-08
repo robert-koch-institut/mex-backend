@@ -3,14 +3,8 @@ from typing import TYPE_CHECKING
 import pytest
 from starlette import status
 
-from mex.backend.auxiliary.primary_source import extracted_primary_source_ldap
-from mex.backend.auxiliary.wikidata import extracted_organization_rki
-from mex.backend.extracted.helpers import search_extracted_items_in_graph
-from mex.backend.models import ReferenceFilter
-from mex.backend.types import ReferenceFieldName
-from mex.common.models import ExtractedPrimarySource
-from mex.common.types import Identifier, TextLanguage
-from tests.conftest import get_graph
+from mex.backend.auxiliary.constants import RKI_WIKIDATA_ID
+from mex.backend.auxiliary.helpers import cached_organization
 
 if TYPE_CHECKING:  # pragma: no cover
     from fastapi.testclient import TestClient
@@ -21,7 +15,7 @@ def test_search_persons_or_contact_points_in_ldap(
     client_with_api_key_read_permission: TestClient,
 ) -> None:
     response = client_with_api_key_read_permission.get("/v0/ldap", params={"q": "*"})
-    rki_organization = extracted_organization_rki()
+    rki_organization = cached_organization(RKI_WIKIDATA_ID)
     assert response.status_code == status.HTTP_200_OK, response.text
     response_json = response.json()
     assert response_json["total"] == 5
@@ -61,43 +55,3 @@ def test_ldap_pagination(
     assert paginated_items["total"] == all_items["total"]
     assert len(paginated_items["items"]) == 2
     assert paginated_items["items"] == all_items["items"][1:3]
-
-
-def test_extracted_primary_source_ldap() -> None:
-    result = extracted_primary_source_ldap()
-    assert isinstance(result, ExtractedPrimarySource)
-    assert result.model_dump() == {
-        "hadPrimarySource": "00000000000000",
-        "identifierInPrimarySource": "ldap",
-        "version": None,
-        "alternativeTitle": [],
-        "contact": [],
-        "contributor": [],
-        "description": [],
-        "documentation": [],
-        "locatedAt": [],
-        "title": [{"value": "Active Directory", "language": TextLanguage.EN}],
-        "unitInCharge": [],
-        "entityType": "ExtractedPrimarySource",
-        "identifier": "cmiaN880A6fm1Ggno4kl7m",
-        "stableTargetId": "ebs5siX85RkdrhBRlsYgRP",
-    }
-
-
-@pytest.mark.integration
-def test_extracted_primary_source_ldap_ingest() -> None:
-    # verify the primary source ldap has been stored in the database
-    result = extracted_primary_source_ldap()
-
-    ingested = search_extracted_items_in_graph(
-        query_string="Active Directory",
-        reference_filters=[
-            ReferenceFilter(
-                field=ReferenceFieldName("stableTargetId"),
-                identifiers=[Identifier(result.stableTargetId)],
-            )
-        ],
-        entity_type=["ExtractedPrimarySource"],
-    )
-
-    assert ingested.total == 1, get_graph()

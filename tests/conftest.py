@@ -13,6 +13,7 @@ from pytest import FixtureRequest, LogCaptureFixture, MonkeyPatch
 from valkey import Valkey
 
 from mex.artificial.helpers import create_artificial_items_and_rule_sets
+from mex.backend.auxiliary.helpers import cached_organization, cached_primary_source
 from mex.backend.cache.connector import CacheConnector, LocalCache, ValkeyCache
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.main import app
@@ -33,6 +34,7 @@ from mex.common.models import (
     OrganizationalUnitRuleSetResponse,
     SubtractiveOrganizationalUnit,
 )
+from mex.common.primary_source.extract import extract_seed_primary_sources
 from mex.common.transform import MExEncoder
 from mex.common.types import (
     Identifier,
@@ -214,6 +216,19 @@ def mocked_valkey(monkeypatch: MonkeyPatch) -> LocalCache | ValkeyCache:
     cache = LocalCache()
     monkeypatch.setattr(Valkey, "from_url", lambda _: cache)
     return cache
+
+
+@pytest.fixture(autouse=True)
+def isolate_auxiliary_caches() -> None:
+    """Clear the auxiliary helper caches to avoid cross-test pollution."""
+    # the auxiliary helpers cache extracted items across calls; clear them so that
+    # each test starts from a clean slate and ingests into its own graph state
+    cached_primary_source.cache_clear()
+    cached_organization.cache_clear()
+    # the seed primary sources are cached by assets-dir-agnostic lru_cache in
+    # mex-common; clear it so integration and unit tests don't leak each other's
+    # assets directory (which may define different primary source metadata)
+    extract_seed_primary_sources.cache_clear()
 
 
 @pytest.fixture(autouse=True)
