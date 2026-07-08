@@ -101,6 +101,6 @@ def merge_preview_items_with_all_required_fields_missing() -> None:
                     )
             else:
                 logger.info(
-                    f"MIGRATION - POSSIBLE BUG: all required fields are populated, but "
-                    f"item is broken for {merged_class_name} id {stid}"
+                    f"MIGRATION - POSSIBLE BUG: item is broken, but not because of "
+                    f"preventive rule: {merged_class_name} id {stid}"
                 )
