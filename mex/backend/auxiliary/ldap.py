@@ -1,10 +1,17 @@
-from typing import Annotated, Final
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 
-from mex.backend.auxiliary.organigram import extracted_organizational_units
-from mex.backend.auxiliary.primary_source import extracted_primary_source_ldap
-from mex.backend.auxiliary.wikidata import extracted_organization_rki
+from mex.backend.auxiliary.constants import (
+    DEFAULT_LDAP_QUERY,
+    LDAP_PRIMARY_SOURCE_NAME,
+    RKI_WIKIDATA_ID,
+)
+from mex.backend.auxiliary.helpers import (
+    cached_organization,
+    cached_organizational_units,
+    cached_primary_source,
+)
 from mex.backend.security import has_read_access
 from mex.common.ldap.connector import LDAPConnector
 from mex.common.ldap.transform import (
@@ -15,8 +22,6 @@ from mex.common.models import (
     ExtractedPerson,
     PaginatedItemsContainer,
 )
-
-DEFAULT_LDAP_QUERY: Final = "mex@rki.de"
 
 router = APIRouter()
 
@@ -38,16 +43,17 @@ def search_persons_or_contact_points_in_ldap(
         Paginated list of ExtractedPersons and ExtractedContactPoints
     """
     connector = LDAPConnector.get()
-
     ldap_actors = connector.get_persons_or_functional_accounts(
-        query=q, limit=limit, offset=offset
+        query=q,
+        limit=limit,
+        offset=offset,
     )
     extracted_persons_or_contact_points = (
         transform_any_ldap_actor_to_extracted_persons_or_contact_points(
             ldap_actors.items,
-            extracted_organizational_units(),
-            extracted_primary_source_ldap().stableTargetId,
-            extracted_organization_rki().stableTargetId,
+            cached_organizational_units(),
+            cached_primary_source(LDAP_PRIMARY_SOURCE_NAME).stableTargetId,
+            cached_organization(RKI_WIKIDATA_ID).stableTargetId,
         )
     )
     return PaginatedItemsContainer[ExtractedPerson | ExtractedContactPoint](
