@@ -62,14 +62,16 @@ def add_workflow_targets_for_switched_off_merged_items() -> None:
 
     forbidden_targets = [PublishingTarget.INVENIO, PublishingTarget.DATENKOMPASS]
 
-    logger.info("Migration add_workflow_targets_for_switched_off_merged_items started")
+    logger.info(
+        "### MIGRATION add_workflow_targets_for_switched_off_merged_items START ###"
+    )
 
     for merged_class in MERGED_MODEL_CLASSES:
         if merged_class.stemType in ["PrimarySource", "Persons"]:
             continue  # these models don't have required fields
         merged_class_name = merged_class.__name__
 
-        logger.info(f"Migrating {merged_class_name} now")
+        logger.info(f"--- Migrating {merged_class_name} now ---")
 
         broken_item_ids = _find_broken_item_ids(connector_backend, merged_class_name)
         if not broken_item_ids:
@@ -97,19 +99,25 @@ def add_workflow_targets_for_switched_off_merged_items() -> None:
                             rule_set.workflow.forbiddenPublishingTarget.append(target)
                     deque(connector_graph.ingest_items([rule_set]))
                     logger.info(
-                        f"Migration step - success: workflow rule successfully "
+                        f"step - success: workflow rule successfully "
                         f"populated for {merged_class_name} id {stid}"
                     )
                 else:
                     logger.info(
-                        f"Migration step - note: not all required fields are switched "
+                        f"step - note: not all required fields are switched "
                         f"off for {merged_class_name} id {stid}: switched off fields "
                         f"are {collected_fields_per_item}."
                     )
             else:
                 logger.info(
-                    f"Migration step - possible bug: item is broken and should be "
+                    f"step - possible bug: item is broken and should be "
                     f"checked: {merged_class_name} id {stid}"
                 )
 
-    logger.info("Migration add_workflow_targets_for_switched_off_merged_items complete")
+    logger.info(
+        "### MIGRATION add_workflow_targets_for_switched_off_merged_items COMPLETE ###"
+    )
+
+
+if __name__ == "__main__":
+    add_workflow_targets_for_switched_off_merged_items()
