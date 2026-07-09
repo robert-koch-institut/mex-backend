@@ -21,6 +21,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [4.0.3] - 2026-07-08
+
+### Changes
+
+- simplify aux endpoints and ensure proper caching
+
 ## [4.0.2] - 2026-07-06
 
 ### Fixed
