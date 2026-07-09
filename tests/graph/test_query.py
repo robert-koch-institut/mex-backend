@@ -96,8 +96,8 @@ RETURN
     )
 
 
-def test_fetch_database_status(query_builder: QueryBuilder) -> None:
-    query = query_builder.fetch_database_status()
+def test_get_database_status(query_builder: QueryBuilder) -> None:
+    query = query_builder.get_database_status()
     assert (
         query.render()
         == """\

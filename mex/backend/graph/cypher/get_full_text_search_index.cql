@@ -1,4 +1,4 @@
-<# Fetch the full text search index by its static name.
+<# Get the full text search index by its static name.
 
 Returns:
     node_labels: List of labels of nodes with searchable fields

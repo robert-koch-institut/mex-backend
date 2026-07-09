@@ -92,7 +92,7 @@ class GraphConnector(BaseConnector):
     def _check_connectivity_and_authentication(self) -> Result:
         """Check the connectivity and authentication to the graph."""
         query_builder = QueryBuilder.get()
-        result = self.commit(query_builder.fetch_database_status())
+        result = self.commit(query_builder.get_database_status())
         if (status := result["currentStatus"]) != "online":
             msg = f"Database is {status}."
             raise MExError(msg) from None
@@ -118,7 +118,7 @@ class GraphConnector(BaseConnector):
         """Ensure there is a full text search index for all searchable fields."""
         query_builder = QueryBuilder.get()
         result = self.commit(
-            query_builder.fetch_full_text_search_index(),
+            query_builder.get_full_text_search_index(),
             access_mode=WRITE_ACCESS,
         )
         if (index := result.one_or_none()) and (

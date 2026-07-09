@@ -48,7 +48,7 @@ def test_check_connectivity_and_authentication(mocked_graph: MockedGraph) -> Non
     graph = GraphConnector.get()
     graph._check_connectivity_and_authentication()
 
-    assert mocked_graph.call_args_list[-1] == call(call("fetch_database_status"), {})
+    assert mocked_graph.call_args_list[-1] == call(call("get_database_status"), {})
 
 
 @pytest.mark.usefixtures("mocked_valkey")
