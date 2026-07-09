@@ -20,16 +20,16 @@ Returns:
 -#>
 <% from "macros/collect_references_and_nested.cql" import collect_references_and_nested with context -%>
 
-MATCH (rule_node:<<any_rule_label>>)-[:stableTargetId]->(merged_node:<<any_merged_label>>)
+MATCH (extracted_or_rule_node:<<any_rule_label>>)-[:stableTargetId]->(merged_node:<<any_merged_label>>)
 WHERE merged_node.identifier = $identifier
 WITH
     merged_node,
-    rule_node,
+    extracted_or_rule_node,
     <<collect_references_and_nested()|indent(4)>> AS refs
 WITH
     merged_node,
     collect(
-        rule_node{.*, entityType: head(labels(rule_node)), _refs: refs}
+        extracted_or_rule_node{.*, entityType: head(labels(extracted_or_rule_node)), _refs: refs}
     ) AS rules
 RETURN
     <%- for field in rule_set_fields %>
