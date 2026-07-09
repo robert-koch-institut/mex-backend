@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - added dedicated get-rule-set query and connector method
+- added `search_rule_items` (GET /rule-item) and `search_rule_items_advanced`
+  (POST /rule-item/_search) endpoints to search for rule items
 
 ### Changes
 
