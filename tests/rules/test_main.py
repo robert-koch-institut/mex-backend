@@ -217,6 +217,62 @@ def test_create_rule_set(client_with_api_key_write_permission: TestClient) -> No
 
 
 @pytest.mark.integration
+def test_search_rule_items(
+    client_with_api_key_read_permission: TestClient,
+    loaded_dummy_data: DummyData,  # noqa: ARG001
+) -> None:
+    response = client_with_api_key_read_permission.get("/v0/rule-item")
+    assert response.status_code == status.HTTP_200_OK, response.text
+    result = response.json()
+    # two dummy rule sets, each with additive/subtractive/preventive/workflow rules
+    assert result["total"] == 8
+    assert {item["$type"] for item in result["items"]} == {
+        "AdditiveOrganizationalUnit",
+        "SubtractiveOrganizationalUnit",
+        "PreventiveOrganizationalUnit",
+        "WorkflowOrganizationalUnit",
+    }
+
+
+@pytest.mark.integration
+def test_search_rule_items_by_entity_type(
+    client_with_api_key_read_permission: TestClient,
+    loaded_dummy_data: DummyData,  # noqa: ARG001
+) -> None:
+    response = client_with_api_key_read_permission.get(
+        "/v0/rule-item?entityType=AdditiveOrganizationalUnit"
+    )
+    assert response.status_code == status.HTTP_200_OK, response.text
+    result = response.json()
+    assert result["total"] == 2
+    assert all(
+        item["$type"] == "AdditiveOrganizationalUnit" for item in result["items"]
+    )
+
+
+@pytest.mark.integration
+def test_search_rule_items_advanced(
+    client_with_api_key_read_permission: TestClient,
+    loaded_dummy_data: DummyData,
+) -> None:
+    parent_unit = loaded_dummy_data["unit_1"].stableTargetId
+    response = client_with_api_key_read_permission.post(
+        "/v0/rule-item/_search",
+        json={
+            "entityType": ["AdditiveOrganizationalUnit"],
+            "referenceFilters": [{"field": "parentUnit", "identifiers": [parent_unit]}],
+        },
+    )
+    assert response.status_code == status.HTTP_200_OK, response.text
+    result = response.json()
+    # both dummy rule sets add an additive unit pointing at unit_1 as parentUnit
+    assert result["total"] == 2
+    assert all(
+        item["$type"] == "AdditiveOrganizationalUnit" for item in result["items"]
+    )
+
+
+@pytest.mark.integration
 def test_get_rule_set_not_found(
     client_with_api_key_write_permission: TestClient,
 ) -> None:
