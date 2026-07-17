@@ -67,7 +67,7 @@ def add_workflow_targets_for_switched_off_merged_items() -> None:
     )
 
     for merged_class in MERGED_MODEL_CLASSES:
-        if merged_class.stemType in ["PrimarySource", "Persons"]:
+        if merged_class.stemType in ["PrimarySource", "Person"]:
             continue  # these models don't have required fields
         merged_class_name = merged_class.__name__
 
