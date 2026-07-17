@@ -28,6 +28,7 @@ from mex.common.models import (
     MERGED_MODEL_CLASSES_BY_NAME,
     MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
     RULE_MODEL_CLASSES_BY_NAME,
+    RULE_MODEL_CLASSES_BY_TYPE_BY_NAME,
 )
 from mex.common.transform import (
     dromedary_to_kebab,
@@ -102,6 +103,7 @@ class QueryBuilder(BaseConnector):
             any_extracted_or_rule_label="|".join(
                 chain(EXTRACTED_MODEL_CLASSES_BY_NAME, RULE_MODEL_CLASSES_BY_NAME)
             ),
+            rule_set_fields=list(RULE_MODEL_CLASSES_BY_TYPE_BY_NAME),
             no_reference=NO_REFERENCE_SENTINEL,
             mex_editor_primary_source=str(MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID),
         )
