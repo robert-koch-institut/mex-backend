@@ -20,7 +20,7 @@ if TYPE_CHECKING:  # pragma: no cover
 def _search_all_preview_items(
     entity_type: list[str],
 ) -> Generator[AnyPreviewModel]:
-    """Fetch all preview items form db (handling limit of 100 per request)."""
+    """Fetch all preview items from db (handling limit of 100 per request)."""
     connector = BackendApiConnector.get()
     response = connector.fetch_preview_items(entity_type=entity_type, limit=1)
     total_item_number = response.total
