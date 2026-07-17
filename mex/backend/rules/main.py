@@ -1,20 +1,75 @@
+from collections.abc import Sequence
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Path
+from fastapi import APIRouter, Body, Depends, HTTPException, Path, Query
 from starlette import status
 
 from mex.backend.graph.exceptions import NoResultFoundError
+from mex.backend.models import ReferenceFilter
 from mex.backend.rules.helpers import (
     create_and_get_rule_set,
     delete_rule_set_from_graph,
     get_rule_set_from_graph,
+    search_rule_items_in_graph,
     update_and_get_rule_set,
 )
 from mex.backend.security import has_read_access, has_write_access
-from mex.common.models import AnyRuleSetRequest, AnyRuleSetResponse
+from mex.backend.types import RuleType
+from mex.common.models import (
+    AnyRuleModel,
+    AnyRuleSetRequest,
+    AnyRuleSetResponse,
+    PaginatedItemsContainer,
+)
 from mex.common.types import Identifier
 
 router = APIRouter()
+
+
+@router.get("/rule-item", tags=["editor"], dependencies=[Depends(has_read_access)])
+def search_rule_items(
+    q: Annotated[str, Query(max_length=100)] = "",
+    entityType: Annotated[Sequence[RuleType], Query(max_length=len(RuleType))] = [],
+    skip: Annotated[int, Query(ge=0, le=10e10)] = 0,
+    limit: Annotated[int, Query(ge=1, le=100)] = 10,
+) -> PaginatedItemsContainer[AnyRuleModel]:
+    """Search for rule items using simple filters.
+
+    For complex queries combining multiple reference filters, use POST
+    /rule-item/_search
+    """
+    return search_rule_items_in_graph(
+        query_string=q,
+        entity_type=[str(t.value) for t in entityType or RuleType],
+        skip=skip,
+        limit=limit,
+    )
+
+
+@router.post(
+    "/rule-item/_search", tags=["editor"], dependencies=[Depends(has_read_access)]
+)
+def search_rule_items_advanced(
+    q: Annotated[str, Body(max_length=100)] = "",
+    entityType: Annotated[Sequence[RuleType], Body(max_length=len(RuleType))] = [],
+    referenceFilters: Annotated[Sequence[ReferenceFilter], Body(max_length=100)]
+    | None = None,
+    skip: Annotated[int, Body(ge=0, le=10e10)] = 0,
+    limit: Annotated[int, Body(ge=1, le=100)] = 10,
+) -> PaginatedItemsContainer[AnyRuleModel]:
+    """Search for rule items with advanced filter combinations.
+
+    Use this endpoint for:
+    - Multiple reference filters combined with AND logic, e.g. hadPrimarySource AND
+      unitOf
+    """
+    return search_rule_items_in_graph(
+        query_string=q,
+        entity_type=[str(t.value) for t in entityType or RuleType],
+        reference_filters=referenceFilters,
+        skip=skip,
+        limit=limit,
+    )
 
 
 @router.post(

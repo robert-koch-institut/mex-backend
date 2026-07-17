@@ -6,6 +6,7 @@ from mex.common.fields import ALL_REFERENCE_FIELD_NAMES
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
+    RULE_MODEL_CLASSES_BY_NAME,
 )
 from mex.common.transform import dromedary_to_snake
 
@@ -76,6 +77,12 @@ class MergedType(Enum, metaclass=DynamicStrEnum):
     """Enumeration of possible types for merged items."""
 
     __names__ = list(MERGED_MODEL_CLASSES_BY_NAME)
+
+
+class RuleType(Enum, metaclass=DynamicStrEnum):
+    """Enumeration of possible types for rule items."""
+
+    __names__ = list(RULE_MODEL_CLASSES_BY_NAME)
 
 
 class ReferenceFieldName(Enum, metaclass=DynamicStrEnum):
