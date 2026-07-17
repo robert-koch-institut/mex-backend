@@ -1,5 +1,8 @@
 from collections import deque
+from copy import deepcopy
 from typing import TYPE_CHECKING
+
+import click
 
 from mex.backend.graph.connector import GraphConnector
 from mex.common.backend_api.connector import BackendApiConnector
@@ -49,7 +52,7 @@ def _find_broken_item_ids(
     return list(preview_items_ids - merged_item_ids)
 
 
-def add_workflow_targets_for_switched_off_merged_items() -> None:
+def add_workflow_targets_for_switched_off_merged_items(*, dry_run: bool) -> None:
     """Set forbidden publishing targets for "switched off" merged items.
 
     Finds items which exists as preview item but not as merged item (i.e. required
@@ -94,14 +97,27 @@ def add_workflow_targets_for_switched_off_merged_items() -> None:
             ]
             if collected_fields_per_item:
                 if all(field in collected_fields_per_item for field in required_fields):
-                    for target in forbidden_targets:
-                        if target not in rule_set.workflow.forbiddenPublishingTarget:
+                    targets_to_add = [
+                        target
+                        for target in forbidden_targets
+                        if target not in rule_set.workflow.forbiddenPublishingTarget
+                    ]
+                    if dry_run:  # Dry run: don't call ingest_items.
+                        simulated = deepcopy(rule_set)  # avoid mutating real objects
+                        for target in targets_to_add:
+                            simulated.workflow.forbiddenPublishingTarget.append(target)
+                        logger.info(
+                            f"DRY RUN: would populate workflow for {merged_class_name} "
+                            f"id {stid} with {[t.name for t in targets_to_add]}"
+                        )
+                    else:  # Real run: add missing targets and ingest
+                        for target in targets_to_add:
                             rule_set.workflow.forbiddenPublishingTarget.append(target)
-                    deque(connector_graph.ingest_items([rule_set]))
-                    logger.info(
-                        f"step - success: workflow rule successfully "
-                        f"populated for {merged_class_name} id {stid}"
-                    )
+                        deque(connector_graph.ingest_items([rule_set]))
+                        logger.info(
+                            f"step - success: workflow rule successfully "
+                            f"populated for {merged_class_name} id {stid}"
+                        )
                 else:
                     logger.info(
                         f"step - note: not all required fields are switched "
@@ -119,5 +135,16 @@ def add_workflow_targets_for_switched_off_merged_items() -> None:
     )
 
 
+@click.command()
+@click.option(
+    "--dry-run/--no-dry-run",
+    default=True,
+    help="Default: dry run (no writing to data base). Use '--no-dry-run' for real run.",
+)
+def main(*, dry_run: bool) -> None:
+    """Set '--no-dry-run' for actually populating the writing workflow rule."""
+    add_workflow_targets_for_switched_off_merged_items(dry_run=dry_run)
+
+
 if __name__ == "__main__":
-    add_workflow_targets_for_switched_off_merged_items()
+    main()
