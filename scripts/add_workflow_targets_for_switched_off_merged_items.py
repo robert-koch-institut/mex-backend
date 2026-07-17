@@ -68,20 +68,20 @@ def add_workflow_targets_for_switched_off_merged_items(*, dry_run: bool) -> None
     logger.info(
         "### MIGRATION add_workflow_targets_for_switched_off_merged_items START ###"
     )
+    if dry_run:
+        logger.info("\nDRY RUN - no writing to data base\n")
 
     for merged_class in MERGED_MODEL_CLASSES:
         if merged_class.stemType in ["PrimarySource", "Person"]:
             continue  # these models don't have required fields
         merged_class_name = merged_class.__name__
 
-        logger.info(f"--- Migrating {merged_class_name} now ---")
-
         broken_item_ids = _find_broken_item_ids(connector_backend, merged_class_name)
         if not broken_item_ids:
-            logger.info("Migrating 0 items")
+            logger.info(f"Migrating 0 {merged_class_name}")
             continue
 
-        logger.info(f"Migrating {len(broken_item_ids)} items")
+        logger.info(f"Migrating {len(broken_item_ids)} {merged_class_name}")
 
         required_fields = [
             x
@@ -102,32 +102,38 @@ def add_workflow_targets_for_switched_off_merged_items(*, dry_run: bool) -> None
                         for target in forbidden_targets
                         if target not in rule_set.workflow.forbiddenPublishingTarget
                     ]
+                    if not targets_to_add:
+                        logger.info(
+                            f"---- step - skipped: workflow rule already fully "
+                            f"populated for {merged_class_name} '{stid}'"
+                        )
+                        continue
                     if dry_run:  # Dry run: don't call ingest_items.
                         simulated = deepcopy(rule_set)  # avoid mutating real objects
                         for target in targets_to_add:
                             simulated.workflow.forbiddenPublishingTarget.append(target)
                         logger.info(
-                            f"DRY RUN: would populate workflow for {merged_class_name} "
-                            f"id {stid} with {[t.name for t in targets_to_add]}"
+                            f"---- DRY RUN: would set workflow for {merged_class_name} "
+                            f"'{stid}' to {[t.name for t in targets_to_add]}"
                         )
                     else:  # Real run: add missing targets and ingest
                         for target in targets_to_add:
                             rule_set.workflow.forbiddenPublishingTarget.append(target)
                         deque(connector_graph.ingest_items([rule_set]))
                         logger.info(
-                            f"step - success: workflow rule successfully "
-                            f"populated for {merged_class_name} id {stid}"
+                            f"---- step - success: workflow for {merged_class_name}"
+                            f"'{stid}' set as {[t.name for t in targets_to_add]}"
                         )
                 else:
                     logger.info(
-                        f"step - note: not all required fields are switched "
-                        f"off for {merged_class_name} id {stid}: switched off fields "
+                        f"---- step - note: not all required fields are switched "
+                        f"off for {merged_class_name} '{stid}': switched off fields "
                         f"are {collected_fields_per_item}."
                     )
             else:
                 logger.info(
-                    f"step - possible bug: item is broken and should be "
-                    f"checked: {merged_class_name} id {stid}"
+                    f"---- step - possible bug: item is broken and should be "
+                    f"checked: {merged_class_name} '{stid}'"
                 )
 
     logger.info(
