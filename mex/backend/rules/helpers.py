@@ -1,18 +1,72 @@
 from collections import deque
+from typing import TYPE_CHECKING, Annotated
+
+from pydantic import Field
+from pydantic_core import ValidationError
 
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.graph.exceptions import NoResultFoundError
-from mex.backend.models import ReferenceFilter
-from mex.backend.rules.transform import transform_raw_rules_to_rule_set_response
-from mex.backend.types import ReferenceFieldName
+from mex.backend.graph.exceptions import InconsistentGraphError, NoResultFoundError
+from mex.backend.rules.transform import transform_raw_rule_set_to_rule_set_response
 from mex.common.logging import logger
 from mex.common.models import (
     RULE_SET_RESPONSE_CLASSES_BY_NAME,
+    AnyRuleModel,
     AnyRuleSetRequest,
     AnyRuleSetResponse,
+    PaginatedItemsContainer,
 )
 from mex.common.transform import ensure_postfix, ensure_prefix
 from mex.common.types import Identifier
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Sequence
+
+    from mex.backend.models import ReferenceFilter
+
+
+def search_rule_items_in_graph(
+    *,
+    query_string: str | None = None,
+    entity_type: Sequence[str] | None = None,
+    reference_filters: Sequence[ReferenceFilter] | None = None,
+    skip: int = 0,
+    limit: int = 100,
+) -> PaginatedItemsContainer[AnyRuleModel]:
+    """Search for rule items in the graph.
+
+    Args:
+        query_string: Full text search query term
+        entity_type: Optional entity type filter
+        reference_filters: Optional reference field filters
+        skip: How many items to skip for pagination
+        limit: How many items to return at most
+
+    Raises:
+        InconsistentGraphError: When the graph response cannot be parsed
+
+    Returns:
+        Paginated list of rule items
+    """
+    connector = GraphConnector.get()
+    graph_result = connector.fetch_rule_items(
+        query_string=query_string,
+        identifier=None,
+        entity_type=entity_type,
+        reference_filters=reference_filters,
+        skip=skip,
+        limit=limit,
+    )
+    search_result = graph_result.one()
+    for item in search_result["items"]:
+        # stableTargetId is expanded from the stableTargetId relationship, but is not
+        # a field on rule models yet, so drop it before the items are validated
+        item.pop("stableTargetId", None)
+    try:
+        return PaginatedItemsContainer[
+            Annotated[AnyRuleModel, Field(discriminator="entityType")]
+        ].model_validate(search_result)
+    except ValidationError as error:
+        raise InconsistentGraphError from error
 
 
 def create_and_get_rule_set(
@@ -47,21 +101,9 @@ def get_rule_set_from_graph(
 ) -> AnyRuleSetResponse | None:
     """Read a rule set from the graph."""
     connector = GraphConnector.get()
-    graph_result = connector.fetch_rule_items(
-        query_string=None,
-        identifier=None,
-        entity_type=None,
-        reference_filters=[
-            ReferenceFilter(
-                field=ReferenceFieldName("stableTargetId"),
-                identifiers=[stable_target_id],
-            )
-        ],
-        skip=0,
-        limit=4,
-    )
-    if raw_rules := graph_result.one()["items"]:
-        return transform_raw_rules_to_rule_set_response(raw_rules)
+    result = connector.fetch_rule_set_response(stable_target_id)
+    if record := result.one_or_none():
+        return transform_raw_rule_set_to_rule_set_response(record)
     return None
 
 
