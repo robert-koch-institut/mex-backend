@@ -28,9 +28,9 @@ from mex.backend.security import (
 from mex.backend.settings import BackendSettings
 from mex.backend.system.main import router as system_router
 from mex.backend.testing.ldap import router as testing_ldap_router
+from mex.backend.testing.person import router as testing_person_router
 from mex.backend.testing.security import has_read_access_mocked, has_write_access_mocked
 from mex.backend.testing.system import router as testing_system_router
-from mex.backend.testing.user import router as testing_user_router
 from mex.common.cli import entrypoint
 
 app = FastAPI(
@@ -64,7 +64,7 @@ router.include_router(preview_router)
 router.include_router(publishable_merged_router)
 router.include_router(rules_router)
 router.include_router(wikidata_router)
-router.include_router(testing_user_router)
+router.include_router(testing_person_router)
 router.include_router(oauth_router)
 router.include_router(system_router)
 router.include_router(testing_system_router)

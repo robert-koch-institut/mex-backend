@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - add dex OIDC provider to compose and CI, federating to slapd via LDAP
-- add `GET /v0/user/me` returning the `MergedPerson` for the authenticated OIDC user
+- add `GET /v0/merged-person/self` returning the `MergedPerson` for the authenticated OIDC user
 
 ### Changes
 
@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- BREAKING: removed `POST /v0/merged-person-from-login` (replaced by `GET /v0/user/me`)
+- BREAKING: removed `POST /v0/merged-person-from-login` (replaced by `GET /v0/merged-person/self`)
 
 ### Fixed
 

@@ -8,10 +8,12 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 @pytest.mark.integration
-def test_get_current_user_success(
+def test_get_current_person_success(
     testing_app_client_with_bearer_write_permission: TestClient,
 ) -> None:
-    response = testing_app_client_with_bearer_write_permission.get("/v0/user/me")
+    response = testing_app_client_with_bearer_write_permission.get(
+        "/v0/merged-person/self"
+    )
     assert response.status_code == status.HTTP_200_OK, response.text
     data = response.json()
     assert data["email"] == ["Writer@rki.com"]

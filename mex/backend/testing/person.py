@@ -16,8 +16,8 @@ from mex.common.types import Validation
 router = APIRouter()
 
 
-@router.get("/user/me", tags=["oauth"])
-def get_current_testing_user(
+@router.get("/merged-person/self", tags=["oauth"])
+def get_current_testing_person(
     username: Annotated[str, Depends(has_oidc_access_mocked)],
 ) -> MergedPerson:
     """Return a mocked merged person for the testing app."""
