@@ -44,7 +44,7 @@ jobs:
           persist-credentials: false
 
       - name: Cache requirements
-        uses: actions/cache@2c8a9bd7457de244a408f35966fab2fb45fda9c8 # v6.0.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         env:
           cache-name: cache-requirements
         with:
@@ -96,7 +96,7 @@ jobs:
           persist-credentials: false
 
       - name: Login to container registry
-        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4.4.0
         with:
           registry: ghcr.io
           username: ${{github.actor}}
@@ -144,7 +144,7 @@ jobs:
           persist-credentials: false
 
       - name: Cache requirements
-        uses: actions/cache@2c8a9bd7457de244a408f35966fab2fb45fda9c8 # v6.0.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         env:
           cache-name: cache-requirements
         with:

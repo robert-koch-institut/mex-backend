@@ -32,7 +32,6 @@ def test_get_current_user(
             objectGUID="bFQoRhcVH5DHUI"
         )
         mock_ldap_connector_get.return_value = mock_ldap_connector
-
         mock_provider = MagicMock()
         mock_provider.fetch.return_value = [MagicMock(stableTargetId="bFQoRhcVH5DHUI")]
         mock_get_provider.return_value = mock_provider

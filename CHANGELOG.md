@@ -24,6 +24,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [4.0.3] - 2026-07-08
+
+### Changes
+
+- simplify aux endpoints and ensure proper caching
+
+## [4.0.2] - 2026-07-06
+
+### Fixed
+
+- move migration into script folder to unblock app start
+- added missing http-test-server executable to final stage of docker image
+
 ## [4.0.1] - 2026-07-01
 
 ### Fixed
