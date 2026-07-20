@@ -124,15 +124,13 @@ def add_workflow_targets_for_switched_off_merged_items(*, dry_run: bool) -> None
                 continue
             if dry_run:  # Dry run: don't call ingest_items.
                 simulated = deepcopy(rule_set)  # avoid mutating real objects
-                for target in targets_to_add:
-                    simulated.workflow.forbiddenPublishingTarget.append(target)
+                simulated.workflow.forbiddenPublishingTarget.extend(targets_to_add)
                 logger.info(
                     f"---- DRY RUN: would set workflow for {merged_class_name} "
                     f"'{stid}' to {[t.name for t in targets_to_add]}"
                 )
             else:  # Real run: add missing targets and ingest
-                for target in targets_to_add:
-                    rule_set.workflow.forbiddenPublishingTarget.append(target)
+                rule_set.workflow.forbiddenPublishingTarget.extend(targets_to_add)
                 deque(connector_graph.ingest_items([rule_set]))
                 logger.info(
                     f"---- step - success: workflow for {merged_class_name}"
