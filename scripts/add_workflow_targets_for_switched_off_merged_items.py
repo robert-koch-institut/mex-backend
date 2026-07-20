@@ -1,10 +1,8 @@
-from collections import deque
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
 import click
 
-from mex.backend.graph.connector import GraphConnector
 from mex.common.backend_api.connector import BackendApiConnector
 from mex.common.fields import (
     REQUIRED_FIELDS_BY_CLASS_NAME,
@@ -13,6 +11,7 @@ from mex.common.logging import logger
 from mex.common.models import (
     MERGED_MODEL_CLASSES,
     AnyPreviewModel,
+    RuleSetRequestTypeAdapter,
 )
 from mex.common.types import PublishingTarget
 
@@ -60,7 +59,6 @@ def add_workflow_targets_for_switched_off_merged_items(*, dry_run: bool) -> None
     with all required fields switched-off, a workflow rule with forbidden publishing
     targets is created.
     """
-    connector_graph = GraphConnector.get()
     connector_backend = BackendApiConnector.get()
 
     forbidden_targets = [PublishingTarget.INVENIO, PublishingTarget.DATENKOMPASS]
@@ -131,7 +129,17 @@ def add_workflow_targets_for_switched_off_merged_items(*, dry_run: bool) -> None
                 )
             else:  # Real run: add missing targets and ingest
                 rule_set.workflow.forbiddenPublishingTarget.extend(targets_to_add)
-                deque(connector_graph.ingest_items([rule_set]))
+                rule_set_request = RuleSetRequestTypeAdapter.validate_python(
+                    {
+                        **rule_set.model_dump(exclude={"stableTargetId"}),
+                        "entityType": rule_set.entityType.replace(
+                            "Response", "Request"
+                        ),
+                    }
+                )
+                connector_backend.update_rule_set(
+                    rule_set.stableTargetId, rule_set_request
+                )
                 logger.info(
                     f"---- step - success: workflow for {merged_class_name}"
                     f"'{stid}' set as {[t.name for t in targets_to_add]}"
