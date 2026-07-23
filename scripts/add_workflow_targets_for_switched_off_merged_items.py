@@ -1,8 +1,8 @@
 from copy import deepcopy
-from typing import TYPE_CHECKING
 
 import click
 
+from mex.backend.graph.connector import GraphConnector
 from mex.common.backend_api.connector import BackendApiConnector
 from mex.common.fields import (
     REQUIRED_FIELDS_BY_CLASS_NAME,
@@ -10,45 +10,9 @@ from mex.common.fields import (
 from mex.common.logging import logger
 from mex.common.models import (
     MERGED_MODEL_CLASSES,
-    AnyPreviewModel,
     RuleSetRequestTypeAdapter,
 )
 from mex.common.types import PublishingTarget
-
-if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Generator
-
-
-def _search_all_preview_items(
-    entity_type: list[str],
-) -> Generator[AnyPreviewModel]:
-    """Fetch all preview items from db (handling limit of 100 per request)."""
-    connector = BackendApiConnector.get()
-    response = connector.fetch_preview_items(entity_type=entity_type, limit=1)
-    total_item_number = response.total
-    item_number_limit = 100
-    for item_counter in range(0, total_item_number, item_number_limit):
-        response = connector.fetch_preview_items(
-            entity_type=entity_type,
-            skip=item_counter,
-            limit=item_number_limit,
-        )
-        yield from response.items
-
-
-def _find_broken_item_ids(
-    connector_backend: BackendApiConnector, merged_class_name: str
-) -> list[str]:
-    """Find merged items which are 'broken' (at least 1 required field switched off)."""
-    merged_items = connector_backend.fetch_all_merged_items(
-        entity_type=[merged_class_name]
-    )
-    merged_item_ids = {str(x.identifier) for x in merged_items}
-
-    preview_items = _search_all_preview_items(entity_type=[merged_class_name])
-    preview_items_ids = {str(x.identifier) for x in preview_items}
-
-    return list(preview_items_ids - merged_item_ids)
 
 
 def add_workflow_targets_for_switched_off_merged_items(*, dry_run: bool) -> None:
@@ -74,19 +38,31 @@ def add_workflow_targets_for_switched_off_merged_items(*, dry_run: bool) -> None
             continue  # these models don't have required fields
         merged_class_name = merged_class.__name__
 
-        broken_item_ids = _find_broken_item_ids(connector_backend, merged_class_name)
-        if not broken_item_ids:
+        connector = BackendApiConnector.get()
+        graph_connector = GraphConnector.get()
+        graph_result = graph_connector.fetch_rule_items(
+            query_string=None,
+            identifier=None,
+            entity_type=None,
+            reference_filters=None,
+            skip=0,
+            limit=4000,
+        )
+        items = graph_result.one()["items"]
+        items_with_rule_ids = sorted({item["stableTargetId"][0] for item in items})
+
+        if not items_with_rule_ids:
             logger.info(f"Migrating 0 {merged_class_name}")
             continue
 
-        logger.info(f"Migrating {len(broken_item_ids)} {merged_class_name}")
+        logger.info(f"Migrating {len(items_with_rule_ids)} {merged_class_name}")
 
         required_fields = [
             x
             for x in REQUIRED_FIELDS_BY_CLASS_NAME[merged_class_name]
             if x != "identifier"
         ]
-        for stid in broken_item_ids:
+        for stid in items_with_rule_ids:
             rule_set = connector_backend.get_rule_set(stable_target_id=stid)
             collected_fields_per_item = [
                 field
@@ -95,10 +71,7 @@ def add_workflow_targets_for_switched_off_merged_items(*, dry_run: bool) -> None
             ]
 
             if not collected_fields_per_item:
-                logger.info(
-                    f"---- step - possible bug: item is broken and should be "
-                    f"checked: {merged_class_name} '{stid}'"
-                )
+                logger.info(f"item : {merged_class_name} '{stid}'")
                 continue
 
             if not all(field in collected_fields_per_item for field in required_fields):

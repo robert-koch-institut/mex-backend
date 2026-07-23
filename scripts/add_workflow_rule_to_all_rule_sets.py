@@ -24,49 +24,52 @@ def add_workflow_rule_to_all_rule_sets() -> None:
 
     number_of_rules_after_migration = 4
 
-    for raw_rules in get_all_raw_rules(connector):
+    for index, raw_rules in enumerate(get_all_raw_rules(connector), start=1):
         if len(raw_rules) == number_of_rules_after_migration:
             continue
         rule_set = transform_three_raw_rules_to_rule_set_response(raw_rules)
 
         deque(connector.ingest_items([rule_set]))
+        logger.info(
+            "ingested %s: %s:%s", index, rule_set.entityType, rule_set.stableTargetId
+        )
     logger.info("migration add_workflow_rule_to_all_rule_sets complete")
 
 
 def get_all_raw_rules(connector: GraphConnector) -> Generator[list[dict[str, Any]]]:
     """Get all raw rules in database."""
-    for item in get_all_merged_item_results(connector):
-        raw_rules = [
-            component
-            for component in item["_components"]
-            if component["entityType"] in RULE_MODEL_CLASSES_BY_NAME
-        ]
-        if raw_rules:
-            yield raw_rules
-
-
-def get_all_merged_item_results(connector: GraphConnector) -> Generator[dict[str, Any]]:
-    """Get all merged items from database."""
-    result = connector.fetch_merged_items(
+    graph_result = connector.fetch_rule_items(
         query_string=None,
         identifier=None,
         entity_type=None,
         reference_filters=None,
         skip=0,
-        limit=1,
+        limit=4000,
     )
-    total_item_number = result["total"]
-    item_number_limit = 100  # 100 is the maximum possible number per get-request
-    for item_counter in range(0, total_item_number, item_number_limit):
+    items = graph_result.one()["items"]
+    rule_ids = sorted({item["stableTargetId"][0] for item in items})
+
+    logger.info("found %s rule_sets", len(rule_ids))
+
+    for rule_id in rule_ids:
         result = connector.fetch_merged_items(
             query_string=None,
-            identifier=None,
+            identifier=rule_id,
             entity_type=None,
             reference_filters=None,
-            skip=item_counter,
-            limit=item_number_limit,
+            skip=0,
+            limit=100,
         )
-        yield from result["items"]
+        if len(result["items"]) != 1:
+            raise RuntimeError
+        for item in result["items"]:
+            raw_rules = [
+                component
+                for component in item["_components"]
+                if component["entityType"] in RULE_MODEL_CLASSES_BY_NAME
+            ]
+            if raw_rules:
+                yield raw_rules
 
 
 def transform_three_raw_rules_to_rule_set_response(
