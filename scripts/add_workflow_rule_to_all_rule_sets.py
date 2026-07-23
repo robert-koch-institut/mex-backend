@@ -1,6 +1,8 @@
 from collections import deque
 from typing import TYPE_CHECKING, Any
 
+import click
+
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import InconsistentGraphError
 from mex.common.logging import logger
@@ -17,39 +19,67 @@ if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Generator, Sequence
 
 
-def add_workflow_rule_to_all_rule_sets() -> None:
-    """Add workflow rule to all rule sets in database."""
+@click.command()
+@click.option(
+    "--dry-run/--no-dry-run",
+    default=True,
+    help="Default: dry run (no writing to data base). Use '--no-dry-run' for real run.",
+)
+def add_workflow_rule_to_all_rule_sets(*, dry_run: bool) -> None:
+    """Add workflow rule to all rule sets in database.
+
+    Finds all rule sets in the graph and checks how many rules each one contains.
+    Rule sets that already have four rules (including a workflow rule) are skipped.
+    Rule sets with only three rules (additive, subtractive, preventive) are
+    re-validated as rule set responses, which adds an empty workflow rule, and
+    then re-ingested into the graph.
+    """
     logger.info("migration add_workflow_rule_to_all_rule_sets started")
+    if dry_run:
+        logger.info("\nDRY RUN - not writing to database\n")
+
     connector = GraphConnector.get()
 
     number_of_rules_after_migration = 4
 
-    for index, raw_rules in enumerate(get_all_raw_rules(connector), start=1):
+    for index, raw_rules in enumerate(get_all_raw_rules(), start=1):
         if len(raw_rules) == number_of_rules_after_migration:
             continue
         rule_set = transform_three_raw_rules_to_rule_set_response(raw_rules)
 
-        deque(connector.ingest_items([rule_set]))
-        logger.info(
-            "ingested %s: %s:%s", index, rule_set.entityType, rule_set.stableTargetId
-        )
+        if dry_run:  # Dry run: don't call ingest_items.
+            logger.info(
+                "DRY RUN: would ingest %s: %s:%s",
+                index,
+                rule_set.entityType,
+                rule_set.stableTargetId,
+            )
+        else:  # Real run: ingest rule set with added workflow rule.
+            deque(connector.ingest_items([rule_set]))
+            logger.info(
+                "ingested %s: %s:%s",
+                index,
+                rule_set.entityType,
+                rule_set.stableTargetId,
+            )
     logger.info("migration add_workflow_rule_to_all_rule_sets complete")
 
 
-def get_all_raw_rules(connector: GraphConnector) -> Generator[list[dict[str, Any]]]:
+def get_all_raw_rules() -> Generator[list[dict[str, Any]]]:
     """Get all raw rules in database."""
+    connector = GraphConnector.get()
     graph_result = connector.fetch_rule_items(
         query_string=None,
         identifier=None,
         entity_type=None,
         reference_filters=None,
         skip=0,
-        limit=4000,
+        limit=5000,
     )
     items = graph_result.one()["items"]
     rule_ids = sorted({item["stableTargetId"][0] for item in items})
 
-    logger.info("found %s rule_sets", len(rule_ids))
+    logger.info("Migrating %s rule_sets", len(rule_ids))
 
     for rule_id in rule_ids:
         result = connector.fetch_merged_items(
