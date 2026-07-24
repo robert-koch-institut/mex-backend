@@ -16,11 +16,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- updated the item-matching flow to merged-to-merged, not extracted-to-merged
+- renamed the "match" nomenclature to reduce confusion, run with "merge" now
+
 ### Deprecated
 
 ### Removed
 
 ### Fixed
+
+- fixed naming of `includeRuleSet` for deletion endpoint (connector already uses camel)
 
 ### Security
 

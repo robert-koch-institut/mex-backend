@@ -14,7 +14,7 @@ from neo4j.exceptions import ConstraintError, Neo4jError
 from mex.backend.graph.exceptions import (
     DeletionFailedError,
     IngestionError,
-    MatchingError,
+    MergingError,
 )
 from mex.backend.graph.models import (
     MEX_EDITOR_PRIMARY_SOURCE,
@@ -504,23 +504,23 @@ class GraphConnector(BaseConnector):
                         tx.commit()
                 yield
 
-    def _check_match_preconditions_tx(
+    def _check_merge_preconditions_tx(
         self,
         tx: Transaction,
-        extracted_item: AnyExtractedModel,
-        merged_item: AnyMergedModel,
+        goner: AnyMergedModel,
+        keeper: AnyMergedModel,
     ) -> None:
-        """Raise an error when the preconditions for performing a match aren't met."""
+        """Raise an error when the preconditions for performing a merge aren't met."""
         settings = BackendSettings.get()
         query_builder = QueryBuilder.get()
-        check_match_preconditions_query = query_builder.check_match_preconditions()
+        check_merge_preconditions_query = query_builder.check_merge_preconditions()
 
         preconditions = Result(
             tx.run(
-                check_match_preconditions_query.render(),
-                extracted_identifier=str(extracted_item.identifier),
-                merged_identifier=str(merged_item.identifier),
-                blocked_types=[t.value for t in settings.non_matchable_types],
+                check_merge_preconditions_query.render(),
+                goner_identifier=str(goner.identifier),
+                keeper_identifier=str(keeper.identifier),
+                non_mergeable_types=[t.value for t in settings.non_mergeable_types],
             )
         )
         results = preconditions.one()
@@ -536,39 +536,38 @@ class GraphConnector(BaseConnector):
                 parts.append(f"Violated: {', '.join(violated)}")
             if unverifiable:
                 parts.append(f"Unverifiable: {', '.join(unverifiable)}")
-            msg = f"Matching precondition check failed. {'. '.join(parts)}"
-            raise MatchingError(msg)
+            msg = f"Merging precondition check failed. {'. '.join(parts)}"
+            raise MergingError(msg)
 
-    def _match_item_tx(
+    def _merge_items_tx(
         self,
         tx: Transaction,
-        extracted_item: AnyExtractedModel,
-        merged_item: AnyMergedModel,
+        goner: AnyMergedModel,
+        keeper: AnyMergedModel,
     ) -> None:
-        """Run all required matching steps in a single transaction."""
-        self._check_match_preconditions_tx(tx, extracted_item, merged_item)
+        """Run all required merging steps in a single transaction."""
+        self._check_merge_preconditions_tx(tx, goner, keeper)
         raise NotImplementedError
 
-    def match_item(
+    def merge_items(
         self,
-        extracted_item: AnyExtractedModel,
-        merged_item: AnyMergedModel,
+        goner: AnyMergedModel,
+        keeper: AnyMergedModel,
     ) -> None:
-        """Match an extracted item to a new merged item and clean up afterwards."""
+        """Merge a goner merged item into a keeper merged item."""
         settings = BackendSettings.get()
         with (
             self.driver.session(default_access_mode=WRITE_ACCESS) as session,
             session.begin_transaction(
                 timeout=settings.graph_tx_timeout,
                 metadata={
-                    "extracted_identifier": extracted_item.identifier,
-                    "old_merged_identifier": extracted_item.stableTargetId,
-                    "new_merged_identifier": merged_item.identifier,
+                    "goner_identifier": goner.identifier,
+                    "keeper_identifier": keeper.identifier,
                 },
             ) as tx,
         ):
             try:
-                self._match_item_tx(tx, extracted_item, merged_item)
+                self._merge_items_tx(tx, goner, keeper)
             except:
                 tx.rollback()
                 raise
