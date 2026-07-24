@@ -15,6 +15,7 @@ def test_all_endpoints_require_authorization(entrypoint_app: TestClient) -> None
     excluded_routes = [
         "/v0/_system/check",
         "/v0/_system/metrics",
+        "/v0/oauth/token",
     ]
     app = cast("FastAPI", entrypoint_app.app)
     for path, operations in app.openapi()["paths"].items():

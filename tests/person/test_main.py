@@ -8,33 +8,32 @@ if TYPE_CHECKING:  # pragma: no cover
     from fastapi.testclient import TestClient
 
 
-def test_get_merged_person_from_login(
-    client_that_is_ldap_authenticated: TestClient,
+def test_get_current_person(
+    client_with_bearer_write_permission: TestClient,
 ) -> None:
     with (
-        patch("mex.backend.security.Connection") as mock_connection,
-        patch("mex.backend.ldap.main.LDAPConnector.get") as mock_ldap_connector_get,
-        patch("mex.backend.ldap.main.get_provider") as mock_get_provider,
-        patch("mex.backend.ldap.main.get_merged_item") as mock_get_merged_item,
+        patch("mex.backend.security._get_jwks_client") as mock_get_jwks_client,
         patch(
-            "mex.backend.ldap.main.cached_primary_source"
-        ) as mock_cached_primary_source,
+            "mex.backend.security.jwt.decode",
+            return_value={"preferred_username": "Writer", "groups": ["Abteilung_21"]},
+        ),
+        patch("mex.backend.person.main.LDAPConnector.get") as mock_ldap_connector_get,
+        patch("mex.backend.person.main.get_provider") as mock_get_provider,
+        patch("mex.backend.person.main.get_merged_item") as mock_get_merged_item,
     ):
-        mocked_connection = mock_connection.return_value.__enter__.return_value
-        mocked_connection.server.check_availability.return_value = True
+        mock_jwks_client = MagicMock()
+        mock_jwks_client.get_signing_key_from_jwt.return_value = MagicMock(
+            key="fake_key"
+        )
+        mock_get_jwks_client.return_value = mock_jwks_client
 
         mock_ldap_connector = MagicMock()
         mock_ldap_connector.get_person.return_value = MagicMock(
             objectGUID="bFQoRhcVH5DHUI"
         )
         mock_ldap_connector_get.return_value = mock_ldap_connector
-        mock_cached_primary_source.return_value = MagicMock(
-            stableTargetId="mocked-primary-source-id"
-        )
         mock_provider = MagicMock()
-        mock_provider.fetch.side_effect = [
-            [MagicMock(stableTargetId="bFQoRhcVH5DHUI")],
-        ]
+        mock_provider.fetch.return_value = [MagicMock(stableTargetId="bFQoRhcVH5DHUI")]
         mock_get_provider.return_value = mock_provider
 
         mock_person = MergedPerson(
@@ -45,9 +44,7 @@ def test_get_merged_person_from_login(
         )
         mock_get_merged_item.return_value = mock_person
 
-        response = client_that_is_ldap_authenticated.post(
-            "/v0/merged-person-from-login",
-        )
+        response = client_with_bearer_write_permission.get("/v0/merged-person/self")
         assert response.status_code == 200
         result = response.json()
         assert result is not None
