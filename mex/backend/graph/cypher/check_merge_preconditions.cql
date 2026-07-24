@@ -14,11 +14,11 @@ Args:
     non_mergeable_types: List of merged entity types that cannot be merged
 
 Returns:
-    goner_exists: Boolean indicating if the goner merged item exists
-    keeper_exists: Boolean indicating if the keeper merged item exists
-    not_self_merge: Optional boolean indicating this is not a noop self-merge
-    same_merged_type: Optional boolean indicating the items have the same stem types
-    merging_of_type_is_allowed: Optional boolean indicating if merging is allowed for the type of the merged items
+    goner_exists: Boolean indicating whether the goner merged item exists
+    keeper_exists: Boolean indicating whether the keeper merged item exists
+    not_self_merge: Boolean indicating whether this is not a noop self-merge
+    same_merged_type: Boolean indicating whether the items have the same stem types
+    merging_of_type_is_allowed: Boolean indicating whether types are allowed to merge
 -#>
 OPTIONAL MATCH (goner:<<any_merged_label>> {identifier: $goner_identifier})
 OPTIONAL MATCH (keeper:<<any_merged_label>> {identifier: $keeper_identifier})
