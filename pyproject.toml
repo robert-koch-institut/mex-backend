@@ -1,6 +1,6 @@
 [project]
 name = "mex-backend"
-version = "4.0.3"
+version = "4.1.0"
 description = "Backend server for the RKI metadata exchange."
 authors = [{ name = "MEx Team", email = "mex@rki.de" }]
 readme = { file = "README.md", content-type = "text/markdown" }
@@ -164,5 +164,11 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["mex"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"scripts" = "mex/backend/scripts"
+
 [tool.hatch.build.targets.sdist]
 packages = ["mex"]
+
+[tool.hatch.build.targets.sdist.force-include]
+"scripts" = "scripts"
