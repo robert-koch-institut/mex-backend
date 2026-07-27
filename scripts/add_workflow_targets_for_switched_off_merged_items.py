@@ -52,7 +52,7 @@ def add_workflow_targets_for_switched_off_merged_items(*, dry_run: bool) -> None
 
         if not switched_off_fields:
             logger.info(
-                "[%s] item %s '%s skipped because it has no switched off fields",
+                "[%s] item %s '%s' skipped because it has no switched off fields",
                 index,
                 rule_set.stemType,
                 stable_target_id,
