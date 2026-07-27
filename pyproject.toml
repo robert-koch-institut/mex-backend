@@ -164,5 +164,11 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["mex"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"scripts" = "mex/backend/scripts"
+
 [tool.hatch.build.targets.sdist]
 packages = ["mex"]
+
+[tool.hatch.build.targets.sdist.force-include]
+"scripts" = "scripts"
