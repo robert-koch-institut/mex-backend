@@ -9,11 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- script to set forbidden publishing targets for "toggled off" merged items
-- added dedicated get-rule-set query and connector method
-- added `search_rule_items` (GET /rule-item) and `search_rule_items_advanced`
-  (POST /rule-item/_search) endpoints to search for rule items
-
 ### Changes
 
 - speed up workflow migration scripts to only look at items with rules
@@ -25,6 +20,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [4.1.0] - 2026-07-27
+
+### Added
+
+- script to set forbidden publishing targets for "toggled off" merged items
+- added dedicated get-rule-set query and connector method
+- added `search_rule_items` (GET /rule-item) and `search_rule_items_advanced`
+  (POST /rule-item/_search) endpoints to search for rule items
 
 ## [4.0.3] - 2026-07-08
 
