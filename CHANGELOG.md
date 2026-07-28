@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- workflow migration check: only process items which can't be validated as merged item
+- fix workflow migration check
 
 ### Changes
 
