@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- run the blocking neo4j i/o of the ingest endpoint in a threadpool,
+  so long ingests no longer block the event loop for other requests
+
 ### Deprecated
 
 ### Removed

@@ -1,5 +1,4 @@
 from typing import TYPE_CHECKING
-from unittest.mock import MagicMock
 
 import pytest
 from pytest import MonkeyPatch
@@ -23,6 +22,8 @@ from mex.common.types import Text
 from tests.conftest import DummyData, get_graph
 
 if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Generator
+
     from fastapi.testclient import TestClient
 
 
@@ -1398,7 +1399,10 @@ def test_ingest_mocked(
     dummy_data: DummyData,
     monkeypatch: MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(GraphConnector, "ingest_items", MagicMock())
+    def ingest_items(_: object, models: list[object]) -> Generator[None]:
+        yield from [None] * len(models)
+
+    monkeypatch.setattr(GraphConnector, "ingest_items", ingest_items)
     response = client_with_api_key_write_permission.post(
         "/v0/ingest", json={"items": list(dummy_data.values())}
     )
