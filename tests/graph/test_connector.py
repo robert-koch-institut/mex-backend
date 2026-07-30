@@ -156,6 +156,45 @@ def test_mocked_graph_seed_indices(
 
 
 @pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+def test_seed_indices_excludes_preview_models(
+    mocked_graph: MockedGraph,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        connector_module,
+        "SEARCHABLE_CLASSES",
+        ["ExtractedThis", "PreviewThing", "ExtractedThat"],
+    )
+    monkeypatch.setattr(
+        connector_module,
+        "PREVIEW_MODEL_CLASSES_BY_NAME",
+        {"PreviewThing": object},
+    )
+    monkeypatch.setattr(
+        connector_module,
+        "SEARCHABLE_FIELDS",
+        ["title", "name"],
+    )
+
+    graph = GraphConnector.get()
+    graph._seed_indices()
+
+    assert mocked_graph.call_args_list[-1] == call(
+        call(
+            "create_full_text_search_index",
+            node_labels=["ExtractedThis", "ExtractedThat"],
+            search_fields=["title", "name"],
+        ),
+        {
+            "index_config": {
+                "fulltext.eventually_consistent": True,
+                "fulltext.analyzer": "german",
+            }
+        },
+    )
+
+
+@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
 def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
     mocked_graph.side_effect = [
         [
