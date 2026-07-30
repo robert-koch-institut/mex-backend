@@ -47,9 +47,3 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
-  http-test-server:
-    build:
-      context: .
-    ports:
-      - 8088:8088
-    entrypoint: http-test-server

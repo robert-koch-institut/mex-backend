@@ -39,7 +39,6 @@ dev = [
 [project.scripts]
 backend = "mex.backend.main:main"
 testing-backend = "mex.backend.testing.main:main"
-http-test-server = "mex.backend.http_test_server.main:main"
 backend-seed = "mex.backend.seed.main:main"
 
 [tool.cruft]
