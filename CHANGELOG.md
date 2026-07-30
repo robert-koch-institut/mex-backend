@@ -11,8 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- speed up workflow migration scripts to only look at items with rules
-
 ### Deprecated
 
 ### Removed
@@ -22,6 +20,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [4.2.2] - 2026-07-28
+
+### Fixed
+
+- fix workflow migration check
+
+## [4.2.1] - 2026-07-28
+
+### Added
+
+- workflow migration check: only process items which can't be validated as merged item
+
+## [4.2.0] - 2026-07-28
+
+### Changes
+
+- speed up workflow migration scripts to only look at items with rules
 
 ## [4.1.0] - 2026-07-27
 
