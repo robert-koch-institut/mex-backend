@@ -86,7 +86,7 @@ class GraphConnector(BaseConnector):
                 NotificationDisabledClassification.UNRECOGNIZED,
             ],
             telemetry_disabled=True,
-            max_connection_pool_size=settings.backend_api_parallelization,
+            max_connection_pool_size=settings.graph_max_connection_pool_size,
             max_transaction_retry_time=settings.graph_session_timeout,
         )
 

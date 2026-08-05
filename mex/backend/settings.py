@@ -58,6 +58,15 @@ class BackendSettings(BaseSettings):
         description="Password for authenticating with the graph database.",
         validation_alias="MEX_GRAPH_PASSWORD",
     )
+    graph_max_connection_pool_size: int = Field(
+        32,
+        gt=0,
+        description=(
+            "Maximum number of connections the graph driver keeps pooled. "
+            "Caps how many graph operations can run at the same time."
+        ),
+        validation_alias="MEX_GRAPH_MAX_CONNECTION_POOL_SIZE",
+    )
     graph_tx_timeout: int | float = Field(
         15.0,
         description=(
