@@ -29,6 +29,15 @@ class BackendSettings(BaseSettings):
         description="Root path that the backend server should run under.",
         validation_alias="MEX_BACKEND_ROOT_PATH",
     )
+    backend_graceful_shutdown_timeout: int = Field(
+        30,
+        gt=0,
+        description=(
+            "Seconds to wait for in-flight requests on shutdown, "
+            "after which the server cancels them."
+        ),
+        validation_alias="MEX_BACKEND_GRACEFUL_SHUTDOWN_TIMEOUT",
+    )
     graph_url: str = Field(
         "neo4j://localhost:7687",
         description="URL for connecting to the graph database.",

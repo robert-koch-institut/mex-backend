@@ -48,4 +48,7 @@ async def ingest_items(
                 logger.warning(f"client disconnected after {index} items were ingested")
                 break
     finally:
+        # when the generator does not exhaust in time, either because the client
+        # disconnected or because uvicorn is shutting down and raised a CancelledError,
+        # we need to manually close the generator, to release the neo4j session.
         await run_in_threadpool(generator.close)
