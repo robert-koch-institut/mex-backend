@@ -986,7 +986,7 @@ def test_delete_merged_item(
     ],
 )
 @pytest.mark.integration
-def test_delete_merged_item_fails(  # noqa: PLR0913
+def test_delete_merged_item_fails(  # noqa: PLR0913, PLR0917
     client_with_api_key_write_permission: TestClient,
     loaded_dummy_data: DummyData,
     item_name: DummyDataName,
