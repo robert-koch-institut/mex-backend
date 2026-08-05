@@ -39,7 +39,9 @@ async def ingest_items(
     index = 0
     try:
         # the generator does blocking neo4j i/o, so advance it in a worker thread
-        # to keep the event loop free for other requests during long ingests
+        # to keep the event loop free for other requests during long ingests.
+        # we use the sentinel object `EXHAUSTED` here because we can't intercept
+        # see: https://docs.python.org/3/library/exceptions.html#StopIteration
         while await run_in_threadpool(next, generator, EXHAUSTED) is not EXHAUSTED:
             index += 1
             if await request.is_disconnected():
