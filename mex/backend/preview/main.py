@@ -37,7 +37,7 @@ def get_preview_item(
 
 
 @router.get("/preview-item", tags=["editor"], dependencies=[Depends(has_read_access)])
-def search_preview_items(  # noqa: PLR0913
+def search_preview_items(  # noqa: PLR0913, PLR0917
     q: Annotated[str, Query(max_length=100)] = "",
     identifier: Annotated[Identifier | None, Query()] = None,
     entityType: Annotated[Sequence[MergedType], Query(max_length=len(MergedType))] = [],
@@ -81,7 +81,7 @@ def search_preview_items(  # noqa: PLR0913
 @router.post(
     "/preview-item/_search", tags=["editor"], dependencies=[Depends(has_read_access)]
 )
-def search_preview_items_advanced(  # noqa: PLR0913
+def search_preview_items_advanced(  # noqa: PLR0913, PLR0917
     q: Annotated[str, Body(max_length=100)] = "",
     identifier: Annotated[Identifier | None, Body()] = None,
     entityType: Annotated[Sequence[MergedType], Body(max_length=len(MergedType))] = [],

@@ -227,7 +227,7 @@ def test_assign_identity(
     ],
 )
 @pytest.mark.usefixtures("mocked_valkey")
-def test_fetch_identities_mocked(  # noqa: PLR0913
+def test_fetch_identities_mocked(  # noqa: PLR0913, PLR0917
     mocked_graph: MockedGraph,
     mocked_return: list[dict[str, str]],
     had_primary_source: MergedPrimarySourceIdentifier | None,
