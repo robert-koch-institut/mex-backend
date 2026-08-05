@@ -1294,16 +1294,19 @@ def test_ingest_artificial_data(
     assert response.json() == {
         "items": [
             {
-                "$type": "MergedPerson",
-                "affiliation": [],
-                "email": [],
-                "familyName": [],
-                "fullName": [],
-                "givenName": ["Stein"],
+                "$type": "MergedVariableGroup",
+                "containedBy": ["bFQoRhcVH5DHU7"],
                 "identifier": "bFQoRhcVH5DHVj",
-                "isniId": [],
-                "memberOf": [],
-                "orcidId": [],
+                "label": [
+                    {
+                        "language": "de",
+                        "value": "Wasser deshalb baden drehen fallen dich "
+                        "rennen. Plötzlich Feuer Schüler müde weiter "
+                        "nächste ins. Deshalb nass scheinen Nase "
+                        "darauf rot hier. Die wer dafür mal mehr rufen "
+                        "draußen.",
+                    }
+                ],
                 "supersededBy": None,
             }
         ],
