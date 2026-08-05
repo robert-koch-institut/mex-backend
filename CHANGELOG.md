@@ -2,14 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and
+this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
 ### Added
 
 ### Changes
+
 - GraphConnector does not create index of PreviewModels anymore
 
 ### Deprecated
@@ -17,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Fixed
+
+- expected test-data due to mex-artificial update
 
 ### Security
 
@@ -195,8 +198,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-- require write access for DELETE `/v0/merged-item/{identifier}` endpoint
-  reported by Simon Weber, Volker Schönefeld, Chiara Fliegner of Machine Spirits
+- require write access for DELETE `/v0/merged-item/{identifier}` endpoint reported by
+  Simon Weber, Volker Schönefeld, Chiara Fliegner of Machine Spirits
   see https://www.machinespirits.com/advisory/93212f
 
 ## [1.7.2] - 2026-03-13
@@ -774,8 +777,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to also include non-indexable models (namely: merged models)
 - BREAKING: rename `fetch_extracted_data` to a more consistent `fetch_extracted_items`
 - harmonize PagedAuxiliaryResponse with Merged- and ExtractedItemSearchResponse
-- move searching and fetching of extracted and merged items to `helpers` module
-  so they can be reused more easily outside of the endpoint code
+- move searching and fetching of extracted and merged items to `helpers` module so they
+  can be reused more easily outside of the endpoint code
 - use starlette status code constants instead of plain integers for readability
 - BREAKING: rework `create_rule` connector method and endpoint to use RuleSets
 - merged endpoint returns actual merged items. was: extracted items presented as merged
@@ -830,8 +833,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- BREAKING: make `MEX_EXTRACTED_PRIMARY_SOURCE` an instance of its own class
-  instead of ExtractedPrimarySource in order to set static provenance identifiers
+- BREAKING: make `MEX_EXTRACTED_PRIMARY_SOURCE` an instance of its own class instead of
+  ExtractedPrimarySource in order to set static provenance identifiers
 
 ## [0.15.0] - 2024-06-14
 
