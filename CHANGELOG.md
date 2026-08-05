@@ -20,6 +20,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Fixed
 
 - expected test-data due to mex-artificial update
+- ruff linting errors
 
 ### Security
 
