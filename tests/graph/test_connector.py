@@ -2294,7 +2294,7 @@ def test_graph_match_item_preconditions_pass(loaded_dummy_data: DummyData) -> No
 )
 @pytest.mark.integration
 @pytest.mark.usefixtures("loaded_dummy_data")
-def test_graph_match_item_preconditions_failed(  # noqa: PLR0913
+def test_graph_match_item_preconditions_failed(  # noqa: PLR0913, PLR0917
     monkeypatch: MonkeyPatch,
     extracted_identifier: Identifier,
     merged_identifier: Identifier,

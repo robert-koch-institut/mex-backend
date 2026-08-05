@@ -180,7 +180,7 @@ class GraphConnector(BaseConnector):
         with self.driver.session(default_access_mode=access_mode) as session:
             return Result(session.run(query.render(), parameters))
 
-    def _fetch_extracted_or_rule_items(  # noqa: PLR0913
+    def _fetch_extracted_or_rule_items(  # noqa: PLR0913, PLR0917
         self,
         query_string: str | None,
         identifier: str | None,
@@ -230,7 +230,7 @@ class GraphConnector(BaseConnector):
                 item.update(expand_references_in_search_result(item.pop("_refs")))
         return result
 
-    def fetch_extracted_items(  # noqa: PLR0913
+    def fetch_extracted_items(  # noqa: PLR0913, PLR0917
         self,
         query_string: str | None,
         identifier: str | None,
@@ -261,7 +261,7 @@ class GraphConnector(BaseConnector):
             limit=limit,
         )
 
-    def fetch_rule_items(  # noqa: PLR0913
+    def fetch_rule_items(  # noqa: PLR0913, PLR0917
         self,
         query_string: str | None,
         identifier: str | None,
@@ -318,7 +318,7 @@ class GraphConnector(BaseConnector):
                     component.pop("stableTargetId", None)
         return result
 
-    def fetch_merged_items(  # noqa: PLR0913
+    def fetch_merged_items(  # noqa: PLR0913, PLR0917
         self,
         query_string: str | None,
         identifier: str | None,
