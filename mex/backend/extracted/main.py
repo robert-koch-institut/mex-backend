@@ -21,7 +21,7 @@ router = APIRouter()
 
 
 @router.get("/extracted-item", tags=["editor"], dependencies=[Depends(has_read_access)])
-def search_extracted_items(  # noqa: PLR0913
+def search_extracted_items(  # noqa: PLR0913, PLR0917
     q: Annotated[str, Query(max_length=100)] = "",
     stableTargetId: Annotated[
         Identifier | None,
