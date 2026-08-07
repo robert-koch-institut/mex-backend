@@ -11,6 +11,8 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changes
 
+- run the blocking neo4j i/o of the ingest endpoint in a threadpool,
+  so long ingests no longer block the event loop for other requests
 - new template https://github.com/robert-koch-institut/mex-template/releases/tag/1.5.0
 - GraphConnector does not create index of PreviewModels anymore
 
@@ -20,6 +22,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 
+- fixed seed script to ingest items progressively to not restrict item count by RAM
 - expected test-data due to mex-artificial update
 - ruff linting errors
 
