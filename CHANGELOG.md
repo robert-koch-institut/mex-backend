@@ -44,9 +44,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changes
 
-- 
-
-scripts to only look at items with rules
+- speed up workflow migration scripts to only look at items with rules
 
 ## [4.1.0] - 2026-07-27
 
