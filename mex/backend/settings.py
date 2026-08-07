@@ -33,8 +33,7 @@ class BackendSettings(BaseSettings):
         30,
         gt=0,
         description=(
-            "Seconds to wait for in-flight requests on shutdown, "
-            "after which the server cancels them."
+            "Seconds to wait during shutdown before terminating in-flight requests."
         ),
         validation_alias="MEX_BACKEND_GRACEFUL_SHUTDOWN_TIMEOUT",
     )
