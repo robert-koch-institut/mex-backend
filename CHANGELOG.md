@@ -13,7 +13,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - updated the item-matching flow to merged-to-merged, not extracted-to-merged
 - renamed the "match" nomenclature to reduce confusion, run with "merge" now
-- speed up workflow migration scripts to only look at items with rules
+- new template https://github.com/robert-koch-institut/mex-template/releases/tag/1.5.0
 - GraphConnector does not create index of PreviewModels anymore
 
 ### Deprecated
@@ -44,7 +44,9 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changes
 
-- speed up workflow migration scripts to only look at items with rules
+- 
+
+scripts to only look at items with rules
 
 ## [4.1.0] - 2026-07-27
 
