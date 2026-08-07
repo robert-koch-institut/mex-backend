@@ -11,18 +11,20 @@ from mex.backend.helpers import build_reference_filters
 from mex.backend.merged.helpers import (
     delete_merged_item_from_graph,
     get_merged_item_from_graph,
+    merge_items_in_graph,
     search_merged_items_in_graph,
 )
 from mex.backend.models import ReferenceFilter
 from mex.backend.rules.helpers import get_rule_set_from_graph
 from mex.backend.security import has_read_access, has_write_access
 from mex.backend.types import MergedType, ReferenceFieldName
+from mex.common.exceptions import MExError
 from mex.common.models import (
     MERGED_MODEL_CLASSES_BY_NAME,
     AnyMergedModel,
     PaginatedItemsContainer,
 )
-from mex.common.types import Identifier, Validation
+from mex.common.types import AnyMergedIdentifier, Identifier, Validation
 
 router = APIRouter()
 
@@ -117,7 +119,7 @@ def get_merged_item(identifier: Annotated[Identifier, Path()]) -> AnyMergedModel
 )
 def delete_merged_item(
     identifier: Annotated[Identifier, Path()],
-    include_rule_set: Annotated[  # noqa: FBT002
+    includeRuleSet: Annotated[  # noqa: FBT002
         bool,
         Query(
             description="Delete with rule-set or "
@@ -129,9 +131,29 @@ def delete_merged_item(
     connector = GraphConnector.get()
     if not connector.exists_item(identifier, list(MERGED_MODEL_CLASSES_BY_NAME)):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
-    if include_rule_set is False and get_rule_set_from_graph(identifier):
+    if includeRuleSet is False and get_rule_set_from_graph(identifier):
         raise HTTPException(status.HTTP_412_PRECONDITION_FAILED)
     try:
         delete_merged_item_from_graph(identifier)
     except DeletionFailedError as error:
         raise HTTPException(status.HTTP_409_CONFLICT) from error
+
+
+@router.post(
+    "/merge",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(has_write_access)],
+    tags=["editor"],
+)
+def merge_items(
+    gonerIdentifier: Annotated[AnyMergedIdentifier, Body()],
+    keeperIdentifier: Annotated[AnyMergedIdentifier, Body()],
+) -> None:
+    """Merge a goner merged item into a keeper merged item."""
+    try:
+        merge_items_in_graph(gonerIdentifier, keeperIdentifier)
+    except MExError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=list(error.args),
+        ) from None
