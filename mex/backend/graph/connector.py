@@ -483,6 +483,10 @@ class GraphConnector(BaseConnector):
         settings = BackendSettings.get()
         with self.driver.session(default_access_mode=WRITE_ACCESS) as session:
             for model in models:
+                # ingests can run in parallel, but neo4j takes write locks on the
+                # touched nodes and relationships, so transactions writing to the
+                # same graph location are serialized instead of overwriting each other.
+                # see: https://neo4j.com/docs/operations-manual/current/database-internals/concurrent-data-access/
                 with session.begin_transaction(
                     timeout=settings.graph_tx_timeout,
                     metadata={
