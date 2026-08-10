@@ -213,3 +213,14 @@ def delete_merged_item_from_graph(identifier: Identifier) -> None:
         msg = "Merged item was not found."
         raise NoResultFoundError(msg)
     logger.info("deleted item %s: %s", identifier, result.one())
+
+
+def merge_items_in_graph(
+    goner_identifier: Identifier,
+    keeper_identifier: Identifier,
+) -> None:
+    """Merge a goner merged item into a keeper merged item in the graph."""
+    connector = GraphConnector.get()
+    goner = get_merged_item_from_graph(goner_identifier)
+    keeper = get_merged_item_from_graph(keeper_identifier)
+    connector.merge_items(goner, keeper)
