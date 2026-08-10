@@ -44,6 +44,7 @@ from mex.common.logging import logger
 from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
+    PREVIEW_MODEL_CLASSES_BY_NAME,
     RULE_MODEL_CLASSES_BY_NAME,
     RULE_MODEL_CLASSES_BY_TYPE_BY_NAME,
     AnyExtractedModel,
@@ -117,12 +118,17 @@ class GraphConnector(BaseConnector):
     def _seed_indices(self) -> Result:
         """Ensure there is a full text search index for all searchable fields."""
         query_builder = QueryBuilder.get()
+        searchable_classes = [
+            label
+            for label in SEARCHABLE_CLASSES
+            if label not in PREVIEW_MODEL_CLASSES_BY_NAME
+        ]
         result = self.commit(
             query_builder.get_full_text_search_index(),
             access_mode=WRITE_ACCESS,
         )
         if (index := result.one_or_none()) and (
-            set(index["node_labels"]) != set(SEARCHABLE_CLASSES)
+            set(index["node_labels"]) != set(searchable_classes)
             or set(index["search_fields"]) != set(SEARCHABLE_FIELDS)
         ):
             # only drop the index if the classes or fields have changed
@@ -133,7 +139,7 @@ class GraphConnector(BaseConnector):
             logger.info("searchable fields changed: dropped indices")
         result = self.commit(
             query_builder.create_full_text_search_index(
-                node_labels=SEARCHABLE_CLASSES,
+                node_labels=searchable_classes,
                 search_fields=SEARCHABLE_FIELDS,
             ),
             access_mode=WRITE_ACCESS,
@@ -174,7 +180,7 @@ class GraphConnector(BaseConnector):
         with self.driver.session(default_access_mode=access_mode) as session:
             return Result(session.run(query.render(), parameters))
 
-    def _fetch_extracted_or_rule_items(  # noqa: PLR0913
+    def _fetch_extracted_or_rule_items(  # noqa: PLR0913, PLR0917
         self,
         query_string: str | None,
         identifier: str | None,
@@ -224,7 +230,7 @@ class GraphConnector(BaseConnector):
                 item.update(expand_references_in_search_result(item.pop("_refs")))
         return result
 
-    def fetch_extracted_items(  # noqa: PLR0913
+    def fetch_extracted_items(  # noqa: PLR0913, PLR0917
         self,
         query_string: str | None,
         identifier: str | None,
@@ -255,7 +261,7 @@ class GraphConnector(BaseConnector):
             limit=limit,
         )
 
-    def fetch_rule_items(  # noqa: PLR0913
+    def fetch_rule_items(  # noqa: PLR0913, PLR0917
         self,
         query_string: str | None,
         identifier: str | None,
@@ -312,7 +318,7 @@ class GraphConnector(BaseConnector):
                     component.pop("stableTargetId", None)
         return result
 
-    def fetch_merged_items(  # noqa: PLR0913
+    def fetch_merged_items(  # noqa: PLR0913, PLR0917
         self,
         query_string: str | None,
         identifier: str | None,
