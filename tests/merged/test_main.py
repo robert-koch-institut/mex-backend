@@ -908,17 +908,17 @@ def test_get_merged_item_not_found(
         ),
         pytest.param(
             "activity_1",
-            "include_rule_set=true",
+            "includeRuleSet=true",
             id="no-rule-set-with-param",
         ),
         pytest.param(
             "unit_2",
-            "include_rule_set=true",
+            "includeRuleSet=true",
             id="with-rule-set-needs-param",
         ),
         pytest.param(
             "unit_3_standalone_rule_set",
-            "include_rule_set=true",
+            "includeRuleSet=true",
             id="rule-set-only-needs-param",
         ),
     ],
@@ -964,7 +964,7 @@ def test_delete_merged_item(
         ),
         pytest.param(
             "unit_2",
-            "include_rule_set=false",
+            "includeRuleSet=false",
             status.HTTP_412_PRECONDITION_FAILED,
             status.HTTP_200_OK,
             id="rule-set-explicit-false",
@@ -1000,7 +1000,7 @@ def test_delete_merged_item_fails(  # noqa: PLR0913, PLR0917
     except KeyError:
         item = Mock(stableTargetId="notARealIdentifier")
 
-    # Should fail when there are rules, but `include_rule_set` is not set to `true`
+    # Should fail when there are rules, but `includeRuleSet` is not set to `true`
     response = client_with_api_key_write_permission.delete(
         f"/v0/merged-item/{item.stableTargetId}?{url_params}"
     )
@@ -1020,6 +1020,38 @@ def test_delete_merged_item_forbidden_for_read_only(
 ) -> None:
     item = loaded_dummy_data["activity_1"]
     response = client_with_api_key_read_permission.delete(
-        f"/v0/merged-item/{item.stableTargetId}?include_rule_set=true"
+        f"/v0/merged-item/{item.stableTargetId}?includeRuleSet=true"
     )
     assert response.status_code == status.HTTP_403_FORBIDDEN, response.text
+
+
+@pytest.mark.integration
+def test_merge_items(
+    client_with_api_key_write_permission: TestClient,
+    loaded_dummy_data: DummyData,
+) -> None:
+    response = client_with_api_key_write_permission.post(
+        "/v0/merge/",
+        json={
+            "gonerIdentifier": loaded_dummy_data["organization_1"].stableTargetId,
+            "keeperIdentifier": loaded_dummy_data["organization_2"].stableTargetId,
+        },
+    )
+    assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR, response.text
+    assert "NotImplemented" in response.text
+
+
+@pytest.mark.integration
+def test_merge_items_precondition_error(
+    client_with_api_key_write_permission: TestClient,
+    loaded_dummy_data: DummyData,
+) -> None:
+    response = client_with_api_key_write_permission.post(
+        "/v0/merge/",
+        json={
+            "gonerIdentifier": loaded_dummy_data["organization_1"].stableTargetId,
+            "keeperIdentifier": loaded_dummy_data["unit_1"].stableTargetId,
+        },
+    )
+    assert response.status_code == status.HTTP_400_BAD_REQUEST, response.text
+    assert "same_merged_type" in response.text
