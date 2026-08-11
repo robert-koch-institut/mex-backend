@@ -19,7 +19,6 @@ from mex.backend.identity.main import router as identity_router
 from mex.backend.ingest.main import router as ingest_router
 from mex.backend.ldap.main import router as ldap_login_router
 from mex.backend.logging import UVICORN_LOGGING_CONFIG
-from mex.backend.match.main import router as match_router
 from mex.backend.merged.main import router as merged_router
 from mex.backend.preview.main import router as preview_router
 from mex.backend.publishable_merged.main import router as publishable_merged_router
@@ -76,7 +75,6 @@ router.include_router(extracted_router)
 router.include_router(identity_router)
 router.include_router(ingest_router)
 router.include_router(ldap_router)
-router.include_router(match_router)
 router.include_router(merged_router)
 router.include_router(orcid_router)
 router.include_router(preview_router)

@@ -4,9 +4,11 @@ import pytest
 from pytest import LogCaptureFixture
 
 from mex.backend.exceptions import BackendError
+from mex.backend.graph.exceptions import MergingError
 from mex.backend.merged.helpers import (
     delete_merged_item_from_graph,
     get_merged_item_from_graph,
+    merge_items_in_graph,
     search_merged_items_in_graph,
 )
 from mex.common.merged.main import create_merged_item
@@ -315,3 +317,25 @@ def test_delete_merged_item_from_graph(
     # Verify item is gone
     with pytest.raises(BackendError, match="Merged item was not found"):
         get_merged_item_from_graph(extracted_item.stableTargetId)
+
+
+@pytest.mark.integration
+def test_merge_items_in_graph_reaches_not_implemented(
+    loaded_dummy_data: DummyData,
+) -> None:
+    goner = loaded_dummy_data["organization_1"]
+    keeper = loaded_dummy_data["organization_2"]
+
+    with pytest.raises(NotImplementedError):
+        merge_items_in_graph(goner.stableTargetId, keeper.stableTargetId)
+
+
+@pytest.mark.integration
+def test_merge_items_in_graph_type_mismatch_error(
+    loaded_dummy_data: DummyData,
+) -> None:
+    goner = loaded_dummy_data["organization_1"]
+    keeper = loaded_dummy_data["unit_1"]
+
+    with pytest.raises(MergingError, match="Violated: same_merged_type"):
+        merge_items_in_graph(goner.stableTargetId, keeper.stableTargetId)

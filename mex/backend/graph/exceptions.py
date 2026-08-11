@@ -47,8 +47,8 @@ class IngestionError(GraphError):
     """Error for ingestion failures with underlying details."""
 
 
-class MatchingError(GraphError):
-    """Exception raised for errors during the matching process."""
+class MergingError(GraphError):
+    """Exception raised for errors during the merging process."""
 
 
 class DeletionFailedError(GraphError):
