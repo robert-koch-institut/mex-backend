@@ -583,22 +583,19 @@ RETURN
     )
 
 
-def test_check_match_preconditions(query_builder: QueryBuilder) -> None:
-    query = query_builder.check_match_preconditions()
+def test_check_merge_preconditions(query_builder: QueryBuilder) -> None:
+    query = query_builder.check_merge_preconditions()
     assert (
         query.render()
         == """\
-OPTIONAL MATCH (extracted:ExtractedPerson|ExtractedVariable|ExtractedDistribution {identifier: $extracted_identifier})
-OPTIONAL MATCH (extracted)-[:stableTargetId]->(old_merged:MergedPerson|MergedVariable|MergedDistribution)
-OPTIONAL MATCH (old_merged)<-[:stableTargetId]-(old_rules:AdditivePerson|AdditiveVariable|AdditiveDistribution)
-OPTIONAL MATCH (new_merged:MergedPerson|MergedVariable|MergedDistribution {identifier: $merged_identifier})
+OPTIONAL MATCH (goner:MergedPerson|MergedVariable|MergedDistribution {identifier: $goner_identifier})
+OPTIONAL MATCH (keeper:MergedPerson|MergedVariable|MergedDistribution {identifier: $keeper_identifier})
 WITH
-   count(DISTINCT extracted) = 1 AS extracted_exists,
-   count(old_rules) = 4 AS old_rules_exist,
-   count(DISTINCT new_merged) = 1 AS merged_exists,
-   elementId(old_merged) <> elementId(new_merged) AS not_self_match,
-   labels(old_merged) = labels(new_merged) AS same_merged_type,
-   NOT ANY(label IN labels(new_merged) WHERE label IN $blocked_types) AS matching_of_type_is_allowed
+   count(DISTINCT goner) = 1 AS goner_exists,
+   count(DISTINCT keeper) = 1 AS keeper_exists,
+   elementId(goner) <> elementId(keeper) AS not_self_merge,
+   labels(goner) = labels(keeper) AS same_merged_type,
+   NOT ANY(label IN labels(keeper) WHERE label IN $non_mergeable_types) AS merging_of_type_is_allowed
 RETURN *;"""
     )
 

@@ -13,7 +13,7 @@ services:
       timeout: 5s
       retries: 5
   neo4j:
-    image: neo4j:2026.06-community
+    image: neo4j:2026.07-community@sha256:dca31d0d938dd8bb199c8846abedd897c3a07ddb629eca46a8009ac9e87aece2
     environment:
       - NEO4J_AUTH=neo4j/password
       - NEO4J_dbms_usage__report_enabled=false
@@ -26,7 +26,7 @@ services:
       retries: 5
       start_period: 30s
   valkey:
-    image: valkey/valkey:9.1.0
+    image: valkey/valkey:9.1.1@sha256:3acc0687f2a2e1091fae6450d7842dd658c941338cf0a873ddd9e14b9e4ea4dd
     ports:
       - 6379:6379
     healthcheck:
@@ -35,7 +35,7 @@ services:
       timeout: 3s
       retries: 5
   slapd:
-    image: thoteam/slapd-server-mock
+    image: thoteam/slapd-server-mock@sha256:f1f976cab47facefc1128d7ebd6b26e20c725fbb990b07e40e79801ec8b77b1f
     platform: linux/amd64
     ports:
       - 636:636

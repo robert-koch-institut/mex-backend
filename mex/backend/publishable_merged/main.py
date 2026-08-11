@@ -22,7 +22,7 @@ router = APIRouter()
 @router.get(
     "/publishable-merged-item", tags=["editor"], dependencies=[Depends(has_read_access)]
 )
-def search_publishable_merged_items(  # noqa: PLR0913
+def search_publishable_merged_items(  # noqa: PLR0913, PLR0917
     publishingTarget: Annotated[PublishingTarget, Query()],
     q: Annotated[str, Query(max_length=100)] = "",
     identifier: Annotated[Identifier | None, Query()] = None,
@@ -69,7 +69,7 @@ def search_publishable_merged_items(  # noqa: PLR0913
     tags=["editor"],
     dependencies=[Depends(has_read_access)],
 )
-def search_publishable_merged_items_advanced(  # noqa: PLR0913
+def search_publishable_merged_items_advanced(  # noqa: PLR0913, PLR0917
     publishingTarget: Annotated[PublishingTarget, Body()],
     q: Annotated[str, Body(max_length=100)] = "",
     identifier: Annotated[Identifier | None, Body()] = None,

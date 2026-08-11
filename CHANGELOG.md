@@ -2,8 +2,8 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and
+this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- updated the item-matching flow to merged-to-merged, not extracted-to-merged
+- renamed the "match" nomenclature to reduce confusion, run with "merge" now
+- new template https://github.com/robert-koch-institut/mex-template/releases/tag/1.5.0
+- GraphConnector does not create index of PreviewModels anymore
+
 ### Deprecated
 
 ### Removed
@@ -26,7 +31,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- fixed naming of `includeRuleSet` for deletion endpoint (connector already uses camel)
+- expected test-data due to mex-artificial update
+- ruff linting errors
+
 ### Security
+
+## [4.2.2] - 2026-07-28
+
+### Fixed
+
+- fix workflow migration check
+
+## [4.2.1] - 2026-07-28
+
+### Added
+
+- workflow migration check: only process items which can't be validated as merged item
+
+## [4.2.0] - 2026-07-28
+
+### Changes
+
+- speed up workflow migration scripts to only look at items with rules
+
+## [4.1.0] - 2026-07-27
+
+### Added
+
+- script to set forbidden publishing targets for "toggled off" merged items
+- added dedicated get-rule-set query and connector method
+- added `search_rule_items` (GET /rule-item) and `search_rule_items_advanced`
+  (POST /rule-item/_search) endpoints to search for rule items
 
 ## [4.0.3] - 2026-07-08
 
@@ -176,8 +212,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-- require write access for DELETE `/v0/merged-item/{identifier}` endpoint
-  reported by Simon Weber, Volker Schönefeld, Chiara Fliegner of Machine Spirits
+- require write access for DELETE `/v0/merged-item/{identifier}` endpoint reported by
+  Simon Weber, Volker Schönefeld, Chiara Fliegner of Machine Spirits
   see https://www.machinespirits.com/advisory/93212f
 
 ## [1.7.2] - 2026-03-13
@@ -755,8 +791,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to also include non-indexable models (namely: merged models)
 - BREAKING: rename `fetch_extracted_data` to a more consistent `fetch_extracted_items`
 - harmonize PagedAuxiliaryResponse with Merged- and ExtractedItemSearchResponse
-- move searching and fetching of extracted and merged items to `helpers` module
-  so they can be reused more easily outside of the endpoint code
+- move searching and fetching of extracted and merged items to `helpers` module so they
+  can be reused more easily outside of the endpoint code
 - use starlette status code constants instead of plain integers for readability
 - BREAKING: rework `create_rule` connector method and endpoint to use RuleSets
 - merged endpoint returns actual merged items. was: extracted items presented as merged
@@ -811,8 +847,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- BREAKING: make `MEX_EXTRACTED_PRIMARY_SOURCE` an instance of its own class
-  instead of ExtractedPrimarySource in order to set static provenance identifiers
+- BREAKING: make `MEX_EXTRACTED_PRIMARY_SOURCE` an instance of its own class instead of
+  ExtractedPrimarySource in order to set static provenance identifiers
 
 ## [0.15.0] - 2024-06-14
 
