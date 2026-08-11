@@ -20,6 +20,8 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Removed
 
+- removed http-test-server code (moved to mex-testing)
+
 ### Fixed
 
 - fixed naming of `includeRuleSet` for deletion endpoint (connector already uses camel)
