@@ -27,14 +27,11 @@ ENV PYTHONOPTIMIZE=1
 
 ENV MEX_BACKEND_HOST=0.0.0.0
 
-ENV MEX_HTTP_TEST_SERVER_HOST=0.0.0.0
-
 WORKDIR /app
 
 COPY --from=builder /usr/local/lib/python3.14/site-packages /usr/local/lib/python3.14/site-packages
 COPY --from=builder /usr/local/bin/backend /usr/local/bin/backend
 COPY --from=builder /usr/local/bin/testing-backend /usr/local/bin/testing-backend
-COPY --from=builder /usr/local/bin/http-test-server /usr/local/bin/http-test-server
 
 USER 10001
 

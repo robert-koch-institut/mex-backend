@@ -22,6 +22,8 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Removed
 
+- removed http-test-server code (moved to mex-testing)
+
 ### Fixed
 
 - fixed seed script to ingest items progressively to not restrict item count by RAM
