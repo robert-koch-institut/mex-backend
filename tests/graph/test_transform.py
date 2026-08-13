@@ -8,13 +8,18 @@ from mex.backend.graph.transform import (
     _SearchResultReference,
     expand_references_in_search_result,
     get_error_details_from_neo4j_error,
+    redirect_references,
     transform_reference_filters_to_raw_fields,
     transform_reference_filters_to_raw_filters,
     validate_ingested_data,
 )
 from mex.backend.models import ReferenceFilter
 from mex.backend.types import ReferenceFieldName
-from mex.common.models import MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID
+from mex.common.models import (
+    MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    AdditiveOrganizationalUnit,
+    ExtractedActivity,
+)
 from mex.common.types import Identifier
 
 
@@ -269,3 +274,61 @@ def test_get_error_details_from_neo4j_error() -> None:
     assert result[0]["msg"] == "Node already exists"
     assert result[0]["input"] == "some-input"
     assert result[0]["ctx"] == {"meta": {"some": "info"}}
+
+
+GONER = Identifier("bFQoRhcVH5DHUA")
+KEEPER = Identifier("bFQoRhcVH5DHUB")
+OWNER = Identifier("bFQoRhcVH5DHUC")
+OTHER = Identifier("bFQoRhcVH5DHUD")
+
+
+def test_redirect_references_replaces_and_keeps_order() -> None:
+    rule = AdditiveOrganizationalUnit(parentUnit=GONER, unitOf=[OTHER, GONER])
+
+    redirected = redirect_references(rule, GONER, KEEPER, OWNER)
+
+    assert redirected.parentUnit == KEEPER
+    assert redirected.unitOf == [OTHER, KEEPER]
+
+
+def test_redirect_references_deduplicates() -> None:
+    rule = AdditiveOrganizationalUnit(unitOf=[KEEPER, GONER, OTHER, GONER])
+
+    redirected = redirect_references(rule, GONER, KEEPER, OWNER)
+
+    assert redirected.unitOf == [KEEPER, OTHER]
+
+
+def test_redirect_references_drops_self_references() -> None:
+    rule = AdditiveOrganizationalUnit(parentUnit=GONER, unitOf=[GONER, OTHER])
+
+    # the model belongs to the keeper, so pointing at the keeper is a self-reference
+    redirected = redirect_references(rule, GONER, KEEPER, KEEPER)
+
+    assert redirected.parentUnit is None
+    assert redirected.unitOf == [OTHER]
+
+
+def test_redirect_references_leaves_unrelated_references_alone() -> None:
+    rule = AdditiveOrganizationalUnit(unitOf=[OTHER])
+
+    redirected = redirect_references(rule, GONER, KEEPER, OWNER)
+
+    assert redirected.unitOf == [OTHER]
+
+
+def test_redirect_references_keeps_computed_fields_of_extracted_items() -> None:
+    activity = ExtractedActivity(
+        hadPrimarySource=OTHER,
+        identifierInPrimarySource="a-1",
+        contact=[GONER],
+        responsibleUnit=[GONER, KEEPER],
+        title=[{"value": "Aktivität"}],
+    )
+
+    redirected = redirect_references(activity, GONER, KEEPER, OWNER)
+
+    assert redirected.identifier == activity.identifier
+    assert redirected.stableTargetId == activity.stableTargetId
+    assert redirected.contact == [KEEPER]
+    assert redirected.responsibleUnit == [KEEPER]

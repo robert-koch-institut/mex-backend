@@ -1037,8 +1037,61 @@ def test_merge_items(
             "keeperIdentifier": loaded_dummy_data["organization_2"].stableTargetId,
         },
     )
-    assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR, response.text
-    assert "NotImplemented" in response.text
+    assert response.status_code == status.HTTP_204_NO_CONTENT, response.text
+
+    # the keeper absorbed the goner's extracted item
+    keeper = client_with_api_key_write_permission.get(
+        f"/v0/merged-item/{loaded_dummy_data['organization_2'].stableTargetId}"
+    )
+    assert keeper.status_code == status.HTTP_200_OK, keeper.text
+    assert sorted(text["value"] for text in keeper.json()["officialName"]) == [
+        "RKI",
+        "Robert Koch Institute",
+    ]
+
+    # the goner became a tombstone, so its rule set is nothing but supersededBy
+    rule_set = client_with_api_key_write_permission.get(
+        f"/v0/rule-set/{loaded_dummy_data['organization_1'].stableTargetId}"
+    )
+    assert rule_set.status_code == status.HTTP_200_OK, rule_set.text
+    assert rule_set.json()["additive"]["supersededBy"] == str(
+        loaded_dummy_data["organization_2"].stableTargetId
+    )
+    assert rule_set.json()["additive"]["officialName"] == []
+
+
+@pytest.mark.integration
+def test_merge_items_leaves_unvalidatable_tombstone(
+    client_with_api_key_write_permission: TestClient,
+    loaded_dummy_data: DummyData,
+) -> None:
+    goner_identifier = loaded_dummy_data["organization_1"].stableTargetId
+    response = client_with_api_key_write_permission.post(
+        "/v0/merge/",
+        json={
+            "gonerIdentifier": goner_identifier,
+            "keeperIdentifier": loaded_dummy_data["organization_2"].stableTargetId,
+        },
+    )
+    assert response.status_code == status.HTTP_204_NO_CONTENT, response.text
+
+    # mex-common does not implement the tombstone validation contract yet, so a
+    # merged-away item has no required fields left and fails strict validation.
+    # mex.common.exceptions.MergingError is not a backend BackendError, so it is
+    # not caught by handle_detailed_error and surfaces as an internal error.
+    fetched = client_with_api_key_write_permission.get(
+        f"/v0/merged-item/{goner_identifier}"
+    )
+    assert fetched.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR, fetched.text
+
+    # and search, which validates leniently, drops it from the results entirely
+    searched = client_with_api_key_write_permission.get(
+        "/v0/merged-item", params={"entityType": ["MergedOrganization"]}
+    )
+    assert searched.status_code == status.HTTP_200_OK, searched.text
+    assert [item["identifier"] for item in searched.json()["items"]] == [
+        str(loaded_dummy_data["organization_2"].stableTargetId)
+    ]
 
 
 @pytest.mark.integration

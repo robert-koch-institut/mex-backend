@@ -11,6 +11,7 @@ from mex.backend.merged.helpers import (
     merge_items_in_graph,
     search_merged_items_in_graph,
 )
+from mex.backend.rules.helpers import get_rule_set_from_graph
 from mex.common.merged.main import create_merged_item
 from mex.common.types import Identifier, TextLanguage, Validation
 
@@ -320,14 +321,73 @@ def test_delete_merged_item_from_graph(
 
 
 @pytest.mark.integration
-def test_merge_items_in_graph_reaches_not_implemented(
-    loaded_dummy_data: DummyData,
-) -> None:
+def test_merge_items_in_graph(loaded_dummy_data: DummyData) -> None:
     goner = loaded_dummy_data["organization_1"]
     keeper = loaded_dummy_data["organization_2"]
 
-    with pytest.raises(NotImplementedError):
-        merge_items_in_graph(goner.stableTargetId, keeper.stableTargetId)
+    merge_items_in_graph(goner.stableTargetId, keeper.stableTargetId)
+
+    # the keeper absorbed the goner's extracted item, so it now carries both names
+    merged_keeper = get_merged_item_from_graph(keeper.stableTargetId)
+    assert sorted(text.value for text in merged_keeper.officialName) == [
+        "RKI",
+        "Robert Koch Institute",
+    ]
+
+    # the units that referenced the goner now reference the keeper
+    units = search_merged_items_in_graph(
+        entity_type=["MergedOrganizationalUnit"],
+        validation=Validation.LENIENT,
+    )
+    assert {unit_of for unit in units.items for unit_of in unit.unitOf} == {
+        keeper.stableTargetId
+    }
+
+    # the goner is left behind as a tombstone pointing at the keeper
+    rule_set = get_rule_set_from_graph(goner.stableTargetId)
+    assert rule_set is not None
+    assert rule_set.additive.supersededBy == keeper.stableTargetId
+    assert rule_set.additive.officialName == []
+
+
+@pytest.mark.integration
+def test_merge_items_in_graph_drops_self_references(
+    loaded_dummy_data: DummyData,
+) -> None:
+    goner = loaded_dummy_data["unit_1"]
+    keeper = loaded_dummy_data["unit_2"]
+
+    merge_items_in_graph(goner.stableTargetId, keeper.stableTargetId)
+
+    # the keeper's rule set pointed its parentUnit at the goner, which would have
+    # become a self-reference, so it is dropped instead of redirected
+    keeper_rule_set = get_rule_set_from_graph(keeper.stableTargetId)
+    assert keeper_rule_set is not None
+    assert keeper_rule_set.additive.parentUnit is None
+
+    # an unrelated rule set that pointed at the goner is redirected to the keeper
+    standalone_rule_set = get_rule_set_from_graph(Identifier("StandaloneRule"))
+    assert standalone_rule_set is not None
+    assert standalone_rule_set.additive.parentUnit == keeper.stableTargetId
+
+
+@pytest.mark.integration
+def test_merge_items_in_graph_deduplicates_references(
+    loaded_dummy_data: DummyData,
+) -> None:
+    # activity_1 references unit_1 twice: once as contact and once as responsibleUnit
+    activity = loaded_dummy_data["activity_1"]
+    goner = loaded_dummy_data["contact_point_1"]
+    keeper = loaded_dummy_data["contact_point_2"]
+
+    merge_items_in_graph(goner.stableTargetId, keeper.stableTargetId)
+
+    merged_activity = get_merged_item_from_graph(activity.stableTargetId)
+    # both contact points collapse into a single reference to the keeper
+    assert merged_activity.contact == [
+        keeper.stableTargetId,
+        loaded_dummy_data["unit_1"].stableTargetId,
+    ]
 
 
 @pytest.mark.integration
