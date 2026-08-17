@@ -13,12 +13,23 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - run the blocking neo4j i/o of the ingest endpoint in a threadpool,
   so long ingests no longer block the event loop for other requests
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [4.3.0] - 2026-08-13
+
+### Changes
+
 - updated the item-matching flow to merged-to-merged, not extracted-to-merged
 - renamed the "match" nomenclature to reduce confusion, run with "merge" now
 - new template https://github.com/robert-koch-institut/mex-template/releases/tag/1.5.0
 - GraphConnector does not create index of PreviewModels anymore
-
-### Deprecated
 
 ### Removed
 
@@ -30,8 +41,6 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - fixed naming of `includeRuleSet` for deletion endpoint (connector already uses camel)
 - expected test-data due to mex-artificial update
 - ruff linting errors
-
-### Security
 
 ## [4.2.2] - 2026-07-28
 
