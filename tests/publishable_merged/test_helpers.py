@@ -7,7 +7,7 @@ from mex.backend.publishable_merged.helpers import (
 )
 from mex.common.types import PublishingTarget, TextLanguage
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from tests.conftest import MockedGraph
 
 

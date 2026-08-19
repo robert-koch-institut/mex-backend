@@ -4,7 +4,7 @@ import pytest
 from pytest import MonkeyPatch
 from starlette import status
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from fastapi.testclient import TestClient
 
     from mex.backend.settings import BackendSettings
