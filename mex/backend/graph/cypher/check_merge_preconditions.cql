@@ -26,22 +26,17 @@ Returns:
 OPTIONAL MATCH (goner:<<any_merged_label>> {identifier: $goner_identifier})
 OPTIONAL MATCH (keeper:<<any_merged_label>> {identifier: $keeper_identifier})
 WITH
-   goner,
-   keeper,
    count(DISTINCT goner) = 1 AS goner_exists,
    count(DISTINCT keeper) = 1 AS keeper_exists,
    elementId(goner) <> elementId(keeper) AS not_self_merge,
    labels(goner) = labels(keeper) AS same_merged_type,
-   NOT ANY(label IN labels(keeper) WHERE label IN $non_mergeable_types) AS merging_of_type_is_allowed
-RETURN
-   goner_exists,
-   keeper_exists,
-   not_self_merge,
-   same_merged_type,
-   merging_of_type_is_allowed,
-   CASE WHEN goner IS NULL THEN null ELSE
+   NOT ANY(label IN labels(keeper) WHERE label IN $non_mergeable_types) AS merging_of_type_is_allowed,
+   <# unlike the checks above, a pattern with a missing node evaluates to `false`
+      instead of `null`, so the unverifiable case needs an explicit guard -#>
+   CASE WHEN goner IS NOT NULL THEN
       NOT EXISTS { (goner)<-[:stableTargetId]-(:<<any_rule_label>>)-[:supersededBy]->() }
    END AS goner_not_superseded,
-   CASE WHEN keeper IS NULL THEN null ELSE
+   CASE WHEN keeper IS NOT NULL THEN
       NOT EXISTS { (keeper)<-[:stableTargetId]-(:<<any_rule_label>>)-[:supersededBy]->() }
-   END AS keeper_not_superseded;
+   END AS keeper_not_superseded
+RETURN *;

@@ -73,8 +73,6 @@ if TYPE_CHECKING:  # pragma: no cover
 
     from mex.common.types import Identifier
 
-MERGE_PAGE_SIZE = 100
-
 
 class GraphConnector(BaseConnector):
     """Connector to handle authentication and transactions with the graph database."""
@@ -658,6 +656,7 @@ class GraphConnector(BaseConnector):
         self,
         tx: Transaction,
         item: AnyMergedModel,
+        page_size: int = 100,
     ) -> list[dict[str, Any]]:
         """Fetch all merged items that have a component referencing the given item.
 
@@ -667,6 +666,7 @@ class GraphConnector(BaseConnector):
         Args:
             tx: Open transaction to run the queries in
             item: Merged item whose referencing items to find
+            page_size: How many items to fetch per request
 
         Returns:
             List of merged search result items, de-duplicated by identifier
@@ -690,14 +690,14 @@ class GraphConnector(BaseConnector):
                         )
                     ],
                     skip=skip,
-                    limit=MERGE_PAGE_SIZE,
+                    limit=page_size,
                     tx=tx,
                 ).one()
                 for referencing_item in record["items"]:
                     items_by_identifier[str(referencing_item["identifier"])] = (
                         referencing_item
                     )
-                skip += MERGE_PAGE_SIZE
+                skip += page_size
                 if skip >= int(record["total"]):
                     break
         return list(items_by_identifier.values())

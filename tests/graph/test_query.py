@@ -591,25 +591,18 @@ def test_check_merge_preconditions(query_builder: QueryBuilder) -> None:
 OPTIONAL MATCH (goner:MergedPerson|MergedVariable|MergedDistribution {identifier: $goner_identifier})
 OPTIONAL MATCH (keeper:MergedPerson|MergedVariable|MergedDistribution {identifier: $keeper_identifier})
 WITH
-   goner,
-   keeper,
    count(DISTINCT goner) = 1 AS goner_exists,
    count(DISTINCT keeper) = 1 AS keeper_exists,
    elementId(goner) <> elementId(keeper) AS not_self_merge,
    labels(goner) = labels(keeper) AS same_merged_type,
-   NOT ANY(label IN labels(keeper) WHERE label IN $non_mergeable_types) AS merging_of_type_is_allowed
-RETURN
-   goner_exists,
-   keeper_exists,
-   not_self_merge,
-   same_merged_type,
-   merging_of_type_is_allowed,
-   CASE WHEN goner IS NULL THEN null ELSE
+   NOT ANY(label IN labels(keeper) WHERE label IN $non_mergeable_types) AS merging_of_type_is_allowed,
+   CASE WHEN goner IS NOT NULL THEN
       NOT EXISTS { (goner)<-[:stableTargetId]-(:AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:supersededBy]->() }
    END AS goner_not_superseded,
-   CASE WHEN keeper IS NULL THEN null ELSE
+   CASE WHEN keeper IS NOT NULL THEN
       NOT EXISTS { (keeper)<-[:stableTargetId]-(:AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:supersededBy]->() }
-   END AS keeper_not_superseded;"""
+   END AS keeper_not_superseded
+RETURN *;"""
     )
 
 
