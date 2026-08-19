@@ -116,4 +116,5 @@ def main() -> None:  # pragma: no cover
         reload=settings.debug,
         log_config=UVICORN_LOGGING_CONFIG,
         headers=[("server", "mex-backend")],
+        timeout_graceful_shutdown=settings.backend_graceful_shutdown_timeout,
     )
