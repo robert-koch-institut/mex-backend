@@ -17,9 +17,9 @@ Args:
     keeper_identifier: Identifier of the merged item that survives the merge
 
 Returns:
-    moved_extracted_count: Number of extracted items moved to the keeper
-    moved_identities: Provenance of every moved extracted item, so that stale entries
-        can be dropped from the identity cache once the merge is committed
+    moved_identities: Identity of every moved extracted item, already carrying the
+        keeper as its stable target id, so that stale entries can be dropped from
+        the identity cache once the merge is committed
 -#>
 MATCH (keeper:<<any_merged_label>> {identifier: $keeper_identifier})
 MATCH (extracted:<<any_extracted_label>>)-[old:stableTargetId]->(:<<any_merged_label>> {identifier: $goner_identifier})
@@ -28,8 +28,9 @@ MERGE (extracted)-[:stableTargetId {position: 0}]->(keeper)
 DELETE old
 
 RETURN
-    count(extracted) AS moved_extracted_count,
     collect({
+        identifier: extracted.identifier,
         hadPrimarySource: [(extracted)-[:hadPrimarySource]->(primary_source) | primary_source.identifier][0],
-        identifierInPrimarySource: extracted.identifierInPrimarySource
+        identifierInPrimarySource: extracted.identifierInPrimarySource,
+        stableTargetId: keeper.identifier
     }) AS moved_identities;

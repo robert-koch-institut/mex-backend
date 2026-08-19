@@ -618,10 +618,11 @@ MERGE (extracted)-[:stableTargetId {position: 0}]->(keeper)
 DELETE old
 
 RETURN
-    count(extracted) AS moved_extracted_count,
     collect({
+        identifier: extracted.identifier,
         hadPrimarySource: [(extracted)-[:hadPrimarySource]->(primary_source) | primary_source.identifier][0],
-        identifierInPrimarySource: extracted.identifierInPrimarySource
+        identifierInPrimarySource: extracted.identifierInPrimarySource,
+        stableTargetId: keeper.identifier
     }) AS moved_identities;"""
     )
 

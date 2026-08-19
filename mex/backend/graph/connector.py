@@ -49,6 +49,7 @@ from mex.common.fields import (
     SEARCHABLE_CLASSES,
     SEARCHABLE_FIELDS,
 )
+from mex.common.identity import Identity
 from mex.common.logging import logger
 from mex.common.merged.main import merge_rule_set_responses
 from mex.common.models import (
@@ -415,8 +416,9 @@ class GraphConnector(BaseConnector):
         for query_result in result.all():
             for item in query_result["items"]:
                 for component in item["_components"]:
-                    refs = component.pop("_refs")
-                    component.update(expand_references_in_search_result(refs))
+                    component.update(
+                        expand_references_in_search_result(component.pop("_refs"))
+                    )
         return result
 
     def fetch_identities(
@@ -609,7 +611,7 @@ class GraphConnector(BaseConnector):
         tx: Transaction,
         goner: AnyMergedModel,
         keeper: AnyMergedModel,
-    ) -> dict[str, Any]:
+    ) -> list[Identity]:
         """Move all extracted items of the goner over to the keeper.
 
         Args:
@@ -618,7 +620,7 @@ class GraphConnector(BaseConnector):
             keeper: Merged item that survives the merge
 
         Returns:
-            Record with the number of moved items and their provenance
+            Identities of the moved items, pointing at the keeper
         """
         query_builder = QueryBuilder.get()
         query = query_builder.move_extracted_items()
@@ -628,7 +630,10 @@ class GraphConnector(BaseConnector):
             goner_identifier=str(goner.identifier),
             keeper_identifier=str(keeper.identifier),
         )
-        return result.one()
+        return [
+            Identity.model_validate(identity)
+            for identity in result.one()["moved_identities"]
+        ]
 
     def _fetch_rule_set_tx(
         self,
@@ -826,7 +831,7 @@ class GraphConnector(BaseConnector):
         tx: Transaction,
         goner: AnyMergedModel,
         keeper: AnyMergedModel,
-    ) -> dict[str, Any]:
+    ) -> list[Identity]:
         """Run all required merging steps in a single transaction.
 
         Args:
@@ -835,7 +840,7 @@ class GraphConnector(BaseConnector):
             keeper: Merged item that survives the merge
 
         Returns:
-            Record describing the extracted items that were moved to the keeper
+            Identities of the extracted items that were moved to the keeper
         """
         self._check_merge_preconditions_tx(tx, goner, keeper)
         goner_identifier = str(goner.identifier)
@@ -847,7 +852,7 @@ class GraphConnector(BaseConnector):
         referencing_items = self._fetch_items_referencing_tx(tx, goner)
 
         # move the goner's extracted items over, the keeper owns them from now on
-        move_result = self._move_extracted_items_tx(tx, goner, keeper)
+        moved_identities = self._move_extracted_items_tx(tx, goner, keeper)
 
         # point everything that still references the goner at the keeper
         self._relink_referencing_items_tx(tx, referencing_items, goner, keeper)
@@ -880,7 +885,7 @@ class GraphConnector(BaseConnector):
         from mex.backend.rules.helpers import build_tombstone_rule_set  # noqa: PLC0415
 
         self._run_ingest_in_transaction(tx, build_tombstone_rule_set(goner, keeper))
-        return move_result
+        return moved_identities
 
     def merge_items(
         self,
@@ -900,13 +905,13 @@ class GraphConnector(BaseConnector):
             ) as tx,
         ):
             try:
-                move_result = self._merge_items_tx(tx, goner, keeper)
+                moved_identities = self._merge_items_tx(tx, goner, keeper)
             except:
                 tx.rollback()
                 raise
             else:
                 tx.commit()
-        reset_identity_cache(move_result["moved_identities"])
+        reset_identity_cache(moved_identities)
 
     def delete_item(self, identifier: str) -> Result:
         """Delete a merged item including all extracted items and rule-sets."""

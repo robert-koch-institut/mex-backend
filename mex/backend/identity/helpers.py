@@ -1,4 +1,9 @@
+from typing import TYPE_CHECKING
+
 from mex.backend.cache.connector import CacheConnector
+
+if TYPE_CHECKING:  # pragma: no cover
+    from mex.common.identity import Identity
 
 
 def get_identity_cache_key(
@@ -18,7 +23,7 @@ def get_identity_cache_key(
     return f"{had_primary_source}\n{identifier_in_primary_source}"
 
 
-def reset_identity_cache(moved_identities: list[dict[str, str]]) -> None:
+def reset_identity_cache(moved_identities: list[Identity]) -> None:
     """Drop the cached identities of extracted items that changed merged item.
 
     The identity provider caches which stable target id a given provenance resolves to.
@@ -30,14 +35,13 @@ def reset_identity_cache(moved_identities: list[dict[str, str]]) -> None:
     configured, which settings require whenever more than one instance runs.
 
     Args:
-        moved_identities: Provenance of the extracted items that were moved, as
-            returned by the `move_extracted_items` query
+        moved_identities: Identities of the extracted items that were moved
     """
     cache = CacheConnector.get()
     for identity in moved_identities:
         cache.delete_value(
             get_identity_cache_key(
-                identity["hadPrimarySource"],
-                identity["identifierInPrimarySource"],
+                identity.hadPrimarySource,
+                identity.identifierInPrimarySource,
             )
         )
