@@ -1030,18 +1030,22 @@ def test_merge_items(
     client_with_api_key_write_permission: TestClient,
     loaded_dummy_data: DummyData,
 ) -> None:
+    # `stableTargetId` is computed by the identity provider on every access, so the
+    # goner's id has to be captured before the merge re-points it at the keeper
+    goner_identifier = loaded_dummy_data["organization_1"].stableTargetId
+    keeper_identifier = loaded_dummy_data["organization_2"].stableTargetId
     response = client_with_api_key_write_permission.post(
         "/v0/merge/",
         json={
-            "gonerIdentifier": loaded_dummy_data["organization_1"].stableTargetId,
-            "keeperIdentifier": loaded_dummy_data["organization_2"].stableTargetId,
+            "gonerIdentifier": goner_identifier,
+            "keeperIdentifier": keeper_identifier,
         },
     )
     assert response.status_code == status.HTTP_204_NO_CONTENT, response.text
 
     # the keeper absorbed the goner's extracted item
     keeper = client_with_api_key_write_permission.get(
-        f"/v0/merged-item/{loaded_dummy_data['organization_2'].stableTargetId}"
+        f"/v0/merged-item/{keeper_identifier}"
     )
     assert keeper.status_code == status.HTTP_200_OK, keeper.text
     assert sorted(text["value"] for text in keeper.json()["officialName"]) == [
@@ -1051,12 +1055,10 @@ def test_merge_items(
 
     # the goner became a tombstone, so its rule set is nothing but supersededBy
     rule_set = client_with_api_key_write_permission.get(
-        f"/v0/rule-set/{loaded_dummy_data['organization_1'].stableTargetId}"
+        f"/v0/rule-set/{goner_identifier}"
     )
     assert rule_set.status_code == status.HTTP_200_OK, rule_set.text
-    assert rule_set.json()["additive"]["supersededBy"] == str(
-        loaded_dummy_data["organization_2"].stableTargetId
-    )
+    assert rule_set.json()["additive"]["supersededBy"] == str(keeper_identifier)
     assert rule_set.json()["additive"]["officialName"] == []
 
 
@@ -1066,11 +1068,12 @@ def test_merge_items_leaves_unvalidatable_tombstone(
     loaded_dummy_data: DummyData,
 ) -> None:
     goner_identifier = loaded_dummy_data["organization_1"].stableTargetId
+    keeper_identifier = loaded_dummy_data["organization_2"].stableTargetId
     response = client_with_api_key_write_permission.post(
         "/v0/merge/",
         json={
             "gonerIdentifier": goner_identifier,
-            "keeperIdentifier": loaded_dummy_data["organization_2"].stableTargetId,
+            "keeperIdentifier": keeper_identifier,
         },
     )
     assert response.status_code == status.HTTP_204_NO_CONTENT, response.text
@@ -1090,7 +1093,7 @@ def test_merge_items_leaves_unvalidatable_tombstone(
     )
     assert searched.status_code == status.HTTP_200_OK, searched.text
     assert [item["identifier"] for item in searched.json()["items"]] == [
-        str(loaded_dummy_data["organization_2"].stableTargetId)
+        str(keeper_identifier)
     ]
 
 

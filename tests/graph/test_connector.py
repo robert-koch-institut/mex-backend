@@ -30,7 +30,13 @@ from mex.common.models import (
     ExtractedOrganizationalUnit,
     OrganizationalUnitRuleSetResponse,
 )
-from mex.common.types import Identifier, Text, TextLanguage, Validation
+from mex.common.types import (
+    Identifier,
+    MergedOrganizationalUnitIdentifier,
+    Text,
+    TextLanguage,
+    Validation,
+)
 from tests.conftest import DummyData, MockedGraph, get_graph
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -2227,6 +2233,11 @@ def test_mocked_graph_ingests_extracted_models(
 @pytest.mark.integration
 def test_graph_merge_items_preconditions_pass(loaded_dummy_data: DummyData) -> None:
     graph = GraphConnector.get()
+    # `stableTargetId` is computed by the identity provider on every access, so the
+    # goner's id has to be captured before the merge re-points it at the keeper
+    extracted_identifier = str(loaded_dummy_data["organization_1"].identifier)
+    goner_identifier = str(loaded_dummy_data["organization_1"].stableTargetId)
+    keeper_identifier = str(loaded_dummy_data["organization_2"].stableTargetId)
     goner = create_merged_item(
         loaded_dummy_data["organization_1"].stableTargetId,
         [loaded_dummy_data["organization_1"]],
@@ -2248,22 +2259,12 @@ def test_graph_merge_items_preconditions_pass(loaded_dummy_data: DummyData) -> N
         for edge in get_graph()
         if edge.get("label") == "stableTargetId"
     }
-    assert (
-        str(loaded_dummy_data["organization_1"].identifier),
-        str(loaded_dummy_data["organization_2"].stableTargetId),
-    ) in stable_target_id_edges
-    assert (
-        str(loaded_dummy_data["organization_1"].identifier),
-        str(loaded_dummy_data["organization_1"].stableTargetId),
-    ) not in stable_target_id_edges
+    assert (extracted_identifier, keeper_identifier) in stable_target_id_edges
+    assert (extracted_identifier, goner_identifier) not in stable_target_id_edges
 
     # the goner's rule set carries nothing but the reference to the keeper
-    rule_set = graph.fetch_rule_set_response(
-        str(loaded_dummy_data["organization_1"].stableTargetId)
-    ).one()
-    assert rule_set["additive"]["supersededBy"] == [
-        str(loaded_dummy_data["organization_2"].stableTargetId)
-    ]
+    rule_set = graph.fetch_rule_set_response(goner_identifier).one()
+    assert rule_set["additive"]["supersededBy"] == [keeper_identifier]
 
 
 @pytest.mark.integration
@@ -2389,16 +2390,20 @@ def test_graph_merge_items_preconditions_failed(  # noqa: PLR0913, PLR0917
         graph.merge_items(goner, keeper)
 
 
-def _supersede(graph: GraphConnector, stable_target_id: Identifier) -> None:
-    """Turn the given merged item into a tombstone pointing at an arbitrary item."""
+def _supersede(
+    graph: GraphConnector,
+    stable_target_id: Identifier,
+    superseded_by: Identifier,
+) -> None:
+    """Turn the given merged item into a tombstone pointing at the other item."""
     deque(
         graph.ingest_items(
             [
                 OrganizationalUnitRuleSetResponse(
                     additive=AdditiveOrganizationalUnit(
-                        supersededBy=MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
+                        supersededBy=MergedOrganizationalUnitIdentifier(superseded_by),
                     ),
-                    stableTargetId=stable_target_id,
+                    stableTargetId=MergedOrganizationalUnitIdentifier(stable_target_id),
                 )
             ]
         )
@@ -2410,7 +2415,11 @@ def test_graph_merge_items_goner_already_superseded(
     loaded_dummy_data: DummyData,
 ) -> None:
     graph = GraphConnector.get()
-    _supersede(graph, loaded_dummy_data["unit_1"].stableTargetId)
+    _supersede(
+        graph,
+        loaded_dummy_data["unit_1"].stableTargetId,
+        loaded_dummy_data["unit_2"].stableTargetId,
+    )
 
     goner = Mock(identifier=loaded_dummy_data["unit_1"].stableTargetId)
     keeper = Mock(identifier=loaded_dummy_data["unit_2"].stableTargetId)
@@ -2428,7 +2437,11 @@ def test_graph_merge_items_keeper_already_superseded(
     loaded_dummy_data: DummyData,
 ) -> None:
     graph = GraphConnector.get()
-    _supersede(graph, loaded_dummy_data["unit_2"].stableTargetId)
+    _supersede(
+        graph,
+        loaded_dummy_data["unit_2"].stableTargetId,
+        loaded_dummy_data["unit_1"].stableTargetId,
+    )
 
     goner = Mock(identifier=loaded_dummy_data["unit_1"].stableTargetId)
     keeper = Mock(identifier=loaded_dummy_data["unit_2"].stableTargetId)
