@@ -9,11 +9,17 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+- added MEX_BACKEND_GRACEFUL_SHUTDOWN_TIMEOUT setting, defaults to 30s, was indefinitely
+- added MEX_GRAPH_MAX_CONNECTION_POOL_SIZE setting, defaults to 100,
+  used to be tied to MEX_BACKEND_API_PARALLELIZATION
+
 ### Changes
 
 ### Deprecated
 
 ### Removed
+
+- removed `# pragma: no cover` from TYPE_CHECKING gates because mypy is smarter now
 
 ### Fixed
 
