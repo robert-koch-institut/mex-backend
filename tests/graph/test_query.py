@@ -595,8 +595,35 @@ WITH
    count(DISTINCT keeper) = 1 AS keeper_exists,
    elementId(goner) <> elementId(keeper) AS not_self_merge,
    labels(goner) = labels(keeper) AS same_merged_type,
-   NOT ANY(label IN labels(keeper) WHERE label IN $non_mergeable_types) AS merging_of_type_is_allowed
+   NOT ANY(label IN labels(keeper) WHERE label IN $non_mergeable_types) AS merging_of_type_is_allowed,
+   CASE WHEN goner IS NOT NULL THEN
+      NOT EXISTS { (goner)<-[:stableTargetId]-(:AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:supersededBy]->() }
+   END AS goner_not_superseded,
+   CASE WHEN keeper IS NOT NULL THEN
+      NOT EXISTS { (keeper)<-[:stableTargetId]-(:AdditivePerson|AdditiveVariable|AdditiveDistribution)-[:supersededBy]->() }
+   END AS keeper_not_superseded
 RETURN *;"""
+    )
+
+
+def test_move_extracted_items(query_builder: QueryBuilder) -> None:
+    query = query_builder.move_extracted_items()
+    assert (
+        query.render()
+        == """\
+MATCH (keeper:MergedPerson|MergedVariable|MergedDistribution {identifier: $keeper_identifier})
+MATCH (extracted:ExtractedPerson|ExtractedVariable|ExtractedDistribution)-[old:stableTargetId]->(:MergedPerson|MergedVariable|MergedDistribution {identifier: $goner_identifier})
+
+MERGE (extracted)-[:stableTargetId {position: 0}]->(keeper)
+DELETE old
+
+RETURN
+    collect({
+        identifier: extracted.identifier,
+        hadPrimarySource: [(extracted)-[:hadPrimarySource]->(primary_source) | primary_source.identifier][0],
+        identifierInPrimarySource: extracted.identifierInPrimarySource,
+        stableTargetId: keeper.identifier
+    }) AS moved_identities;"""
     )
 
 

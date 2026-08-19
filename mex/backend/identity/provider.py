@@ -1,5 +1,6 @@
 from mex.backend.cache.connector import CacheConnector
 from mex.backend.graph.connector import GraphConnector
+from mex.backend.identity.helpers import get_identity_cache_key
 from mex.common.identity import BaseProvider, Identity
 from mex.common.types import Identifier, MergedPrimarySourceIdentifier
 
@@ -29,8 +30,9 @@ class GraphIdentityProvider(BaseProvider):
         Returns:
             Identity object with provenance metadata
         """
-        # newline is a safe delimiter because it is explicitly forbidden in both fields
-        cache_key = f"{had_primary_source}\n{identifier_in_primary_source}"
+        cache_key = get_identity_cache_key(
+            had_primary_source, identifier_in_primary_source
+        )
         if cache_value := self._cache.get_value(cache_key):
             return Identity.model_validate(cache_value)
         connector = GraphConnector.get()
