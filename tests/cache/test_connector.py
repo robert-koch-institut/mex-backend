@@ -10,6 +10,7 @@ from valkey.exceptions import ConnectionError as ValkeyConnectionError
 from valkey.exceptions import ValkeyError
 
 from mex.backend.cache.connector import CacheConnector, LocalCache, ValkeyCache
+from mex.common.models import VersionStatus
 from mex.common.transform import MExEncoder
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -360,3 +361,43 @@ def test_metrics_consistency(
 
     updated_metrics = connector.metrics()
     assert updated_metrics["local_cache_size"] == 2
+
+
+def test_get_status_with_local_cache(
+    monkeypatch: MonkeyPatch, settings: BackendSettings
+) -> None:
+    monkeypatch.setattr(settings, "valkey_url", None)
+
+    connector = CacheConnector()
+
+    assert connector.get_status() == VersionStatus(status="local", version="unknown")
+
+
+def test_get_status_with_valkey(monkeypatch: MonkeyPatch) -> None:
+    mock_cache = Mock()
+    mock_cache.info.return_value = {"valkey_version": "9.1.1", "redis_version": "7.2.4"}
+
+    connector = CacheConnector()
+    monkeypatch.setattr(connector, "_cache", mock_cache)
+
+    assert connector.get_status() == VersionStatus(status="ok", version="9.1.1")
+
+
+def test_get_status_without_version(monkeypatch: MonkeyPatch) -> None:
+    mock_cache = Mock()
+    mock_cache.info.return_value = {"used_memory": 1024}
+
+    connector = CacheConnector()
+    monkeypatch.setattr(connector, "_cache", mock_cache)
+
+    assert connector.get_status() == VersionStatus(status="ok", version="unknown")
+
+
+def test_get_status_unavailable(monkeypatch: MonkeyPatch) -> None:
+    mock_cache = Mock()
+    mock_cache.info.side_effect = ValkeyConnectionError("cannot connect to valkey")
+
+    connector = CacheConnector()
+    monkeypatch.setattr(connector, "_cache", mock_cache)
+
+    assert connector.get_status() == VersionStatus(status="error", version="unknown")

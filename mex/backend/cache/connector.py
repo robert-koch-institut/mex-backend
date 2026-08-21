@@ -2,9 +2,12 @@ import json
 from typing import TYPE_CHECKING, Any, cast
 
 from valkey import Valkey
+from valkey.exceptions import ValkeyError
 
 from mex.backend.settings import BackendSettings
 from mex.common.connector import BaseConnector
+from mex.common.logging import logger
+from mex.common.models import VersionStatus
 from mex.common.transform import MExEncoder
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -123,6 +126,26 @@ class CacheConnector(BaseConnector):
         settings = BackendSettings.get()
         if settings.debug is True:
             self._cache.flushdb()
+
+    def get_status(self) -> VersionStatus:
+        """Get the status and version of the underlying cache.
+
+        Returns:
+            VersionStatus with status "ok" and the valkey server version, status
+            "local" when no valkey server is configured, or status "error" when the
+            configured valkey server is unreachable
+        """
+        if isinstance(self._cache, LocalCache):
+            return VersionStatus(status="local", version="unknown")
+        try:
+            info = self._cache.info()
+        except ValkeyError:
+            logger.exception("error checking the valkey cache status")
+            return VersionStatus(status="error", version="unknown")
+        version = info.get("valkey_version") or info.get("redis_version")
+        return VersionStatus(
+            status="ok", version=str(version) if version else "unknown"
+        )
 
     def close(self) -> None:
         """Close the connector's underlying sockets."""

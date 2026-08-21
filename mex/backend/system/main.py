@@ -3,6 +3,8 @@ from importlib.metadata import version
 from fastapi import APIRouter
 from fastapi.responses import PlainTextResponse
 
+from mex.backend.cache.connector import CacheConnector
+from mex.backend.graph.connector import get_graph_status
 from mex.common.connector import CONNECTOR_STORE
 from mex.common.models import VersionStatus
 
@@ -16,6 +18,24 @@ router = APIRouter()
 def check_system_status() -> VersionStatus:
     """Check that the backend server is healthy and responsive."""
     return VersionStatus(status="ok", version=version("mex-backend"))
+
+
+@router.get(
+    "/_system/neo4j",
+    tags=["system"],
+)
+def check_neo4j_status() -> VersionStatus:
+    """Check the status and version of the neo4j graph database."""
+    return get_graph_status()
+
+
+@router.get(
+    "/_system/valkey",
+    tags=["system"],
+)
+def check_valkey_status() -> VersionStatus:
+    """Check the status and version of the valkey cache."""
+    return CacheConnector.get().get_status()
 
 
 @router.get(

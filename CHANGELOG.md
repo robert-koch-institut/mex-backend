@@ -9,7 +9,11 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+- new endpoints `_system/neo4j` and `_system/valkey` reporting status and version
+
 ### Changes
+
+- `get_database_status` cypher query now returns the neo4j kernel version
 
 ### Deprecated
 
