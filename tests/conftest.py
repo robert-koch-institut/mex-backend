@@ -10,16 +10,16 @@ import pytest
 from fastapi.testclient import TestClient
 from neo4j import Driver, Session, SummaryCounters, Transaction
 from pytest import FixtureRequest, LogCaptureFixture, MonkeyPatch
-from valkey import Valkey
 
 from mex.artificial.helpers import create_artificial_items_and_rule_sets
 from mex.backend.auxiliary.helpers import cached_organization, cached_primary_source
-from mex.backend.cache.connector import CacheConnector, LocalCache, ValkeyCache
+from mex.backend.cache import get_cache_connector
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.identity.provider import GraphIdentityProvider
 from mex.backend.main import app
 from mex.backend.settings import BackendSettings
 from mex.backend.testing.main import app as testing_app
+from mex.backend.types import CacheConnectorType
 from mex.common.connector import CONNECTOR_STORE
 from mex.common.identity import MemoryIdentityProvider
 from mex.common.identity.registry import _PROVIDER_REGISTRY
@@ -56,6 +56,7 @@ pytest_plugins = ("mex.common.testing.plugin",)
 def settings(
     caplog: LogCaptureFixture,
     monkeypatch: MonkeyPatch,
+    is_integration_test: bool,  # noqa: FBT001
     log_level: int,
     isolate_settings: None,  # noqa: ARG001
 ) -> BackendSettings:
@@ -73,6 +74,16 @@ def settings(
         "MEX_IDENTITY_PROVIDER",
         IdentityProvider.GRAPH.value,
     )
+    if is_integration_test:
+        monkeypatch.setenv(
+            "MEX_BACKEND_CACHE_CONNECTOR",
+            CacheConnectorType.VALKEY.value,
+        )
+    else:
+        monkeypatch.setenv(
+            "MEX_BACKEND_CACHE_CONNECTOR",
+            CacheConnectorType.MEMORY.value,
+        )
     # temporarily reduce log-level because the settings emit their configuration
     # on every instantiation or value-change. this would flood the test logs with noise,
     # especially because this fixture is used by *every* test.
@@ -206,14 +217,6 @@ def mocked_graph(monkeypatch: MonkeyPatch) -> MockedGraph:
     return MockedGraph(run, session)
 
 
-@pytest.fixture
-def mocked_valkey(monkeypatch: MonkeyPatch) -> LocalCache | ValkeyCache:
-    """Mock the valkey client to use a local cache instead."""
-    cache = LocalCache()
-    monkeypatch.setattr(Valkey, "from_url", lambda _: cache)
-    return cache
-
-
 @pytest.fixture(autouse=True)
 def isolate_auxiliary_caches() -> None:
     """Clear the auxiliary helper caches to avoid cross-test pollution."""
@@ -275,18 +278,18 @@ def isolate_graph_database(
 
 
 @pytest.fixture(autouse=True)
-def isolate_valkey_cache(
+def isolate_cache_connector(
     is_integration_test: bool,  # noqa: FBT001
     settings: BackendSettings,
     monkeypatch: MonkeyPatch,
 ) -> None:
-    """Automatically flush the valkey cache for integration testing."""
+    """Automatically flush the cache for integration testing."""
     if is_integration_test:
         monkeypatch.setattr(settings, "debug", True)
-        connector = CacheConnector.get()
+        connector = get_cache_connector()
         connector.flush()
         connector.close()
-        CONNECTOR_STORE.pop(CacheConnector)
+        CONNECTOR_STORE.pop(type(connector))
 
 
 def get_graph() -> list[dict[str, Any]]:

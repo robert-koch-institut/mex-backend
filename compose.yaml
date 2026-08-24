@@ -6,6 +6,7 @@ services:
       - 8080:8080
     environment:
       - MEX_GRAPH_URL=neo4j://neo4j:7687
+      - MEX_BACKEND_CACHE_CONNECTOR=valkey
       - MEX_BACKEND_VALKEY_URL=valkey://valkey:6379
     healthcheck:
       test: [ "CMD", "curl", "http://0.0.0.0:8080/v0/_system/check" ]

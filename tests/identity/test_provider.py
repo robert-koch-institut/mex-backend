@@ -55,7 +55,6 @@ if TYPE_CHECKING:  # pragma: no cover
         ),
     ],
 )
-@pytest.mark.usefixtures("mocked_valkey")
 def test_assign_identity_mocked(
     mocked_graph: MockedGraph,
     mocked_return: list[dict[str, str]],
@@ -72,7 +71,6 @@ def test_assign_identity_mocked(
     assert identity.model_dump() == expected
 
 
-@pytest.mark.usefixtures("mocked_valkey")
 def test_assign_identity_inconsistency_mocked(
     mocked_graph: MockedGraph,
 ) -> None:
@@ -226,7 +224,6 @@ def test_assign_identity(
         ),
     ],
 )
-@pytest.mark.usefixtures("mocked_valkey")
 def test_fetch_identities_mocked(  # noqa: PLR0913, PLR0917
     mocked_graph: MockedGraph,
     mocked_return: list[dict[str, str]],

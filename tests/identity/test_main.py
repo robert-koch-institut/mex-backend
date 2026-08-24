@@ -55,7 +55,7 @@ if TYPE_CHECKING:  # pragma: no cover
         ),
     ],
 )
-@pytest.mark.usefixtures("mocked_valkey", "graph_identity_provider")
+@pytest.mark.usefixtures("graph_identity_provider")
 def test_assign_identity_mocked(
     client_with_api_key_write_permission: TestClient,
     mocked_graph: MockedGraph,
@@ -69,7 +69,7 @@ def test_assign_identity_mocked(
     assert response.json() == expected
 
 
-@pytest.mark.usefixtures("mocked_valkey", "graph_identity_provider")
+@pytest.mark.usefixtures("graph_identity_provider")
 def test_assign_identity_inconsistency_mocked(
     client_with_api_key_write_permission: TestClient,
     mocked_graph: MockedGraph,
@@ -224,7 +224,7 @@ def test_assign_identity(
         ),
     ],
 )
-@pytest.mark.usefixtures("mocked_valkey", "graph_identity_provider")
+@pytest.mark.usefixtures("graph_identity_provider")
 def test_fetch_identities_mocked(
     client_with_api_key_write_permission: TestClient,
     mocked_graph: MockedGraph,

@@ -228,7 +228,6 @@ def test_search_publishable_merged_items_in_graph() -> None:
         ),
     ],
 )
-@pytest.mark.usefixtures("mocked_valkey")
 def test_search_publishable_merged_items_in_graph_mocked(
     mocked_graph_result: list[dict[str, Any]],
     expected: Any,  # noqa: ANN401

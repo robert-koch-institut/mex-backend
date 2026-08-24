@@ -20,7 +20,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from tests.conftest import DummyData, DummyDataName, MockedGraph
 
 
-@pytest.mark.usefixtures("mocked_valkey")
 def test_search_merged_items_mocked(
     client_with_api_key_read_permission: TestClient,
     mocked_graph: MockedGraph,
