@@ -2,7 +2,9 @@ import json
 from typing import TYPE_CHECKING, Any, cast
 
 from valkey import Valkey
-from valkey.exceptions import ValkeyError
+from valkey.exceptions import AuthenticationError, AuthorizationError, ValkeyError
+from valkey.exceptions import ConnectionError as ValkeyConnectionError
+from valkey.exceptions import TimeoutError as ValkeyTimeoutError
 
 from mex.backend.settings import BackendSettings
 from mex.common.connector import BaseConnector
@@ -132,13 +134,20 @@ class CacheConnector(BaseConnector):
 
         Returns:
             VersionStatus with status "ok" and the valkey server version, status
-            "local" when no valkey server is configured, or status "error" when the
-            configured valkey server is unreachable
+            "local" when no valkey server is configured, status "offline" when the
+            configured valkey server cannot be reached, or status "error" when the
+            cache is misconfigured or answers with an error
         """
         if isinstance(self._cache, LocalCache):
             return VersionStatus(status="local", version="unknown")
         try:
             info = self._cache.info()
+        except AuthenticationError, AuthorizationError:
+            logger.exception("error authenticating with the valkey cache")
+            return VersionStatus(status="error", version="unknown")
+        except ValkeyConnectionError, ValkeyTimeoutError:
+            logger.exception("valkey cache is unreachable")
+            return VersionStatus(status="offline", version="unknown")
         except ValkeyError:
             logger.exception("error checking the valkey cache status")
             return VersionStatus(status="error", version="unknown")

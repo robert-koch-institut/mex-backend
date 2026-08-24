@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any
 from unittest.mock import Mock, call
 
 import pytest
-from neo4j.exceptions import ServiceUnavailable
+from neo4j.exceptions import AuthError, ServiceUnavailable
 from pytest import FixtureRequest, MonkeyPatch
 
 from mex.backend.graph import connector as connector_module
@@ -2393,8 +2393,15 @@ def test_get_graph_status(mocked_graph: MockedGraph) -> None:
 
 
 @pytest.mark.usefixtures("mocked_valkey")
-def test_get_graph_status_unavailable(mocked_graph: MockedGraph) -> None:
+def test_get_graph_status_unreachable(mocked_graph: MockedGraph) -> None:
     mocked_graph.run.side_effect = ServiceUnavailable("cannot connect to neo4j")
+
+    assert get_graph_status() == VersionStatus(status="offline", version="unknown")
+
+
+@pytest.mark.usefixtures("mocked_valkey")
+def test_get_graph_status_misconfigured(mocked_graph: MockedGraph) -> None:
+    mocked_graph.run.side_effect = AuthError("invalid credentials")
 
     assert get_graph_status() == VersionStatus(status="error", version="unknown")
 

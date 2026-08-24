@@ -9,7 +9,13 @@ from neo4j import (
     NotificationDisabledClassification,
     Transaction,
 )
-from neo4j.exceptions import ConstraintError, DriverError, Neo4jError
+from neo4j.exceptions import (
+    ConstraintError,
+    DriverError,
+    Neo4jError,
+    ServiceUnavailable,
+    SessionExpired,
+)
 
 from mex.backend.exceptions import BackendError
 from mex.backend.graph.exceptions import (
@@ -649,13 +655,17 @@ def get_graph_status() -> VersionStatus:
     """Get the status and version of the graph database.
 
     Returns:
-        VersionStatus with status "ok" and the neo4j kernel version,
-        or status "error" and an "unknown" version if the graph is not available
+        VersionStatus with status "ok" and the neo4j kernel version, status "offline"
+        when the graph cannot be reached, or status "error" when the graph is
+        misconfigured or answers with an error
     """
     query_builder = QueryBuilder.get()
     try:
         connector = GraphConnector.get()
         version = connector.commit(query_builder.get_database_status())["version"]
+    except ServiceUnavailable, SessionExpired:
+        logger.exception("graph database is unreachable")
+        return VersionStatus(status="offline", version="unknown")
     except DriverError, Neo4jError, MExError, BackendError:
         logger.exception("error checking the graph database status")
         return VersionStatus(status="error", version="unknown")

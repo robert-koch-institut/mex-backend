@@ -7,7 +7,7 @@ from pydantic import SecretStr
 from pytest import MonkeyPatch
 from starlette import status
 from valkey import Valkey
-from valkey.exceptions import ValkeyError
+from valkey.exceptions import ConnectionError as ValkeyConnectionError
 
 from mex.common.testing import Joker
 
@@ -55,7 +55,7 @@ def test_check_neo4j_status(client: TestClient, mocked_graph: MockedGraph) -> No
 
 
 @pytest.mark.usefixtures("mocked_valkey")
-def test_check_neo4j_status_unavailable(
+def test_check_neo4j_status_unreachable(
     client: TestClient, mocked_graph: MockedGraph
 ) -> None:
     mocked_graph.run.side_effect = ServiceUnavailable("cannot connect to neo4j")
@@ -63,7 +63,7 @@ def test_check_neo4j_status_unavailable(
     response = client.get("/v0/_system/neo4j")
 
     assert response.status_code == status.HTTP_200_OK, response.text
-    assert response.json() == {"status": "error", "version": "unknown"}
+    assert response.json() == {"status": "offline", "version": "unknown"}
 
 
 @pytest.mark.integration
@@ -119,15 +119,17 @@ def test_check_valkey_status_without_version(
     assert response.json() == {"status": "ok", "version": "unknown"}
 
 
-def test_check_valkey_status_unavailable(
+def test_check_valkey_status_unreachable(
     client: TestClient, mocked_valkey_client: Mock
 ) -> None:
-    mocked_valkey_client.info.side_effect = ValkeyError("cannot connect to valkey")
+    mocked_valkey_client.info.side_effect = ValkeyConnectionError(
+        "cannot connect to valkey"
+    )
 
     response = client.get("/v0/_system/valkey")
 
     assert response.status_code == status.HTTP_200_OK, response.text
-    assert response.json() == {"status": "error", "version": "unknown"}
+    assert response.json() == {"status": "offline", "version": "unknown"}
 
 
 @pytest.mark.integration
