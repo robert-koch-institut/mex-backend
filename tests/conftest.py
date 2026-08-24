@@ -16,10 +16,13 @@ from mex.artificial.helpers import create_artificial_items_and_rule_sets
 from mex.backend.auxiliary.helpers import cached_organization, cached_primary_source
 from mex.backend.cache.connector import CacheConnector, LocalCache, ValkeyCache
 from mex.backend.graph.connector import GraphConnector
+from mex.backend.identity.provider import GraphIdentityProvider
 from mex.backend.main import app
 from mex.backend.settings import BackendSettings
 from mex.backend.testing.main import app as testing_app
 from mex.common.connector import CONNECTOR_STORE
+from mex.common.identity import MemoryIdentityProvider
+from mex.common.identity.registry import _PROVIDER_REGISTRY
 from mex.common.logging import logger
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -53,7 +56,6 @@ pytest_plugins = ("mex.common.testing.plugin",)
 def settings(
     caplog: LogCaptureFixture,
     monkeypatch: MonkeyPatch,
-    is_integration_test: bool,  # noqa: FBT001
     log_level: int,
     isolate_settings: None,  # noqa: ARG001
 ) -> BackendSettings:
@@ -67,16 +69,10 @@ def settings(
             }
         ),
     )
-    if is_integration_test:
-        monkeypatch.setenv(
-            "MEX_IDENTITY_PROVIDER",
-            IdentityProvider.GRAPH.value,
-        )
-    else:
-        monkeypatch.setenv(
-            "MEX_IDENTITY_PROVIDER",
-            IdentityProvider.MEMORY.value,
-        )
+    monkeypatch.setenv(
+        "MEX_IDENTITY_PROVIDER",
+        IdentityProvider.GRAPH.value,
+    )
     # temporarily reduce log-level because the settings emit their configuration
     # on every instantiation or value-change. this would flood the test logs with noise,
     # especially because this fixture is used by *every* test.
@@ -236,6 +232,31 @@ def isolate_identifier_seeds(monkeypatch: MonkeyPatch) -> None:
         return cls(original_generate(seed or next(counter)))
 
     monkeypatch.setattr(Identifier, "generate", classmethod(generate))
+
+
+@pytest.fixture(autouse=True)
+def isolate_identity_provider(
+    is_integration_test: bool,  # noqa: FBT001
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Back the graph identity provider with an in-memory one for unit tests.
+
+    The settings only allow the graph identity provider, but unit tests must not
+    talk to a real graph database, so we swap the implementation registered for
+    `IdentityProvider.GRAPH` instead of configuring a different provider.
+    """
+    if not is_integration_test:
+        monkeypatch.setitem(
+            _PROVIDER_REGISTRY, IdentityProvider.GRAPH, MemoryIdentityProvider
+        )
+
+
+@pytest.fixture
+def graph_identity_provider(monkeypatch: MonkeyPatch) -> None:
+    """Undo `isolate_identity_provider` for unit tests that mock the graph."""
+    monkeypatch.setitem(
+        _PROVIDER_REGISTRY, IdentityProvider.GRAPH, GraphIdentityProvider
+    )
 
 
 @pytest.fixture(autouse=True)

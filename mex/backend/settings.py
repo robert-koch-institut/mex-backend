@@ -5,6 +5,7 @@ from pydantic import Field, SecretStr, model_validator
 from mex.backend.models import APIKeyDatabase
 from mex.backend.types import MergedType
 from mex.common.settings import BaseSettings
+from mex.common.types import IdentityProvider
 
 
 class BackendSettings(BaseSettings):
@@ -75,6 +76,11 @@ class BackendSettings(BaseSettings):
         description="Database of API keys.",
         validation_alias="MEX_BACKEND_API_KEY_DATABASE",
     )
+    identity_provider: IdentityProvider = Field(
+        IdentityProvider.GRAPH,
+        description="Provider to assign identifiers to new model instances.",
+        validation_alias="MEX_IDENTITY_PROVIDER",
+    )
     valkey_url: SecretStr | None = Field(
         None,
         description="Fully qualified URL of a valkey cache server.",
@@ -93,5 +99,20 @@ class BackendSettings(BaseSettings):
         """
         if self.backend_api_parallelization > 1 and self.valkey_url is None:
             msg = "If parallelization is > 1, valkey url must be set."
+            raise ValueError(msg)
+        return self
+
+    @model_validator(mode="after")
+    def assert_identity_provider_is_graph(self) -> Self:
+        """Validate that the graph identity provider is configured.
+
+        Rationale: The backend is the service that owns the graph database and is
+        therefore the only component that can assign and resolve identities in it.
+        Any other provider would either delegate back to the backend itself
+        (`BACKEND`) or hand out identifiers that are lost on restart (`MEMORY`),
+        so we make sure the backend always uses the graph identity provider.
+        """
+        if self.identity_provider != IdentityProvider.GRAPH:
+            msg = "Identity provider must be set to graph."
             raise ValueError(msg)
         return self
