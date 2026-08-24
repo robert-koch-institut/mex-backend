@@ -155,11 +155,6 @@ def entrypoint_app(request: FixtureRequest) -> TestClient:
 
 
 class MockedGraph:
-    def __init__(self, run: MagicMock, session: MagicMock) -> None:
-        self.run = run
-        self.session = session
-        self.return_value = []
-
     @property
     def return_value(self) -> list[Any]:  # pragma: no cover
         raise NotImplementedError
@@ -198,6 +193,11 @@ class MockedGraph:
     @property
     def call_args_list(self) -> list[Any]:
         return self.run.call_args_list
+
+    def __init__(self, run: MagicMock, session: MagicMock) -> None:
+        self.run = run
+        self.session = session
+        self.return_value = []
 
 
 @pytest.fixture
