@@ -473,6 +473,7 @@ def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
                 "items": [
                     {
                         "rorId": [],
+                        "country": [],
                         "gndId": [],
                         "wikidataId": [],
                         "identifierInPrimarySource": "robert-koch-institute",
@@ -510,6 +511,7 @@ def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
                 "items": [
                     {
                         "rorId": [],
+                        "country": [],
                         "gndId": [],
                         "wikidataId": [],
                         "identifierInPrimarySource": "robert-koch-institute",
@@ -552,6 +554,7 @@ def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
                 "items": [
                     {
                         "rorId": [],
+                        "country": [],
                         "gndId": [],
                         "wikidataId": [],
                         "identifierInPrimarySource": "robert-koch-institute",
@@ -623,6 +626,7 @@ def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
                 "items": [
                     {
                         "rorId": [],
+                        "country": [],
                         "gndId": [],
                         "wikidataId": [],
                         "identifierInPrimarySource": "robert-koch-institute",
@@ -640,6 +644,7 @@ def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
                     },
                     {
                         "rorId": [],
+                        "country": [],
                         "identifierInPrimarySource": "rki",
                         "gndId": [],
                         "wikidataId": [],
@@ -1178,6 +1183,7 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
                         "_components": [
                             {
                                 "rorId": [],
+                                "country": [],
                                 "gndId": [],
                                 "wikidataId": [],
                                 "identifierInPrimarySource": "robert-koch-institute",
@@ -1236,6 +1242,7 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
                                 "geprisId": [],
                                 "gndId": [],
                                 "rorId": [],
+                                "country": [],
                                 "viafId": [],
                                 "wikidataId": [],
                             }
@@ -1455,6 +1462,7 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
                         "_components": [
                             {
                                 "rorId": [],
+                                "country": [],
                                 "gndId": [],
                                 "wikidataId": [],
                                 "identifierInPrimarySource": "robert-koch-institute",
@@ -1481,6 +1489,7 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
                         "_components": [
                             {
                                 "rorId": [],
+                                "country": [],
                                 "gndId": [],
                                 "wikidataId": [],
                                 "identifierInPrimarySource": "rki",
