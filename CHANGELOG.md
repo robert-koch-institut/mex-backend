@@ -13,7 +13,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changes
 
-- `get_database_status` cypher query now returns the neo4j kernel version
+- `get_database_status` cypher query now returns the neo4j version
 
 ### Deprecated
 

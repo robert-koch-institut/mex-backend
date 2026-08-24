@@ -102,7 +102,7 @@ class GraphConnector(BaseConnector):
         """Check the connectivity and authentication to the graph."""
         query_builder = QueryBuilder.get()
         result = self.commit(query_builder.get_database_status())
-        logger.info("connected to neo4j kernel %s", result["version"])
+        logger.info("connected to neo4j %s", result["version"])
         return result
 
     def _seed_constraints(self) -> None:
@@ -655,7 +655,7 @@ def get_graph_status() -> VersionStatus:
     """Get the status and version of the graph database.
 
     Returns:
-        VersionStatus with status "ok" and the neo4j kernel version, status "offline"
+        VersionStatus with status "ok" and the neo4j version, status "offline"
         when the graph cannot be reached, or status "error" when the graph is
         misconfigured or answers with an error
     """
