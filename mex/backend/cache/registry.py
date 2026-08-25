@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Final
 
 from mex.backend.settings import BackendSettings
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from mex.backend.cache.base import BaseCacheConnector
     from mex.backend.types import CacheConnectorType
 

@@ -9,10 +9,16 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+- new setting `MEX_BACKEND_CACHE_CONNECTOR` to choose between `memory` and `valkey`
+- validator asserting the backend is configured with the graph identity provider
+
 ### Changes
 
 - update mex-common to 3.4.0 and mex-model to 5.1.2
 - set exact version for neo4j:2026.07.1
+- align cache connectors with the registry architecture of identity providers
+- cache metrics are now prefixed with the connector name, e.g. `valkey_cache_connector_*`
+- the existence of `MEX_BACKEND_VALKEY_URL` no longer chooses the cache connector
 
 ### Deprecated
 

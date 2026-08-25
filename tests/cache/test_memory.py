@@ -7,7 +7,7 @@ from pytest import MonkeyPatch
 
 from mex.backend.cache.memory import MemoryCacheConnector
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from mex.backend.settings import BackendSettings
 
 

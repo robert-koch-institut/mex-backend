@@ -12,7 +12,7 @@ from mex.backend.cache.registry import (
 from mex.backend.cache.valkey import ValkeyCacheConnector
 from mex.backend.types import CacheConnectorType
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from mex.backend.settings import BackendSettings
 
 
