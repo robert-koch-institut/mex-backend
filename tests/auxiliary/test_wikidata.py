@@ -49,6 +49,7 @@ def test_search_organization_in_wikidata_mocked(
                         "value": "alias_de_3",
                     },
                 ],
+                "country": [],
                 "geprisId": [],
                 "gndId": [],
                 "hadPrimarySource": "djbNGb5fLgYHFyMh3fZE2g",
