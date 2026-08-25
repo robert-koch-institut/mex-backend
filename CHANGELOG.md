@@ -9,8 +9,12 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+- added `goner_not_superseded` and `keeper_not_superseded` merging preconditions
+- added `get_identity_cache_key` helper to build identity cache keys in one place
+
 ### Changes
 
+- graph reads can now join an open write transaction via the new `GraphConnector._run`
 - update mex-common to 3.4.0 and mex-model to 5.1.2
 - set exact version for neo4j:2026.07.1
 
