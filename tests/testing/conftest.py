@@ -30,9 +30,9 @@ def testing_app_client_with_api_key_read_permission(
 
 
 @pytest.fixture
-def testing_app_client_that_is_ldap_authenticated(
+def testing_app_client_with_bearer_write_permission(
     testing_app_client: TestClient,
 ) -> TestClient:
-    """Return a fastAPI test client with write permission granted by basic auth."""
-    testing_app_client.auth = ("Writer", "write_password")
+    """Return a fastAPI test client with write permission granted by Bearer token."""
+    testing_app_client.headers.update({"Authorization": "Bearer Writer"})
     return testing_app_client
