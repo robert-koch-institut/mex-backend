@@ -1,7 +1,7 @@
 import re
 from collections import deque
-from typing import TYPE_CHECKING, Any
-from unittest.mock import Mock, call
+from typing import TYPE_CHECKING, Any, cast
+from unittest.mock import MagicMock, Mock, call
 
 import pytest
 from pytest import FixtureRequest, MonkeyPatch
@@ -21,11 +21,19 @@ from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
     MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    AdditiveOrganizationalUnit,
     AnyExtractedModel,
     ExtractedOrganization,
     ExtractedOrganizationalUnit,
+    OrganizationalUnitRuleSetResponse,
 )
-from mex.common.types import Identifier, Text, TextLanguage, Validation
+from mex.common.types import (
+    Identifier,
+    MergedOrganizationalUnitIdentifier,
+    Text,
+    TextLanguage,
+    Validation,
+)
 from tests.conftest import DummyData, MockedGraph, get_graph
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -842,6 +850,23 @@ def test_mocked_graph_fetch_rule_set_response_not_found(
     graph = GraphConnector.get()
     result = graph.fetch_rule_set_response("thisIdDoesNotExist")
 
+    assert result.one_or_none() is None
+
+
+@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+def test_mocked_graph_run_in_transaction(mocked_graph: MockedGraph) -> None:
+    mocked_graph.return_value = []
+    graph = GraphConnector.get()
+    tx = Mock(run=mocked_graph.run)
+
+    result = graph.fetch_rule_set_response("thisIsAStableTargetId", tx=tx)
+
+    # the query joined the given transaction instead of opening a session of its own
+    assert tx.run.call_args_list[-1] == call(
+        call("get_rule_set_response"),
+        {"identifier": "thisIsAStableTargetId"},
+    )
+    cast("MagicMock", graph.driver.session).assert_not_called()
     assert result.one_or_none() is None
 
 
@@ -2256,7 +2281,7 @@ def test_graph_merge_items_preconditions_pass(loaded_dummy_data: DummyData) -> N
             "unit_1",
             "Merging precondition check failed. "
             "Violated: goner_exists. "
-            "Unverifiable: not_self_merge, same_merged_type",
+            "Unverifiable: goner_not_superseded, not_self_merge, same_merged_type",
             id="goner item does not exist",
         ),
         pytest.param(
@@ -2264,7 +2289,8 @@ def test_graph_merge_items_preconditions_pass(loaded_dummy_data: DummyData) -> N
             "fakeKeeper",
             "Merging precondition check failed. "
             "Violated: keeper_exists. "
-            "Unverifiable: merging_of_type_is_allowed, not_self_merge, same_merged_type",
+            "Unverifiable: keeper_not_superseded, merging_of_type_is_allowed, "
+            "not_self_merge, same_merged_type",
             id="keeper item does not exist",
         ),
         pytest.param(
@@ -2272,7 +2298,8 @@ def test_graph_merge_items_preconditions_pass(loaded_dummy_data: DummyData) -> N
             "fakeKeeper",
             "Merging precondition check failed. "
             "Violated: goner_exists, keeper_exists. "
-            "Unverifiable: merging_of_type_is_allowed, not_self_merge, same_merged_type",
+            "Unverifiable: goner_not_superseded, keeper_not_superseded, "
+            "merging_of_type_is_allowed, not_self_merge, same_merged_type",
             id="nothing exists",
         ),
         pytest.param(
@@ -2323,6 +2350,70 @@ def test_graph_merge_items_preconditions_failed(  # noqa: PLR0913, PLR0917
     with pytest.raises(
         MergingError,
         match=re.escape(expected_failed),
+    ):
+        graph.merge_items(goner, keeper)
+
+
+def _supersede(
+    graph: GraphConnector,
+    stable_target_id: Identifier,
+    superseded_by: Identifier,
+) -> None:
+    """Turn the given merged item into a tombstone pointing at the other item."""
+    deque(
+        graph.ingest_items(
+            [
+                OrganizationalUnitRuleSetResponse(
+                    additive=AdditiveOrganizationalUnit(
+                        supersededBy=MergedOrganizationalUnitIdentifier(superseded_by),
+                    ),
+                    stableTargetId=MergedOrganizationalUnitIdentifier(stable_target_id),
+                )
+            ]
+        )
+    )
+
+
+@pytest.mark.integration
+def test_graph_merge_items_goner_already_superseded(
+    loaded_dummy_data: DummyData,
+) -> None:
+    graph = GraphConnector.get()
+    _supersede(
+        graph,
+        loaded_dummy_data["unit_1"].stableTargetId,
+        loaded_dummy_data["unit_2"].stableTargetId,
+    )
+
+    goner = Mock(identifier=loaded_dummy_data["unit_1"].stableTargetId)
+    keeper = Mock(identifier=loaded_dummy_data["unit_2"].stableTargetId)
+    with pytest.raises(
+        MergingError,
+        match=re.escape(
+            "Merging precondition check failed. Violated: goner_not_superseded"
+        ),
+    ):
+        graph.merge_items(goner, keeper)
+
+
+@pytest.mark.integration
+def test_graph_merge_items_keeper_already_superseded(
+    loaded_dummy_data: DummyData,
+) -> None:
+    graph = GraphConnector.get()
+    _supersede(
+        graph,
+        loaded_dummy_data["unit_2"].stableTargetId,
+        loaded_dummy_data["unit_1"].stableTargetId,
+    )
+
+    goner = Mock(identifier=loaded_dummy_data["unit_1"].stableTargetId)
+    keeper = Mock(identifier=loaded_dummy_data["unit_2"].stableTargetId)
+    with pytest.raises(
+        MergingError,
+        match=re.escape(
+            "Merging precondition check failed. Violated: keeper_not_superseded"
+        ),
     ):
         graph.merge_items(goner, keeper)
 

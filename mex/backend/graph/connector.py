@@ -180,6 +180,33 @@ class GraphConnector(BaseConnector):
         with self.driver.session(default_access_mode=access_mode) as session:
             return Result(session.run(query.render(), parameters))
 
+    def _run(
+        self,
+        query: Query,
+        /,
+        tx: Transaction | None = None,
+        access_mode: str = READ_ACCESS,
+        **parameters: Any,  # noqa: ANN401
+    ) -> Result:
+        """Run a query in the given transaction, or in a fresh session when none given.
+
+        Reads that are part of a bigger write operation need to see that operation's
+        uncommitted state, so they have to run in its transaction instead of opening
+        a session of their own.
+
+        Args:
+            query: Query instance to render and run
+            tx: Optional open transaction to run the query in
+            access_mode: Access mode to use when no transaction is given
+            parameters: Keyword parameters for the query
+
+        Returns:
+            Graph result instance
+        """
+        if tx is None:
+            return self.commit(query, access_mode=access_mode, **parameters)
+        return Result(tx.run(query.render(), parameters))
+
     def _fetch_extracted_or_rule_items(  # noqa: PLR0913, PLR0917
         self,
         query_string: str | None,
@@ -292,11 +319,16 @@ class GraphConnector(BaseConnector):
             limit=limit,
         )
 
-    def fetch_rule_set_response(self, stable_target_id: str) -> Result:
+    def fetch_rule_set_response(
+        self,
+        stable_target_id: str,
+        tx: Transaction | None = None,
+    ) -> Result:
         """Query the graph for the rule set belonging to one merged item.
 
         Args:
             stable_target_id: Identifier of the merged item whose rule set to fetch
+            tx: Optional open transaction to run the query in
 
         Returns:
             Graph result instance with a single rule-set-response shaped record
@@ -305,7 +337,7 @@ class GraphConnector(BaseConnector):
         """
         query_builder = QueryBuilder.get()
         query = query_builder.get_rule_set_response()
-        result = self.commit(query, identifier=stable_target_id)
+        result = self._run(query, tx=tx, identifier=stable_target_id)
         if record := result.one_or_none():
             for field in RULE_MODEL_CLASSES_BY_TYPE_BY_NAME:
                 if (component := record.get(field)) is not None:
@@ -326,6 +358,7 @@ class GraphConnector(BaseConnector):
         reference_filters: Sequence[ReferenceFilter] | None,
         skip: int,
         limit: int,
+        tx: Transaction | None = None,
     ) -> Result:
         """Query the graph for merged items.
 
@@ -336,6 +369,7 @@ class GraphConnector(BaseConnector):
             reference_filters: Optional reference field filters
             skip: How many items to skip for pagination
             limit: How many items to return at most
+            tx: Optional open transaction to run the query in
 
         Returns:
             Graph result instance
@@ -353,8 +387,9 @@ class GraphConnector(BaseConnector):
             filter_by_references=bool(raw_reference_filters),
             reference_fields=raw_reference_fields,
         )
-        result = self.commit(
+        result = self._run(
             query,
+            tx=tx,
             query_string=query_string,
             identifier=identifier,
             labels=entity_type or list(MERGED_MODEL_CLASSES_BY_NAME),
@@ -366,8 +401,9 @@ class GraphConnector(BaseConnector):
         for query_result in result.all():
             for item in query_result["items"]:
                 for component in item["_components"]:
-                    refs = component.pop("_refs")
-                    component.update(expand_references_in_search_result(refs))
+                    component.update(
+                        expand_references_in_search_result(component.pop("_refs"))
+                    )
         return result
 
     def fetch_identities(
