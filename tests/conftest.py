@@ -272,6 +272,9 @@ def isolate_graph_database(
         monkeypatch.setattr(settings, "debug", True)
         connector = GraphConnector.get()
         connector.flush()
+        connector._seed_constraints()
+        connector._seed_indices()
+        connector._seed_data()
 
 
 @pytest.fixture(autouse=True)
