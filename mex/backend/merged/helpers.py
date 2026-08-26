@@ -21,7 +21,7 @@ from mex.common.models import (
 )
 from mex.common.types import Identifier, Validation
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from mex.backend.models import ReferenceFilter

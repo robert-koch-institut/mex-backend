@@ -28,7 +28,7 @@ from mex.common.models import (
 from mex.common.types import Identifier, Text, TextLanguage, Validation
 from tests.conftest import DummyData, MockedGraph, get_graph
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from mex.backend.settings import BackendSettings
 
 

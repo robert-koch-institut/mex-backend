@@ -11,6 +11,9 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - new setting `MEX_BACKEND_CACHE_CONNECTOR` to choose between `memory` and `valkey`
 - validator asserting the backend is configured with the graph identity provider
+- added MEX_BACKEND_GRACEFUL_SHUTDOWN_TIMEOUT setting, defaults to 30s, was indefinitely
+- added MEX_GRAPH_MAX_CONNECTION_POOL_SIZE setting, defaults to 100,
+  used to be tied to MEX_BACKEND_API_PARALLELIZATION
 
 ### Changes
 
@@ -24,7 +27,11 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Removed
 
+- removed `# pragma: no cover` from TYPE_CHECKING gates because coverage is smarter now
+
 ### Fixed
+
+- fixed seed script to ingest items progressively to not restrict item count by RAM
 
 ### Security
 
