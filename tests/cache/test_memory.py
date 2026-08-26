@@ -33,6 +33,12 @@ def test_roundtrip(connector: MemoryCacheConnector) -> None:
     assert connector.get_value("test_key") is None
 
 
+def test_delete_value_missing_key(connector: MemoryCacheConnector) -> None:
+    connector.delete_value("missing_key")
+
+    assert connector.get_value("missing_key") is None
+
+
 def test_get_value_invalid_json(connector: MemoryCacheConnector) -> None:
     connector._set("test_key", "invalid json")
 

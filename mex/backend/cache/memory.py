@@ -23,8 +23,8 @@ class MemoryCacheConnector(BaseCacheConnector):
         self._database[key] = value
 
     def _delete(self, key: str) -> None:
-        """Delete the key-value pair with the given key."""
-        del self._database[key]
+        """Delete the key-value pair with the given key, if it exists."""
+        self._database.pop(key, None)
 
     def _info(self) -> dict[str, int | str]:
         """Return the cache stats that we track as metrics."""
