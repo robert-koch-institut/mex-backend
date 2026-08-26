@@ -30,8 +30,8 @@ class ValkeyCacheConnector(BaseCacheConnector):
         """Return information and statistics about the cache."""
         return cast("dict[str, int | str]", self._client.info())
 
-    def _clear(self) -> None:
-        """Clear all keys from the cache."""
+    def _flush(self) -> None:
+        """Flush all keys from the cache."""
         self._client.flushdb()
 
     def close(self) -> None:

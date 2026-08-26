@@ -24,8 +24,8 @@ class MemoryCacheConnector(BaseCacheConnector):
         """Return information and statistics about the cache."""
         return {"memory_cache_size": len(self._database)}
 
-    def _clear(self) -> None:
-        """Clear all keys from the cache."""
+    def _flush(self) -> None:
+        """Flush all keys from the cache."""
         self._database.clear()
 
     def close(self) -> None:

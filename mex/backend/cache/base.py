@@ -34,8 +34,8 @@ class BaseCacheConnector(BaseConnector):
         ...
 
     @abstractmethod
-    def _clear(self) -> None:
-        """Clear all keys from the cache."""
+    def _flush(self) -> None:
+        """Flush all keys from the cache."""
         ...
 
     def get_value(self, key: str) -> dict[str, Any] | None:
@@ -57,6 +57,6 @@ class BaseCacheConnector(BaseConnector):
         return {k: v for k, v in self._info().items() if isinstance(v, int)}
 
     def flush(self) -> None:
-        """Clear all stored data, but only when debug mode is enabled."""
+        """Flush all stored data, but only when debug mode is enabled."""
         if BackendSettings.get().debug is True:
-            self._clear()
+            self._flush()
