@@ -20,7 +20,7 @@ from mex.common.wikidata.transform import (
     transform_wikidata_organization_to_extracted_organization,
 )
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from mex.common.models import (
         ExtractedOrganization,
         ExtractedOrganizationalUnit,

@@ -7,7 +7,7 @@ from mex.backend.settings import BackendSettings
 from mex.common.connector import BaseConnector
 from mex.common.transform import MExEncoder
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pydantic import BaseModel, SecretStr
 
 

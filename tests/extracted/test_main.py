@@ -9,7 +9,7 @@ from mex.common.models import (
     ExtractedOrganizationalUnit,
 )
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from fastapi.testclient import TestClient
 
     from tests.conftest import DummyData, MockedGraph
