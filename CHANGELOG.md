@@ -22,7 +22,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Removed
 
-- removed `# pragma: no cover` from TYPE_CHECKING gates because mypy is smarter now
+- removed `# pragma: no cover` from TYPE_CHECKING gates because coverage is smarter now
 
 ### Fixed
 

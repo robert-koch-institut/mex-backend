@@ -53,7 +53,7 @@ from mex.common.models import (
     AnyRuleSetResponse,
 )
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Generator, Iterable, Sequence
 
     from mex.backend.models import ReferenceFilter
