@@ -1,9 +1,18 @@
-from typing import cast
+from typing import Final, cast
 
 from valkey import Valkey
 
 from mex.backend.cache.base import BaseCacheConnector
 from mex.backend.settings import BackendSettings
+
+DASHBOARD_METRICS: Final[dict[str, str]] = {
+    "connected_clients": "connected_clients",  # no suffix means counter
+    "evicted_keys": "evicted_keys_total",
+    "keyspace_hits": "keyspace_hits_total",  # _total suffix signals gauge
+    "keyspace_misses": "keyspace_misses_total",
+    "uptime_in_seconds": "uptime_in_seconds",
+    "used_memory": "used_memory_bytes",  # _bytes signals correct unit
+}
 
 
 class ValkeyCacheConnector(BaseCacheConnector):
@@ -27,8 +36,16 @@ class ValkeyCacheConnector(BaseCacheConnector):
         self._client.delete(key)
 
     def _info(self) -> dict[str, int | str]:
-        """Return information and statistics about the cache."""
-        return cast("dict[str, int | str]", self._client.info())
+        """Return the subset of valkey server stats that we track as metrics."""
+        info = cast("dict[str, int | str]", self._client.info())
+        return {
+            "dbsize": cast("int", self._client.dbsize()),
+            **{
+                DASHBOARD_METRICS[k]: v
+                for k, v in info.items()
+                if k in DASHBOARD_METRICS
+            },
+        }
 
     def _flush(self) -> None:
         """Flush all keys from the cache."""

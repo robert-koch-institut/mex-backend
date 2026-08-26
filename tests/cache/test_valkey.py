@@ -69,15 +69,40 @@ def test_delete_value(mocked_client: Mock) -> None:
     mocked_client.delete.assert_called_once_with("test_key")
 
 
-def test_metrics_filters_non_integers(mocked_client: Mock) -> None:
+def test_metrics(mocked_client: Mock) -> None:
     mocked_client.info.return_value = {
-        "used_memory": 1024,
+        "connected_clients": 3,
+        "evicted_keys": 0,
         "keyspace_hits": 100,
+        "keyspace_misses": 5,
+        "uptime_in_seconds": 42,
+        "used_memory": 1024,
+        # noise that should not end up on a dashboard
+        "rdb_last_bgsave_time_sec": 7,
+        "tcp_port": 6379,
         "version": "7.0.0",
+        "db0": {"keys": 2, "expires": 0},
     }
+    mocked_client.dbsize.return_value = 2
     connector = ValkeyCacheConnector()
 
-    assert connector.metrics() == {"used_memory": 1024, "keyspace_hits": 100}
+    assert connector.metrics() == {
+        "dbsize": 2,
+        "connected_clients": 3,
+        "evicted_keys_total": 0,
+        "keyspace_hits_total": 100,
+        "keyspace_misses_total": 5,
+        "uptime_in_seconds": 42,
+        "used_memory_bytes": 1024,
+    }
+
+
+def test_metrics_filters_non_integers(mocked_client: Mock) -> None:
+    mocked_client.info.return_value = {"used_memory": "1024", "evicted_keys": 0}
+    mocked_client.dbsize.return_value = 0
+    connector = ValkeyCacheConnector()
+
+    assert connector.metrics() == {"dbsize": 0, "evicted_keys_total": 0}
 
 
 def test_close(mocked_client: Mock) -> None:

@@ -41,12 +41,23 @@ def test_get_value_invalid_json(connector: MemoryCacheConnector) -> None:
 
 
 def test_metrics(connector: MemoryCacheConnector) -> None:
-    assert connector.metrics() == {"memory_cache_size": 0}
+    assert connector.metrics() == {
+        "dbsize": 0,
+        "keyspace_hits_total": 0,
+        "keyspace_misses_total": 0,
+    }
 
     connector.set_value("key1", DummyModel(name="test", value=42))
     connector.set_value("key2", DummyModel(name="test", value=42))
+    connector.get_value("key1")
+    connector.get_value("key2")
+    connector.get_value("missing_key")
 
-    assert connector.metrics() == {"memory_cache_size": 2}
+    assert connector.metrics() == {
+        "dbsize": 2,
+        "keyspace_hits_total": 2,
+        "keyspace_misses_total": 1,
+    }
 
 
 def test_flush_in_debug_mode(
@@ -54,9 +65,15 @@ def test_flush_in_debug_mode(
 ) -> None:
     monkeypatch.setattr(settings, "debug", True)
     connector.set_value("test_key", DummyModel(name="test", value=42))
+    connector.get_value("test_key")
 
     connector.flush()
 
+    assert connector.metrics() == {
+        "dbsize": 0,
+        "keyspace_hits_total": 0,
+        "keyspace_misses_total": 0,
+    }
     assert connector.get_value("test_key") is None
 
 
@@ -65,9 +82,15 @@ def test_flush_not_in_debug_mode(
 ) -> None:
     monkeypatch.setattr(settings, "debug", False)
     connector.set_value("test_key", DummyModel(name="test", value=42))
+    connector.get_value("test_key")
 
     connector.flush()
 
+    assert connector.metrics() == {
+        "dbsize": 1,
+        "keyspace_hits_total": 1,
+        "keyspace_misses_total": 0,
+    }
     assert connector.get_value("test_key") is not None
 
 
