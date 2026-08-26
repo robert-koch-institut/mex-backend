@@ -20,7 +20,6 @@ from mex.backend.main import app
 from mex.backend.settings import BackendSettings
 from mex.backend.testing.main import app as testing_app
 from mex.backend.types import CacheConnectorType
-from mex.common.connector import CONNECTOR_STORE
 from mex.common.identity import MemoryIdentityProvider
 from mex.common.identity.registry import _PROVIDER_REGISTRY
 from mex.common.logging import logger
@@ -273,8 +272,6 @@ def isolate_graph_database(
         monkeypatch.setattr(settings, "debug", True)
         connector = GraphConnector.get()
         connector.flush()
-        connector.close()
-        CONNECTOR_STORE.pop(GraphConnector)
 
 
 @pytest.fixture(autouse=True)
@@ -283,13 +280,11 @@ def isolate_cache_connector(
     settings: BackendSettings,
     monkeypatch: MonkeyPatch,
 ) -> None:
-    """Automatically flush the cache for integration testing."""
+    """Automatically flush the identity cache for integration testing."""
     if is_integration_test:
         monkeypatch.setattr(settings, "debug", True)
         connector = get_cache_connector()
         connector.flush()
-        connector.close()
-        CONNECTOR_STORE.pop(type(connector))
 
 
 def get_graph() -> list[dict[str, Any]]:
