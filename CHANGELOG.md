@@ -9,6 +9,20 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+### Changes
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [4.4.0] - 2026-08-28
+
+### Added
+
 - added MEX_BACKEND_GRACEFUL_SHUTDOWN_TIMEOUT setting, defaults to 30s, was indefinitely
 - added MEX_GRAPH_MAX_CONNECTION_POOL_SIZE setting, defaults to 100,
   used to be tied to MEX_BACKEND_API_PARALLELIZATION
@@ -18,8 +32,6 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - update mex-common to 3.4.0 and mex-model to 5.1.2
 - set exact version for neo4j:2026.07.1
 
-### Deprecated
-
 ### Removed
 
 - removed `# pragma: no cover` from TYPE_CHECKING gates because coverage is smarter now
@@ -27,8 +39,6 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Fixed
 
 - fixed seed script to ingest items progressively to not restrict item count by RAM
-
-### Security
 
 ## [4.3.0] - 2026-08-13
 
