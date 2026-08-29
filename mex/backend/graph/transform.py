@@ -24,6 +24,7 @@ from mex.common.models import (
 )
 from mex.common.transform import clean_dict, to_key_and_values
 from mex.common.types import AnyPrimitiveType, Link, Text
+from mex.common.utils import ensure_list
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -171,6 +172,44 @@ def transform_model_into_ingest_data(
         linkRels=link_rels,
         createRels=create_rels,
     )
+
+
+def redirect_references[ModelT: AnyExtractedModel | AnyRuleModel](
+    model: ModelT,
+    old: str,
+    new: str,
+    owner: str,
+) -> ModelT:
+    """Point all references of the given model from one merged item at another.
+
+    References to `old` are replaced with `new`. References that would end up pointing
+    at the merged item the model itself belongs to are dropped, because an item must
+    not reference itself. Duplicates are removed while preserving order, which also
+    keeps the positions of the resulting relations contiguous once the model is
+    ingested again.
+
+    Args:
+        model: Extracted or rule model whose references to rewrite
+        old: Identifier of the merged item that should no longer be referenced
+        new: Identifier of the merged item that should be referenced instead
+        owner: Identifier of the merged item the given model belongs to
+
+    Returns:
+        A copy of the model with its references rewritten
+    """
+    ref_fields = set(REFERENCE_FIELDS_BY_CLASS_NAME[model.entityType]) - {
+        "stableTargetId"
+    }
+    updates: dict[str, list[str]] = {}
+    for field in sorted(ref_fields):
+        redirected: list[str] = []
+        for value in ensure_list(getattr(model, field)):
+            identifier = new if str(value) == old else str(value)
+            if identifier != owner and identifier not in redirected:
+                redirected.append(identifier)
+        updates[field] = redirected
+    # empty lists are coerced back to `None` for single-valued reference fields
+    return cast("ModelT", type(model).model_validate({**model.model_dump(), **updates}))
 
 
 def get_graph_rel_id(rel: GraphRel) -> tuple[str, int]:

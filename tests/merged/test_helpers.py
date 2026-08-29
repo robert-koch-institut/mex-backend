@@ -11,7 +11,16 @@ from mex.backend.merged.helpers import (
     merge_items_in_graph,
     search_merged_items_in_graph,
 )
+from mex.backend.rules.helpers import get_rule_set_from_graph
 from mex.common.merged.main import create_merged_item
+from mex.common.models import (
+    MergedActivity,
+    MergedOrganization,
+    MergedOrganizationalUnit,
+    OrganizationalUnitRuleSetResponse,
+    OrganizationRuleSetResponse,
+    PreviewOrganizationalUnit,
+)
 from mex.common.types import Identifier, TextLanguage, Validation
 
 if TYPE_CHECKING:
@@ -320,22 +329,86 @@ def test_delete_merged_item_from_graph(
 
 
 @pytest.mark.integration
-def test_merge_items_in_graph_reaches_not_implemented(
+def test_merge_items_in_graph(loaded_dummy_data: DummyData) -> None:
+    # `stableTargetId` is computed by the identity provider on every access, so the
+    # goner's id has to be captured before the merge re-points it at the keeper
+    goner_id = loaded_dummy_data["organization_1"].stableTargetId
+    keeper_id = loaded_dummy_data["organization_2"].stableTargetId
+
+    merge_items_in_graph(goner_id, keeper_id)
+
+    # the keeper absorbed the goner's extracted item, so it now carries both names
+    merged_keeper = get_merged_item_from_graph(keeper_id)
+    assert isinstance(merged_keeper, MergedOrganization)
+    assert sorted(text.value for text in merged_keeper.officialName) == [
+        "RKI",
+        "Robert Koch Institute",
+    ]
+
+    # the units that referenced the goner now reference the keeper
+    units = search_merged_items_in_graph(
+        entity_type=["MergedOrganizationalUnit"],
+        validation=Validation.LENIENT,
+    )
+    assert {
+        unit_of
+        for unit in units.items
+        if isinstance(unit, PreviewOrganizationalUnit | MergedOrganizationalUnit)
+        for unit_of in unit.unitOf
+    } == {keeper_id}
+
+    # the goner is left behind as a tombstone pointing at the keeper
+    rule_set = get_rule_set_from_graph(goner_id)
+    assert isinstance(rule_set, OrganizationRuleSetResponse)
+    assert rule_set.additive.supersededBy == keeper_id
+    assert rule_set.additive.officialName == []
+
+
+@pytest.mark.integration
+def test_merge_items_in_graph_drops_self_references(
     loaded_dummy_data: DummyData,
 ) -> None:
-    goner = loaded_dummy_data["organization_1"]
-    keeper = loaded_dummy_data["organization_2"]
+    goner_id = loaded_dummy_data["unit_1"].stableTargetId
+    keeper_id = loaded_dummy_data["unit_2"].stableTargetId
 
-    with pytest.raises(NotImplementedError):
-        merge_items_in_graph(goner.stableTargetId, keeper.stableTargetId)
+    merge_items_in_graph(goner_id, keeper_id)
+
+    # the keeper's rule set pointed its parentUnit at the goner, which would have
+    # become a self-reference, so it is dropped instead of redirected
+    keeper_rule_set = get_rule_set_from_graph(keeper_id)
+    assert isinstance(keeper_rule_set, OrganizationalUnitRuleSetResponse)
+    assert keeper_rule_set.additive.parentUnit is None
+
+    # an unrelated rule set that pointed at the goner is redirected to the keeper
+    standalone_rule_set = get_rule_set_from_graph(Identifier("StandaloneRule"))
+    assert isinstance(standalone_rule_set, OrganizationalUnitRuleSetResponse)
+    assert standalone_rule_set.additive.parentUnit == keeper_id
+
+
+@pytest.mark.integration
+def test_merge_items_in_graph_deduplicates_references(
+    loaded_dummy_data: DummyData,
+) -> None:
+    # activity_1 references unit_1 twice: once as contact and once as responsibleUnit
+    activity_id = loaded_dummy_data["activity_1"].stableTargetId
+    goner_id = loaded_dummy_data["contact_point_1"].stableTargetId
+    keeper_id = loaded_dummy_data["contact_point_2"].stableTargetId
+    unit_id = loaded_dummy_data["unit_1"].stableTargetId
+
+    merge_items_in_graph(goner_id, keeper_id)
+
+    merged_activity = get_merged_item_from_graph(activity_id)
+    assert isinstance(merged_activity, MergedActivity)
+    # both contact points collapse into a single reference to the keeper
+    assert merged_activity.contact == [keeper_id, unit_id]
 
 
 @pytest.mark.integration
 def test_merge_items_in_graph_type_mismatch_error(
     loaded_dummy_data: DummyData,
 ) -> None:
-    goner = loaded_dummy_data["organization_1"]
-    keeper = loaded_dummy_data["unit_1"]
+    goner_id = loaded_dummy_data["organization_1"].stableTargetId
+    keeper_id = loaded_dummy_data["unit_1"].stableTargetId
 
     with pytest.raises(MergingError, match="Violated: same_merged_type"):
-        merge_items_in_graph(goner.stableTargetId, keeper.stableTargetId)
+        merge_items_in_graph(goner_id, keeper_id)
