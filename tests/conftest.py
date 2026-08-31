@@ -10,16 +10,18 @@ import pytest
 from fastapi.testclient import TestClient
 from neo4j import Driver, Session, SummaryCounters, Transaction
 from pytest import FixtureRequest, LogCaptureFixture, MonkeyPatch
-from valkey import Valkey
 
 from mex.artificial.helpers import create_artificial_items_and_rule_sets
 from mex.backend.auxiliary.helpers import cached_organization, cached_primary_source
-from mex.backend.cache.connector import CacheConnector, LocalCache, ValkeyCache
+from mex.backend.cache import get_cache_connector
 from mex.backend.graph.connector import GraphConnector
+from mex.backend.identity.provider import GraphIdentityProvider
 from mex.backend.main import app
 from mex.backend.settings import BackendSettings
 from mex.backend.testing.main import app as testing_app
-from mex.common.connector import CONNECTOR_STORE
+from mex.backend.types import CacheConnectorType
+from mex.common.identity import MemoryIdentityProvider
+from mex.common.identity.registry import _PROVIDER_REGISTRY
 from mex.common.logging import logger
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -67,15 +69,19 @@ def settings(
             }
         ),
     )
+    monkeypatch.setenv(
+        "MEX_IDENTITY_PROVIDER",
+        IdentityProvider.GRAPH.value,
+    )
     if is_integration_test:
         monkeypatch.setenv(
-            "MEX_IDENTITY_PROVIDER",
-            IdentityProvider.GRAPH.value,
+            "MEX_BACKEND_CACHE_CONNECTOR",
+            CacheConnectorType.VALKEY.value,
         )
     else:
         monkeypatch.setenv(
-            "MEX_IDENTITY_PROVIDER",
-            IdentityProvider.MEMORY.value,
+            "MEX_BACKEND_CACHE_CONNECTOR",
+            CacheConnectorType.MEMORY.value,
         )
     # temporarily reduce log-level because the settings emit their configuration
     # on every instantiation or value-change. this would flood the test logs with noise,
@@ -148,11 +154,6 @@ def entrypoint_app(request: FixtureRequest) -> TestClient:
 
 
 class MockedGraph:
-    def __init__(self, run: MagicMock, session: MagicMock) -> None:
-        self.run = run
-        self.session = session
-        self.return_value = []
-
     @property
     def return_value(self) -> list[Any]:  # pragma: no cover
         raise NotImplementedError
@@ -192,6 +193,11 @@ class MockedGraph:
     def call_args_list(self) -> list[Any]:
         return self.run.call_args_list
 
+    def __init__(self, run: MagicMock, session: MagicMock) -> None:
+        self.run = run
+        self.session = session
+        self.return_value = []
+
 
 @pytest.fixture
 def mocked_graph(monkeypatch: MonkeyPatch) -> MockedGraph:
@@ -208,14 +214,6 @@ def mocked_graph(monkeypatch: MonkeyPatch) -> MockedGraph:
         GraphConnector, "__init__", lambda self: setattr(self, "driver", driver)
     )
     return MockedGraph(run, session)
-
-
-@pytest.fixture
-def mocked_valkey(monkeypatch: MonkeyPatch) -> LocalCache | ValkeyCache:
-    """Mock the valkey client to use a local cache instead."""
-    cache = LocalCache()
-    monkeypatch.setattr(Valkey, "from_url", lambda _: cache)
-    return cache
 
 
 @pytest.fixture(autouse=True)
@@ -239,6 +237,31 @@ def isolate_identifier_seeds(monkeypatch: MonkeyPatch) -> None:
 
 
 @pytest.fixture(autouse=True)
+def isolate_identity_provider(
+    is_integration_test: bool,  # noqa: FBT001
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Back the graph identity provider with an in-memory one for unit tests.
+
+    The settings only allow the graph identity provider, but unit tests must not
+    talk to a real graph database, so we swap the implementation registered for
+    `IdentityProvider.GRAPH` instead of configuring a different provider.
+    """
+    if not is_integration_test:
+        monkeypatch.setitem(
+            _PROVIDER_REGISTRY, IdentityProvider.GRAPH, MemoryIdentityProvider
+        )
+
+
+@pytest.fixture
+def graph_identity_provider(monkeypatch: MonkeyPatch) -> None:
+    """Undo `isolate_identity_provider` for unit tests that mock the graph."""
+    monkeypatch.setitem(
+        _PROVIDER_REGISTRY, IdentityProvider.GRAPH, GraphIdentityProvider
+    )
+
+
+@pytest.fixture(autouse=True)
 def isolate_graph_database(
     is_integration_test: bool,  # noqa: FBT001
     settings: BackendSettings,
@@ -249,23 +272,22 @@ def isolate_graph_database(
         monkeypatch.setattr(settings, "debug", True)
         connector = GraphConnector.get()
         connector.flush()
-        connector.close()
-        CONNECTOR_STORE.pop(GraphConnector)
+        connector._seed_constraints()
+        connector._seed_indices()
+        connector._seed_data()
 
 
 @pytest.fixture(autouse=True)
-def isolate_valkey_cache(
+def isolate_cache_connector(
     is_integration_test: bool,  # noqa: FBT001
     settings: BackendSettings,
     monkeypatch: MonkeyPatch,
 ) -> None:
-    """Automatically flush the valkey cache for integration testing."""
+    """Automatically flush the identity cache for integration testing."""
     if is_integration_test:
         monkeypatch.setattr(settings, "debug", True)
-        connector = CacheConnector.get()
+        connector = get_cache_connector()
         connector.flush()
-        connector.close()
-        CONNECTOR_STORE.pop(CacheConnector)
 
 
 def get_graph() -> list[dict[str, Any]]:

@@ -37,7 +37,7 @@ def mocked_query_class(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(Query, "render", lambda s: call(s.name, **s.kwargs))
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_check_connectivity_and_authentication(mocked_graph: MockedGraph) -> None:
     mocked_graph.return_value = [{"currentStatus": "online"}]
     graph = GraphConnector.get()
@@ -46,7 +46,6 @@ def test_check_connectivity_and_authentication(mocked_graph: MockedGraph) -> Non
     assert mocked_graph.call_args_list[-1] == call(call("get_database_status"), {})
 
 
-@pytest.mark.usefixtures("mocked_valkey")
 def test_check_connectivity_and_authentication_error(mocked_graph: MockedGraph) -> None:
     mocked_graph.return_value = [{"currentStatus": "offline"}]
     graph = GraphConnector.get()
@@ -54,7 +53,7 @@ def test_check_connectivity_and_authentication_error(mocked_graph: MockedGraph) 
         graph._check_connectivity_and_authentication()
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_seed_constraints(mocked_graph: MockedGraph) -> None:
     graph = GraphConnector.get()
     graph._seed_constraints()
@@ -86,7 +85,7 @@ def test_mocked_graph_seed_constraints(mocked_graph: MockedGraph) -> None:
     )
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_seed_indices(
     mocked_graph: MockedGraph, monkeypatch: MonkeyPatch
 ) -> None:
@@ -150,7 +149,7 @@ def test_mocked_graph_seed_indices(
     )
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_seed_indices_excludes_preview_models(
     mocked_graph: MockedGraph,
     monkeypatch: MonkeyPatch,
@@ -189,7 +188,7 @@ def test_seed_indices_excludes_preview_models(
     )
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
     mocked_graph.side_effect = [
         [
@@ -288,7 +287,6 @@ def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
     )
 
 
-@pytest.mark.usefixtures("mocked_valkey")
 def test_mocked_graph_commit_raises_error(mocked_graph: MockedGraph) -> None:
     mocked_graph.run.side_effect = Exception("query failed")
     graph = GraphConnector.get()
@@ -296,7 +294,7 @@ def test_mocked_graph_commit_raises_error(mocked_graph: MockedGraph) -> None:
         graph._check_connectivity_and_authentication()
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
     mocked_graph.return_value = [
         {
@@ -368,7 +366,7 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
     }
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
     mocked_graph: MockedGraph,
 ) -> None:
@@ -722,7 +720,7 @@ def test_fetch_extracted_items(
     assert result.one() == expected
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
     mocked_graph.return_value = [
         {
@@ -794,7 +792,7 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
     }
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_fetch_rule_set_response(mocked_graph: MockedGraph) -> None:
     mocked_graph.return_value = [
         {
@@ -834,7 +832,7 @@ def test_mocked_graph_fetch_rule_set_response(mocked_graph: MockedGraph) -> None
     }
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_fetch_rule_set_response_not_found(
     mocked_graph: MockedGraph,
 ) -> None:
@@ -1022,7 +1020,7 @@ def test_fetch_rule_items_empty() -> None:
     assert result.one() == {"items": [], "total": 0}
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
     mocked_graph.return_value = [
         {
@@ -1686,7 +1684,7 @@ def test_fetch_merged_items_reference_filter_combination_across_components(
     ]
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_fetch_identities(mocked_graph: MockedGraph) -> None:
     graph = GraphConnector.get()
     graph.fetch_identities(stable_target_id=Identifier.generate(99))
@@ -1744,7 +1742,7 @@ def test_mocked_graph_fetch_identities(mocked_graph: MockedGraph) -> None:
     )
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_exists_item(
     mocked_graph: MockedGraph,
     monkeypatch: MonkeyPatch,
@@ -1809,7 +1807,7 @@ def test_graph_exists_item(
     assert graph.exists_item(stable_target_id, entity_types) == exists
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_run_ingest_in_transaction_rule_set(
     mocked_graph: MockedGraph,
     dummy_data: DummyData,
@@ -1862,7 +1860,7 @@ def test_graph_merge_rule_edges_fails_inconsistent(
         deque(graph.ingest_items([consistent_org, inconsistent_unit]))
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_ingests_rule_set(
     mocked_graph: MockedGraph,
     dummy_data: DummyData,
@@ -1880,7 +1878,6 @@ def test_mocked_graph_ingests_rule_set(
     )
 
 
-@pytest.mark.usefixtures("mocked_valkey")
 def test_mocked_graph_ingests_extracted_models(
     mocked_graph: MockedGraph,
     dummy_data: DummyData,
@@ -2327,7 +2324,7 @@ def test_graph_merge_items_preconditions_failed(  # noqa: PLR0913, PLR0917
         graph.merge_items(goner, keeper)
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_delete_item(mocked_graph: MockedGraph) -> None:
     deletion_summary = {
         "deleted_merged_count": 1,
@@ -2347,7 +2344,7 @@ def test_mocked_graph_delete_item(mocked_graph: MockedGraph) -> None:
     assert result.one() == deletion_summary
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_delete_rule_set(mocked_graph: MockedGraph) -> None:
     deletion_summary = {
         "deleted_merged_count": 0,

@@ -24,8 +24,15 @@ def check_system_status() -> VersionStatus:
     tags=["system"],
 )
 def get_prometheus_metrics() -> str:
-    """Get connector metrics for prometheus."""
+    """Get connector metrics for prometheus.
+
+    Monotonically increasing metrics are named with a `_total` suffix, as per
+    prometheus convention, and are announced as counters. All others are gauges.
+    """
     return "\n\n".join(
-        f"# TYPE {key} counter\n{key} {value}"
-        for key, value in CONNECTOR_STORE.metrics().items()
+        f"# TYPE {key} {metric_type}\n{key} {value}"
+        for key, value, metric_type in (
+            (key, value, "counter" if key.endswith("_total") else "gauge")
+            for key, value in CONNECTOR_STORE.metrics().items()
+        )
     )

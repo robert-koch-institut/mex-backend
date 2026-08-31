@@ -18,6 +18,13 @@ class AccessLevel(Enum):
     WRITE = "write"
 
 
+class CacheConnectorType(Enum):
+    """Choice of available cache connectors."""
+
+    MEMORY = "memory"
+    VALKEY = "valkey"
+
+
 class APIKey(SecretStr):
     """An API Key used for authenticating and authorizing a client."""
 
