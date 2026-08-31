@@ -1,4 +1,5 @@
 import json
+from importlib.metadata import version
 from typing import TYPE_CHECKING
 
 import pytest
@@ -102,7 +103,9 @@ def test_flush_not_in_debug_mode(
 
 
 def test_get_status(connector: MemoryCacheConnector) -> None:
-    assert connector.get_status() == VersionStatus(status="local", version="unknown")
+    assert connector.get_status() == VersionStatus(
+        status="ok", version=version("mex-backend")
+    )
 
 
 def test_close(connector: MemoryCacheConnector) -> None:

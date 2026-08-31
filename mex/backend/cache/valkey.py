@@ -75,7 +75,7 @@ class ValkeyCacheConnector(BaseCacheConnector):
         except ValkeyError:
             logger.exception("error checking the valkey cache status")
             return VersionStatus(status="error", version="unknown")
-        version = info.get("valkey_version") or info.get("redis_version")
+        version = info.get("valkey_version")
         return VersionStatus(
             status="ok", version=str(version) if version else "unknown"
         )

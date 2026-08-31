@@ -108,20 +108,10 @@ def test_metrics_filters_non_integers(mocked_client: Mock) -> None:
 
 
 def test_get_status(mocked_client: Mock) -> None:
-    mocked_client.info.return_value = {
-        "valkey_version": "9.1.1",
-        "redis_version": "7.2.4",
-    }
+    mocked_client.info.return_value = {"valkey_version": "9.1.1"}
     connector = ValkeyCacheConnector()
 
     assert connector.get_status() == VersionStatus(status="ok", version="9.1.1")
-
-
-def test_get_status_falls_back_to_redis_version(mocked_client: Mock) -> None:
-    mocked_client.info.return_value = {"redis_version": "7.2.4"}
-    connector = ValkeyCacheConnector()
-
-    assert connector.get_status() == VersionStatus(status="ok", version="7.2.4")
 
 
 def test_get_status_without_version(mocked_client: Mock) -> None:

@@ -75,7 +75,7 @@ def test_check_neo4j_status_integration(client: TestClient) -> None:
     assert response.json() == {"status": "ok", "version": Joker()}
 
 
-def test_check_valkey_status_local(
+def test_check_valkey_status_with_memory_cache(
     client: TestClient, monkeypatch: MonkeyPatch, settings: BackendSettings
 ) -> None:
     monkeypatch.setattr(settings, "cache_connector", CacheConnectorType.MEMORY)
@@ -83,30 +83,16 @@ def test_check_valkey_status_local(
     response = client.get("/v0/_system/valkey")
 
     assert response.status_code == status.HTTP_200_OK, response.text
-    assert response.json() == {"status": "local", "version": "unknown"}
+    assert response.json() == {"status": "ok", "version": Joker()}
 
 
 def test_check_valkey_status(client: TestClient, mocked_valkey_client: Mock) -> None:
-    mocked_valkey_client.info.return_value = {
-        "valkey_version": "9.1.1",
-        "redis_version": "7.2.4",
-    }
+    mocked_valkey_client.info.return_value = {"valkey_version": "9.1.1"}
 
     response = client.get("/v0/_system/valkey")
 
     assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == {"status": "ok", "version": "9.1.1"}
-
-
-def test_check_valkey_status_falls_back_to_redis_version(
-    client: TestClient, mocked_valkey_client: Mock
-) -> None:
-    mocked_valkey_client.info.return_value = {"redis_version": "7.2.4"}
-
-    response = client.get("/v0/_system/valkey")
-
-    assert response.status_code == status.HTTP_200_OK, response.text
-    assert response.json() == {"status": "ok", "version": "7.2.4"}
 
 
 def test_check_valkey_status_without_version(
