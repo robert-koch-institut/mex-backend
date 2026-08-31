@@ -29,6 +29,14 @@ class BackendSettings(BaseSettings):
         description="Root path that the backend server should run under.",
         validation_alias="MEX_BACKEND_ROOT_PATH",
     )
+    backend_graceful_shutdown_timeout: int = Field(
+        30,
+        gt=0,
+        description=(
+            "Seconds to wait during shutdown before terminating in-flight requests."
+        ),
+        validation_alias="MEX_BACKEND_GRACEFUL_SHUTDOWN_TIMEOUT",
+    )
     graph_url: str = Field(
         "neo4j://localhost:7687",
         description="URL for connecting to the graph database.",
@@ -48,6 +56,12 @@ class BackendSettings(BaseSettings):
         SecretStr("password"),
         description="Password for authenticating with the graph database.",
         validation_alias="MEX_GRAPH_PASSWORD",
+    )
+    graph_max_connection_pool_size: int = Field(
+        100,
+        gt=0,
+        description="Maximum number of connections the graph driver keeps pooled.",
+        validation_alias="MEX_GRAPH_MAX_CONNECTION_POOL_SIZE",
     )
     graph_tx_timeout: int | float = Field(
         15.0,

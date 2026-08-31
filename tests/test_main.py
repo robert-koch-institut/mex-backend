@@ -4,7 +4,7 @@ import pytest
 from neo4j import GraphDatabase
 from starlette import status
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
 

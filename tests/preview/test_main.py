@@ -5,7 +5,7 @@ from starlette import status
 
 from mex.common.models import MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from fastapi.testclient import TestClient
 
 
@@ -50,6 +50,7 @@ if TYPE_CHECKING:  # pragma: no cover
                             {"language": "de", "value": "RKI"},
                         ],
                         "rorId": [],
+                        "country": [],
                         "shortName": [],
                         "supersededBy": None,
                         "viafId": [],
@@ -193,6 +194,7 @@ if TYPE_CHECKING:  # pragma: no cover
                             {"language": "en", "value": "Robert Koch Institute"},
                         ],
                         "rorId": [],
+                        "country": [],
                         "shortName": [],
                         "supersededBy": None,
                         "viafId": [],
@@ -341,6 +343,7 @@ def test_search_preview_items(
                             {"language": "de", "value": "RKI"},
                         ],
                         "rorId": [],
+                        "country": [],
                         "shortName": [],
                         "supersededBy": None,
                         "viafId": [],
@@ -488,6 +491,7 @@ def test_search_preview_items(
                             {"language": "en", "value": "Robert Koch Institute"},
                         ],
                         "rorId": [],
+                        "country": [],
                         "shortName": [],
                         "supersededBy": None,
                         "viafId": [],

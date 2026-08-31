@@ -5,7 +5,7 @@ from starlette import status
 
 from tests.conftest import DummyData, DummyDataName, get_graph
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from fastapi.testclient import TestClient
 
 
@@ -541,6 +541,30 @@ def test_update_rule_set(
             ],
         },
         {
+            "country": [],
+            "geprisId": [],
+            "gndId": [],
+            "identifier": "bFQoRhcVH5DHUE",
+            "identifierInPrimarySource": "robert-koch-institute",
+            "isniId": [],
+            "label": "ExtractedOrganization",
+            "rorId": [],
+            "viafId": [],
+            "wikidataId": [],
+        },
+        {
+            "country": [],
+            "geprisId": [],
+            "gndId": [],
+            "identifier": "bFQoRhcVH5DHUu",
+            "identifierInPrimarySource": "rki",
+            "isniId": [],
+            "label": "ExtractedOrganization",
+            "rorId": [],
+            "viafId": [],
+            "wikidataId": [],
+        },
+        {
             "email": [
                 "1.7@rki.de",
             ],
@@ -887,28 +911,6 @@ def test_update_rule_set(
         {
             "forbiddenPublishingTarget": [],
             "label": "WorkflowOrganizationalUnit",
-        },
-        {
-            "geprisId": [],
-            "gndId": [],
-            "identifier": "bFQoRhcVH5DHUE",
-            "identifierInPrimarySource": "robert-koch-institute",
-            "isniId": [],
-            "label": "ExtractedOrganization",
-            "rorId": [],
-            "viafId": [],
-            "wikidataId": [],
-        },
-        {
-            "geprisId": [],
-            "gndId": [],
-            "identifier": "bFQoRhcVH5DHUu",
-            "identifierInPrimarySource": "rki",
-            "isniId": [],
-            "label": "ExtractedOrganization",
-            "rorId": [],
-            "viafId": [],
-            "wikidataId": [],
         },
         {
             "identifier": "00000000000000",

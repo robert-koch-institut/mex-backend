@@ -61,7 +61,7 @@ from mex.common.models import (
     VersionStatus,
 )
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Generator, Iterable, Sequence
 
     from mex.backend.models import ReferenceFilter
@@ -94,7 +94,7 @@ class GraphConnector(BaseConnector):
                 NotificationDisabledClassification.UNRECOGNIZED,
             ],
             telemetry_disabled=True,
-            max_connection_pool_size=settings.backend_api_parallelization,
+            max_connection_pool_size=settings.graph_max_connection_pool_size,
             max_transaction_retry_time=settings.graph_session_timeout,
         )
 
@@ -489,6 +489,10 @@ class GraphConnector(BaseConnector):
         settings = BackendSettings.get()
         with self.driver.session(default_access_mode=WRITE_ACCESS) as session:
             for model in models:
+                # neo4j manages write locks on touched nodes and edges:
+                # parallel transactions writing to the same graph location are
+                # serialized instead of overwriting each other.
+                # see: https://neo4j.com/docs/operations-manual/current/database-internals/concurrent-data-access/
                 with session.begin_transaction(
                     timeout=settings.graph_tx_timeout,
                     metadata={

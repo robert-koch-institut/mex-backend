@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 import pytest
 from starlette import status
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from fastapi.testclient import TestClient
 
 
@@ -49,6 +49,7 @@ def test_search_organization_in_wikidata_mocked(
                         "value": "alias_de_3",
                     },
                 ],
+                "country": [],
                 "geprisId": [],
                 "gndId": [],
                 "hadPrimarySource": "djbNGb5fLgYHFyMh3fZE2g",

@@ -14,7 +14,7 @@ from mex.backend.graph.models import (
 from mex.backend.graph.query import QueryBuilder
 from mex.common.models.base.rules import RuleSet
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Callable
 
     from tests.conftest import DummyData

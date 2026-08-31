@@ -12,7 +12,7 @@ from mex.common.logging import logger
 from mex.common.models import VersionStatus
 from mex.common.transform import MExEncoder
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pydantic import BaseModel, SecretStr
 
 

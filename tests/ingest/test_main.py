@@ -22,7 +22,7 @@ from mex.common.models import (
 from mex.common.types import Text
 from tests.conftest import DummyData, get_graph
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from fastapi.testclient import TestClient
 
 
@@ -62,6 +62,30 @@ def test_ingest_extracted(
             "theme": [
                 "https://mex.rki.de/item/theme-11",
             ],
+        },
+        {
+            "country": [],
+            "geprisId": [],
+            "gndId": [],
+            "identifier": "bFQoRhcVH5DHUE",
+            "identifierInPrimarySource": "robert-koch-institute",
+            "isniId": [],
+            "label": "ExtractedOrganization",
+            "rorId": [],
+            "viafId": [],
+            "wikidataId": [],
+        },
+        {
+            "country": [],
+            "geprisId": [],
+            "gndId": [],
+            "identifier": "bFQoRhcVH5DHUu",
+            "identifierInPrimarySource": "rki",
+            "isniId": [],
+            "label": "ExtractedOrganization",
+            "rorId": [],
+            "viafId": [],
+            "wikidataId": [],
         },
         {
             "email": [
@@ -430,28 +454,6 @@ def test_ingest_extracted(
             "label": "WorkflowOrganizationalUnit",
         },
         {
-            "geprisId": [],
-            "gndId": [],
-            "identifier": "bFQoRhcVH5DHUE",
-            "identifierInPrimarySource": "robert-koch-institute",
-            "isniId": [],
-            "label": "ExtractedOrganization",
-            "rorId": [],
-            "viafId": [],
-            "wikidataId": [],
-        },
-        {
-            "geprisId": [],
-            "gndId": [],
-            "identifier": "bFQoRhcVH5DHUu",
-            "identifierInPrimarySource": "rki",
-            "isniId": [],
-            "label": "ExtractedOrganization",
-            "rorId": [],
-            "viafId": [],
-            "wikidataId": [],
-        },
-        {
             "identifier": "00000000000000",
             "label": "MergedPrimarySource",
         },
@@ -652,6 +654,30 @@ def test_ingest_rule_set(
             "label": "SubtractiveActivity",
             "start": [],
             "theme": [],
+        },
+        {
+            "country": [],
+            "geprisId": [],
+            "gndId": [],
+            "identifier": "bFQoRhcVH5DHUE",
+            "identifierInPrimarySource": "robert-koch-institute",
+            "isniId": [],
+            "label": "ExtractedOrganization",
+            "rorId": [],
+            "viafId": [],
+            "wikidataId": [],
+        },
+        {
+            "country": [],
+            "geprisId": [],
+            "gndId": [],
+            "identifier": "bFQoRhcVH5DHUu",
+            "identifierInPrimarySource": "rki",
+            "isniId": [],
+            "label": "ExtractedOrganization",
+            "rorId": [],
+            "viafId": [],
+            "wikidataId": [],
         },
         {
             "email": [
@@ -1060,28 +1086,6 @@ def test_ingest_rule_set(
             "label": "WorkflowOrganizationalUnit",
         },
         {
-            "geprisId": [],
-            "gndId": [],
-            "identifier": "bFQoRhcVH5DHUE",
-            "identifierInPrimarySource": "robert-koch-institute",
-            "isniId": [],
-            "label": "ExtractedOrganization",
-            "rorId": [],
-            "viafId": [],
-            "wikidataId": [],
-        },
-        {
-            "geprisId": [],
-            "gndId": [],
-            "identifier": "bFQoRhcVH5DHUu",
-            "identifierInPrimarySource": "rki",
-            "isniId": [],
-            "label": "ExtractedOrganization",
-            "rorId": [],
-            "viafId": [],
-            "wikidataId": [],
-        },
-        {
             "identifier": "00000000000000",
             "label": "MergedPrimarySource",
         },
@@ -1288,25 +1292,27 @@ def test_ingest_artificial_data(
     assert response.status_code == status.HTTP_204_NO_CONTENT, response.text
 
     response = client_with_api_key_write_permission.get(
-        "/v0/merged-item", params={"skip": "34", "limit": "1"}
+        "/v0/merged-item", params={"skip": "42", "limit": "1"}
     )
     assert response.status_code == status.HTTP_200_OK, response.text
     assert response.json() == {
         "items": [
             {
-                "$type": "MergedVariableGroup",
-                "containedBy": ["bFQoRhcVH5DHU7"],
-                "identifier": "bFQoRhcVH5DHVj",
-                "label": [
-                    {
-                        "language": "de",
-                        "value": "Wasser deshalb baden drehen fallen dich "
-                        "rennen. Plötzlich Feuer Schüler müde weiter "
-                        "nächste ins. Deshalb nass scheinen Nase "
-                        "darauf rot hier. Die wer dafür mal mehr rufen "
-                        "draußen.",
-                    }
+                "$type": "MergedPerson",
+                "affiliation": [],
+                "email": [],
+                "familyName": [],
+                "fullName": [],
+                "givenName": [
+                    "Hilfe",
+                    "Jahr dem man",
+                    "schön damit",
+                    "ist laut schicken",
                 ],
+                "identifier": "bFQoRhcVH5DHVz",
+                "isniId": [],
+                "memberOf": [],
+                "orcidId": [],
                 "supersededBy": None,
             }
         ],

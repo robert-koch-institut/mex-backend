@@ -13,7 +13,7 @@ services:
       timeout: 5s
       retries: 5
   neo4j:
-    image: neo4j:2026.07-community@sha256:6ea87e9f43d1cf6c6a00a709d05aab626c9a5128aded8673804d087c0232434e
+    image: neo4j:2026.07.1-community@sha256:dbc377fb9cd8fe8dabc19d3041b197d5ca0ef8bae514cea175b8df265e5b7a76
     environment:
       - NEO4J_AUTH=neo4j/password
       - NEO4J_dbms_usage__report_enabled=false
@@ -26,7 +26,7 @@ services:
       retries: 5
       start_period: 30s
   valkey:
-    image: valkey/valkey:9.1.1@sha256:3acc0687f2a2e1091fae6450d7842dd658c941338cf0a873ddd9e14b9e4ea4dd
+    image: valkey/valkey:9.1.1@sha256:70739f85ad2ee01a726a965584a0f94895f01b0c60b3cc8b0aeef11eaa6888cf
     ports:
       - 6379:6379
     healthcheck:

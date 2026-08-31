@@ -14,7 +14,7 @@ from mex.common.models import (
 )
 from mex.common.types import Validation
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from fastapi.testclient import TestClient
 
     from tests.conftest import DummyData, DummyDataName, MockedGraph
@@ -143,6 +143,7 @@ def test_search_merged_items_mocked(
                         "isniId": [],
                         "officialName": [{"language": "de", "value": "RKI"}],
                         "rorId": [],
+                        "country": [],
                         "shortName": [],
                         "supersededBy": None,
                         "viafId": [],
@@ -284,6 +285,7 @@ def test_search_merged_items_mocked(
                             {"language": "en", "value": "Robert Koch Institute"},
                         ],
                         "rorId": [],
+                        "country": [],
                         "shortName": [],
                         "supersededBy": None,
                         "viafId": [],
@@ -428,6 +430,7 @@ def test_search_merged_items(
                         "isniId": [],
                         "officialName": [{"language": "de", "value": "RKI"}],
                         "rorId": [],
+                        "country": [],
                         "shortName": [],
                         "supersededBy": None,
                         "viafId": [],
@@ -573,6 +576,7 @@ def test_search_merged_items(
                             {"language": "en", "value": "Robert Koch Institute"},
                         ],
                         "rorId": [],
+                        "country": [],
                         "shortName": [],
                         "supersededBy": None,
                         "viafId": [],

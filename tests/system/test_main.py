@@ -11,7 +11,7 @@ from valkey.exceptions import ConnectionError as ValkeyConnectionError
 
 from mex.common.testing import Joker
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from fastapi.testclient import TestClient
 
     from mex.backend.settings import BackendSettings
