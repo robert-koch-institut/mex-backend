@@ -6,9 +6,9 @@ from mex.backend.cache.base import BaseCacheConnector
 from mex.backend.settings import BackendSettings
 
 DASHBOARD_METRICS: Final[dict[str, str]] = {
-    "connected_clients": "connected_clients",  # no suffix means counter
+    "connected_clients": "connected_clients",  # no suffix means gauge
     "evicted_keys": "evicted_keys_total",
-    "keyspace_hits": "keyspace_hits_total",  # _total suffix signals gauge
+    "keyspace_hits": "keyspace_hits_total",  # _total suffix signals counter
     "keyspace_misses": "keyspace_misses_total",
     "uptime_in_seconds": "uptime_in_seconds",
     "used_memory": "used_memory_bytes",  # _bytes signals correct unit
