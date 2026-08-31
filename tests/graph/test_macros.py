@@ -12,7 +12,7 @@ from mex.backend.graph.models import (
     RawReferenceFilter,
 )
 from mex.backend.graph.query import QueryBuilder
-from mex.common.models.base.rules import RuleSet
+from mex.common.models import AnyRuleSetResponse
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -172,7 +172,7 @@ def test_match_or_search_nodes_match(
     rows = result.all()
 
     seeded_extracted_or_rule_item_count = sum(
-        4 if isinstance(v, RuleSet) else 1
+        4 if isinstance(v, AnyRuleSetResponse) else 1
         for v in [
             *loaded_dummy_data.values(),
             MEX_PRIMARY_SOURCE,

@@ -1,14 +1,13 @@
 from typing import TYPE_CHECKING, cast
 
 import pytest
-from neo4j import GraphDatabase
 from starlette import status
+
+from tests.conftest import get_graph
 
 if TYPE_CHECKING:
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
-
-    from mex.backend.settings import BackendSettings
 
 
 def test_all_endpoints_require_authorization(entrypoint_app: TestClient) -> None:
@@ -28,14 +27,48 @@ def test_all_endpoints_require_authorization(entrypoint_app: TestClient) -> None
 
 
 @pytest.mark.integration
-def test_database_is_empty(settings: BackendSettings) -> None:
-    with GraphDatabase.driver(
-        settings.graph_url,
-        auth=(
-            settings.graph_user.get_secret_value(),
-            settings.graph_password.get_secret_value(),
-        ),
-        database=settings.graph_db,
-    ) as driver:
-        result = driver.execute_query("MATCH (n) RETURN n;")
-    assert result.records == []
+def test_database_is_seeded() -> None:
+    assert get_graph() == [
+        {
+            "end": "00000000000000",
+            "label": "hadPrimarySource",
+            "position": 0,
+            "start": "00000000000001",
+        },
+        {
+            "end": "00000000000000",
+            "label": "hadPrimarySource",
+            "position": 0,
+            "start": "00000000000003",
+        },
+        {
+            "end": "00000000000000",
+            "label": "stableTargetId",
+            "position": 0,
+            "start": "00000000000001",
+        },
+        {
+            "end": "00000000000002",
+            "label": "stableTargetId",
+            "position": 0,
+            "start": "00000000000003",
+        },
+        {
+            "identifier": "00000000000000",
+            "label": "MergedPrimarySource",
+        },
+        {
+            "identifier": "00000000000001",
+            "identifierInPrimarySource": "mex",
+            "label": "ExtractedPrimarySource",
+        },
+        {
+            "identifier": "00000000000002",
+            "label": "MergedPrimarySource",
+        },
+        {
+            "identifier": "00000000000003",
+            "identifierInPrimarySource": "mex-editor",
+            "label": "ExtractedPrimarySource",
+        },
+    ]

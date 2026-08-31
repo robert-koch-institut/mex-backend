@@ -1,4 +1,4 @@
-from mex.backend.cache.connector import CacheConnector
+from mex.backend.cache import get_cache_connector
 from mex.backend.graph.connector import GraphConnector
 from mex.common.identity import BaseProvider, Identity
 from mex.common.types import Identifier, MergedPrimarySourceIdentifier
@@ -9,7 +9,7 @@ class GraphIdentityProvider(BaseProvider):
 
     def __init__(self) -> None:
         """Create a new graph identity provider."""
-        self._cache = CacheConnector.get()
+        self._cache = get_cache_connector()
         self._identities_generated = 0
 
     def assign(

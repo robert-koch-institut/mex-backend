@@ -3,7 +3,7 @@ from importlib.metadata import version
 from fastapi import APIRouter
 from fastapi.responses import PlainTextResponse
 
-from mex.backend.cache.connector import CacheConnector
+from mex.backend.cache import get_cache_connector
 from mex.backend.graph.connector import get_graph_status
 from mex.common.connector import CONNECTOR_STORE
 from mex.common.models import VersionStatus
@@ -34,8 +34,8 @@ def check_neo4j_status() -> VersionStatus:
     tags=["system"],
 )
 def check_valkey_status() -> VersionStatus:
-    """Check the status and version of the valkey cache."""
-    return CacheConnector.get().get_status()
+    """Check the status and version of the configured cache connector."""
+    return get_cache_connector().get_status()
 
 
 @router.get(
@@ -44,8 +44,15 @@ def check_valkey_status() -> VersionStatus:
     tags=["system"],
 )
 def get_prometheus_metrics() -> str:
-    """Get connector metrics for prometheus."""
+    """Get connector metrics for prometheus.
+
+    Monotonically increasing metrics are named with a `_total` suffix, as per
+    prometheus convention, and are announced as counters. All others are gauges.
+    """
     return "\n\n".join(
-        f"# TYPE {key} counter\n{key} {value}"
-        for key, value in CONNECTOR_STORE.metrics().items()
+        f"# TYPE {key} {metric_type}\n{key} {value}"
+        for key, value, metric_type in (
+            (key, value, "counter" if key.endswith("_total") else "gauge")
+            for key, value in CONNECTOR_STORE.metrics().items()
+        )
     )

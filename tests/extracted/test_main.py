@@ -15,7 +15,6 @@ if TYPE_CHECKING:
     from tests.conftest import DummyData, MockedGraph
 
 
-@pytest.mark.usefixtures("mocked_valkey")
 def test_search_extracted_items_mocked(
     client_with_api_key_read_permission: TestClient,
     mocked_graph: MockedGraph,
