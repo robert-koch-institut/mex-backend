@@ -9,10 +9,13 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+- new endpoints `_system/neo4j` and `_system/valkey` reporting status and version
 - new setting `MEX_BACKEND_CACHE_CONNECTOR` to choose between `memory` and `valkey`
 - validator asserting the backend is configured with the graph identity provider
 
 ### Changes
+
+- `get_database_status` cypher query now returns the neo4j version
 
 ### Deprecated
 

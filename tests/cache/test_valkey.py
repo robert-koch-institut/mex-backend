@@ -4,9 +4,11 @@ import pytest
 from pydantic import BaseModel
 from pytest import MonkeyPatch
 from valkey import Valkey
-from valkey.exceptions import ValkeyError
+from valkey.exceptions import AuthenticationError, ValkeyError
+from valkey.exceptions import ConnectionError as ValkeyConnectionError
 
 from mex.backend.cache.valkey import ValkeyCacheConnector
+from mex.common.models import VersionStatus
 
 
 class DummyModel(BaseModel):
@@ -103,6 +105,41 @@ def test_metrics_filters_non_integers(mocked_client: Mock) -> None:
     connector = ValkeyCacheConnector()
 
     assert connector.metrics() == {"dbsize": 0, "evicted_keys_total": 0}
+
+
+def test_get_status(mocked_client: Mock) -> None:
+    mocked_client.info.return_value = {"valkey_version": "9.1.1"}
+    connector = ValkeyCacheConnector()
+
+    assert connector.get_status() == VersionStatus(status="ok", version="9.1.1")
+
+
+def test_get_status_without_version(mocked_client: Mock) -> None:
+    mocked_client.info.return_value = {"used_memory": 1024}
+    connector = ValkeyCacheConnector()
+
+    assert connector.get_status() == VersionStatus(status="ok", version="unknown")
+
+
+def test_get_status_unreachable(mocked_client: Mock) -> None:
+    mocked_client.info.side_effect = ValkeyConnectionError("cannot connect to valkey")
+    connector = ValkeyCacheConnector()
+
+    assert connector.get_status() == VersionStatus(status="offline", version="unknown")
+
+
+def test_get_status_unauthenticated(mocked_client: Mock) -> None:
+    mocked_client.info.side_effect = AuthenticationError("invalid password")
+    connector = ValkeyCacheConnector()
+
+    assert connector.get_status() == VersionStatus(status="error", version="unknown")
+
+
+def test_get_status_error_response(mocked_client: Mock) -> None:
+    mocked_client.info.side_effect = ValkeyError("unknown command 'INFO'")
+    connector = ValkeyCacheConnector()
+
+    assert connector.get_status() == VersionStatus(status="error", version="unknown")
 
 
 def test_close(mocked_client: Mock) -> None:

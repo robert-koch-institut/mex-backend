@@ -9,8 +9,15 @@ from neo4j import (
     NotificationDisabledClassification,
     Transaction,
 )
-from neo4j.exceptions import ConstraintError, Neo4jError
+from neo4j.exceptions import (
+    ConstraintError,
+    DriverError,
+    Neo4jError,
+    ServiceUnavailable,
+    SessionExpired,
+)
 
+from mex.backend.exceptions import BackendError
 from mex.backend.graph.exceptions import (
     DeletionFailedError,
     IngestionError,
@@ -51,6 +58,7 @@ from mex.common.models import (
     AnyMergedModel,
     AnyRuleModel,
     AnyRuleSetResponse,
+    VersionStatus,
 )
 
 if TYPE_CHECKING:
@@ -94,9 +102,7 @@ class GraphConnector(BaseConnector):
         """Check the connectivity and authentication to the graph."""
         query_builder = QueryBuilder.get()
         result = self.commit(query_builder.get_database_status())
-        if (status := result["currentStatus"]) != "online":
-            msg = f"Database is {status}."
-            raise MExError(msg) from None
+        logger.info("connected to neo4j %s", result["version"])
         return result
 
     def _seed_constraints(self) -> None:
@@ -647,3 +653,24 @@ class GraphConnector(BaseConnector):
         else:
             msg = "database flush was attempted outside of debug mode"
             raise MExError(msg)
+
+
+def get_graph_status() -> VersionStatus:
+    """Get the status and version of the graph database.
+
+    Returns:
+        VersionStatus with status "ok" and the neo4j version, status "offline"
+        when the graph cannot be reached, or status "error" when the graph is
+        misconfigured or answers with an error
+    """
+    query_builder = QueryBuilder.get()
+    try:
+        connector = GraphConnector.get()
+        version = connector.commit(query_builder.get_database_status())["version"]
+    except ServiceUnavailable, SessionExpired:
+        logger.exception("graph database is unreachable")
+        return VersionStatus(status="offline", version="unknown")
+    except DriverError, Neo4jError, MExError, BackendError:
+        logger.exception("error checking the graph database status")
+        return VersionStatus(status="error", version="unknown")
+    return VersionStatus(status="ok", version=str(version))
