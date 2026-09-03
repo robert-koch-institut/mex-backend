@@ -14,11 +14,16 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changes
 
+- `GraphConnector` now tracks whether constraints/indices have been seeded via a `_schema_seeded` class flag, seeding them only once per process instead of once per connector instance
+- `isolate_graph_database` in `tests/conftest.py` now calls `flush_data()` + re-seeds the two primary source nodes between tests, instead of dropping and recreating the whole schema every time
+
 ### Deprecated
 
 ### Removed
 
 ### Fixed
+
+- integration test run time locally: 352.6s -> 46.1s (~7.6x)
 
 ### Security
 

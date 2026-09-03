@@ -1,5 +1,5 @@
 from collections import deque
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from neo4j import (
     READ_ACCESS,
@@ -63,12 +63,20 @@ if TYPE_CHECKING:
 class GraphConnector(BaseConnector):
     """Connector to handle authentication and transactions with the graph database."""
 
+    # Constraints and indexes are schema, not data: seeding them is expensive
+    # (one round trip per entity type) but only needs to happen once per process,
+    # not once per connector instance. `flush` resets this when it really does
+    # drop the schema; `flush_data` (data-only reset) leaves it untouched.
+    _schema_seeded: ClassVar[bool] = False
+
     def __init__(self) -> None:
         """Create a new graph database connection."""
         self.driver = self._init_driver()
         self._check_connectivity_and_authentication()
-        self._seed_constraints()
-        self._seed_indices()
+        if not GraphConnector._schema_seeded:
+            self._seed_constraints()
+            self._seed_indices()
+            GraphConnector._schema_seeded = True
         self._seed_data()
 
     def _init_driver(self) -> Driver:
@@ -644,6 +652,25 @@ class GraphConnector(BaseConnector):
                 indexes = session.run("SHOW ALL INDEXES;")
                 for row in indexes.to_eager_result().records:
                     session.run(f"DROP INDEX {row['name']};")
+            # the schema was just wiped along with the data, so the next connector
+            # that gets constructed needs to seed constraints and indexes again
+            GraphConnector._schema_seeded = False
+        else:
+            msg = "database flush was attempted outside of debug mode"
+            raise MExError(msg)
+
+    def flush_data(self) -> None:
+        """Flush the database by deleting all nodes, keeping the schema intact.
+
+        This operation only executes when debug mode is enabled in settings.
+        Unlike `flush`, constraints and indexes are left in place, so callers
+        that only need a clean dataset (e.g. tests) can avoid the cost of
+        dropping and recreating the schema on every reset.
+        """
+        settings = BackendSettings.get()
+        if settings.debug is True:
+            with self.driver.session(default_access_mode=WRITE_ACCESS) as session:
+                session.run("MATCH (n) DETACH DELETE n;")
         else:
             msg = "database flush was attempted outside of debug mode"
             raise MExError(msg)
