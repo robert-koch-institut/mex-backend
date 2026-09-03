@@ -267,13 +267,19 @@ def isolate_graph_database(
     settings: BackendSettings,
     monkeypatch: MonkeyPatch,
 ) -> None:
-    """Automatically flush the graph database for integration testing."""
+    """Automatically flush the graph database's data for integration testing.
+
+    Constraints and indexes are schema, not test data, and `GraphConnector`
+    already seeds them exactly once per test session (see `_schema_seeded`).
+    Dropping and recreating that schema for every single test was the single
+    biggest contributor to slow integration test runs, so this only clears
+    out data between tests and re-seeds the two primary source nodes that
+    most tests rely on.
+    """
     if is_integration_test:
         monkeypatch.setattr(settings, "debug", True)
         connector = GraphConnector.get()
-        connector.flush()
-        connector._seed_constraints()
-        connector._seed_indices()
+        connector.flush_data()
         connector._seed_data()
 
 
