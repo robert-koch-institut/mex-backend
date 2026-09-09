@@ -101,8 +101,10 @@ def test_get_database_status(query_builder: QueryBuilder) -> None:
     assert (
         query.render()
         == """\
-SHOW DEFAULT DATABASE
-YIELD currentStatus;"""
+CALL dbms.components()
+YIELD name, versions
+WHERE name = "Neo4j Kernel"
+RETURN versions[0] AS version;"""
     )
 
 

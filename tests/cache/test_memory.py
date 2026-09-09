@@ -1,4 +1,5 @@
 import json
+from importlib.metadata import version
 from typing import TYPE_CHECKING
 
 import pytest
@@ -6,6 +7,7 @@ from pydantic import BaseModel
 from pytest import MonkeyPatch
 
 from mex.backend.cache.memory import MemoryCacheConnector
+from mex.common.models import VersionStatus
 
 if TYPE_CHECKING:
     from mex.backend.settings import BackendSettings
@@ -98,6 +100,12 @@ def test_flush_not_in_debug_mode(
         "keyspace_misses_total": 0,
     }
     assert connector.get_value("test_key") is not None
+
+
+def test_get_status(connector: MemoryCacheConnector) -> None:
+    assert connector.get_status() == VersionStatus(
+        status="ok", version=version("mex-backend")
+    )
 
 
 def test_close(connector: MemoryCacheConnector) -> None:

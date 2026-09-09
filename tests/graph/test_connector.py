@@ -4,10 +4,11 @@ from typing import TYPE_CHECKING, Any
 from unittest.mock import Mock, call
 
 import pytest
+from neo4j.exceptions import AuthError, ServiceUnavailable
 from pytest import FixtureRequest, MonkeyPatch
 
 from mex.backend.graph import connector as connector_module
-from mex.backend.graph.connector import GraphConnector
+from mex.backend.graph.connector import GraphConnector, get_graph_status
 from mex.backend.graph.constants import NO_REFERENCE_SENTINEL
 from mex.backend.graph.exceptions import IngestionError, MergingError
 from mex.backend.graph.models import IngestParams
@@ -24,6 +25,7 @@ from mex.common.models import (
     AnyExtractedModel,
     ExtractedOrganization,
     ExtractedOrganizationalUnit,
+    VersionStatus,
 )
 from mex.common.types import Identifier, Text, TextLanguage, Validation
 from tests.conftest import DummyData, MockedGraph, get_graph
@@ -39,7 +41,7 @@ def mocked_query_class(monkeypatch: MonkeyPatch) -> None:
 
 @pytest.mark.usefixtures("mocked_query_class")
 def test_check_connectivity_and_authentication(mocked_graph: MockedGraph) -> None:
-    mocked_graph.return_value = [{"currentStatus": "online"}]
+    mocked_graph.return_value = [{"version": "2026.07.1"}]
     graph = GraphConnector.get()
     graph._check_connectivity_and_authentication()
 
@@ -47,9 +49,9 @@ def test_check_connectivity_and_authentication(mocked_graph: MockedGraph) -> Non
 
 
 def test_check_connectivity_and_authentication_error(mocked_graph: MockedGraph) -> None:
-    mocked_graph.return_value = [{"currentStatus": "offline"}]
+    mocked_graph.run.side_effect = ServiceUnavailable("cannot connect to neo4j")
     graph = GraphConnector.get()
-    with pytest.raises(MExError, match="Database is offline"):
+    with pytest.raises(ServiceUnavailable, match="cannot connect to neo4j"):
         graph._check_connectivity_and_authentication()
 
 
@@ -2387,3 +2389,29 @@ def test_connector_flush_fails(
         MExError, match="database flush was attempted outside of debug mode"
     ):
         graph.flush()
+
+
+def test_get_graph_status(mocked_graph: MockedGraph) -> None:
+    mocked_graph.return_value = [{"version": "2026.07.1"}]
+
+    assert get_graph_status() == VersionStatus(status="ok", version="2026.07.1")
+
+
+def test_get_graph_status_unreachable(mocked_graph: MockedGraph) -> None:
+    mocked_graph.run.side_effect = ServiceUnavailable("cannot connect to neo4j")
+
+    assert get_graph_status() == VersionStatus(status="offline", version="unknown")
+
+
+def test_get_graph_status_misconfigured(mocked_graph: MockedGraph) -> None:
+    mocked_graph.run.side_effect = AuthError("invalid credentials")
+
+    assert get_graph_status() == VersionStatus(status="error", version="unknown")
+
+
+@pytest.mark.integration
+def test_get_graph_status_integration() -> None:
+    status = get_graph_status()
+
+    assert status.status == "ok"
+    assert status.version
