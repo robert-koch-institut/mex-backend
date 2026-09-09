@@ -2,7 +2,7 @@ name: Documentation
 
 on:
   push:
-    tags: [ "**" ]
+    tags: ["**"]
   workflow_dispatch:
 
 env:
@@ -44,7 +44,7 @@ jobs:
         env:
           cache-name: cache-environment
         with:
-          path: ~/.cache/pip
+          path: ~/.cache/uv
           key: ${{ env.cache-name }}-${{ hashFiles('uv.lock') }}
           restore-keys: |
             ${{ env.cache-name }}-
