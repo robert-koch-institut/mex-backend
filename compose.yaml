@@ -27,7 +27,7 @@ services:
       retries: 5
       start_period: 30s
   valkey:
-    image: valkey/valkey:9.1.1@sha256:70739f85ad2ee01a726a965584a0f94895f01b0c60b3cc8b0aeef11eaa6888cf
+    image: valkey/valkey:9.1.1@sha256:64e361b630ecf18dff7ca4df6a88e6eafc193687eb48cff2c7e0a293ab67d29a
     ports:
       - 6379:6379
     healthcheck:

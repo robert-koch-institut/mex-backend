@@ -16,6 +16,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Changes
 
 - `get_database_status` cypher query now returns the neo4j version
+- new template https://github.com/robert-koch-institut/mex-template/releases/tag/2.0.1
 
 ### Deprecated
 
@@ -215,7 +216,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
-- add preview item by stableTargetid endpoint
+- add preview item by stableTargetId endpoint
 - add slapd LDAP mock server to compose and CI
 - add `mocked_ldap` fixture variant running against slapd when a search base is set
 - add LDAP mock data in `assets/raw-data/ldap/` with persons and functional accounts
