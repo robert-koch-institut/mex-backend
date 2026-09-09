@@ -25,11 +25,11 @@ dev = [
     "ipdb>=0.13",
     "mex-artificial>=2",
     "mypy>=1",
-    "pytest-cov>=6",
+    "pytest-cov>=7",
     "pytest-random-order>=1",
     "pytest>=9",
     "requests>=2",
-    "ruff>=0.15",
+    "ruff>=0.16",
     "sphinx>=9",
     "types-ldap3",
     "types-pytz",
@@ -71,7 +71,9 @@ addopts = [
     "--pdbcls=IPython.terminal.debugger:TerminalPdb",
     "--random-order-bucket=global",
 ]
-markers = "integration: mark a test as integration test"
+markers = [
+    "integration: mark a test as integration test",
+]
 
 [tool.ruff]
 fix = true

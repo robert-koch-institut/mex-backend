@@ -2,8 +2,8 @@ name: Testing
 
 on:
   push:
-    branches: [ "main" ]
-    tags: [ "**" ]
+    branches: ["main"]
+    tags: ["**"]
   pull_request:
     types:
       - opened
@@ -27,6 +27,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    strategy:
+      matrix:
+        python-version: [ "3.14" ]
     timeout-minutes: 10
 
     steps:
@@ -34,6 +37,9 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 1
+
+      - name: Start containers
+        run: docker compose up --wait neo4j valkey slapd
 
       - name: Cache requirements
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -50,7 +56,7 @@ jobs:
         env:
           cache-name: cache-environment
         with:
-          path: ~/.cache/pip
+          path: ~/.cache/uv
           key: ${{ env.cache-name }}-${{ hashFiles('uv.lock') }}
           restore-keys: |
             ${{ env.cache-name }}-
@@ -58,13 +64,15 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: 3.14
-
-      - name: Start containers
-        run: docker compose up --wait neo4j valkey slapd
+          python-version: "3.14"
 
       - name: Install requirements
-        run: make install
+        run: |
+          echo ${{ matrix.python-version }} > .python-version
+          make install
+
+      - name: Wait for container readiness
+        run: docker compose up --wait --wait-timeout 500 neo4j valkey slapd
 
       - name: Run test suite
         env:
@@ -74,6 +82,10 @@ jobs:
           MEX_LDAP_SEARCH_BASE: dc=ldapmock,dc=local
         run: make test
 
+      - name: Show container logs
+        if: failure()
+        run: docker compose logs --no-color --timestamps
+
       - name: Cleanup containers
         if: always()
-        run: docker compose down neo4j valkey slapd
+        run: docker compose down --volumes --remove-orphans
