@@ -644,6 +644,9 @@ class GraphConnector(BaseConnector):
         """
         settings = BackendSettings.get()
         if settings.debug is True:
+            # the schema will be wiped along with the data, so the next connector
+            # that gets constructed needs to seed constraints and indexes again
+            GraphConnector._schema_seeded = False
             with self.driver.session(default_access_mode=WRITE_ACCESS) as session:
                 session.run("MATCH (n) DETACH DELETE n;")
                 constraints = session.run("SHOW ALL CONSTRAINTS;")
@@ -652,9 +655,6 @@ class GraphConnector(BaseConnector):
                 indexes = session.run("SHOW ALL INDEXES;")
                 for row in indexes.to_eager_result().records:
                     session.run(f"DROP INDEX {row['name']};")
-            # the schema was just wiped along with the data, so the next connector
-            # that gets constructed needs to seed constraints and indexes again
-            GraphConnector._schema_seeded = False
         else:
             msg = "database flush was attempted outside of debug mode"
             raise MExError(msg)
