@@ -105,6 +105,42 @@ class BackendSettings(BaseSettings):
         description="Fully qualified URL of a valkey cache server.",
         validation_alias="MEX_BACKEND_VALKEY_URL",
     )
+    suggestion_cohort_blend_weight: float = Field(
+        0.6,
+        ge=0.0,
+        le=1.0,
+        description=(
+            "Weight of the reference conditioned signal when blending it with the "
+            "full text neighbourhood signal for vocabulary suggestions."
+        ),
+        validation_alias="MEX_BACKEND_SUGGESTION_COHORT_BLEND_WEIGHT",
+    )
+    suggestion_cohort_pseudo_count: float = Field(
+        5.0,
+        gt=0.0,
+        description=(
+            "Pseudo count of corpus prior observations mixed into the reference "
+            "conditioned signal, damping the confidence of tiny cohorts. Must be "
+            "greater than zero, which is what keeps the estimator's denominator "
+            "non-zero for every input."
+        ),
+        validation_alias="MEX_BACKEND_SUGGESTION_COHORT_PSEUDO_COUNT",
+    )
+    suggestion_neighbourhood_pseudo_weight: float = Field(
+        3.0,
+        gt=0.0,
+        description=(
+            "Pseudo weight of corpus prior observations mixed into the full text "
+            "neighbourhood signal, damping thin neighbourhoods."
+        ),
+        validation_alias="MEX_BACKEND_SUGGESTION_NEIGHBOURHOOD_PSEUDO_WEIGHT",
+    )
+    suggestion_corpus_prior_ttl: int = Field(
+        900,
+        gt=0,
+        description="Seconds a cached corpus wide vocabulary prior stays fresh.",
+        validation_alias="MEX_BACKEND_SUGGESTION_CORPUS_PRIOR_TTL",
+    )
 
     @model_validator(mode="after")
     def assert_cache_connector_is_shared_when_parallelized(self) -> Self:

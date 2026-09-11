@@ -1,7 +1,7 @@
 import re
 from collections import deque
 from typing import TYPE_CHECKING, Any
-from unittest.mock import Mock, call
+from unittest.mock import MagicMock, Mock, call
 
 import pytest
 from pytest import FixtureRequest, MonkeyPatch
@@ -43,7 +43,9 @@ def test_check_connectivity_and_authentication(mocked_graph: MockedGraph) -> Non
     graph = GraphConnector.get()
     graph._check_connectivity_and_authentication()
 
-    assert mocked_graph.call_args_list[-1] == call(call("get_database_status"), {})
+    assert mocked_graph.call_args_list[-1] == call(
+        call("get_database_status"), {}, timeout=None
+    )
 
 
 def test_check_connectivity_and_authentication_error(mocked_graph: MockedGraph) -> None:
@@ -82,6 +84,7 @@ def test_mocked_graph_seed_constraints(mocked_graph: MockedGraph) -> None:
             node_label="ExtractedVariableGroup",
         ),
         {},
+        timeout=None,
     )
 
 
@@ -114,6 +117,7 @@ def test_mocked_graph_seed_indices(
                 "fulltext.analyzer": "german",
             }
         },
+        timeout=None,
     )
 
     mocked_graph.return_value = [
@@ -133,6 +137,7 @@ def test_mocked_graph_seed_indices(
     assert mocked_graph.call_args_list[-2] == call(
         call("drop_full_text_search_index"),
         {},
+        timeout=None,
     )
     assert mocked_graph.call_args_list[-1] == call(
         call(
@@ -146,6 +151,7 @@ def test_mocked_graph_seed_indices(
                 "fulltext.analyzer": "german",
             }
         },
+        timeout=None,
     )
 
 
@@ -185,6 +191,7 @@ def test_seed_indices_excludes_preview_models(
                 "fulltext.analyzer": "german",
             }
         },
+        timeout=None,
     )
 
 
@@ -352,6 +359,7 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
             "skip": 10,
             "identifier": None,
         },
+        timeout=None,
     )
 
     assert result.one() == {
@@ -408,6 +416,7 @@ def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
             "reference_fields": ["hadPrimarySource"],
             "skip": 0,
         },
+        timeout=None,
     )
 
 
@@ -778,6 +787,7 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
             "skip": 10,
             "identifier": None,
         },
+        timeout=None,
     )
 
     assert result.one() == {
@@ -817,6 +827,7 @@ def test_mocked_graph_fetch_rule_set_response(mocked_graph: MockedGraph) -> None
     assert mocked_graph.call_args_list[-1] == call(
         call("get_rule_set_response"),
         {"identifier": "thisIsAStableTargetId"},
+        timeout=None,
     )
 
     assert result.one_or_none() == {
@@ -1102,6 +1113,7 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
             "skip": 10,
             "identifier": "bFQoRhcVH5DHV1",
         },
+        timeout=None,
     )
 
     assert result.one() == {
@@ -1702,6 +1714,7 @@ def test_mocked_graph_fetch_identities(mocked_graph: MockedGraph) -> None:
             "stable_target_id": Identifier.generate(99),
             "limit": 1000,
         },
+        timeout=None,
     )
 
     graph.fetch_identities(
@@ -1722,6 +1735,7 @@ def test_mocked_graph_fetch_identities(mocked_graph: MockedGraph) -> None:
             "stable_target_id": None,
             "limit": 1000,
         },
+        timeout=None,
     )
 
     graph.fetch_identities(identifier_in_primary_source="two")
@@ -1739,6 +1753,7 @@ def test_mocked_graph_fetch_identities(mocked_graph: MockedGraph) -> None:
             "stable_target_id": None,
             "limit": 1000,
         },
+        timeout=None,
     )
 
 
@@ -1763,6 +1778,7 @@ def test_mocked_graph_exists_item(
             node_labels=["MergedFoo"],
         ),
         {"identifier": Identifier.generate(99)},
+        timeout=None,
     )
 
 
@@ -2339,6 +2355,7 @@ def test_mocked_graph_delete_item(mocked_graph: MockedGraph) -> None:
     assert mocked_graph.call_args_list[-1] == call(
         call("delete_merged_item"),
         {"identifier": str(Identifier.generate(99))},
+        timeout=None,
     )
 
     assert result.one() == deletion_summary
@@ -2359,6 +2376,7 @@ def test_mocked_graph_delete_rule_set(mocked_graph: MockedGraph) -> None:
     assert mocked_graph.call_args_list[-1] == call(
         call("delete_rule_set"),
         {"stable_target_id": str(Identifier.generate(99))},
+        timeout=None,
     )
 
     assert result.one() == deletion_summary
@@ -2387,3 +2405,15 @@ def test_connector_flush_fails(
         MExError, match="database flush was attempted outside of debug mode"
     ):
         graph.flush()
+
+
+@pytest.mark.usefixtures("mocked_query_class")
+def test_mocked_graph_commit_passes_timeout(mocked_graph: MockedGraph) -> None:
+    graph = GraphConnector.get()
+    graph.commit(Query("dummy", MagicMock(), {}), timeout=2.0)
+
+    assert mocked_graph.call_args_list[-1] == call(
+        call("dummy"),
+        {},
+        timeout=2.0,
+    )

@@ -40,6 +40,11 @@ def query_builder(monkeypatch: MonkeyPatch) -> QueryBuilder:
         "ExtractedThis|AdditiveThis",
     )
     monkeypatch.setitem(builder._env.globals, "any_rule_label", "AdditiveThis")
+    monkeypatch.setitem(builder._env.globals, "any_extracted_label", "ExtractedThis")
+    monkeypatch.setitem(builder._env.globals, "any_additive_label", "AdditiveThis")
+    monkeypatch.setitem(
+        builder._env.globals, "any_subtractive_label", "SubtractiveThis"
+    )
     monkeypatch.setitem(builder._env.globals, "any_merged_label", "MergedThis")
     monkeypatch.setitem(builder._env.globals, "any_nested_label", "Link|Text")
     return builder
@@ -395,3 +400,73 @@ def test_filter_nodes_by_reference_filters(
     )
     rows = result.all()
     assert len(rows) == expected_count
+
+
+def test_normalize_vocabulary_values(query_builder: QueryBuilder) -> None:
+    query = query_builder.test_normalize_vocabulary_values()
+
+    assert (
+        query.render()
+        == """\
+MATCH (node:ExtractedThis)
+WHERE node.identifier = $identifier
+UNWIND $vocabulary_fields AS field
+RETURN field, CASE
+    WHEN node[field] IS NULL THEN []
+    WHEN node[field] IS :: LIST<ANY> THEN node[field]
+    ELSE [node[field]]
+END AS values;"""
+    )
+
+
+def test_collect_effective_vocabulary_values(query_builder: QueryBuilder) -> None:
+    query = query_builder.test_collect_effective_vocabulary_values()
+
+    assert (
+        query.render()
+        == """\
+MATCH (merged_node:MergedThis)
+MATCH (component:ExtractedThis|AdditiveThis|SubtractiveThis)-[:stableTargetId]->(merged_node)
+UNWIND $vocabulary_fields AS field
+WITH
+    merged_node,
+    field,
+    head(labels(component)) IN $subtractive_labels AS is_negative,
+    CASE
+        WHEN component[field] IS NULL THEN []
+        WHEN component[field] IS :: LIST<ANY> THEN component[field]
+        ELSE [component[field]]
+    END AS values_on_component
+UNWIND values_on_component AS value
+WITH
+    merged_node,
+    field,
+    value,
+    max(CASE WHEN is_negative THEN 0 ELSE 1 END) AS added,
+    max(CASE WHEN is_negative THEN 1 ELSE 0 END) AS removed
+WHERE added = 1 AND removed = 0
+WITH merged_node, field, collect(value) AS values_on_item
+RETURN merged_node.identifier AS identifier, field, values_on_item
+ORDER BY identifier, field ASC;"""
+    )
+
+
+def test_search_nodes_with_score(query_builder: QueryBuilder) -> None:
+    query = query_builder.test_search_nodes_with_score()
+
+    assert (
+        query.render()
+        == """\
+CALL db.index.fulltext.queryNodes("search_index", $query_string, {limit: $hit_limit})
+YIELD node AS hit, score
+CALL (hit, score) {
+    MATCH (hit:ExtractedThis|AdditiveThis)-[:stableTargetId]->(merged_node:MergedThis)
+    RETURN merged_node, score AS hit_score
+UNION
+    MATCH (hit:Link|Text)<-[]-(:ExtractedThis|AdditiveThis)-[:stableTargetId]->(merged_node:MergedThis)
+    RETURN merged_node, score AS hit_score
+}
+WITH merged_node, max(hit_score) AS score
+ORDER BY score DESC, merged_node.identifier ASC
+RETURN merged_node.identifier AS identifier, score;"""
+    )
