@@ -17,7 +17,7 @@ from scripts.add_workflow_targets_for_switched_off_merged_items import (
     help="Default: dry run (no writing to data base). Use '--no-dry-run' for real run.",
 )
 def reset_preventive_rule_for_switched_off_merged_items(*, dry_run: bool) -> None:
-    """Set forbidden publishing targets for "switched off" merged items.
+    """Reset preventive rules for "switched off" merged items.
 
     Finds items which have rules. Checks if all or only some required fields are
     switched off by a preventive rule. For items with all required fields switched-off,
