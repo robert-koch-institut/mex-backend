@@ -10,14 +10,8 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Added
 
 - migration logic to reset preventive rules for "switched-off" merged items with workflow rule
-- new setting `MEX_BACKEND_CACHE_CONNECTOR` to choose between `memory` and `valkey`
-- validator asserting the backend is configured with the graph identity provider
 
 ### Changes
-
-- new template https://github.com/robert-koch-institut/mex-template/releases/tag/2.0.1
-- `GraphConnector` now tracks whether constraints/indices have been seeded via a `_schema_seeded` class flag, seeding them only once per process instead of once per connector instance
-- `isolate_graph_database` in `tests/conftest.py` now calls `flush_data()` + re-seeds the two primary source nodes between tests, instead of dropping and recreating the whole schema every time
 
 ### Deprecated
 
@@ -25,9 +19,35 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 
-- integration test run time locally: 352.6s -> 46.1s (~7.6x)
-
 ### Security
+
+## [4.5.0] - 2026-09-16
+
+### Added
+
+- new endpoints `_system/neo4j` and `_system/valkey` reporting status and version
+- new setting `MEX_BACKEND_CACHE_CONNECTOR` to choose between `memory` and `valkey`
+- validator asserting the backend is configured with the graph identity provider
+
+### Changes
+
+- `get_database_status` cypher query now returns the neo4j version
+- new template https://github.com/robert-koch-institut/mex-template/releases/tag/2.0.1
+- `GraphConnector` now tracks whether constraints/indices have been seeded via a
+  `_schema_seeded` class flag, seeding them only once per process instead of once per
+  connector instance
+- `isolate_graph_database` in `tests/conftest.py` now calls `flush_data()` + re-seeds
+  the two primary source nodes between tests, instead of dropping and recreating the
+  whole schema every time
+- reference-filtered searches for merged, extracted and rule items now anchor their
+  match on one of the filtered references and seek it through the identifier index,
+  instead of scanning every extracted and rule node; filters asking for the absence of a
+  reference and `hadPrimarySource` filters cannot anchor and keep the previous scan
+
+### Fixed
+
+- integration test run time locally: 352.6s -> 46.1s (~7.6x)
+- reference-filtered search no longer costs a full graph scan per request
 
 ## [4.4.0] - 2026-08-28
 
@@ -219,7 +239,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
-- add preview item by stableTargetid endpoint
+- add preview item by stableTargetId endpoint
 - add slapd LDAP mock server to compose and CI
 - add `mocked_ldap` fixture variant running against slapd when a search base is set
 - add LDAP mock data in `assets/raw-data/ldap/` with persons and functional accounts

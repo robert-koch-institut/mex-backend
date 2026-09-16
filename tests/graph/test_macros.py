@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING
+from collections import defaultdict
+from typing import TYPE_CHECKING, Any
 
 import pytest
 from jinja2 import ChoiceLoader, FileSystemLoader
@@ -46,10 +47,19 @@ def query_builder(monkeypatch: MonkeyPatch) -> QueryBuilder:
 
 
 @pytest.mark.parametrize(
-    ("filter_by_query_string", "expected"),
+    (
+        "filter_by_query_string",
+        "anchor_field",
+        "merged_labels",
+        "bind_all_components",
+        "expected",
+    ),
     [
         pytest.param(
             True,
+            None,
+            None,
+            False,
             """\
 OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
 YIELD node AS hit, score
@@ -66,6 +76,29 @@ RETURN extracted_or_rule_node, merged_node;""",
             id="search",
         ),
         pytest.param(
+            True,
+            "contact",
+            None,
+            False,
+            """\
+OPTIONAL CALL db.index.fulltext.queryNodes("search_index", $query_string)
+YIELD node AS hit, score
+CALL (hit) {
+    MATCH (hit:ExtractedThis|AdditiveThis)-[:stableTargetId]->(merged_node:MergedThis)
+    RETURN hit as extracted_or_rule_node, merged_node
+UNION
+    MATCH (hit:Link|Text)<-[]-(extracted_or_rule_node:ExtractedThis|AdditiveThis)-[:stableTargetId]->(merged_node:MergedThis)
+    RETURN extracted_or_rule_node, merged_node
+}
+WITH DISTINCT extracted_or_rule_node, merged_node
+ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
+RETURN extracted_or_rule_node, merged_node;""",
+            id="search-wins-over-anchor",
+        ),
+        pytest.param(
+            False,
+            None,
+            None,
             False,
             """\
 OPTIONAL MATCH (extracted_or_rule_node:ExtractedThis|AdditiveThis)-[:stableTargetId]->(merged_node:MergedThis)
@@ -73,17 +106,69 @@ ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(
 RETURN extracted_or_rule_node, merged_node;""",
             id="match",
         ),
+        pytest.param(
+            False,
+            None,
+            ["MergedThat"],
+            False,
+            """\
+OPTIONAL MATCH (extracted_or_rule_node:ExtractedThis|AdditiveThis)-[:stableTargetId]->(merged_node:MergedThat)
+ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
+RETURN extracted_or_rule_node, merged_node;""",
+            id="match-with-merged-labels",
+        ),
+        pytest.param(
+            False,
+            "contact",
+            None,
+            False,
+            """\
+MATCH (anchor_node:MergedThis)
+WHERE anchor_node.identifier IN $anchor_identifiers
+MATCH (anchor_node)<-[:contact]-(anchor_component:ExtractedThis|AdditiveThis)
+MATCH (anchor_component)-[:stableTargetId]->(merged_node:MergedThis)
+WITH DISTINCT merged_node
+ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
+RETURN extracted_or_rule_node, merged_node;""",
+            id="anchor",
+        ),
+        pytest.param(
+            False,
+            "contact",
+            ["MergedThat"],
+            True,
+            """\
+MATCH (anchor_node:MergedThis)
+WHERE anchor_node.identifier IN $anchor_identifiers
+MATCH (anchor_node)<-[:contact]-(anchor_component:ExtractedThis|AdditiveThis)
+MATCH (anchor_component)-[:stableTargetId]->(merged_node:MergedThat)
+WITH DISTINCT merged_node
+MATCH (extracted_or_rule_node:ExtractedThis|AdditiveThis)-[:stableTargetId]->(merged_node)
+ORDER BY merged_node.identifier, extracted_or_rule_node.identifier, head(labels(extracted_or_rule_node)) ASC
+RETURN extracted_or_rule_node, merged_node;""",
+            id="anchor-with-all-components",
+        ),
     ],
 )
-def test_render_match_or_search_nodes(
+def test_render_match_or_search_nodes(  # noqa: PLR0913, PLR0917
     query_builder: QueryBuilder,
     filter_by_query_string: bool,  # noqa: FBT001
+    anchor_field: str | None,
+    merged_labels: list[str] | None,
+    bind_all_components: bool,  # noqa: FBT001
     expected: str,
 ) -> None:
     query = query_builder.test_match_or_search_nodes(
         filter_by_query_string=filter_by_query_string,
+        anchor_field=anchor_field,
+        merged_labels=merged_labels,
+        bind_all_components=bind_all_components,
     )
-    assert query.render() == expected
+    rendered = query.render()
+
+    assert rendered == expected
+    if anchor_field and not filter_by_query_string:
+        assert "OPTIONAL MATCH" not in rendered
 
 
 def test_render_collect_references_and_nested(
@@ -166,6 +251,9 @@ def test_match_or_search_nodes_match(
 ) -> None:
     query = integration_query_builder.test_match_or_search_nodes(
         filter_by_query_string=False,
+        anchor_field=None,
+        merged_labels=None,
+        bind_all_components=False,
     )
     connector = GraphConnector.get()
     result = connector.commit(query)
@@ -197,6 +285,9 @@ def test_match_or_search_nodes_search(
 ) -> None:
     query = integration_query_builder.test_match_or_search_nodes(
         filter_by_query_string=True,
+        anchor_field=None,
+        merged_labels=None,
+        bind_all_components=False,
     )
     connector = GraphConnector.get()
     result = connector.commit(query, query_string="Aktivität")
@@ -215,6 +306,53 @@ def test_match_or_search_nodes_search(
         },
         "merged_node": {"identifier": "bFQoRhcVH5DHUH"},
     }
+
+
+@pytest.mark.integration
+def test_match_or_search_nodes_anchored(
+    integration_query_builder: QueryBuilder, loaded_dummy_data: DummyData
+) -> None:
+    # `unit_2` carries `parentUnit` only on its additive rule, not on its extracted
+    # item, so this is the case that `bind_all_components` exists to get right
+    query = integration_query_builder.test_match_or_search_nodes(
+        filter_by_query_string=False,
+        anchor_field="parentUnit",
+        merged_labels=None,
+        bind_all_components=True,
+    )
+    connector = GraphConnector.get()
+    result = connector.commit(
+        query,
+        anchor_identifiers=[str(loaded_dummy_data["unit_1"].stableTargetId)],
+    )
+    rows = result.all()
+
+    components_by_merged_identifier: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in rows:
+        components_by_merged_identifier[row["merged_node"]["identifier"]].append(
+            row["extracted_or_rule_node"]
+        )
+
+    unit_2_components = components_by_merged_identifier[
+        str(loaded_dummy_data["unit_2"].stableTargetId)
+    ]
+    standalone_components = components_by_merged_identifier["StandaloneRule"]
+
+    assert set(components_by_merged_identifier) == {
+        str(loaded_dummy_data["unit_2"].stableTargetId),
+        "StandaloneRule",
+    }
+    # one extracted item plus the four rule nodes of its rule set
+    assert len(unit_2_components) == 5
+    assert len(standalone_components) == 4
+    assert {
+        "identifier": str(loaded_dummy_data["unit_2"].identifier),
+        "identifierInPrimarySource": "ou-1.6",
+    }.items() <= next(
+        component
+        for component in unit_2_components
+        if component.get("identifierInPrimarySource")
+    ).items()
 
 
 @pytest.mark.integration
