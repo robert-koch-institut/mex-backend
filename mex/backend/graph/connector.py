@@ -11,6 +11,7 @@ from neo4j import (
 )
 from neo4j.exceptions import ConstraintError, Neo4jError
 
+from mex.backend.graph.constants import NO_REFERENCE_SENTINEL
 from mex.backend.graph.exceptions import (
     DeletionFailedError,
     IngestionError,
@@ -56,8 +57,36 @@ from mex.common.models import (
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable, Sequence
 
+    from mex.backend.graph.models import RawReferenceFilter
     from mex.backend.models import ReferenceFilter
     from mex.common.types import Identifier
+
+
+def pick_anchor_filter(
+    raw_reference_filters: list[RawReferenceFilter],
+) -> RawReferenceFilter | None:
+    """Pick the reference filter that can drive the match from an index seek.
+
+    Matching every extracted and rule node and then checking each one's references
+    is O(graph). Starting from one referenced merged item instead is an index seek
+    plus two expands, and any one of the ANDed filters will do, because an item that
+    satisfies all of them satisfies this one too. A filter looking for the absence of
+    a reference has nothing to seek, so it cannot serve as the anchor.
+
+    Args:
+        raw_reference_filters: The reference filters the query was asked for
+
+    Returns:
+        The filter to anchor on, or None to fall back to scanning
+    """
+    for reference_filter in raw_reference_filters:
+        if reference_filter["field"] == "hadPrimarySource":
+            # TODO(ND): remove this crutch as soon as we add hadPrimarySource to rules.
+            continue
+        if NO_REFERENCE_SENTINEL in reference_filter["identifiers"]:
+            continue
+        return reference_filter
+    return None
 
 
 class GraphConnector(BaseConnector):
@@ -216,12 +245,16 @@ class GraphConnector(BaseConnector):
         raw_reference_fields = transform_reference_filters_to_raw_fields(
             reference_filters
         )
+        anchor_filter = pick_anchor_filter(raw_reference_filters)
         query_builder = QueryBuilder.get()
         query = query_builder.fetch_extracted_or_rule_items(
             filter_by_query_string=bool(query_string),
             filter_by_identifier=bool(identifier),
             filter_by_references=bool(raw_reference_filters),
             reference_fields=raw_reference_fields,
+            anchor_field=anchor_filter["field"] if anchor_filter else None,
+            # `entity_type` constrains the extracted or rule nodes, not the merged ones
+            merged_labels=None,
         )
         result = self.commit(
             query,
@@ -230,6 +263,7 @@ class GraphConnector(BaseConnector):
             labels=entity_type,
             reference_filters=raw_reference_filters,
             reference_fields=raw_reference_fields,
+            anchor_identifiers=anchor_filter["identifiers"] if anchor_filter else [],
             skip=skip,
             limit=limit,
         )
@@ -354,12 +388,15 @@ class GraphConnector(BaseConnector):
         raw_reference_fields = transform_reference_filters_to_raw_fields(
             reference_filters
         )
+        anchor_filter = pick_anchor_filter(raw_reference_filters)
         query_builder = QueryBuilder.get()
         query = query_builder.fetch_merged_items(
             filter_by_query_string=bool(query_string),
             filter_by_identifier=bool(identifier),
             filter_by_references=bool(raw_reference_filters),
             reference_fields=raw_reference_fields,
+            anchor_field=anchor_filter["field"] if anchor_filter else None,
+            merged_labels=list(entity_type) if entity_type else None,
         )
         result = self.commit(
             query,
@@ -368,6 +405,7 @@ class GraphConnector(BaseConnector):
             labels=entity_type or list(MERGED_MODEL_CLASSES_BY_NAME),
             reference_filters=raw_reference_filters,
             reference_fields=raw_reference_fields,
+            anchor_identifiers=anchor_filter["identifiers"] if anchor_filter else [],
             skip=skip,
             limit=limit,
         )
