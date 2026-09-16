@@ -9,6 +9,8 @@ from mex.common.transform import MExEncoder
 if TYPE_CHECKING:
     from pydantic import BaseModel
 
+    from mex.common.models import VersionStatus
+
 
 class BaseCacheConnector(BaseConnector):
     """Base class for cache connectors that handle key-value storage."""
@@ -36,6 +38,11 @@ class BaseCacheConnector(BaseConnector):
     @abstractmethod
     def _flush(self) -> None:
         """Flush all keys from the cache."""
+        ...
+
+    @abstractmethod
+    def get_status(self) -> VersionStatus:
+        """Get the status and version of the underlying cache."""
         ...
 
     def get_value(self, key: str) -> dict[str, Any] | None:
