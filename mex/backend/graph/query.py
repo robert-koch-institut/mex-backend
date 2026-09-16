@@ -40,7 +40,7 @@ from mex.common.transform import (
 )
 from mex.common.types import NESTED_MODEL_CLASSES_BY_NAME
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
 
 

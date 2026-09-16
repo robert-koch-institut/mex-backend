@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Any
 
 from mex.backend.exceptions import BackendError
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from pydantic_core import ErrorDetails

@@ -22,7 +22,7 @@ from mex.common.models import (
 from mex.common.types import Text
 from tests.conftest import DummyData, get_graph
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from fastapi.testclient import TestClient
 
 
@@ -1401,7 +1401,7 @@ def test_ingest_constraint_violation(
     }
 
 
-@pytest.mark.usefixtures("mocked_graph", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_graph")
 def test_ingest_mocked(
     client_with_api_key_write_permission: TestClient,
     dummy_data: DummyData,

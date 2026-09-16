@@ -15,7 +15,7 @@ from mex.common.models import (
 )
 from mex.common.transform import ensure_postfix
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Generator, Sequence
 
 

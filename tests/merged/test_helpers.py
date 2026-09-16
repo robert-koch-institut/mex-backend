@@ -14,7 +14,7 @@ from mex.backend.merged.helpers import (
 from mex.common.merged.main import create_merged_item
 from mex.common.types import Identifier, TextLanguage, Validation
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from tests.conftest import DummyData, MockedGraph
 
 
@@ -234,7 +234,6 @@ def test_search_merged_items_in_graph() -> None:
         ),
     ],
 )
-@pytest.mark.usefixtures("mocked_valkey")
 def test_search_merged_items_in_graph_mocked(
     mocked_graph_result: list[dict[str, Any]],
     expected: Any,  # noqa: ANN401

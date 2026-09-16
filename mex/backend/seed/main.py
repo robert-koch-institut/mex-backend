@@ -1,8 +1,9 @@
 from collections import deque
+from itertools import islice
 
 import click
 
-from mex.artificial.helpers import create_artificial_items_and_rule_sets
+from mex.artificial.helpers import generate_artificial_items_and_rule_sets
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.settings import BackendSettings
 
@@ -27,17 +28,19 @@ def main(
         locale: Language/ Region code ("de_DE").
     """
     BackendSettings.get()
-    data = [
+    data = (
         item
-        for container in create_artificial_items_and_rule_sets(
-            locale=locale,
-            seed=seed,
-            count=count,
-            chattiness=chattiness,
+        for container in islice(
+            generate_artificial_items_and_rule_sets(
+                locale=locale,
+                seed=seed,
+                chattiness=chattiness,
+            ),
+            count,
         )
-        for item in [container.extracted_item, container.rule_set]
+        for item in (container.extracted_item, container.rule_set)
         if item
-    ]
+    )
 
     connector = GraphConnector.get()
-    deque(connector.ingest_items(data))
+    deque(connector.ingest_items(data), maxlen=0)

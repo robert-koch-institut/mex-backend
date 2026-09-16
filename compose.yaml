@@ -6,6 +6,7 @@ services:
       - 8080:8080
     environment:
       - MEX_GRAPH_URL=neo4j://neo4j:7687
+      - MEX_BACKEND_CACHE_CONNECTOR=valkey
       - MEX_BACKEND_VALKEY_URL=valkey://valkey:6379
     healthcheck:
       test: [ "CMD", "curl", "http://0.0.0.0:8080/v0/_system/check" ]
@@ -13,7 +14,7 @@ services:
       timeout: 5s
       retries: 5
   neo4j:
-    image: neo4j:2026.07.1-community@sha256:0ddfa71c8f0bfe0d780d74fb66b985de4767bbd274bab70c0806cb3a6deec101
+    image: neo4j:2026.08.1-community@sha256:eabfbb042bdaca2fd5e1950db1329b22c794eee80f0eacc4e7a729d44b2e863f
     environment:
       - NEO4J_AUTH=neo4j/password
       - NEO4J_dbms_usage__report_enabled=false
@@ -26,7 +27,7 @@ services:
       retries: 5
       start_period: 30s
   valkey:
-    image: valkey/valkey:9.1.1@sha256:3acc0687f2a2e1091fae6450d7842dd658c941338cf0a873ddd9e14b9e4ea4dd
+    image: valkey/valkey:9.1.2@sha256:c123e3715db63d06d4ad6964884037aa0d5d4d703939b9929954112889708e1d
     ports:
       - 6379:6379
     healthcheck:

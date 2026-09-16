@@ -26,7 +26,7 @@ from mex.common.types import (
     MergedPrimarySourceIdentifier,
 )
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
 
 
