@@ -69,8 +69,8 @@ def reset_preventive_rule_for_switched_off_merged_items(*, dry_run: bool) -> Non
             continue
 
         if not all(
-            targets in rule_set.workflow.forbiddenPublishingTarget
-            for targets in forbidden_targets
+            target in rule_set.workflow.forbiddenPublishingTarget
+            for target in forbidden_targets
         ):
             msg = (
                 f"all required fields are switched off but not all forbidden targets "
