@@ -9,6 +9,20 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+### Changes
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [4.5.0] - 2026-09-16
+
+### Added
+
 - new endpoints `_system/neo4j` and `_system/valkey` reporting status and version
 - new setting `MEX_BACKEND_CACHE_CONNECTOR` to choose between `memory` and `valkey`
 - validator asserting the backend is configured with the graph identity provider
@@ -28,16 +42,10 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   instead of scanning every extracted and rule node; filters asking for the absence of a
   reference and `hadPrimarySource` filters cannot anchor and keep the previous scan
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 
 - integration test run time locally: 352.6s -> 46.1s (~7.6x)
 - reference-filtered search no longer costs a full graph scan per request
-
-### Security
 
 ## [4.4.0] - 2026-08-28
 
