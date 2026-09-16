@@ -681,7 +681,7 @@ class GraphConnector(BaseConnector):
             msg = "database flush was attempted outside of debug mode"
             raise MExError(msg)
 
-            
+
 def get_graph_status() -> VersionStatus:
     """Get the status and version of the graph database.
 
