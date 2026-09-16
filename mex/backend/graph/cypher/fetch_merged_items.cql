@@ -11,12 +11,15 @@ Jinja:
     filter_by_identifier: Whether the final query should filter by item identifiers
     filter_by_references: Whether to filter for references to items with specific identifiers
     reference_fields: List of relationship names holding referenced identifiers to use for filtering
+    anchor_field: Reference field to anchor the match on, or None to match directly
+    merged_labels: Labels to narrow merged_node down to, or None for any merged label
 
 Args:
     query_string: Full text query string
     labels: Labels to filter items by
     identifier: Identifier to filter items by
     reference_filters: List of reference filters
+    anchor_identifiers: Identifiers of the anchoring merged nodes
     skip: Skip these many nodes for pagination
     limit: Limit pagination to this many items
 

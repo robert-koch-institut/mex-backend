@@ -11,7 +11,7 @@ from mex.backend.graph import connector as connector_module
 from mex.backend.graph.connector import GraphConnector, get_graph_status
 from mex.backend.graph.constants import NO_REFERENCE_SENTINEL
 from mex.backend.graph.exceptions import IngestionError, MergingError
-from mex.backend.graph.models import IngestParams
+from mex.backend.graph.models import IngestParams, RawReferenceFilter
 from mex.backend.graph.query import Query
 from mex.backend.models import ReferenceFilter
 from mex.backend.settings import BackendSettings
@@ -296,6 +296,51 @@ def test_mocked_graph_commit_raises_error(mocked_graph: MockedGraph) -> None:
         graph._check_connectivity_and_authentication()
 
 
+@pytest.mark.parametrize(
+    ("raw_reference_filters", "expected"),
+    [
+        pytest.param([], None, id="no-filters"),
+        pytest.param(
+            [{"field": "contact", "identifiers": ["bFQoRhcVH5DHUB"]}],
+            {"field": "contact", "identifiers": ["bFQoRhcVH5DHUB"]},
+            id="single-usable-filter",
+        ),
+        pytest.param(
+            [
+                {"field": "contact", "identifiers": ["bFQoRhcVH5DHUB"]},
+                {"field": "unitInCharge", "identifiers": ["bFQoRhcVH5DHUC"]},
+            ],
+            {"field": "contact", "identifiers": ["bFQoRhcVH5DHUB"]},
+            id="first-usable-filter-wins",
+        ),
+        pytest.param(
+            [{"field": "hadPrimarySource", "identifiers": ["bFQoRhcVH5DHUB"]}],
+            None,
+            id="lone-had-primary-source-filter",
+        ),
+        pytest.param(
+            [{"field": "contact", "identifiers": [NO_REFERENCE_SENTINEL]}],
+            None,
+            id="lone-sentinel-filter",
+        ),
+        pytest.param(
+            [
+                {"field": "hadPrimarySource", "identifiers": ["bFQoRhcVH5DHUB"]},
+                {"field": "contact", "identifiers": [NO_REFERENCE_SENTINEL]},
+                {"field": "unitInCharge", "identifiers": ["bFQoRhcVH5DHUC"]},
+            ],
+            {"field": "unitInCharge", "identifiers": ["bFQoRhcVH5DHUC"]},
+            id="skips-unusable-filters",
+        ),
+    ],
+)
+def test_pick_anchor_filter(
+    raw_reference_filters: list[RawReferenceFilter],
+    expected: RawReferenceFilter | None,
+) -> None:
+    assert GraphConnector.pick_anchor_filter(raw_reference_filters) == expected
+
+
 @pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
     mocked_graph.return_value = [
@@ -335,6 +380,8 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
             filter_by_identifier=False,
             filter_by_references=True,
             reference_fields=["stableTargetId"],
+            anchor_field="stableTargetId",
+            merged_labels=None,
         ),
         {
             "labels": [
@@ -351,6 +398,7 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                 }
             ],
             "reference_fields": ["stableTargetId"],
+            "anchor_identifiers": [str(Identifier.generate(99))],
             "skip": 10,
             "identifier": None,
         },
@@ -395,6 +443,8 @@ def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
             filter_by_identifier=False,
             filter_by_references=True,
             reference_fields=["hadPrimarySource"],
+            anchor_field=None,
+            merged_labels=None,
         ),
         {
             "query_string": None,
@@ -408,6 +458,7 @@ def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
                 }
             ],
             "reference_fields": ["hadPrimarySource"],
+            "anchor_identifiers": [],
             "skip": 0,
         },
     )
@@ -761,6 +812,8 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
             filter_by_identifier=False,
             filter_by_references=True,
             reference_fields=["stableTargetId"],
+            anchor_field="stableTargetId",
+            merged_labels=None,
         ),
         {
             "labels": [
@@ -777,6 +830,7 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
                 }
             ],
             "reference_fields": ["stableTargetId"],
+            "anchor_identifiers": [str(Identifier.generate(99))],
             "skip": 10,
             "identifier": None,
         },
@@ -1085,6 +1139,8 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
             filter_by_identifier=True,
             filter_by_references=True,
             reference_fields=["hadPrimarySource"],
+            anchor_field=None,
+            merged_labels=["MergedFoo", "MergedBar", "MergedBatz"],
         ),
         {
             "labels": [
@@ -1101,6 +1157,7 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
                 }
             ],
             "reference_fields": ["hadPrimarySource"],
+            "anchor_identifiers": [],
             "skip": 10,
             "identifier": "bFQoRhcVH5DHV1",
         },

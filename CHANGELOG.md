@@ -17,8 +17,16 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - `get_database_status` cypher query now returns the neo4j version
 - new template https://github.com/robert-koch-institut/mex-template/releases/tag/2.0.1
-- `GraphConnector` now tracks whether constraints/indices have been seeded via a `_schema_seeded` class flag, seeding them only once per process instead of once per connector instance
-- `isolate_graph_database` in `tests/conftest.py` now calls `flush_data()` + re-seeds the two primary source nodes between tests, instead of dropping and recreating the whole schema every time
+- `GraphConnector` now tracks whether constraints/indices have been seeded via a
+  `_schema_seeded` class flag, seeding them only once per process instead of once per
+  connector instance
+- `isolate_graph_database` in `tests/conftest.py` now calls `flush_data()` + re-seeds
+  the two primary source nodes between tests, instead of dropping and recreating the
+  whole schema every time
+- reference-filtered searches for merged, extracted and rule items now anchor their
+  match on one of the filtered references and seek it through the identifier index,
+  instead of scanning every extracted and rule node; filters asking for the absence of a
+  reference and `hadPrimarySource` filters cannot anchor and keep the previous scan
 
 ### Deprecated
 
@@ -27,6 +35,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Fixed
 
 - integration test run time locally: 352.6s -> 46.1s (~7.6x)
+- reference-filtered search no longer costs a full graph scan per request
 
 ### Security
 
