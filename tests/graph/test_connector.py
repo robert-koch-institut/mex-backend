@@ -7,7 +7,7 @@ import pytest
 from pytest import FixtureRequest, MonkeyPatch
 
 from mex.backend.graph import connector as connector_module
-from mex.backend.graph.connector import GraphConnector, pick_anchor_filter
+from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.constants import NO_REFERENCE_SENTINEL
 from mex.backend.graph.exceptions import IngestionError, MergingError
 from mex.backend.graph.models import IngestParams, RawReferenceFilter
@@ -336,7 +336,7 @@ def test_pick_anchor_filter(
     raw_reference_filters: list[RawReferenceFilter],
     expected: RawReferenceFilter | None,
 ) -> None:
-    assert pick_anchor_filter(raw_reference_filters) == expected
+    assert GraphConnector.pick_anchor_filter(raw_reference_filters) == expected
 
 
 @pytest.mark.usefixtures("mocked_query_class")

@@ -62,33 +62,6 @@ if TYPE_CHECKING:
     from mex.common.types import Identifier
 
 
-def pick_anchor_filter(
-    raw_reference_filters: list[RawReferenceFilter],
-) -> RawReferenceFilter | None:
-    """Pick the reference filter that can drive the match from an index seek.
-
-    Matching every extracted and rule node and then checking each one's references
-    is O(graph). Starting from one referenced merged item instead is an index seek
-    plus two expands, and any one of the ANDed filters will do, because an item that
-    satisfies all of them satisfies this one too. A filter looking for the absence of
-    a reference has nothing to seek, so it cannot serve as the anchor.
-
-    Args:
-        raw_reference_filters: The reference filters the query was asked for
-
-    Returns:
-        The filter to anchor on, or None to fall back to scanning
-    """
-    for reference_filter in raw_reference_filters:
-        if reference_filter["field"] == "hadPrimarySource":
-            # TODO(ND): remove this crutch as soon as we add hadPrimarySource to rules.
-            continue
-        if NO_REFERENCE_SENTINEL in reference_filter["identifiers"]:
-            continue
-        return reference_filter
-    return None
-
-
 class GraphConnector(BaseConnector):
     """Connector to handle authentication and transactions with the graph database."""
 
@@ -217,6 +190,33 @@ class GraphConnector(BaseConnector):
         with self.driver.session(default_access_mode=access_mode) as session:
             return Result(session.run(query.render(), parameters))
 
+    @staticmethod
+    def pick_anchor_filter(
+        raw_reference_filters: list[RawReferenceFilter],
+    ) -> RawReferenceFilter | None:
+        """Pick the reference filter that can drive the match from an index seek.
+
+        Matching every extracted and rule node and then checking each one's references
+        is O(graph). Starting from one referenced merged item instead is an index seek
+        plus two expands, and any one of the ANDed filters will do, because an item that
+        satisfies all of them satisfies this one too. A filter looking for the absence
+        of a reference has nothing to seek, so it cannot serve as the anchor.
+
+        Args:
+            raw_reference_filters: The reference filters the query was asked for
+
+        Returns:
+            The filter to anchor on, or None to fall back to scanning
+        """
+        for reference_filter in raw_reference_filters:
+            # TODO(ND): remove this crutch as soon as we add hadPrimarySource to rules.
+            if reference_filter["field"] == "hadPrimarySource":
+                continue
+            if NO_REFERENCE_SENTINEL in reference_filter["identifiers"]:
+                continue
+            return reference_filter
+        return None
+
     def _fetch_extracted_or_rule_items(  # noqa: PLR0913, PLR0917
         self,
         query_string: str | None,
@@ -245,7 +245,7 @@ class GraphConnector(BaseConnector):
         raw_reference_fields = transform_reference_filters_to_raw_fields(
             reference_filters
         )
-        anchor_filter = pick_anchor_filter(raw_reference_filters)
+        anchor_filter = self.pick_anchor_filter(raw_reference_filters)
         query_builder = QueryBuilder.get()
         query = query_builder.fetch_extracted_or_rule_items(
             filter_by_query_string=bool(query_string),
@@ -388,7 +388,7 @@ class GraphConnector(BaseConnector):
         raw_reference_fields = transform_reference_filters_to_raw_fields(
             reference_filters
         )
-        anchor_filter = pick_anchor_filter(raw_reference_filters)
+        anchor_filter = self.pick_anchor_filter(raw_reference_filters)
         query_builder = QueryBuilder.get()
         query = query_builder.fetch_merged_items(
             filter_by_query_string=bool(query_string),
