@@ -28,10 +28,16 @@ def score_field(  # noqa: PLR0913, PLR0917
 
     Both conditioned signals are shrunk toward the corpus prior with a pseudo
     count, so a thin cohort or a thin neighbourhood degrades smoothly into the
-    corpus prior instead of falling off a threshold. When a signal has no
-    evidence at all its estimate equals the prior exactly, which is why there is
-    no explicit backoff branch here. Because both pseudo counts are constrained
-    to be greater than zero, every denominator is non-zero by construction.
+    corpus prior instead of falling off a threshold. Because both pseudo counts
+    are constrained to be greater than zero, every denominator is non-zero by
+    construction.
+
+    A signal with no evidence whatsoever is dropped from the blend rather than
+    shrunk, and the remaining weights are renormalised. Shrinking it would let
+    it contribute the corpus prior at full weight, which quietly dilutes a
+    strong signal: a value with no items at all in the cohort would still score
+    well above zero purely because the user has not typed any text yet. If
+    neither signal has evidence the result is the corpus prior itself.
 
     Neighbour weights are normalised by the top score, because raw lucene scores
     are unbounded and scale with query length, so an absolute scale would make
@@ -80,39 +86,57 @@ def score_field(  # noqa: PLR0913, PLR0917
             neighbour_weights[value] += weight
             neighbour_counts[value] += 1
 
+    cohort_weight = alpha if cohort_support else 0.0
+    neighbour_weight = (1.0 - alpha) if neighbour_items else 0.0
+    total_weight = cohort_weight + neighbour_weight
+
+    # support must count the same population that sampleSize denominates, or the
+    # two cannot be read as a ratio and candidates cannot be compared with each
+    # other: a value counted over the corpus sitting next to one counted over the
+    # cohort looks far better evidenced purely because the corpus is bigger
+    if cohort_support:
+        source = SuggestionSource.COHORT
+        support_counts: dict[str, int] = cohort_counts
+        sample_size = cohort_support
+    elif neighbour_items:
+        source = SuggestionSource.NEIGHBOURHOOD
+        support_counts = dict(neighbour_counts)
+        sample_size = neighbour_items
+    else:
+        source = SuggestionSource.CORPUS
+        support_counts = corpus_counts
+        sample_size = corpus_support
+
     candidates: list[VocabularyCandidate] = []
     observed = set(cohort_counts) | set(neighbour_counts) | set(corpus_counts)
     for value in sorted(observed & allowed_values):
         prior = corpus_counts.get(value, 0) / corpus_support if corpus_support else 0.0
-        cohort_estimate = (cohort_counts.get(value, 0) + cohort_pseudo * prior) / (
-            cohort_support + cohort_pseudo
-        )
-        neighbour_estimate = (
-            neighbour_weights.get(value, 0.0) + neighbour_pseudo * prior
-        ) / (neighbour_total + neighbour_pseudo)
-        confidence = alpha * cohort_estimate + (1.0 - alpha) * neighbour_estimate
+        if not total_weight:
+            confidence = prior
+        else:
+            cohort_estimate = (cohort_counts.get(value, 0) + cohort_pseudo * prior) / (
+                cohort_support + cohort_pseudo
+            )
+            neighbour_estimate = (
+                neighbour_weights.get(value, 0.0) + neighbour_pseudo * prior
+            ) / (neighbour_total + neighbour_pseudo)
+            confidence = (
+                cohort_weight * cohort_estimate + neighbour_weight * neighbour_estimate
+            ) / total_weight
         if confidence < min_confidence:
             continue
-        support = max(cohort_counts.get(value, 0), neighbour_counts.get(value, 0))
         candidates.append(
             VocabularyCandidate(
                 value=value,
                 confidence=round(confidence, 4),
-                support=support or corpus_counts.get(value, 0),
+                support=support_counts.get(value, 0),
             )
         )
     candidates.sort(key=lambda candidate: (-candidate.confidence, candidate.value))
 
-    if cohort_support:
-        source = SuggestionSource.COHORT
-    elif neighbour_items:
-        source = SuggestionSource.NEIGHBOURHOOD
-    else:
-        source = SuggestionSource.CORPUS
-
     return FieldSuggestion(
         field=field_name,
         candidates=candidates[:limit],
-        sampleSize=cohort_support or neighbour_items or corpus_support,
+        sampleSize=sample_size,
         source=source,
     )

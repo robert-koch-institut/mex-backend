@@ -24,10 +24,9 @@ class VocabularyCandidate(BaseModel):
         Field(
             ge=0,
             description=(
-                "Lower bound on the number of distinct existing items backing this "
-                "value. The cohort and the neighbourhood overlap and the queries do "
-                "not return item identifiers, so this is the larger of the two counts "
-                "rather than the size of their union, and can never overstate."
+                "Number of existing items backing this value, counted over the "
+                "same population that `sampleSize` denominates and `source` names. "
+                "Read the two together as a ratio: 12 of 16 items in this unit."
             ),
         ),
     ]
