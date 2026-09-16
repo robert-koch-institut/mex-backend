@@ -1,13 +1,17 @@
 import click
 
+from mex.backend.graph.connector import GraphConnector
+from mex.backend.graph.exceptions import MergingError
+from mex.backend.merged.helpers import get_merged_item_from_graph
 from mex.backend.rules.helpers import get_rule_set_from_graph, update_and_get_rule_set
 from mex.common.fields import REQUIRED_FIELDS_BY_CLASS_NAME
 from mex.common.logging import logger
-from mex.common.types import Identifier, PublishingTarget
-from scripts.add_workflow_targets_for_switched_off_merged_items import (
-    get_all_rule_set_ids,
-    transform_rule_set_response_to_request,
+from mex.common.models import (
+    AnyRuleSetRequest,
+    AnyRuleSetResponse,
+    RuleSetRequestTypeAdapter,
 )
+from mex.common.types import Identifier, PublishingTarget
 
 
 @click.command()
@@ -98,6 +102,40 @@ def reset_preventive_rule_for_switched_off_merged_items(*, dry_run: bool) -> Non
 
     logger.info(
         "migration reset_preventive_rule_for_switched_off_merged_items complete"
+    )
+
+
+def get_all_rule_set_ids() -> list[str]:
+    """Get the stableTargetIds of all rule sets in the database."""
+    connector = GraphConnector.get()
+    graph_result = connector.fetch_rule_items(
+        query_string=None,
+        identifier=None,
+        entity_type=None,
+        reference_filters=None,
+        skip=0,
+        limit=5000,
+    )
+
+    ids_merged_items_with_rules: set[str] = set()
+    for item in graph_result.one()["items"]:
+        stid = item["stableTargetId"][0]
+        try:
+            get_merged_item_from_graph(identifier=stid)
+        except MergingError:  # only process if item can't be validated
+            ids_merged_items_with_rules.add(stid)
+    return sorted(ids_merged_items_with_rules)
+
+
+def transform_rule_set_response_to_request(
+    rule_set: AnyRuleSetResponse,
+) -> AnyRuleSetRequest:
+    """Transform a rule set response into a rule set request."""
+    return RuleSetRequestTypeAdapter.validate_python(
+        {
+            **rule_set.model_dump(exclude={"stableTargetId"}),
+            "entityType": rule_set.entityType.replace("Response", "Request"),
+        }
     )
 
 
