@@ -1,9 +1,9 @@
 import click
 
 from mex.backend.graph.connector import GraphConnector
-from mex.backend.graph.exceptions import MergingError
 from mex.backend.merged.helpers import get_merged_item_from_graph
 from mex.backend.rules.helpers import get_rule_set_from_graph, update_and_get_rule_set
+from mex.common.exceptions import MergingError
 from mex.common.fields import REQUIRED_FIELDS_BY_CLASS_NAME
 from mex.common.logging import logger
 from mex.common.models import (
