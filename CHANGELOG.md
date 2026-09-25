@@ -9,8 +9,6 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
-- migration logic to reset preventive rules for "switched-off" merged items with workflow rule
-
 ### Changes
 
 ### Deprecated
@@ -20,6 +18,12 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Fixed
 
 ### Security
+
+## [4.6.0] - 2026-09-25
+
+### Added
+
+- migration logic to reset preventive rules for "switched-off" merged items with workflow rule
 
 ## [4.5.0] - 2026-09-16
 
