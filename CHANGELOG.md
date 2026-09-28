@@ -17,9 +17,13 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 
-- fix migration reset preventive rule by using MergingError fom common, not backend
-
 ### Security
+
+## [4.6.1] - 2026-09-28
+
+### Fixed
+
+- fix migration reset preventive rule by using MergingError fom common, not backend
 
 ## [4.6.0] - 2026-09-25
 
