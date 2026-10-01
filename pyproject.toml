@@ -14,6 +14,7 @@ dependencies = [
     "mex-common>=3,<4",
     "neo4j>=6.1,<7",
     "pydantic>=2,<3",
+    "python-ldap>=3.4,<4",
     "starlette>=1,<2",
     "uvicorn[standard]>=0.42,<1",
     "valkey>=6.1,<7",
@@ -31,7 +32,6 @@ dev = [
     "requests>=2",
     "ruff>=0.16",
     "sphinx>=9",
-    "types-ldap3",
     "types-pytz",
     "types-requests",
 ]
@@ -54,7 +54,7 @@ strict = true
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = ["valkey.*"]
+module = ["ldap", "ldap.*", "valkey.*"]
 ignore_missing_imports = true
 
 [tool.pydantic-mypy]
