@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Annotated
 
+import ldap
 from fastapi import Depends
-from ldap3.utils.dn import escape_rdn
 
 from mex.backend.security import HTTP_BASIC_AUTH
 
@@ -17,4 +17,4 @@ def is_ldap_authenticated_mocked(
     Args:
         credentials: username and password
     """
-    return escape_rdn(credentials.username.split("@")[0])
+    return ldap.dn.escape_dn_chars(credentials.username.split("@")[0])
