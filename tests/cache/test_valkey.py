@@ -1,3 +1,4 @@
+from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
 import pytest
@@ -9,6 +10,9 @@ from valkey.exceptions import ConnectionError as ValkeyConnectionError
 
 from mex.backend.cache.valkey import ValkeyCacheConnector
 from mex.common.models import VersionStatus
+
+if TYPE_CHECKING:
+    from mex.backend.settings import BackendSettings
 
 
 class DummyModel(BaseModel):
@@ -24,7 +28,9 @@ def mocked_client(monkeypatch: MonkeyPatch) -> Mock:
     return client
 
 
-def test_init_connects_to_configured_url(monkeypatch: MonkeyPatch) -> None:
+def test_init_connects_to_configured_url(
+    settings: BackendSettings, monkeypatch: MonkeyPatch
+) -> None:
     urls: list[str] = []
 
     def from_url(url: str) -> Mock:
@@ -35,7 +41,7 @@ def test_init_connects_to_configured_url(monkeypatch: MonkeyPatch) -> None:
 
     ValkeyCacheConnector()
 
-    assert urls == ["valkey://localhost:6379"]
+    assert urls == [settings.valkey_url.get_secret_value()]
 
 
 def test_get_value(mocked_client: Mock) -> None:
