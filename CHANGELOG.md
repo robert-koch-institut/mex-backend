@@ -17,6 +17,10 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 
+- flaky valkey cache test asserting a hardcoded URL instead of the configured setting
+- flaky artificial-data ingest test snapshotting one item at a fixed pagination offset
+- raise required test coverage from 95% to 98%
+
 ### Security
 
 ## [4.6.1] - 2026-09-28
