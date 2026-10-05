@@ -14,7 +14,7 @@ services:
       timeout: 5s
       retries: 5
   neo4j:
-    image: neo4j:2026.09.0-community@sha256:91fb0bf237c41b7b3dcbe84703aa0b82e0d7d067b16e1c8ab21f03fc679edf4e
+    image: neo4j:2026.09.0-community@sha256:0dfcadbd51e1d2e5a0cf86d054a0bb537a4bce212796d967cbd88445aaf3fbf3
     environment:
       - NEO4J_AUTH=neo4j/password
       - NEO4J_dbms_usage__report_enabled=false
