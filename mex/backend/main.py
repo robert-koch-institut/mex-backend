@@ -15,6 +15,7 @@ from mex.backend.exceptions import (
     handle_uncaught_exception,
 )
 from mex.backend.extracted.main import router as extracted_router
+from mex.backend.graph.connector import GraphConnector
 from mex.backend.identity.main import router as identity_router
 from mex.backend.ingest.main import router as ingest_router
 from mex.backend.ldap.main import router as ldap_login_router
@@ -34,6 +35,9 @@ if TYPE_CHECKING:
 
 startup_tasks: list[Callable[[], Any]] = [
     BackendSettings.get,
+    # eagerly runs the neo4j version check so an incompatible neo4j fails application
+    # startup.
+    GraphConnector.get,
 ]
 teardown_tasks: list[Callable[[], Any]] = [
     CONNECTOR_STORE.reset,
