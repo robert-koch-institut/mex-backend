@@ -1,4 +1,6 @@
 import re
+import threading
+import time
 from collections import deque
 from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import MagicMock, Mock, call
@@ -40,6 +42,8 @@ from mex.common.types import (
 from tests.conftest import DummyData, MockedGraph, get_graph
 
 if TYPE_CHECKING:
+    from neo4j import Transaction
+
     from mex.backend.settings import BackendSettings
 
 
@@ -2507,6 +2511,111 @@ def test_graph_merge_items_keeper_already_superseded(
         ),
     ):
         graph.merge_items(goner, keeper)
+
+
+def _write_tombstone(tx: Transaction, goner: Identifier, keeper: Identifier) -> None:
+    """Stand in for the tombstone write of the not-yet-implemented merge."""
+    tx.run(
+        "MATCH (goner:MergedOrganizationalUnit {identifier: $goner})"
+        "<-[:stableTargetId]-(rule:AdditiveOrganizationalUnit) "
+        "MATCH (keeper:MergedOrganizationalUnit {identifier: $keeper}) "
+        "CREATE (rule)-[:supersededBy {position: 0}]->(keeper)",
+        goner=str(goner),
+        keeper=str(keeper),
+    ).consume()
+
+
+@pytest.mark.integration
+def test_graph_merge_items_locks_out_concurrent_merge_of_same_goner(
+    loaded_dummy_data: DummyData,
+) -> None:
+    """A merge must not pass its checks on state a competing merge has moved on from.
+
+    Neo4j reads take no locks under read-committed isolation, so without the lock
+    acquired by `_lock_merge_participants_tx` both merges would read an un-superseded
+    goner and both would commit a tombstone for it.
+    """
+    graph = GraphConnector.get()
+    goner_id = loaded_dummy_data["unit_1"].stableTargetId
+    keeper_id = loaded_dummy_data["unit_2"].stableTargetId
+    # the goner needs a rule node, that the tombstone can be attached to
+    deque(
+        graph.ingest_items(
+            [
+                OrganizationalUnitRuleSetResponse(
+                    stableTargetId=MergedOrganizationalUnitIdentifier(goner_id)
+                )
+            ]
+        )
+    )
+
+    goner = Mock(identifier=goner_id)
+    keeper = Mock(identifier=keeper_id)
+    hold_seconds = 1.0
+    first_is_holding = threading.Event()
+    blocked_for: list[float] = []
+    errors: dict[str, BaseException] = {}
+
+    def merge_and_hold() -> None:
+        """Pass the checks, then keep the transaction open before committing."""
+        try:
+            with (
+                graph.driver.session(default_access_mode=WRITE_ACCESS) as session,
+                session.begin_transaction() as tx,
+            ):
+                graph._lock_merge_participants_tx(tx, goner, keeper)
+                graph._check_merge_preconditions_tx(tx, goner, keeper)
+                _write_tombstone(tx, goner_id, keeper_id)
+                first_is_holding.set()
+                time.sleep(hold_seconds)
+                tx.commit()
+        except BaseException as error:  # noqa: BLE001
+            first_is_holding.set()
+            errors["holder"] = error
+
+    def merge_concurrently() -> None:
+        """Run into the lock held by the other merge and re-read once it is free."""
+        first_is_holding.wait(timeout=10)
+        try:
+            with (
+                graph.driver.session(default_access_mode=WRITE_ACCESS) as session,
+                session.begin_transaction() as tx,
+            ):
+                start = time.monotonic()
+                graph._lock_merge_participants_tx(tx, goner, keeper)
+                blocked_for.append(time.monotonic() - start)
+                graph._check_merge_preconditions_tx(tx, goner, keeper)
+                tx.rollback()
+        except BaseException as error:  # noqa: BLE001
+            errors["contender"] = error
+
+    holder = threading.Thread(target=merge_and_hold)
+    contender = threading.Thread(target=merge_concurrently)
+    holder.start()
+    contender.start()
+    holder.join(timeout=30)
+    contender.join(timeout=30)
+
+    assert "holder" not in errors, errors.get("holder")
+    # the second merge waited for the lock instead of reading straight away
+    assert blocked_for
+    assert blocked_for[0] > hold_seconds / 2
+    # and then saw the committed tombstone of the first merge
+    assert isinstance(errors.get("contender"), MergingError)
+    assert "Merging precondition check failed. Violated: goner_not_superseded" in str(
+        errors["contender"]
+    )
+    # so the goner is superseded exactly once
+    with graph.driver.session() as session:
+        record = session.run(
+            "MATCH (:MergedOrganizationalUnit {identifier: $goner})"
+            "<-[:stableTargetId]-(:AdditiveOrganizationalUnit)"
+            "-[:supersededBy]->(keeper) "
+            "RETURN collect(keeper.identifier) AS keepers",
+            goner=str(goner_id),
+        ).single()
+    assert record is not None
+    assert record["keepers"] == [str(keeper_id)]
 
 
 @pytest.mark.usefixtures("mocked_query_class")

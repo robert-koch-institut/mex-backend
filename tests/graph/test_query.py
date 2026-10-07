@@ -642,6 +642,21 @@ RETURN
     )
 
 
+def test_lock_merge_participants(query_builder: QueryBuilder) -> None:
+    query = query_builder.lock_merge_participants()
+    assert (
+        query.render()
+        == """\
+UNWIND [$goner_identifier, $keeper_identifier] AS lock_identifier
+WITH DISTINCT lock_identifier ORDER BY lock_identifier
+OPTIONAL MATCH (lock_node:MergedPerson|MergedVariable|MergedDistribution {identifier: lock_identifier})
+FOREACH (_ IN CASE WHEN lock_node IS NULL THEN [] ELSE [1] END |
+   SET lock_node._lock = true
+   REMOVE lock_node._lock
+);"""
+    )
+
+
 def test_check_merge_preconditions(query_builder: QueryBuilder) -> None:
     query = query_builder.check_merge_preconditions()
     assert (

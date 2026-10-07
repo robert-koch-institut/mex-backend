@@ -602,6 +602,25 @@ class GraphConnector(BaseConnector):
                         tx.commit()
                 yield
 
+    def _lock_merge_participants_tx(
+        self,
+        tx: Transaction,
+        goner: AnyMergedModel,
+        keeper: AnyMergedModel,
+    ) -> None:
+        """Take exclusive write locks on the merged items taking part in a merge.
+
+        Reads in neo4j's read-committed isolation take no locks, so the precondition
+        check has to run behind these locks to not act on a stale result.
+        """
+        query_builder = QueryBuilder.get()
+        lock_merge_participants_query = query_builder.lock_merge_participants()
+        tx.run(
+            lock_merge_participants_query.render(),
+            goner_identifier=str(goner.identifier),
+            keeper_identifier=str(keeper.identifier),
+        ).consume()
+
     def _check_merge_preconditions_tx(
         self,
         tx: Transaction,
@@ -644,6 +663,7 @@ class GraphConnector(BaseConnector):
         keeper: AnyMergedModel,
     ) -> None:
         """Run all required merging steps in a single transaction."""
+        self._lock_merge_participants_tx(tx, goner, keeper)
         self._check_merge_preconditions_tx(tx, goner, keeper)
         raise NotImplementedError
 
