@@ -1,6 +1,6 @@
 [project]
 name = "mex-backend"
-version = "4.5.0"
+version = "4.6.1"
 description = "Backend server for the RKI metadata exchange."
 authors = [{ name = "MEx Team", email = "mex@rki.de" }]
 readme = { file = "README.md", content-type = "text/markdown" }
@@ -66,7 +66,7 @@ addopts = [
     "--cov",
     "--no-cov-on-fail",
     "--cov-report=term-missing:skip-covered",
-    "--cov-fail-under=95",
+    "--cov-fail-under=98",
     "--cov-branch",
     "--pdbcls=IPython.terminal.debugger:TerminalPdb",
     "--random-order-bucket=global",
