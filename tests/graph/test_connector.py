@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import MagicMock, Mock, call
 
 import pytest
+from neo4j import WRITE_ACCESS
 from neo4j.exceptions import AuthError, ServiceUnavailable
 from pytest import FixtureRequest, MonkeyPatch
 
@@ -951,6 +952,40 @@ def test_fetch_rule_set_response() -> None:
     }
 
     assert graph.fetch_rule_set_response("thisIdDoesNotExist").one_or_none() is None
+
+
+@pytest.mark.usefixtures("loaded_dummy_data")
+@pytest.mark.integration
+def test_fetch_rule_set_response_in_transaction_sees_uncommitted_write() -> None:
+    graph = GraphConnector.get()
+
+    with (
+        graph.driver.session(default_access_mode=WRITE_ACCESS) as session,
+        session.begin_transaction() as tx,
+    ):
+        summary = tx.run(
+            "MATCH (rule:AdditiveOrganizationalUnit)"
+            "-[:stableTargetId]->(:MergedOrganizationalUnit {identifier: $identifier}) "
+            "SET rule.email = $email",
+            identifier="StandaloneRule",
+            email=["uncommitted@rki.de"],
+        ).consume()
+        assert summary.counters.properties_set == 1  # the write hit the rule node
+
+        # reading in the transaction sees the write that is not committed yet
+        in_tx = graph.fetch_rule_set_response("StandaloneRule", tx=tx)
+        assert in_tx.one()["additive"]["email"] == ["uncommitted@rki.de"]
+
+        # whereas reading outside of it still sees the committed state
+        assert graph.fetch_rule_set_response("StandaloneRule").one()["additive"][
+            "email"
+        ] == ["1.7@rki.de"]
+
+        tx.rollback()
+
+    assert graph.fetch_rule_set_response("StandaloneRule").one()["additive"][
+        "email"
+    ] == ["1.7@rki.de"]
 
 
 @pytest.mark.parametrize(
