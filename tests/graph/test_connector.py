@@ -1,9 +1,12 @@
 import re
+import threading
+import time
 from collections import deque
-from typing import TYPE_CHECKING, Any
-from unittest.mock import Mock, call
+from typing import TYPE_CHECKING, Any, cast
+from unittest.mock import MagicMock, Mock, call
 
 import pytest
+from neo4j import WRITE_ACCESS
 from neo4j.exceptions import AuthError, ServiceUnavailable
 from pytest import FixtureRequest, MonkeyPatch
 
@@ -26,15 +29,25 @@ from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
     MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    AdditiveOrganizationalUnit,
     AnyExtractedModel,
     ExtractedOrganization,
     ExtractedOrganizationalUnit,
+    OrganizationalUnitRuleSetResponse,
     VersionStatus,
 )
-from mex.common.types import Identifier, Text, TextLanguage, Validation
+from mex.common.types import (
+    Identifier,
+    MergedOrganizationalUnitIdentifier,
+    Text,
+    TextLanguage,
+    Validation,
+)
 from tests.conftest import DummyData, MockedGraph, get_graph
 
 if TYPE_CHECKING:
+    from neo4j import Transaction
+
     from mex.backend.settings import BackendSettings
 
 
@@ -915,6 +928,23 @@ def test_mocked_graph_fetch_rule_set_response_not_found(
     assert result.one_or_none() is None
 
 
+@pytest.mark.usefixtures("mocked_query_class")
+def test_mocked_graph_run_in_transaction(mocked_graph: MockedGraph) -> None:
+    mocked_graph.return_value = []
+    graph = GraphConnector.get()
+    tx = Mock(run=mocked_graph.run)
+
+    result = graph.fetch_rule_set_response("thisIsAStableTargetId", tx=tx)
+
+    # the query joined the given transaction instead of opening a session of its own
+    assert tx.run.call_args_list[-1] == call(
+        call("get_rule_set_response"),
+        {"identifier": "thisIsAStableTargetId"},
+    )
+    cast("MagicMock", graph.driver.session).assert_not_called()
+    assert result.one_or_none() is None
+
+
 @pytest.mark.usefixtures("loaded_dummy_data")
 @pytest.mark.integration
 def test_fetch_rule_set_response() -> None:
@@ -942,6 +972,40 @@ def test_fetch_rule_set_response() -> None:
     }
 
     assert graph.fetch_rule_set_response("thisIdDoesNotExist").one_or_none() is None
+
+
+@pytest.mark.usefixtures("loaded_dummy_data")
+@pytest.mark.integration
+def test_fetch_rule_set_response_in_transaction_sees_uncommitted_write() -> None:
+    graph = GraphConnector.get()
+
+    with (
+        graph.driver.session(default_access_mode=WRITE_ACCESS) as session,
+        session.begin_transaction() as tx,
+    ):
+        summary = tx.run(
+            "MATCH (rule:AdditiveOrganizationalUnit)"
+            "-[:stableTargetId]->(:MergedOrganizationalUnit {identifier: $identifier}) "
+            "SET rule.email = $email",
+            identifier="StandaloneRule",
+            email=["uncommitted@rki.de"],
+        ).consume()
+        assert summary.counters.properties_set == 1  # the write hit the rule node
+
+        # reading in the transaction sees the write that is not committed yet
+        in_tx = graph.fetch_rule_set_response("StandaloneRule", tx=tx)
+        assert in_tx.one()["additive"]["email"] == ["uncommitted@rki.de"]
+
+        # whereas reading outside of it still sees the committed state
+        assert graph.fetch_rule_set_response("StandaloneRule").one()["additive"][
+            "email"
+        ] == ["1.7@rki.de"]
+
+        tx.rollback()
+
+    assert graph.fetch_rule_set_response("StandaloneRule").one()["additive"][
+        "email"
+    ] == ["1.7@rki.de"]
 
 
 @pytest.mark.parametrize(
@@ -2328,7 +2392,7 @@ def test_graph_merge_items_preconditions_pass(loaded_dummy_data: DummyData) -> N
             "unit_1",
             "Merging precondition check failed. "
             "Violated: goner_exists. "
-            "Unverifiable: not_self_merge, same_merged_type",
+            "Unverifiable: goner_not_superseded, not_self_merge, same_merged_type",
             id="goner item does not exist",
         ),
         pytest.param(
@@ -2336,7 +2400,8 @@ def test_graph_merge_items_preconditions_pass(loaded_dummy_data: DummyData) -> N
             "fakeKeeper",
             "Merging precondition check failed. "
             "Violated: keeper_exists. "
-            "Unverifiable: merging_of_type_is_allowed, not_self_merge, same_merged_type",
+            "Unverifiable: keeper_not_superseded, merging_of_type_is_allowed, "
+            "not_self_merge, same_merged_type",
             id="keeper item does not exist",
         ),
         pytest.param(
@@ -2344,7 +2409,8 @@ def test_graph_merge_items_preconditions_pass(loaded_dummy_data: DummyData) -> N
             "fakeKeeper",
             "Merging precondition check failed. "
             "Violated: goner_exists, keeper_exists. "
-            "Unverifiable: merging_of_type_is_allowed, not_self_merge, same_merged_type",
+            "Unverifiable: goner_not_superseded, keeper_not_superseded, "
+            "merging_of_type_is_allowed, not_self_merge, same_merged_type",
             id="nothing exists",
         ),
         pytest.param(
@@ -2397,6 +2463,175 @@ def test_graph_merge_items_preconditions_failed(  # noqa: PLR0913, PLR0917
         match=re.escape(expected_failed),
     ):
         graph.merge_items(goner, keeper)
+
+
+def _supersede(
+    graph: GraphConnector,
+    stable_target_id: Identifier,
+    superseded_by: Identifier,
+) -> None:
+    """Turn the given merged item into a tombstone pointing at the other item."""
+    deque(
+        graph.ingest_items(
+            [
+                OrganizationalUnitRuleSetResponse(
+                    additive=AdditiveOrganizationalUnit(
+                        supersededBy=MergedOrganizationalUnitIdentifier(superseded_by),
+                    ),
+                    stableTargetId=MergedOrganizationalUnitIdentifier(stable_target_id),
+                )
+            ]
+        )
+    )
+
+
+@pytest.mark.integration
+def test_graph_merge_items_goner_already_superseded(
+    loaded_dummy_data: DummyData,
+) -> None:
+    graph = GraphConnector.get()
+    _supersede(
+        graph,
+        loaded_dummy_data["unit_1"].stableTargetId,
+        loaded_dummy_data["unit_2"].stableTargetId,
+    )
+
+    goner = Mock(identifier=loaded_dummy_data["unit_1"].stableTargetId)
+    keeper = Mock(identifier=loaded_dummy_data["unit_2"].stableTargetId)
+    with pytest.raises(
+        MergingError,
+        match=re.escape(
+            "Merging precondition check failed. Violated: goner_not_superseded"
+        ),
+    ):
+        graph.merge_items(goner, keeper)
+
+
+@pytest.mark.integration
+def test_graph_merge_items_keeper_already_superseded(
+    loaded_dummy_data: DummyData,
+) -> None:
+    graph = GraphConnector.get()
+    _supersede(
+        graph,
+        loaded_dummy_data["unit_2"].stableTargetId,
+        loaded_dummy_data["unit_1"].stableTargetId,
+    )
+
+    goner = Mock(identifier=loaded_dummy_data["unit_1"].stableTargetId)
+    keeper = Mock(identifier=loaded_dummy_data["unit_2"].stableTargetId)
+    with pytest.raises(
+        MergingError,
+        match=re.escape(
+            "Merging precondition check failed. Violated: keeper_not_superseded"
+        ),
+    ):
+        graph.merge_items(goner, keeper)
+
+
+def _write_tombstone(tx: Transaction, goner: Identifier, keeper: Identifier) -> None:
+    """Stand in for the tombstone write of the not-yet-implemented merge."""
+    tx.run(
+        "MATCH (goner:MergedOrganizationalUnit {identifier: $goner})"
+        "<-[:stableTargetId]-(rule:AdditiveOrganizationalUnit) "
+        "MATCH (keeper:MergedOrganizationalUnit {identifier: $keeper}) "
+        "CREATE (rule)-[:supersededBy {position: 0}]->(keeper)",
+        goner=str(goner),
+        keeper=str(keeper),
+    ).consume()
+
+
+@pytest.mark.integration
+def test_graph_merge_items_locks_out_concurrent_merge_of_same_goner(
+    loaded_dummy_data: DummyData,
+) -> None:
+    """A merge must not pass its checks on state a competing merge has moved on from.
+
+    Neo4j reads take no locks under read-committed isolation, so without the lock
+    acquired by `_lock_merge_participants_tx` both merges would read an un-superseded
+    goner and both would commit a tombstone for it.
+    """
+    graph = GraphConnector.get()
+    goner_id = loaded_dummy_data["unit_1"].stableTargetId
+    keeper_id = loaded_dummy_data["unit_2"].stableTargetId
+    # the goner needs a rule node, that the tombstone can be attached to
+    deque(
+        graph.ingest_items(
+            [
+                OrganizationalUnitRuleSetResponse(
+                    stableTargetId=MergedOrganizationalUnitIdentifier(goner_id)
+                )
+            ]
+        )
+    )
+
+    goner = Mock(identifier=goner_id)
+    keeper = Mock(identifier=keeper_id)
+    hold_seconds = 1.0
+    first_is_holding = threading.Event()
+    blocked_for: list[float] = []
+    errors: dict[str, BaseException] = {}
+
+    def merge_and_hold() -> None:
+        """Pass the checks, then keep the transaction open before committing."""
+        try:
+            with (
+                graph.driver.session(default_access_mode=WRITE_ACCESS) as session,
+                session.begin_transaction() as tx,
+            ):
+                graph._lock_merge_participants_tx(tx, goner, keeper)
+                graph._check_merge_preconditions_tx(tx, goner, keeper)
+                _write_tombstone(tx, goner_id, keeper_id)
+                first_is_holding.set()
+                time.sleep(hold_seconds)
+                tx.commit()
+        except BaseException as error:  # noqa: BLE001
+            first_is_holding.set()
+            errors["holder"] = error
+
+    def merge_concurrently() -> None:
+        """Run into the lock held by the other merge and re-read once it is free."""
+        first_is_holding.wait(timeout=10)
+        try:
+            with (
+                graph.driver.session(default_access_mode=WRITE_ACCESS) as session,
+                session.begin_transaction() as tx,
+            ):
+                start = time.monotonic()
+                graph._lock_merge_participants_tx(tx, goner, keeper)
+                blocked_for.append(time.monotonic() - start)
+                graph._check_merge_preconditions_tx(tx, goner, keeper)
+                tx.rollback()
+        except BaseException as error:  # noqa: BLE001
+            errors["contender"] = error
+
+    holder = threading.Thread(target=merge_and_hold)
+    contender = threading.Thread(target=merge_concurrently)
+    holder.start()
+    contender.start()
+    holder.join(timeout=30)
+    contender.join(timeout=30)
+
+    assert "holder" not in errors, errors.get("holder")
+    # the second merge waited for the lock instead of reading straight away
+    assert blocked_for
+    assert blocked_for[0] > hold_seconds / 2
+    # and then saw the committed tombstone of the first merge
+    assert isinstance(errors.get("contender"), MergingError)
+    assert "Merging precondition check failed. Violated: goner_not_superseded" in str(
+        errors["contender"]
+    )
+    # so the goner is superseded exactly once
+    with graph.driver.session() as session:
+        record = session.run(
+            "MATCH (:MergedOrganizationalUnit {identifier: $goner})"
+            "<-[:stableTargetId]-(:AdditiveOrganizationalUnit)"
+            "-[:supersededBy]->(keeper) "
+            "RETURN collect(keeper.identifier) AS keepers",
+            goner=str(goner_id),
+        ).single()
+    assert record is not None
+    assert record["keepers"] == [str(keeper_id)]
 
 
 @pytest.mark.usefixtures("mocked_query_class")
