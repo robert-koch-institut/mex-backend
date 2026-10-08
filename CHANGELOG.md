@@ -27,6 +27,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - flaky valkey cache test asserting a hardcoded URL instead of the configured setting
 - flaky artificial-data ingest test snapshotting one item at a fixed pagination offset
 - raise required test coverage from 95% to 98%
+- get valkey key count only for active database to avoid permission restrictions
 
 ### Security
 

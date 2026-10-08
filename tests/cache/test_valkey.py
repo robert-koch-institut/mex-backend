@@ -24,6 +24,7 @@ class DummyModel(BaseModel):
 def mocked_client(monkeypatch: MonkeyPatch) -> Mock:
     client = Mock(spec=Valkey)
     client.get.return_value = None
+    client.get_connection_kwargs.return_value = {}
     monkeypatch.setattr(Valkey, "from_url", lambda _url: client)
     return client
 
@@ -90,8 +91,8 @@ def test_metrics(mocked_client: Mock) -> None:
         "tcp_port": 6379,
         "version": "7.0.0",
         "db0": {"keys": 2, "expires": 0},
+        "db1": {"keys": 9, "expires": 0},
     }
-    mocked_client.dbsize.return_value = 2
     connector = ValkeyCacheConnector()
 
     assert connector.metrics() == {
@@ -107,10 +108,20 @@ def test_metrics(mocked_client: Mock) -> None:
 
 def test_metrics_filters_non_integers(mocked_client: Mock) -> None:
     mocked_client.info.return_value = {"used_memory": "1024", "evicted_keys": 0}
-    mocked_client.dbsize.return_value = 0
     connector = ValkeyCacheConnector()
 
     assert connector.metrics() == {"dbsize": 0, "evicted_keys_total": 0}
+
+
+def test_metrics_uses_selected_database(mocked_client: Mock) -> None:
+    mocked_client.get_connection_kwargs.return_value = {"db": 1}
+    mocked_client.info.return_value = {
+        "db0": {"keys": 2, "expires": 0},
+        "db1": {"keys": 9, "expires": 0},
+    }
+    connector = ValkeyCacheConnector()
+
+    assert connector.metrics() == {"dbsize": 9}
 
 
 def test_get_status(mocked_client: Mock) -> None:

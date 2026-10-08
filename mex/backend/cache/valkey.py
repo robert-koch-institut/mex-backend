@@ -1,4 +1,4 @@
-from typing import Final, cast
+from typing import Any, Final, cast
 
 from valkey import Valkey
 from valkey.exceptions import AuthenticationError, AuthorizationError, ValkeyError
@@ -42,9 +42,11 @@ class ValkeyCacheConnector(BaseCacheConnector):
 
     def _info(self) -> dict[str, int | str]:
         """Return the subset of valkey server stats that we track as metrics."""
-        info = cast("dict[str, int | str]", self._client.info())
+        info = cast("dict[str, Any]", self._client.info())
+        db = self._client.get_connection_kwargs().get("db", 0)
+        keyspace = cast("dict[str, int]", info.get(f"db{db}", {}))
         return {
-            "dbsize": cast("int", self._client.dbsize()),
+            "dbsize": keyspace.get("keys", 0),
             **{
                 DASHBOARD_METRICS[k]: v
                 for k, v in info.items()
