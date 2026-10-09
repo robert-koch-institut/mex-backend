@@ -13,6 +13,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - added `lock_merge_participants` query that write-locks both merged items before the
   merging preconditions are checked, so that concurrent merges cannot both pass them
 - added `get_identity_cache_key` helper to build identity cache keys in one place
+- hard-fail application boot upon incompatible neo4j
 
 ### Changes
 
