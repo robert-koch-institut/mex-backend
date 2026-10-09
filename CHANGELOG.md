@@ -16,6 +16,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changes
 
+- update dependency to mex-common 3.4.2 and update other dependencies
 - graph reads can now join an open write transaction via the new `GraphConnector._run`
 
 ### Deprecated
