@@ -680,6 +680,27 @@ RETURN *;"""
     )
 
 
+def test_move_extracted_items(query_builder: QueryBuilder) -> None:
+    query = query_builder.move_extracted_items()
+    assert (
+        query.render()
+        == """\
+MATCH (keeper:MergedPerson|MergedVariable|MergedDistribution {identifier: $keeper_identifier})
+MATCH (extracted:ExtractedPerson|ExtractedVariable|ExtractedDistribution)-[old:stableTargetId]->(:MergedPerson|MergedVariable|MergedDistribution {identifier: $goner_identifier})
+
+MERGE (extracted)-[:stableTargetId {position: 0}]->(keeper)
+DELETE old
+
+RETURN
+    collect({
+        identifier: extracted.identifier,
+        hadPrimarySource: [(extracted)-[:hadPrimarySource]->(primary_source) | primary_source.identifier][0],
+        identifierInPrimarySource: extracted.identifierInPrimarySource,
+        stableTargetId: keeper.identifier
+    }) AS moved_identities;"""
+    )
+
+
 def test_merge_item(query_builder: QueryBuilder) -> None:
     query = query_builder.get_ingest_query_for_entity_type("ExtractedVariable")
     assert (

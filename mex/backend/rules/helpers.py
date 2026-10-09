@@ -10,6 +10,7 @@ from mex.backend.rules.transform import transform_raw_rule_set_to_rule_set_respo
 from mex.common.logging import logger
 from mex.common.models import (
     RULE_SET_RESPONSE_CLASSES_BY_NAME,
+    AnyMergedModel,
     AnyRuleModel,
     AnyRuleSetRequest,
     AnyRuleSetResponse,
@@ -94,6 +95,33 @@ def create_and_get_rule_set(
 
     msg = f"rule-set was not found after it was just inserted: {stable_target_id}"
     raise RuntimeError(msg)
+
+
+def build_tombstone_rule_set(
+    goner: AnyMergedModel,
+    keeper: AnyMergedModel,
+) -> AnyRuleSetResponse:
+    """Build a rule set for a merged item that was merged away.
+
+    A merged item that has been merged into another one keeps no values of its own.
+    All that is left of it is the reference to the item that superseded it, which
+    makes the resulting rule set the "tombstone" of the goner.
+
+    Args:
+        goner: Merged item that is merged away
+        keeper: Merged item that survives the merge
+
+    Returns:
+        Rule set whose only non-default value is `supersededBy`
+    """
+    response_class_name = ensure_postfix(goner.stemType, "RuleSetResponse")
+    response_class = RULE_SET_RESPONSE_CLASSES_BY_NAME[response_class_name]
+    return response_class.model_validate(
+        {
+            "additive": {"supersededBy": keeper.identifier},
+            "stableTargetId": goner.identifier,
+        }
+    )
 
 
 def get_rule_set_from_graph(

@@ -10,12 +10,15 @@ from neo4j import WRITE_ACCESS
 from neo4j.exceptions import AuthError, ServiceUnavailable
 from pytest import FixtureRequest, MonkeyPatch
 
+from mex.backend.cache import get_cache_connector
 from mex.backend.graph import connector as connector_module
 from mex.backend.graph.connector import GraphConnector, get_graph_status
 from mex.backend.graph.constants import NO_REFERENCE_SENTINEL
 from mex.backend.graph.exceptions import IngestionError, MergingError
 from mex.backend.graph.models import IngestParams, RawReferenceFilter
 from mex.backend.graph.query import Query
+from mex.backend.identity.helpers import get_identity_cache_key
+from mex.backend.identity.provider import GraphIdentityProvider
 from mex.backend.models import ReferenceFilter
 from mex.backend.settings import BackendSettings
 from mex.backend.types import MergedType, ReferenceFieldName
@@ -2351,6 +2354,11 @@ def test_mocked_graph_ingests_extracted_models(
 @pytest.mark.integration
 def test_graph_merge_items_preconditions_pass(loaded_dummy_data: DummyData) -> None:
     graph = GraphConnector.get()
+    # `stableTargetId` is computed by the identity provider on every access, so the
+    # goner's id has to be captured before the merge re-points it at the keeper
+    extracted_identifier = str(loaded_dummy_data["organization_1"].identifier)
+    goner_identifier = str(loaded_dummy_data["organization_1"].stableTargetId)
+    keeper_identifier = str(loaded_dummy_data["organization_2"].stableTargetId)
     goner = create_merged_item(
         loaded_dummy_data["organization_1"].stableTargetId,
         [loaded_dummy_data["organization_1"]],
@@ -2364,8 +2372,62 @@ def test_graph_merge_items_preconditions_pass(loaded_dummy_data: DummyData) -> N
         Validation.STRICT,
     )
 
-    with pytest.raises(NotImplementedError):
-        graph.merge_items(goner, keeper)
+    graph.merge_items(goner, keeper)
+
+    # the goner's extracted item now belongs to the keeper instead of the goner
+    stable_target_id_edges = {
+        (edge["start"], edge["end"])
+        for edge in get_graph()
+        if edge.get("label") == "stableTargetId"
+    }
+    assert (extracted_identifier, keeper_identifier) in stable_target_id_edges
+    assert (extracted_identifier, goner_identifier) not in stable_target_id_edges
+
+    # the goner's rule set carries nothing but the reference to the keeper
+    rule_set = graph.fetch_rule_set_response(goner_identifier).one()
+    assert rule_set["additive"]["supersededBy"] == [keeper_identifier]
+
+
+@pytest.mark.integration
+def test_graph_merge_items_resets_identity_cache(
+    loaded_dummy_data: DummyData,
+) -> None:
+    graph = GraphConnector.get()
+    cache = get_cache_connector()
+    provider = GraphIdentityProvider.get()
+
+    goner_extracted = loaded_dummy_data["organization_1"]
+    keeper_extracted = loaded_dummy_data["organization_2"]
+
+    # warm the cache with the goner's stable target id
+    identity = provider.assign(
+        goner_extracted.hadPrimarySource,
+        goner_extracted.identifierInPrimarySource,
+    )
+    assert identity.stableTargetId == goner_extracted.stableTargetId
+    cache_key = get_identity_cache_key(
+        goner_extracted.hadPrimarySource,
+        goner_extracted.identifierInPrimarySource,
+    )
+    assert cache.get_value(cache_key) is not None
+
+    goner = create_merged_item(
+        goner_extracted.stableTargetId, [goner_extracted], None, Validation.STRICT
+    )
+    keeper = create_merged_item(
+        keeper_extracted.stableTargetId, [keeper_extracted], None, Validation.STRICT
+    )
+    graph.merge_items(goner, keeper)
+
+    assert cache.get_value(cache_key) is None
+    # the next lookup resolves to the keeper, so extractors stop resurrecting the goner
+    assert (
+        provider.assign(
+            goner_extracted.hadPrimarySource,
+            goner_extracted.identifierInPrimarySource,
+        ).stableTargetId
+        == keeper_extracted.stableTargetId
+    )
 
 
 @pytest.mark.parametrize(
@@ -2514,7 +2576,7 @@ def test_graph_merge_items_keeper_already_superseded(
 
 
 def _write_tombstone(tx: Transaction, goner: Identifier, keeper: Identifier) -> None:
-    """Stand in for the tombstone write of the not-yet-implemented merge."""
+    """Stand in for the tombstone write of the merge."""
     tx.run(
         "MATCH (goner:MergedOrganizationalUnit {identifier: $goner})"
         "<-[:stableTargetId]-(rule:AdditiveOrganizationalUnit) "

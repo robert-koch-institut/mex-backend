@@ -9,7 +9,13 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+- implemented the merging operation: `POST /merge` now moves the goner's extracted items
+  to the keeper, re-links all references to the goner, migrates the goner's rule values
+  into the keeper's rule set and leaves the goner behind as a tombstone whose only value
+  is `supersededBy`
 - added `goner_not_superseded` and `keeper_not_superseded` merging preconditions
+- the identity cache is reset for all extracted items that a merge moved, so that
+  re-running an extractor links to the keeper instead of resurrecting the goner
 - added `lock_merge_participants` query that write-locks both merged items before the
   merging preconditions are checked, so that concurrent merges cannot both pass them
 - added `get_identity_cache_key` helper to build identity cache keys in one place
