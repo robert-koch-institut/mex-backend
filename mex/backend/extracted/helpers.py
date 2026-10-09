@@ -8,7 +8,7 @@ from mex.backend.models import ReferenceFilter
 from mex.backend.types import ReferenceFieldName
 from mex.common.models import AnyExtractedModel, PaginatedItemsContainer
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from mex.common.types import Identifier

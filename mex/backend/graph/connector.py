@@ -1,5 +1,5 @@
 from collections import deque
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from neo4j import (
     READ_ACCESS,
@@ -9,8 +9,16 @@ from neo4j import (
     NotificationDisabledClassification,
     Transaction,
 )
-from neo4j.exceptions import ConstraintError, Neo4jError
+from neo4j.exceptions import (
+    ConstraintError,
+    DriverError,
+    Neo4jError,
+    ServiceUnavailable,
+    SessionExpired,
+)
 
+from mex.backend.exceptions import BackendError
+from mex.backend.graph.constants import NO_REFERENCE_SENTINEL
 from mex.backend.graph.exceptions import (
     DeletionFailedError,
     IngestionError,
@@ -65,25 +73,35 @@ from mex.common.models import (
     AnyRuleModel,
     AnyRuleSetResponse,
     ExtractedModelTypeAdapter,
+    VersionStatus,
 )
 from mex.common.transform import ensure_postfix
 from mex.common.types import MergedPrimarySourceIdentifier
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Generator, Iterable, Sequence
 
+    from mex.backend.graph.models import RawReferenceFilter
     from mex.common.types import Identifier
 
 
 class GraphConnector(BaseConnector):
     """Connector to handle authentication and transactions with the graph database."""
 
+    # Constraints and indexes are schema, not data: seeding them is expensive
+    # (one round trip per entity type) but only needs to happen once per process,
+    # not once per connector instance. `flush` resets this when it really does
+    # drop the schema; `flush_data` (data-only reset) leaves it untouched.
+    _schema_seeded: ClassVar[bool] = False
+
     def __init__(self) -> None:
         """Create a new graph database connection."""
         self.driver = self._init_driver()
         self._check_connectivity_and_authentication()
-        self._seed_constraints()
-        self._seed_indices()
+        if not GraphConnector._schema_seeded:
+            self._seed_constraints()
+            self._seed_indices()
+            GraphConnector._schema_seeded = True
         self._seed_data()
 
     def _init_driver(self) -> Driver:
@@ -101,7 +119,7 @@ class GraphConnector(BaseConnector):
                 NotificationDisabledClassification.UNRECOGNIZED,
             ],
             telemetry_disabled=True,
-            max_connection_pool_size=settings.backend_api_parallelization,
+            max_connection_pool_size=settings.graph_max_connection_pool_size,
             max_transaction_retry_time=settings.graph_session_timeout,
         )
 
@@ -109,9 +127,7 @@ class GraphConnector(BaseConnector):
         """Check the connectivity and authentication to the graph."""
         query_builder = QueryBuilder.get()
         result = self.commit(query_builder.get_database_status())
-        if (status := result["currentStatus"]) != "online":
-            msg = f"Database is {status}."
-            raise MExError(msg) from None
+        logger.info("connected to neo4j %s", result["version"])
         return result
 
     def _seed_constraints(self) -> None:
@@ -222,6 +238,33 @@ class GraphConnector(BaseConnector):
             return self.commit(query, access_mode=access_mode, **parameters)
         return Result(tx.run(query.render(), parameters))
 
+    @staticmethod
+    def pick_anchor_filter(
+        raw_reference_filters: list[RawReferenceFilter],
+    ) -> RawReferenceFilter | None:
+        """Pick the reference filter that can drive the match from an index seek.
+
+        Matching every extracted and rule node and then checking each one's references
+        is O(graph). Starting from one referenced merged item instead is an index seek
+        plus two expands, and any one of the ANDed filters will do, because an item that
+        satisfies all of them satisfies this one too. A filter looking for the absence
+        of a reference has nothing to seek, so it cannot serve as the anchor.
+
+        Args:
+            raw_reference_filters: The reference filters the query was asked for
+
+        Returns:
+            The filter to anchor on, or None to fall back to scanning
+        """
+        for reference_filter in raw_reference_filters:
+            # TODO(ND): remove this crutch as soon as we add hadPrimarySource to rules.
+            if reference_filter["field"] == "hadPrimarySource":
+                continue
+            if NO_REFERENCE_SENTINEL in reference_filter["identifiers"]:
+                continue
+            return reference_filter
+        return None
+
     def _fetch_extracted_or_rule_items(  # noqa: PLR0913, PLR0917
         self,
         query_string: str | None,
@@ -250,12 +293,16 @@ class GraphConnector(BaseConnector):
         raw_reference_fields = transform_reference_filters_to_raw_fields(
             reference_filters
         )
+        anchor_filter = self.pick_anchor_filter(raw_reference_filters)
         query_builder = QueryBuilder.get()
         query = query_builder.fetch_extracted_or_rule_items(
             filter_by_query_string=bool(query_string),
             filter_by_identifier=bool(identifier),
             filter_by_references=bool(raw_reference_filters),
             reference_fields=raw_reference_fields,
+            anchor_field=anchor_filter["field"] if anchor_filter else None,
+            # `entity_type` constrains the extracted or rule nodes, not the merged ones
+            merged_labels=None,
         )
         result = self.commit(
             query,
@@ -264,6 +311,7 @@ class GraphConnector(BaseConnector):
             labels=entity_type,
             reference_filters=raw_reference_filters,
             reference_fields=raw_reference_fields,
+            anchor_identifiers=anchor_filter["identifiers"] if anchor_filter else [],
             skip=skip,
             limit=limit,
         )
@@ -395,12 +443,15 @@ class GraphConnector(BaseConnector):
         raw_reference_fields = transform_reference_filters_to_raw_fields(
             reference_filters
         )
+        anchor_filter = self.pick_anchor_filter(raw_reference_filters)
         query_builder = QueryBuilder.get()
         query = query_builder.fetch_merged_items(
             filter_by_query_string=bool(query_string),
             filter_by_identifier=bool(identifier),
             filter_by_references=bool(raw_reference_filters),
             reference_fields=raw_reference_fields,
+            anchor_field=anchor_filter["field"] if anchor_filter else None,
+            merged_labels=list(entity_type) if entity_type else None,
         )
         result = self._run(
             query,
@@ -410,6 +461,7 @@ class GraphConnector(BaseConnector):
             labels=entity_type or list(MERGED_MODEL_CLASSES_BY_NAME),
             reference_filters=raw_reference_filters,
             reference_fields=raw_reference_fields,
+            anchor_identifiers=anchor_filter["identifiers"] if anchor_filter else [],
             skip=skip,
             limit=limit,
         )
@@ -544,6 +596,10 @@ class GraphConnector(BaseConnector):
         settings = BackendSettings.get()
         with self.driver.session(default_access_mode=WRITE_ACCESS) as session:
             for model in models:
+                # neo4j manages write locks on touched nodes and edges:
+                # parallel transactions writing to the same graph location are
+                # serialized instead of overwriting each other.
+                # see: https://neo4j.com/docs/operations-manual/current/database-internals/concurrent-data-access/
                 with session.begin_transaction(
                     timeout=settings.graph_tx_timeout,
                     metadata={
@@ -570,6 +626,25 @@ class GraphConnector(BaseConnector):
                     else:
                         tx.commit()
                 yield
+
+    def _lock_merge_participants_tx(
+        self,
+        tx: Transaction,
+        goner: AnyMergedModel,
+        keeper: AnyMergedModel,
+    ) -> None:
+        """Take exclusive write locks on the merged items taking part in a merge.
+
+        Reads in neo4j's read-committed isolation take no locks, so the precondition
+        check has to run behind these locks to not act on a stale result.
+        """
+        query_builder = QueryBuilder.get()
+        lock_merge_participants_query = query_builder.lock_merge_participants()
+        tx.run(
+            lock_merge_participants_query.render(),
+            goner_identifier=str(goner.identifier),
+            keeper_identifier=str(keeper.identifier),
+        ).consume()
 
     def _check_merge_preconditions_tx(
         self,
@@ -842,6 +917,7 @@ class GraphConnector(BaseConnector):
         Returns:
             Identities of the extracted items that were moved to the keeper
         """
+        self._lock_merge_participants_tx(tx, goner, keeper)
         self._check_merge_preconditions_tx(tx, goner, keeper)
         goner_identifier = str(goner.identifier)
         keeper_identifier = str(keeper.identifier)
@@ -965,6 +1041,9 @@ class GraphConnector(BaseConnector):
         """
         settings = BackendSettings.get()
         if settings.debug is True:
+            # the schema will be wiped along with the data, so the next connector
+            # that gets constructed needs to seed constraints and indexes again
+            GraphConnector._schema_seeded = False
             with self.driver.session(default_access_mode=WRITE_ACCESS) as session:
                 session.run("MATCH (n) DETACH DELETE n;")
                 constraints = session.run("SHOW ALL CONSTRAINTS;")
@@ -976,3 +1055,40 @@ class GraphConnector(BaseConnector):
         else:
             msg = "database flush was attempted outside of debug mode"
             raise MExError(msg)
+
+    def flush_data(self) -> None:
+        """Flush the database by deleting all nodes, keeping the schema intact.
+
+        This operation only executes when debug mode is enabled in settings.
+        Unlike `flush`, constraints and indexes are left in place, so callers
+        that only need a clean dataset (e.g. tests) can avoid the cost of
+        dropping and recreating the schema on every reset.
+        """
+        settings = BackendSettings.get()
+        if settings.debug is True:
+            with self.driver.session(default_access_mode=WRITE_ACCESS) as session:
+                session.run("MATCH (n) DETACH DELETE n;")
+        else:
+            msg = "database flush was attempted outside of debug mode"
+            raise MExError(msg)
+
+
+def get_graph_status() -> VersionStatus:
+    """Get the status and version of the graph database.
+
+    Returns:
+        VersionStatus with status "ok" and the neo4j version, status "offline"
+        when the graph cannot be reached, or status "error" when the graph is
+        misconfigured or answers with an error
+    """
+    query_builder = QueryBuilder.get()
+    try:
+        connector = GraphConnector.get()
+        version = connector.commit(query_builder.get_database_status())["version"]
+    except ServiceUnavailable, SessionExpired:
+        logger.exception("graph database is unreachable")
+        return VersionStatus(status="offline", version="unknown")
+    except DriverError, Neo4jError, MExError, BackendError:
+        logger.exception("error checking the graph database status")
+        return VersionStatus(status="error", version="unknown")
+    return VersionStatus(status="ok", version=str(version))

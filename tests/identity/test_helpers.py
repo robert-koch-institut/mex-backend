@@ -1,6 +1,4 @@
-import pytest
-
-from mex.backend.cache.connector import CacheConnector
+from mex.backend.cache import get_cache_connector
 from mex.backend.identity.helpers import (
     get_identity_cache_key,
     reset_identity_cache,
@@ -24,9 +22,8 @@ def test_get_identity_cache_key() -> None:
     )
 
 
-@pytest.mark.usefixtures("mocked_valkey")
 def test_reset_identity_cache() -> None:
-    cache = CacheConnector.get()
+    cache = get_cache_connector()
     moved = _identity("moved-item")
     kept = _identity("untouched-item")
     moved_key = get_identity_cache_key(
@@ -44,9 +41,8 @@ def test_reset_identity_cache() -> None:
     assert cache.get_value(kept_key) is not None
 
 
-@pytest.mark.usefixtures("mocked_valkey")
 def test_reset_identity_cache_without_moved_items() -> None:
-    cache = CacheConnector.get()
+    cache = get_cache_connector()
     kept = _identity("untouched-item")
     kept_key = get_identity_cache_key(
         kept.hadPrimarySource, kept.identifierInPrimarySource

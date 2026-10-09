@@ -2,11 +2,10 @@ from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends, Query
 
-from mex.backend.identity.provider import GraphIdentityProvider
 from mex.backend.security import has_read_access, has_write_access
-from mex.common.identity import Identity
+from mex.common.identity import Identity, get_provider
 from mex.common.models import PaginatedItemsContainer
-from mex.common.types import Identifier, MergedPrimarySourceIdentifier
+from mex.common.types import AnyMergedIdentifier, MergedPrimarySourceIdentifier
 
 router = APIRouter()
 
@@ -17,7 +16,7 @@ def assign_identity(
     identifierInPrimarySource: Annotated[str, Body()],
 ) -> Identity:
     """Insert a new identity or update an existing one."""
-    identity_provider = GraphIdentityProvider.get()
+    identity_provider = get_provider()
     return identity_provider.assign(
         had_primary_source=hadPrimarySource,
         identifier_in_primary_source=identifierInPrimarySource,
@@ -26,16 +25,16 @@ def assign_identity(
 
 @router.get("/identity", tags=["extractors"], dependencies=[Depends(has_read_access)])
 def fetch_identity(
-    hadPrimarySource: Annotated[Identifier | None, Query()] = None,
+    hadPrimarySource: Annotated[MergedPrimarySourceIdentifier | None, Query()] = None,
     identifierInPrimarySource: Annotated[str | None, Query()] = None,
-    stableTargetId: Annotated[Identifier | None, Query()] = None,
+    stableTargetId: Annotated[AnyMergedIdentifier | None, Query()] = None,
 ) -> PaginatedItemsContainer[Identity]:
     """Find an Identity instance from the database if it can be found.
 
     Either provide `stableTargetId` or `hadPrimarySource`
     and `identifierInPrimarySource` together to get a unique result.
     """
-    identity_provider = GraphIdentityProvider.get()
+    identity_provider = get_provider()
     identities = identity_provider.fetch(
         had_primary_source=hadPrimarySource,
         identifier_in_primary_source=identifierInPrimarySource,

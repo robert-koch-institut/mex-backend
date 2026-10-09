@@ -1,17 +1,21 @@
 import re
+import threading
+import time
 from collections import deque
-from typing import TYPE_CHECKING, Any
-from unittest.mock import Mock, call
+from typing import TYPE_CHECKING, Any, cast
+from unittest.mock import MagicMock, Mock, call
 
 import pytest
+from neo4j import WRITE_ACCESS
+from neo4j.exceptions import AuthError, ServiceUnavailable
 from pytest import FixtureRequest, MonkeyPatch
 
-from mex.backend.cache.connector import CacheConnector
+from mex.backend.cache import get_cache_connector
 from mex.backend.graph import connector as connector_module
-from mex.backend.graph.connector import GraphConnector
+from mex.backend.graph.connector import GraphConnector, get_graph_status
 from mex.backend.graph.constants import NO_REFERENCE_SENTINEL
 from mex.backend.graph.exceptions import IngestionError, MergingError
-from mex.backend.graph.models import IngestParams
+from mex.backend.graph.models import IngestParams, RawReferenceFilter
 from mex.backend.graph.query import Query
 from mex.backend.identity.helpers import get_identity_cache_key
 from mex.backend.identity.provider import GraphIdentityProvider
@@ -29,6 +33,7 @@ from mex.common.models import (
     ExtractedOrganization,
     ExtractedOrganizationalUnit,
     OrganizationalUnitRuleSetResponse,
+    VersionStatus,
 )
 from mex.common.types import (
     Identifier,
@@ -39,7 +44,9 @@ from mex.common.types import (
 )
 from tests.conftest import DummyData, MockedGraph, get_graph
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
+    from neo4j import Transaction
+
     from mex.backend.settings import BackendSettings
 
 
@@ -48,24 +55,23 @@ def mocked_query_class(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(Query, "render", lambda s: call(s.name, **s.kwargs))
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_check_connectivity_and_authentication(mocked_graph: MockedGraph) -> None:
-    mocked_graph.return_value = [{"currentStatus": "online"}]
+    mocked_graph.return_value = [{"version": "2026.07.1"}]
     graph = GraphConnector.get()
     graph._check_connectivity_and_authentication()
 
     assert mocked_graph.call_args_list[-1] == call(call("get_database_status"), {})
 
 
-@pytest.mark.usefixtures("mocked_valkey")
 def test_check_connectivity_and_authentication_error(mocked_graph: MockedGraph) -> None:
-    mocked_graph.return_value = [{"currentStatus": "offline"}]
+    mocked_graph.run.side_effect = ServiceUnavailable("cannot connect to neo4j")
     graph = GraphConnector.get()
-    with pytest.raises(MExError, match="Database is offline"):
+    with pytest.raises(ServiceUnavailable, match="cannot connect to neo4j"):
         graph._check_connectivity_and_authentication()
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_seed_constraints(mocked_graph: MockedGraph) -> None:
     graph = GraphConnector.get()
     graph._seed_constraints()
@@ -97,7 +103,7 @@ def test_mocked_graph_seed_constraints(mocked_graph: MockedGraph) -> None:
     )
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_seed_indices(
     mocked_graph: MockedGraph, monkeypatch: MonkeyPatch
 ) -> None:
@@ -161,7 +167,7 @@ def test_mocked_graph_seed_indices(
     )
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_seed_indices_excludes_preview_models(
     mocked_graph: MockedGraph,
     monkeypatch: MonkeyPatch,
@@ -200,7 +206,7 @@ def test_seed_indices_excludes_preview_models(
     )
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
     mocked_graph.side_effect = [
         [
@@ -299,7 +305,6 @@ def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
     )
 
 
-@pytest.mark.usefixtures("mocked_valkey")
 def test_mocked_graph_commit_raises_error(mocked_graph: MockedGraph) -> None:
     mocked_graph.run.side_effect = Exception("query failed")
     graph = GraphConnector.get()
@@ -307,7 +312,52 @@ def test_mocked_graph_commit_raises_error(mocked_graph: MockedGraph) -> None:
         graph._check_connectivity_and_authentication()
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.parametrize(
+    ("raw_reference_filters", "expected"),
+    [
+        pytest.param([], None, id="no-filters"),
+        pytest.param(
+            [{"field": "contact", "identifiers": ["bFQoRhcVH5DHUB"]}],
+            {"field": "contact", "identifiers": ["bFQoRhcVH5DHUB"]},
+            id="single-usable-filter",
+        ),
+        pytest.param(
+            [
+                {"field": "contact", "identifiers": ["bFQoRhcVH5DHUB"]},
+                {"field": "unitInCharge", "identifiers": ["bFQoRhcVH5DHUC"]},
+            ],
+            {"field": "contact", "identifiers": ["bFQoRhcVH5DHUB"]},
+            id="first-usable-filter-wins",
+        ),
+        pytest.param(
+            [{"field": "hadPrimarySource", "identifiers": ["bFQoRhcVH5DHUB"]}],
+            None,
+            id="lone-had-primary-source-filter",
+        ),
+        pytest.param(
+            [{"field": "contact", "identifiers": [NO_REFERENCE_SENTINEL]}],
+            None,
+            id="lone-sentinel-filter",
+        ),
+        pytest.param(
+            [
+                {"field": "hadPrimarySource", "identifiers": ["bFQoRhcVH5DHUB"]},
+                {"field": "contact", "identifiers": [NO_REFERENCE_SENTINEL]},
+                {"field": "unitInCharge", "identifiers": ["bFQoRhcVH5DHUC"]},
+            ],
+            {"field": "unitInCharge", "identifiers": ["bFQoRhcVH5DHUC"]},
+            id="skips-unusable-filters",
+        ),
+    ],
+)
+def test_pick_anchor_filter(
+    raw_reference_filters: list[RawReferenceFilter],
+    expected: RawReferenceFilter | None,
+) -> None:
+    assert GraphConnector.pick_anchor_filter(raw_reference_filters) == expected
+
+
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
     mocked_graph.return_value = [
         {
@@ -346,6 +396,8 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
             filter_by_identifier=False,
             filter_by_references=True,
             reference_fields=["stableTargetId"],
+            anchor_field="stableTargetId",
+            merged_labels=None,
         ),
         {
             "labels": [
@@ -362,6 +414,7 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
                 }
             ],
             "reference_fields": ["stableTargetId"],
+            "anchor_identifiers": [str(Identifier.generate(99))],
             "skip": 10,
             "identifier": None,
         },
@@ -379,7 +432,7 @@ def test_mocked_graph_fetch_extracted_items(mocked_graph: MockedGraph) -> None:
     }
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
     mocked_graph: MockedGraph,
 ) -> None:
@@ -406,6 +459,8 @@ def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
             filter_by_identifier=False,
             filter_by_references=True,
             reference_fields=["hadPrimarySource"],
+            anchor_field=None,
+            merged_labels=None,
         ),
         {
             "query_string": None,
@@ -419,6 +474,7 @@ def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
                 }
             ],
             "reference_fields": ["hadPrimarySource"],
+            "anchor_identifiers": [],
             "skip": 0,
         },
     )
@@ -733,7 +789,7 @@ def test_fetch_extracted_items(
     assert result.one() == expected
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
     mocked_graph.return_value = [
         {
@@ -772,6 +828,8 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
             filter_by_identifier=False,
             filter_by_references=True,
             reference_fields=["stableTargetId"],
+            anchor_field="stableTargetId",
+            merged_labels=None,
         ),
         {
             "labels": [
@@ -788,6 +846,7 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
                 }
             ],
             "reference_fields": ["stableTargetId"],
+            "anchor_identifiers": [str(Identifier.generate(99))],
             "skip": 10,
             "identifier": None,
         },
@@ -805,7 +864,7 @@ def test_mocked_graph_fetch_rule_items(mocked_graph: MockedGraph) -> None:
     }
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_fetch_rule_set_response(mocked_graph: MockedGraph) -> None:
     mocked_graph.return_value = [
         {
@@ -845,7 +904,7 @@ def test_mocked_graph_fetch_rule_set_response(mocked_graph: MockedGraph) -> None
     }
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_fetch_rule_set_response_not_found(
     mocked_graph: MockedGraph,
 ) -> None:
@@ -853,6 +912,23 @@ def test_mocked_graph_fetch_rule_set_response_not_found(
     graph = GraphConnector.get()
     result = graph.fetch_rule_set_response("thisIdDoesNotExist")
 
+    assert result.one_or_none() is None
+
+
+@pytest.mark.usefixtures("mocked_query_class")
+def test_mocked_graph_run_in_transaction(mocked_graph: MockedGraph) -> None:
+    mocked_graph.return_value = []
+    graph = GraphConnector.get()
+    tx = Mock(run=mocked_graph.run)
+
+    result = graph.fetch_rule_set_response("thisIsAStableTargetId", tx=tx)
+
+    # the query joined the given transaction instead of opening a session of its own
+    assert tx.run.call_args_list[-1] == call(
+        call("get_rule_set_response"),
+        {"identifier": "thisIsAStableTargetId"},
+    )
+    cast("MagicMock", graph.driver.session).assert_not_called()
     assert result.one_or_none() is None
 
 
@@ -883,6 +959,40 @@ def test_fetch_rule_set_response() -> None:
     }
 
     assert graph.fetch_rule_set_response("thisIdDoesNotExist").one_or_none() is None
+
+
+@pytest.mark.usefixtures("loaded_dummy_data")
+@pytest.mark.integration
+def test_fetch_rule_set_response_in_transaction_sees_uncommitted_write() -> None:
+    graph = GraphConnector.get()
+
+    with (
+        graph.driver.session(default_access_mode=WRITE_ACCESS) as session,
+        session.begin_transaction() as tx,
+    ):
+        summary = tx.run(
+            "MATCH (rule:AdditiveOrganizationalUnit)"
+            "-[:stableTargetId]->(:MergedOrganizationalUnit {identifier: $identifier}) "
+            "SET rule.email = $email",
+            identifier="StandaloneRule",
+            email=["uncommitted@rki.de"],
+        ).consume()
+        assert summary.counters.properties_set == 1  # the write hit the rule node
+
+        # reading in the transaction sees the write that is not committed yet
+        in_tx = graph.fetch_rule_set_response("StandaloneRule", tx=tx)
+        assert in_tx.one()["additive"]["email"] == ["uncommitted@rki.de"]
+
+        # whereas reading outside of it still sees the committed state
+        assert graph.fetch_rule_set_response("StandaloneRule").one()["additive"][
+            "email"
+        ] == ["1.7@rki.de"]
+
+        tx.rollback()
+
+    assert graph.fetch_rule_set_response("StandaloneRule").one()["additive"][
+        "email"
+    ] == ["1.7@rki.de"]
 
 
 @pytest.mark.parametrize(
@@ -1033,7 +1143,7 @@ def test_fetch_rule_items_empty() -> None:
     assert result.one() == {"items": [], "total": 0}
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
     mocked_graph.return_value = [
         {
@@ -1096,6 +1206,8 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
             filter_by_identifier=True,
             filter_by_references=True,
             reference_fields=["hadPrimarySource"],
+            anchor_field=None,
+            merged_labels=["MergedFoo", "MergedBar", "MergedBatz"],
         ),
         {
             "labels": [
@@ -1112,6 +1224,7 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
                 }
             ],
             "reference_fields": ["hadPrimarySource"],
+            "anchor_identifiers": [],
             "skip": 10,
             "identifier": "bFQoRhcVH5DHV1",
         },
@@ -1697,7 +1810,7 @@ def test_fetch_merged_items_reference_filter_combination_across_components(
     ]
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_fetch_identities(mocked_graph: MockedGraph) -> None:
     graph = GraphConnector.get()
     graph.fetch_identities(stable_target_id=Identifier.generate(99))
@@ -1755,7 +1868,7 @@ def test_mocked_graph_fetch_identities(mocked_graph: MockedGraph) -> None:
     )
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_exists_item(
     mocked_graph: MockedGraph,
     monkeypatch: MonkeyPatch,
@@ -1820,7 +1933,7 @@ def test_graph_exists_item(
     assert graph.exists_item(stable_target_id, entity_types) == exists
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_run_ingest_in_transaction_rule_set(
     mocked_graph: MockedGraph,
     dummy_data: DummyData,
@@ -1873,7 +1986,7 @@ def test_graph_merge_rule_edges_fails_inconsistent(
         deque(graph.ingest_items([consistent_org, inconsistent_unit]))
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_ingests_rule_set(
     mocked_graph: MockedGraph,
     dummy_data: DummyData,
@@ -1891,7 +2004,6 @@ def test_mocked_graph_ingests_rule_set(
     )
 
 
-@pytest.mark.usefixtures("mocked_valkey")
 def test_mocked_graph_ingests_extracted_models(
     mocked_graph: MockedGraph,
     dummy_data: DummyData,
@@ -2281,7 +2393,7 @@ def test_graph_merge_items_resets_identity_cache(
     loaded_dummy_data: DummyData,
 ) -> None:
     graph = GraphConnector.get()
-    cache = CacheConnector.get()
+    cache = get_cache_connector()
     provider = GraphIdentityProvider.get()
 
     goner_extracted = loaded_dummy_data["organization_1"]
@@ -2463,7 +2575,112 @@ def test_graph_merge_items_keeper_already_superseded(
         graph.merge_items(goner, keeper)
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+def _write_tombstone(tx: Transaction, goner: Identifier, keeper: Identifier) -> None:
+    """Stand in for the tombstone write of the merge."""
+    tx.run(
+        "MATCH (goner:MergedOrganizationalUnit {identifier: $goner})"
+        "<-[:stableTargetId]-(rule:AdditiveOrganizationalUnit) "
+        "MATCH (keeper:MergedOrganizationalUnit {identifier: $keeper}) "
+        "CREATE (rule)-[:supersededBy {position: 0}]->(keeper)",
+        goner=str(goner),
+        keeper=str(keeper),
+    ).consume()
+
+
+@pytest.mark.integration
+def test_graph_merge_items_locks_out_concurrent_merge_of_same_goner(
+    loaded_dummy_data: DummyData,
+) -> None:
+    """A merge must not pass its checks on state a competing merge has moved on from.
+
+    Neo4j reads take no locks under read-committed isolation, so without the lock
+    acquired by `_lock_merge_participants_tx` both merges would read an un-superseded
+    goner and both would commit a tombstone for it.
+    """
+    graph = GraphConnector.get()
+    goner_id = loaded_dummy_data["unit_1"].stableTargetId
+    keeper_id = loaded_dummy_data["unit_2"].stableTargetId
+    # the goner needs a rule node, that the tombstone can be attached to
+    deque(
+        graph.ingest_items(
+            [
+                OrganizationalUnitRuleSetResponse(
+                    stableTargetId=MergedOrganizationalUnitIdentifier(goner_id)
+                )
+            ]
+        )
+    )
+
+    goner = Mock(identifier=goner_id)
+    keeper = Mock(identifier=keeper_id)
+    hold_seconds = 1.0
+    first_is_holding = threading.Event()
+    blocked_for: list[float] = []
+    errors: dict[str, BaseException] = {}
+
+    def merge_and_hold() -> None:
+        """Pass the checks, then keep the transaction open before committing."""
+        try:
+            with (
+                graph.driver.session(default_access_mode=WRITE_ACCESS) as session,
+                session.begin_transaction() as tx,
+            ):
+                graph._lock_merge_participants_tx(tx, goner, keeper)
+                graph._check_merge_preconditions_tx(tx, goner, keeper)
+                _write_tombstone(tx, goner_id, keeper_id)
+                first_is_holding.set()
+                time.sleep(hold_seconds)
+                tx.commit()
+        except BaseException as error:  # noqa: BLE001
+            first_is_holding.set()
+            errors["holder"] = error
+
+    def merge_concurrently() -> None:
+        """Run into the lock held by the other merge and re-read once it is free."""
+        first_is_holding.wait(timeout=10)
+        try:
+            with (
+                graph.driver.session(default_access_mode=WRITE_ACCESS) as session,
+                session.begin_transaction() as tx,
+            ):
+                start = time.monotonic()
+                graph._lock_merge_participants_tx(tx, goner, keeper)
+                blocked_for.append(time.monotonic() - start)
+                graph._check_merge_preconditions_tx(tx, goner, keeper)
+                tx.rollback()
+        except BaseException as error:  # noqa: BLE001
+            errors["contender"] = error
+
+    holder = threading.Thread(target=merge_and_hold)
+    contender = threading.Thread(target=merge_concurrently)
+    holder.start()
+    contender.start()
+    holder.join(timeout=30)
+    contender.join(timeout=30)
+
+    assert "holder" not in errors, errors.get("holder")
+    # the second merge waited for the lock instead of reading straight away
+    assert blocked_for
+    assert blocked_for[0] > hold_seconds / 2
+    # and then saw the committed tombstone of the first merge
+    assert isinstance(errors.get("contender"), MergingError)
+    assert "Merging precondition check failed. Violated: goner_not_superseded" in str(
+        errors["contender"]
+    )
+    # so the goner is superseded exactly once
+    with graph.driver.session() as session:
+        record = session.run(
+            "MATCH (:MergedOrganizationalUnit {identifier: $goner})"
+            "<-[:stableTargetId]-(:AdditiveOrganizationalUnit)"
+            "-[:supersededBy]->(keeper) "
+            "RETURN collect(keeper.identifier) AS keepers",
+            goner=str(goner_id),
+        ).single()
+    assert record is not None
+    assert record["keepers"] == [str(keeper_id)]
+
+
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_delete_item(mocked_graph: MockedGraph) -> None:
     deletion_summary = {
         "deleted_merged_count": 1,
@@ -2483,7 +2700,7 @@ def test_mocked_graph_delete_item(mocked_graph: MockedGraph) -> None:
     assert result.one() == deletion_summary
 
 
-@pytest.mark.usefixtures("mocked_query_class", "mocked_valkey")
+@pytest.mark.usefixtures("mocked_query_class")
 def test_mocked_graph_delete_rule_set(mocked_graph: MockedGraph) -> None:
     deletion_summary = {
         "deleted_merged_count": 0,
@@ -2526,3 +2743,29 @@ def test_connector_flush_fails(
         MExError, match="database flush was attempted outside of debug mode"
     ):
         graph.flush()
+
+
+def test_get_graph_status(mocked_graph: MockedGraph) -> None:
+    mocked_graph.return_value = [{"version": "2026.07.1"}]
+
+    assert get_graph_status() == VersionStatus(status="ok", version="2026.07.1")
+
+
+def test_get_graph_status_unreachable(mocked_graph: MockedGraph) -> None:
+    mocked_graph.run.side_effect = ServiceUnavailable("cannot connect to neo4j")
+
+    assert get_graph_status() == VersionStatus(status="offline", version="unknown")
+
+
+def test_get_graph_status_misconfigured(mocked_graph: MockedGraph) -> None:
+    mocked_graph.run.side_effect = AuthError("invalid credentials")
+
+    assert get_graph_status() == VersionStatus(status="error", version="unknown")
+
+
+@pytest.mark.integration
+def test_get_graph_status_integration() -> None:
+    status = get_graph_status()
+
+    assert status.status == "ok"
+    assert status.version

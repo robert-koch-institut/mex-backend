@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from mex.backend.cache.connector import CacheConnector
+from mex.backend.cache import get_cache_connector
 
 if TYPE_CHECKING:  # pragma: no cover
     from mex.common.identity import Identity
@@ -37,7 +37,7 @@ def reset_identity_cache(moved_identities: list[Identity]) -> None:
     Args:
         moved_identities: Identities of the extracted items that were moved
     """
-    cache = CacheConnector.get()
+    cache = get_cache_connector()
     for identity in moved_identities:
         cache.delete_value(
             get_identity_cache_key(

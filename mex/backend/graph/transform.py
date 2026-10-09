@@ -26,7 +26,7 @@ from mex.common.transform import clean_dict, to_key_and_values
 from mex.common.types import AnyPrimitiveType, Link, Text
 from mex.common.utils import ensure_list
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from neo4j.exceptions import Neo4jError

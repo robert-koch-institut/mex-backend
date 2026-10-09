@@ -6,7 +6,7 @@ from starlette import status
 from mex.backend.auxiliary.constants import RKI_WIKIDATA_ID
 from mex.backend.auxiliary.helpers import cached_organization
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from fastapi.testclient import TestClient
 
 

@@ -101,8 +101,10 @@ def test_get_database_status(query_builder: QueryBuilder) -> None:
     assert (
         query.render()
         == """\
-SHOW DEFAULT DATABASE
-YIELD currentStatus;"""
+CALL dbms.components()
+YIELD name, versions
+WHERE name = "Neo4j Kernel"
+RETURN versions[0] AS version;"""
     )
 
 
@@ -262,6 +264,8 @@ def test_fetch_extracted_or_rule_items(
         filter_by_identifier=enable_filters,
         filter_by_references=enable_filters,
         reference_fields=["hadPrimarySource"],
+        anchor_field=None,
+        merged_labels=None,
     )
     assert query.render() == expected
 
@@ -448,8 +452,63 @@ def test_fetch_merged_items(
         filter_by_identifier=filter_by_identifier,
         filter_by_references=filter_by_references,
         reference_fields=["hadPrimarySource"],
+        anchor_field=None,
+        merged_labels=None,
     )
     assert query.render() == expected
+
+
+def test_fetch_merged_items_anchored(query_builder: QueryBuilder) -> None:
+    query = query_builder.fetch_merged_items(
+        filter_by_query_string=False,
+        filter_by_identifier=False,
+        filter_by_references=True,
+        reference_fields=["contact"],
+        anchor_field="contact",
+        merged_labels=["MergedVariable"],
+    )
+    rendered = query.render()
+
+    assert "OPTIONAL MATCH (extracted_or_rule_node:" not in rendered
+    assert (
+        rendered.count(
+            """\
+    MATCH (anchor_node:MergedPerson|MergedVariable|MergedDistribution)
+    WHERE anchor_node.identifier IN $anchor_identifiers
+    MATCH (anchor_node)<-[:contact]-\
+(anchor_component:ExtractedPerson|ExtractedVariable|ExtractedDistribution\
+|AdditivePerson|AdditiveVariable|AdditiveDistribution)
+    MATCH (anchor_component)-[:stableTargetId]->(merged_node:MergedVariable)
+    WITH DISTINCT merged_node
+    WHERE"""
+        )
+        == 2
+    )
+
+
+def test_fetch_extracted_or_rule_items_anchored(query_builder: QueryBuilder) -> None:
+    query = query_builder.fetch_extracted_or_rule_items(
+        filter_by_query_string=False,
+        filter_by_identifier=False,
+        filter_by_references=True,
+        reference_fields=["contact"],
+        anchor_field="contact",
+        merged_labels=None,
+    )
+    rendered = query.render()
+
+    assert "OPTIONAL MATCH (extracted_or_rule_node:" not in rendered
+    # all components must be bound, not just the one carrying the anchoring reference
+    assert (
+        rendered.count(
+            """\
+    WITH DISTINCT merged_node
+    MATCH (extracted_or_rule_node:ExtractedPerson|ExtractedVariable\
+|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)\
+-[:stableTargetId]->(merged_node)"""
+        )
+        == 2
+    )
 
 
 @pytest.mark.parametrize(
@@ -580,6 +639,21 @@ RETURN
     0 as deleted_extracted_count,
     count(DISTINCT rule) AS deleted_rule_count,
     count(DISTINCT nested) AS deleted_nested_count;"""
+    )
+
+
+def test_lock_merge_participants(query_builder: QueryBuilder) -> None:
+    query = query_builder.lock_merge_participants()
+    assert (
+        query.render()
+        == """\
+UNWIND [$goner_identifier, $keeper_identifier] AS lock_identifier
+WITH DISTINCT lock_identifier ORDER BY lock_identifier
+OPTIONAL MATCH (lock_node:MergedPerson|MergedVariable|MergedDistribution {identifier: lock_identifier})
+FOREACH (_ IN CASE WHEN lock_node IS NULL THEN [] ELSE [1] END |
+   SET lock_node._lock = true
+   REMOVE lock_node._lock
+);"""
     )
 
 

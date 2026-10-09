@@ -12,13 +12,12 @@ from mex.common.models import (
     WorkflowOrganizationalUnit,
 )
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from fastapi.testclient import TestClient
 
     from tests.conftest import DummyData, MockedGraph
 
 
-@pytest.mark.usefixtures("mocked_valkey")
 def test_search_publishable_merged_items_mocked(
     client_with_api_key_read_permission: TestClient,
     mocked_graph: MockedGraph,
