@@ -9,6 +9,20 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+### Changes
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [4.6.2] - 2026-10-12
+
+### Added
+
 - added `goner_not_superseded` and `keeper_not_superseded` merging preconditions
 - added `lock_merge_participants` query that write-locks both merged items before the
   merging preconditions are checked, so that concurrent merges cannot both pass them
@@ -20,17 +34,11 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - update dependency to mex-common 3.4.2 and update other dependencies
 - graph reads can now join an open write transaction via the new `GraphConnector._run`
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 
 - flaky valkey cache test asserting a hardcoded URL instead of the configured setting
 - flaky artificial-data ingest test snapshotting one item at a fixed pagination offset
 - raise required test coverage from 95% to 98%
-
-### Security
 
 ## [4.6.1] - 2026-09-28
 
