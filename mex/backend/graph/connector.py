@@ -16,11 +16,13 @@ from neo4j.exceptions import (
     ServiceUnavailable,
     SessionExpired,
 )
+from packaging.version import Version
 
 from mex.backend.exceptions import BackendError
 from mex.backend.graph.constants import NO_REFERENCE_SENTINEL
 from mex.backend.graph.exceptions import (
     DeletionFailedError,
+    IncompatibleVersionError,
     IngestionError,
     MergingError,
 )
@@ -70,6 +72,13 @@ if TYPE_CHECKING:
     from mex.common.types import Identifier
 
 
+# `merge_item.cql` uses the Cypher 25 conditional subquery syntax
+# (`CALL (...) { WHEN ... THEN ... }`), which Neo4j only introduced in 2025.6.0 as
+# part of Cypher 25's initial release. See the Cypher Manual's conditional-queries
+# page and Neo4j's developer blog on Cypher conditional queries.
+MIN_NEO4J_VERSION = Version("2025.6.0")
+
+
 class GraphConnector(BaseConnector):
     """Connector to handle authentication and transactions with the graph database."""
 
@@ -109,9 +118,21 @@ class GraphConnector(BaseConnector):
         )
 
     def _check_connectivity_and_authentication(self) -> Result:
-        """Check the connectivity and authentication to the graph."""
+        """Check the connectivity and authentication to the graph.
+
+        Raises:
+            IncompatibleVersionError: If the connected neo4j is older than
+                `MIN_NEO4J_VERSION`.
+        """
         query_builder = QueryBuilder.get()
         result = self.commit(query_builder.get_database_status())
+        version = Version(result["version"])
+        if version < MIN_NEO4J_VERSION:
+            msg = (
+                f"Incompatible neo4j version: requires {MIN_NEO4J_VERSION} or newer, "
+                f"but connected to {version}."
+            )
+            raise IncompatibleVersionError(msg)
         logger.info("connected to neo4j %s", result["version"])
         return result
 

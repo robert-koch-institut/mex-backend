@@ -13,7 +13,11 @@ from pytest import FixtureRequest, MonkeyPatch
 from mex.backend.graph import connector as connector_module
 from mex.backend.graph.connector import GraphConnector, get_graph_status
 from mex.backend.graph.constants import NO_REFERENCE_SENTINEL
-from mex.backend.graph.exceptions import IngestionError, MergingError
+from mex.backend.graph.exceptions import (
+    IncompatibleVersionError,
+    IngestionError,
+    MergingError,
+)
 from mex.backend.graph.models import IngestParams, RawReferenceFilter
 from mex.backend.graph.query import Query
 from mex.backend.models import ReferenceFilter
@@ -65,6 +69,18 @@ def test_check_connectivity_and_authentication_error(mocked_graph: MockedGraph) 
     mocked_graph.run.side_effect = ServiceUnavailable("cannot connect to neo4j")
     graph = GraphConnector.get()
     with pytest.raises(ServiceUnavailable, match="cannot connect to neo4j"):
+        graph._check_connectivity_and_authentication()
+
+
+def test_check_connectivity_and_authentication_incompatible_version(
+    mocked_graph: MockedGraph,
+) -> None:
+    mocked_graph.return_value = [{"version": "2025.5.0"}]
+    graph = GraphConnector.get()
+    with pytest.raises(
+        IncompatibleVersionError,
+        match=re.escape("requires 2025.6.0 or newer, but connected to 2025.5.0"),
+    ):
         graph._check_connectivity_and_authentication()
 
 
