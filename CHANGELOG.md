@@ -17,6 +17,9 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 
+- wrong environment for mex-backend in compose
+- healthcheck for mex-backend in compose
+
 ### Security
 
 ## [4.6.2] - 2026-10-12
