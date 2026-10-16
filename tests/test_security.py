@@ -1,10 +1,10 @@
 from typing import Annotated
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
+import ldap
 import pytest
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.security import HTTPBasicCredentials
-from ldap3.core.exceptions import LDAPBindError
 from starlette.testclient import TestClient
 
 from mex.backend.security import (
@@ -110,9 +110,8 @@ def test_is_ldap_authenticated_success() -> None:
         mock_settings.return_value.ldap_url.get_secret_value.return_value = (
             "ldaps://ldap.example.com:636"
         )
-        with patch("mex.backend.security.Connection") as mock_connection:
-            mocked_connection = mock_connection.return_value.__enter__.return_value
-            mocked_connection.server.check_availability.return_value = True
+        with patch("mex.backend.security.ldap.initialize") as mock_initialize:
+            mock_initialize.return_value = MagicMock()
             assert ldap_credentials.username == is_ldap_authenticated(
                 credentials=ldap_credentials
             )
@@ -127,9 +126,12 @@ def test_is_ldap_authenticated_bind_error() -> None:
         mock_settings.return_value.ldap_url.get_secret_value.return_value = (
             "ldaps://ldap.example.com:636"
         )
-        with patch(
-            "mex.backend.security.Connection", side_effect=LDAPBindError("fail")
-        ):
+        with patch("mex.backend.security.ldap.initialize") as mock_initialize:
+            mock_connection = MagicMock()
+            mock_connection.simple_bind_s.side_effect = ldap.INVALID_CREDENTIALS(
+                "fail"
+            )
+            mock_initialize.return_value = mock_connection
             with pytest.raises(HTTPException) as error:
                 is_ldap_authenticated(credentials=user_wrong_pw)
             assert error.value.status_code == 401
@@ -141,9 +143,12 @@ def test_is_ldap_authenticated_server_not_available() -> None:
         mock_settings.return_value.ldap_url.get_secret_value.return_value = (
             "ldaps://ldap.example.com:636"
         )
-        with patch("mex.backend.security.Connection") as mock_connection:
-            mocked_connection = mock_connection.return_value.__enter__.return_value
-            mocked_connection.server.check_availability.return_value = False
+        with patch("mex.backend.security.ldap.initialize") as mock_initialize:
+            mock_connection = MagicMock()
+            mock_connection.simple_bind_s.side_effect = ldap.SERVER_DOWN(
+                "server down"
+            )
+            mock_initialize.return_value = mock_connection
             with pytest.raises(HTTPException) as error:
                 is_ldap_authenticated(credentials=ldap_credentials)
             assert error.value.status_code == 503

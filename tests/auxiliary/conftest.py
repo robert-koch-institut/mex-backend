@@ -1,6 +1,5 @@
 import json
 import os
-import ssl
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import MagicMock, Mock
@@ -11,7 +10,6 @@ if TYPE_CHECKING:
 
 import pytest
 import requests
-from ldap3 import Tls
 from pytest import MonkeyPatch
 from requests import Response
 
@@ -20,6 +18,7 @@ from mex.common.ldap.models import LDAPActor, LDAPFunctionalAccount, LDAPPerson
 from mex.common.models import PaginatedItemsContainer
 from mex.common.orcid.connector import OrcidConnector
 from mex.common.orcid.models import OrcidRecord, OrcidSearchResponse
+from mex.common.settings import BaseSettings
 from mex.common.transform import MExEncoder, normalize
 from mex.common.wikidata.connector import WikidataAPIConnector
 
@@ -152,15 +151,9 @@ def mocked_ldap(request: pytest.FixtureRequest, monkeypatch: MonkeyPatch) -> Non
         if "MEX_LDAP_SEARCH_BASE" not in os.environ:
             pytest.skip("LDAP mock server not configured")
         else:
-            # TODO(ND): Make this configurable in mex-common
-
-            original_init = Tls.__init__
-
-            def _tls_init_no_verify(self: Tls, *args: Any, **kwargs: Any) -> None:  # noqa: ANN401
-                kwargs["validate"] = ssl.CERT_NONE
-                original_init(self, *args, **kwargs)
-
-            monkeypatch.setattr(Tls, "__init__", _tls_init_no_verify)
+            # the mock server uses a self-signed certificate, so disable TLS
+            # verification to allow connecting to it during testing
+            monkeypatch.setattr(BaseSettings.get(), "verify_session", False)
 
 
 @pytest.fixture

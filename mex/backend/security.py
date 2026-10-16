@@ -1,11 +1,9 @@
 from typing import Annotated, Final
 from urllib.parse import urlsplit
 
+import ldap
 from fastapi import Depends, HTTPException
 from fastapi.security import APIKeyHeader, HTTPBasic, HTTPBasicCredentials
-from ldap3 import AUTO_BIND_NO_TLS, Connection, Server
-from ldap3.core.exceptions import LDAPBindError
-from ldap3.utils.dn import escape_rdn
 from starlette import status
 
 from mex.backend.settings import BackendSettings
@@ -66,30 +64,26 @@ def is_ldap_authenticated(
     settings = BackendSettings.get()
     url = urlsplit(settings.ldap_url.get_secret_value())
     host = str(url.hostname)
-    port = int(url.port) if url.port else None
-    server = Server(host, port, use_ssl=True)
-    username = escape_rdn(credentials.username.split("@")[0])
+    port = int(url.port) if url.port else 636
+    username = ldap.dn.escape_dn_chars(credentials.username.split("@")[0])
+    connection = ldap.initialize(f"ldaps://{host}:{port}")
     try:
-        with Connection(
-            server,
-            user=f"{username}@rki.local",
-            password=credentials.password,
-            auto_bind=AUTO_BIND_NO_TLS,
-            read_only=True,
-        ) as connection:
-            availability = connection.server.check_availability()
-            if availability is True:
-                return credentials.username
-            logger.error(f"LDAP server not available: {availability}")
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="LDAP server not available.",
-                headers=({"WWW-Authenticate": "Basic"}),
-            )
-    except LDAPBindError as e:
+        connection.simple_bind_s(f"{username}@rki.local", credentials.password)
+    except ldap.INVALID_CREDENTIALS as e:
         logger.error(f"LDAP bind error: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="LDAP bind failed.",
             headers=({"WWW-Authenticate": "Basic"}),
         ) from e
+    except ldap.LDAPError as e:
+        logger.error(f"LDAP server not available: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="LDAP server not available.",
+            headers=({"WWW-Authenticate": "Basic"}),
+        ) from e
+    else:
+        return credentials.username
+    finally:
+        connection.unbind_s()
