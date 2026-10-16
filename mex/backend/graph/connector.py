@@ -9,10 +9,20 @@ from neo4j import (
     NotificationDisabledClassification,
     Transaction,
 )
-from neo4j.exceptions import ConstraintError, Neo4jError
+from neo4j.exceptions import (
+    ConstraintError,
+    DriverError,
+    Neo4jError,
+    ServiceUnavailable,
+    SessionExpired,
+)
+from packaging.version import Version
 
+from mex.backend.exceptions import BackendError
+from mex.backend.graph.constants import NO_REFERENCE_SENTINEL
 from mex.backend.graph.exceptions import (
     DeletionFailedError,
+    IncompatibleVersionError,
     IngestionError,
     MergingError,
 )
@@ -52,13 +62,22 @@ from mex.common.models import (
     AnyMergedModel,
     AnyRuleModel,
     AnyRuleSetResponse,
+    VersionStatus,
 )
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable, Sequence
 
+    from mex.backend.graph.models import RawReferenceFilter
     from mex.backend.models import ReferenceFilter
     from mex.common.types import Identifier
+
+
+# `merge_item.cql` uses the Cypher 25 conditional subquery syntax
+# (`CALL (...) { WHEN ... THEN ... }`), which Neo4j only introduced in 2025.6.0 as
+# part of Cypher 25's initial release. See the Cypher Manual's conditional-queries
+# page and Neo4j's developer blog on Cypher conditional queries.
+MIN_NEO4J_VERSION = Version("2025.6.0")
 
 
 class GraphConnector(BaseConnector):
@@ -100,12 +119,22 @@ class GraphConnector(BaseConnector):
         )
 
     def _check_connectivity_and_authentication(self) -> Result:
-        """Check the connectivity and authentication to the graph."""
+        """Check the connectivity and authentication to the graph.
+
+        Raises:
+            IncompatibleVersionError: If the connected neo4j is older than
+                `MIN_NEO4J_VERSION`.
+        """
         query_builder = QueryBuilder.get()
         result = self.commit(query_builder.get_database_status())
-        if (status := result["currentStatus"]) != "online":
-            msg = f"Database is {status}."
-            raise MExError(msg) from None
+        version = Version(result["version"])
+        if version < MIN_NEO4J_VERSION:
+            msg = (
+                f"Incompatible neo4j version: requires {MIN_NEO4J_VERSION} or newer, "
+                f"but connected to {version}."
+            )
+            raise IncompatibleVersionError(msg)
+        logger.info("connected to neo4j %s", result["version"])
         return result
 
     def _seed_constraints(self) -> None:
@@ -194,6 +223,60 @@ class GraphConnector(BaseConnector):
         with self.driver.session(default_access_mode=access_mode) as session:
             return Result(session.run(query.render(), parameters, timeout=timeout))
 
+    def _run(
+        self,
+        query: Query,
+        /,
+        tx: Transaction | None = None,
+        access_mode: str = READ_ACCESS,
+        **parameters: Any,  # noqa: ANN401
+    ) -> Result:
+        """Run a query in the given transaction, or in a fresh session when none given.
+
+        Reads that are part of a bigger write operation need to see that operation's
+        uncommitted state, so they have to run in its transaction instead of opening
+        a session of their own.
+
+        Args:
+            query: Query instance to render and run
+            tx: Optional open transaction to run the query in
+            access_mode: Access mode to use when no transaction is given
+            parameters: Keyword parameters for the query
+
+        Returns:
+            Graph result instance
+        """
+        if tx is None:
+            return self.commit(query, access_mode=access_mode, **parameters)
+        return Result(tx.run(query.render(), parameters))
+
+    @staticmethod
+    def pick_anchor_filter(
+        raw_reference_filters: list[RawReferenceFilter],
+    ) -> RawReferenceFilter | None:
+        """Pick the reference filter that can drive the match from an index seek.
+
+        Matching every extracted and rule node and then checking each one's references
+        is O(graph). Starting from one referenced merged item instead is an index seek
+        plus two expands, and any one of the ANDed filters will do, because an item that
+        satisfies all of them satisfies this one too. A filter looking for the absence
+        of a reference has nothing to seek, so it cannot serve as the anchor.
+
+        Args:
+            raw_reference_filters: The reference filters the query was asked for
+
+        Returns:
+            The filter to anchor on, or None to fall back to scanning
+        """
+        for reference_filter in raw_reference_filters:
+            # TODO(ND): remove this crutch as soon as we add hadPrimarySource to rules.
+            if reference_filter["field"] == "hadPrimarySource":
+                continue
+            if NO_REFERENCE_SENTINEL in reference_filter["identifiers"]:
+                continue
+            return reference_filter
+        return None
+
     def _fetch_extracted_or_rule_items(  # noqa: PLR0913, PLR0917
         self,
         query_string: str | None,
@@ -222,12 +305,16 @@ class GraphConnector(BaseConnector):
         raw_reference_fields = transform_reference_filters_to_raw_fields(
             reference_filters
         )
+        anchor_filter = self.pick_anchor_filter(raw_reference_filters)
         query_builder = QueryBuilder.get()
         query = query_builder.fetch_extracted_or_rule_items(
             filter_by_query_string=bool(query_string),
             filter_by_identifier=bool(identifier),
             filter_by_references=bool(raw_reference_filters),
             reference_fields=raw_reference_fields,
+            anchor_field=anchor_filter["field"] if anchor_filter else None,
+            # `entity_type` constrains the extracted or rule nodes, not the merged ones
+            merged_labels=None,
         )
         result = self.commit(
             query,
@@ -236,6 +323,7 @@ class GraphConnector(BaseConnector):
             labels=entity_type,
             reference_filters=raw_reference_filters,
             reference_fields=raw_reference_fields,
+            anchor_identifiers=anchor_filter["identifiers"] if anchor_filter else [],
             skip=skip,
             limit=limit,
         )
@@ -306,11 +394,16 @@ class GraphConnector(BaseConnector):
             limit=limit,
         )
 
-    def fetch_rule_set_response(self, stable_target_id: str) -> Result:
+    def fetch_rule_set_response(
+        self,
+        stable_target_id: str,
+        tx: Transaction | None = None,
+    ) -> Result:
         """Query the graph for the rule set belonging to one merged item.
 
         Args:
             stable_target_id: Identifier of the merged item whose rule set to fetch
+            tx: Optional open transaction to run the query in
 
         Returns:
             Graph result instance with a single rule-set-response shaped record
@@ -319,7 +412,7 @@ class GraphConnector(BaseConnector):
         """
         query_builder = QueryBuilder.get()
         query = query_builder.get_rule_set_response()
-        result = self.commit(query, identifier=stable_target_id)
+        result = self._run(query, tx=tx, identifier=stable_target_id)
         if record := result.one_or_none():
             for field in RULE_MODEL_CLASSES_BY_TYPE_BY_NAME:
                 if (component := record.get(field)) is not None:
@@ -340,6 +433,7 @@ class GraphConnector(BaseConnector):
         reference_filters: Sequence[ReferenceFilter] | None,
         skip: int,
         limit: int,
+        tx: Transaction | None = None,
     ) -> Result:
         """Query the graph for merged items.
 
@@ -350,6 +444,7 @@ class GraphConnector(BaseConnector):
             reference_filters: Optional reference field filters
             skip: How many items to skip for pagination
             limit: How many items to return at most
+            tx: Optional open transaction to run the query in
 
         Returns:
             Graph result instance
@@ -360,28 +455,34 @@ class GraphConnector(BaseConnector):
         raw_reference_fields = transform_reference_filters_to_raw_fields(
             reference_filters
         )
+        anchor_filter = self.pick_anchor_filter(raw_reference_filters)
         query_builder = QueryBuilder.get()
         query = query_builder.fetch_merged_items(
             filter_by_query_string=bool(query_string),
             filter_by_identifier=bool(identifier),
             filter_by_references=bool(raw_reference_filters),
             reference_fields=raw_reference_fields,
+            anchor_field=anchor_filter["field"] if anchor_filter else None,
+            merged_labels=list(entity_type) if entity_type else None,
         )
-        result = self.commit(
+        result = self._run(
             query,
+            tx=tx,
             query_string=query_string,
             identifier=identifier,
             labels=entity_type or list(MERGED_MODEL_CLASSES_BY_NAME),
             reference_filters=raw_reference_filters,
             reference_fields=raw_reference_fields,
+            anchor_identifiers=anchor_filter["identifiers"] if anchor_filter else [],
             skip=skip,
             limit=limit,
         )
         for query_result in result.all():
             for item in query_result["items"]:
                 for component in item["_components"]:
-                    refs = component.pop("_refs")
-                    component.update(expand_references_in_search_result(refs))
+                    component.update(
+                        expand_references_in_search_result(component.pop("_refs"))
+                    )
         return result
 
     def aggregate_vocabulary_values(  # noqa: PLR0913, PLR0917
@@ -619,6 +720,25 @@ class GraphConnector(BaseConnector):
                         tx.commit()
                 yield
 
+    def _lock_merge_participants_tx(
+        self,
+        tx: Transaction,
+        goner: AnyMergedModel,
+        keeper: AnyMergedModel,
+    ) -> None:
+        """Take exclusive write locks on the merged items taking part in a merge.
+
+        Reads in neo4j's read-committed isolation take no locks, so the precondition
+        check has to run behind these locks to not act on a stale result.
+        """
+        query_builder = QueryBuilder.get()
+        lock_merge_participants_query = query_builder.lock_merge_participants()
+        tx.run(
+            lock_merge_participants_query.render(),
+            goner_identifier=str(goner.identifier),
+            keeper_identifier=str(keeper.identifier),
+        ).consume()
+
     def _check_merge_preconditions_tx(
         self,
         tx: Transaction,
@@ -661,6 +781,7 @@ class GraphConnector(BaseConnector):
         keeper: AnyMergedModel,
     ) -> None:
         """Run all required merging steps in a single transaction."""
+        self._lock_merge_participants_tx(tx, goner, keeper)
         self._check_merge_preconditions_tx(tx, goner, keeper)
         raise NotImplementedError
 
@@ -771,3 +892,24 @@ class GraphConnector(BaseConnector):
         else:
             msg = "database flush was attempted outside of debug mode"
             raise MExError(msg)
+
+
+def get_graph_status() -> VersionStatus:
+    """Get the status and version of the graph database.
+
+    Returns:
+        VersionStatus with status "ok" and the neo4j version, status "offline"
+        when the graph cannot be reached, or status "error" when the graph is
+        misconfigured or answers with an error
+    """
+    query_builder = QueryBuilder.get()
+    try:
+        connector = GraphConnector.get()
+        version = connector.commit(query_builder.get_database_status())["version"]
+    except ServiceUnavailable, SessionExpired:
+        logger.exception("graph database is unreachable")
+        return VersionStatus(status="offline", version="unknown")
+    except DriverError, Neo4jError, MExError, BackendError:
+        logger.exception("error checking the graph database status")
+        return VersionStatus(status="error", version="unknown")
+    return VersionStatus(status="ok", version=str(version))

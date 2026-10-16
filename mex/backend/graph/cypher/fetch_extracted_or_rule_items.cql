@@ -10,12 +10,16 @@ Jinja:
     filter_by_identifier: Whether the final query should filter by item identifiers
     filter_by_references: Whether to filter for references to items with specific identifiers
     reference_fields: List of relationship names holding referenced identifiers to use for filtering
+    anchor_field: Reference field to anchor the match on, or None to match directly
+    merged_labels: Labels to narrow merged_node down to, always None here, because
+        the labels this query filters by apply to the extracted or rule nodes
 
 Args:
     query_string: Full text query string
     labels: Labels to filter items by
     identifier: Identifier to filter items by
     reference_filters: List of reference filters
+    anchor_identifiers: Identifiers of the anchoring merged nodes
     skip: Skip these many nodes for pagination
     limit: Limit pagination to this many items
 
@@ -32,7 +36,7 @@ Returns:
 
 CALL () {
     <% block match_clause -%>
-    <<match_or_search_nodes()|indent(4)>>
+    <<match_or_search_nodes(bind_all_components=True)|indent(4)>>
     WHERE
         ANY(label IN labels(extracted_or_rule_node) WHERE label IN $labels)
         <%- if filter_by_identifier %>

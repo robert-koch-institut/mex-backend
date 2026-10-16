@@ -1,4 +1,7 @@
+from importlib.metadata import version
+
 from mex.backend.cache.base import BaseCacheConnector
+from mex.common.models import VersionStatus
 
 
 class MemoryCacheConnector(BaseCacheConnector):
@@ -39,6 +42,16 @@ class MemoryCacheConnector(BaseCacheConnector):
         self._database.clear()
         self._keyspace_hits = 0
         self._keyspace_misses = 0
+
+    def get_status(self) -> VersionStatus:
+        """Get the status and version of the in-memory cache.
+
+        Returns:
+            VersionStatus with status "ok" and the backend version, because the
+            in-memory cache lives in the backend process itself and is therefore
+            always available and versioned along with it
+        """
+        return VersionStatus(status="ok", version=version("mex-backend"))
 
     def close(self) -> None:
         """Trash the in-memory cache."""

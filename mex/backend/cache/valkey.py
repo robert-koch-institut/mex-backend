@@ -1,9 +1,14 @@
 from typing import Final, cast
 
 from valkey import Valkey
+from valkey.exceptions import AuthenticationError, AuthorizationError, ValkeyError
+from valkey.exceptions import ConnectionError as ValkeyConnectionError
+from valkey.exceptions import TimeoutError as ValkeyTimeoutError
 
 from mex.backend.cache.base import BaseCacheConnector
 from mex.backend.settings import BackendSettings
+from mex.common.logging import logger
+from mex.common.models import VersionStatus
 
 DASHBOARD_METRICS: Final[dict[str, str]] = {
     "connected_clients": "connected_clients",  # no suffix means gauge
@@ -50,6 +55,30 @@ class ValkeyCacheConnector(BaseCacheConnector):
     def _flush(self) -> None:
         """Flush all keys from the cache."""
         self._client.flushdb()
+
+    def get_status(self) -> VersionStatus:
+        """Get the status and version of the valkey server.
+
+        Returns:
+            VersionStatus with status "ok" and the valkey server version, status
+            "offline" when the configured valkey server cannot be reached, or status
+            "error" when the cache is misconfigured or answers with an error
+        """
+        try:
+            info = cast("dict[str, int | str]", self._client.info())
+        except AuthenticationError, AuthorizationError:
+            logger.exception("error authenticating with the valkey cache")
+            return VersionStatus(status="error", version="unknown")
+        except ValkeyConnectionError, ValkeyTimeoutError:
+            logger.exception("valkey cache is unreachable")
+            return VersionStatus(status="offline", version="unknown")
+        except ValkeyError:
+            logger.exception("error checking the valkey cache status")
+            return VersionStatus(status="error", version="unknown")
+        version = info.get("valkey_version")
+        return VersionStatus(
+            status="ok", version=str(version) if version else "unknown"
+        )
 
     def close(self) -> None:
         """Close the valkey connection."""

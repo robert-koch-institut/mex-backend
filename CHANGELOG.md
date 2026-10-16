@@ -9,8 +9,6 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
-- new setting `MEX_BACKEND_CACHE_CONNECTOR` to choose between `memory` and `valkey`
-- validator asserting the backend is configured with the graph identity provider
 - new endpoint `POST /v0/rule-item/_suggest` that ranks likely vocabulary values for a
   partially filled draft item, for data entry forms like the editor's fasttrack mode
 - new console script `backend-suggestion-eval` that evaluates those suggestions by
@@ -24,9 +22,6 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changes
 
-- new template https://github.com/robert-koch-institut/mex-template/releases/tag/2.0.1
-- `GraphConnector` now tracks whether constraints/indices have been seeded via a `_schema_seeded` class flag, seeding them only once per process instead of once per connector instance
-- `isolate_graph_database` in `tests/conftest.py` now calls `flush_data()` + re-seeds the two primary source nodes between tests, instead of dropping and recreating the whole schema every time
 - `GraphConnector.commit` accepts an optional `timeout`, so queries served on a request
   path can no longer hold a pooled connection for the whole session timeout
 
@@ -36,9 +31,71 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 
-- integration test run time locally: 352.6s -> 46.1s (~7.6x)
+- wrong environment for mex-backend in compose
+- healthcheck for mex-backend in compose
 
 ### Security
+
+## [4.6.2] - 2026-10-12
+
+### Added
+
+- added `goner_not_superseded` and `keeper_not_superseded` merging preconditions
+- added `lock_merge_participants` query that write-locks both merged items before the
+  merging preconditions are checked, so that concurrent merges cannot both pass them
+- added `get_identity_cache_key` helper to build identity cache keys in one place
+- hard-fail application boot upon incompatible neo4j
+
+### Changes
+
+- update dependency to mex-common 3.4.2 and update other dependencies
+- graph reads can now join an open write transaction via the new `GraphConnector._run`
+
+### Fixed
+
+- flaky valkey cache test asserting a hardcoded URL instead of the configured setting
+- flaky artificial-data ingest test snapshotting one item at a fixed pagination offset
+- raise required test coverage from 95% to 98%
+
+## [4.6.1] - 2026-09-28
+
+### Fixed
+
+- fix migration reset preventive rule by using MergingError fom common, not backend
+
+## [4.6.0] - 2026-09-25
+
+### Added
+
+- migration logic to reset preventive rules for "switched-off" merged items with workflow rule
+
+## [4.5.0] - 2026-09-16
+
+### Added
+
+- new endpoints `_system/neo4j` and `_system/valkey` reporting status and version
+- new setting `MEX_BACKEND_CACHE_CONNECTOR` to choose between `memory` and `valkey`
+- validator asserting the backend is configured with the graph identity provider
+
+### Changes
+
+- `get_database_status` cypher query now returns the neo4j version
+- new template https://github.com/robert-koch-institut/mex-template/releases/tag/2.0.1
+- `GraphConnector` now tracks whether constraints/indices have been seeded via a
+  `_schema_seeded` class flag, seeding them only once per process instead of once per
+  connector instance
+- `isolate_graph_database` in `tests/conftest.py` now calls `flush_data()` + re-seeds
+  the two primary source nodes between tests, instead of dropping and recreating the
+  whole schema every time
+- reference-filtered searches for merged, extracted and rule items now anchor their
+  match on one of the filtered references and seek it through the identifier index,
+  instead of scanning every extracted and rule node; filters asking for the absence of a
+  reference and `hadPrimarySource` filters cannot anchor and keep the previous scan
+
+### Fixed
+
+- integration test run time locally: 352.6s -> 46.1s (~7.6x)
+- reference-filtered search no longer costs a full graph scan per request
 
 ## [4.4.0] - 2026-08-28
 
@@ -230,7 +287,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
-- add preview item by stableTargetid endpoint
+- add preview item by stableTargetId endpoint
 - add slapd LDAP mock server to compose and CI
 - add `mocked_ldap` fixture variant running against slapd when a search base is set
 - add LDAP mock data in `assets/raw-data/ldap/` with persons and functional accounts

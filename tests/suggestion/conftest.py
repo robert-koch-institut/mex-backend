@@ -228,5 +228,5 @@ def loaded_suggestion_corpus(suggestion_corpus: SuggestionCorpus) -> SuggestionC
         *suggestion_corpus["rule_sets"],
     ]
     connector = GraphConnector.get()
-    deque(connector.ingest_items(items))  # type: ignore[arg-type]
+    deque(connector.ingest_items(items))
     return suggestion_corpus
