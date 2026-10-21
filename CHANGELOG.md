@@ -9,8 +9,21 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+- new endpoint `POST /v0/rule-item/_suggest` that ranks likely vocabulary values for a
+  partially filled draft item, for data entry forms like the editor's fasttrack mode
+- new console script `backend-suggestion-eval` that evaluates those suggestions by
+  leave-one-out against whatever graph `MEX_GRAPH_URL` points at
+- new settings `MEX_BACKEND_SUGGESTION_COHORT_BLEND_WEIGHT`,
+  `MEX_BACKEND_SUGGESTION_COHORT_PSEUDO_COUNT`,
+  `MEX_BACKEND_SUGGESTION_NEIGHBOURHOOD_PSEUDO_WEIGHT` and
+  `MEX_BACKEND_SUGGESTION_CORPUS_PRIOR_TTL` to tune suggestion scoring
+- new `VocabularyFieldName` enum, generated from the vocabulary fields of all extracted
+  and additive classes
+
 ### Changes
 
+- `GraphConnector.commit` accepts an optional `timeout`, so queries served on a request
+  path can no longer hold a pooled connection for the whole session timeout
 - upgrade python version to 3.15
 
 ### Deprecated

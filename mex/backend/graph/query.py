@@ -23,12 +23,14 @@ from mex.common.fields import (
     TEXT_FIELDS_BY_CLASS_NAME,
 )
 from mex.common.models import (
+    ADDITIVE_MODEL_CLASSES_BY_NAME,
     EXTRACTED_AND_RULE_MODEL_CLASSES_BY_NAME,
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
     MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
     RULE_MODEL_CLASSES_BY_NAME,
     RULE_MODEL_CLASSES_BY_TYPE_BY_NAME,
+    SUBTRACTIVE_MODEL_CLASSES_BY_NAME,
 )
 from mex.common.transform import (
     dromedary_to_kebab,
@@ -96,10 +98,12 @@ class QueryBuilder(BaseConnector):
             render_constraints=render_constraints,
         )
         self._env.globals.update(
+            any_additive_label="|".join(ADDITIVE_MODEL_CLASSES_BY_NAME),
             any_extracted_label="|".join(EXTRACTED_MODEL_CLASSES_BY_NAME),
             any_merged_label="|".join(MERGED_MODEL_CLASSES_BY_NAME),
             any_nested_label="|".join(NESTED_MODEL_CLASSES_BY_NAME),
             any_rule_label="|".join(RULE_MODEL_CLASSES_BY_NAME),
+            any_subtractive_label="|".join(SUBTRACTIVE_MODEL_CLASSES_BY_NAME),
             any_extracted_or_rule_label="|".join(
                 chain(EXTRACTED_MODEL_CLASSES_BY_NAME, RULE_MODEL_CLASSES_BY_NAME)
             ),
