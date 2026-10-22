@@ -11,19 +11,25 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changes
 
-- upgrade python version to 3.15
-- upgrade mex-model to 5.2
-
 ### Deprecated
 
 ### Removed
 
 ### Fixed
 
+### Security
+
+## [4.7.0] - 2026-10-22
+
+### Changes
+
+- upgrade python version to 3.15
+- upgrade mex-model to 5.2
+
+### Fixed
+
 - wrong environment for mex-backend in compose
 - healthcheck for mex-backend in compose
-
-### Security
 
 ## [4.6.2] - 2026-10-12
 
