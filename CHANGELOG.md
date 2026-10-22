@@ -12,6 +12,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Changes
 
 - upgrade python version to 3.15
+- upgrade mex-model to 5.2
 
 ### Deprecated
 
