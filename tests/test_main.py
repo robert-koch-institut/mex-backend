@@ -74,6 +74,18 @@ def test_database_is_seeded() -> None:
             "start": "00000000000003",
         },
         {
+            "end": "Text",
+            "label": "title",
+            "position": 0,
+            "start": "00000000000001",
+        },
+        {
+            "end": "Text",
+            "label": "title",
+            "position": 0,
+            "start": "00000000000003",
+        },
+        {
             "identifier": "00000000000000",
             "label": "MergedPrimarySource",
         },
@@ -90,5 +102,13 @@ def test_database_is_seeded() -> None:
             "identifier": "00000000000003",
             "identifierInPrimarySource": "mex-editor",
             "label": "ExtractedPrimarySource",
+        },
+        {
+            "label": "Text",
+            "value": "MEx Editor",
+        },
+        {
+            "label": "Text",
+            "value": "MEx",
         },
     ]

@@ -16,11 +16,10 @@ from mex.backend.graph.models import IngestParams
 from mex.backend.settings import BackendSettings
 from mex.common.connector import BaseConnector
 from mex.common.fields import (
-    LINK_FIELDS_BY_CLASS_NAME,
     NESTED_ENTITY_TYPES_BY_CLASS_NAME,
+    NESTED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME,
     REFERENCE_FIELDS_BY_CLASS_NAME,
     REFERENCED_ENTITY_TYPES_BY_CLASS_NAME,
-    TEXT_FIELDS_BY_CLASS_NAME,
 )
 from mex.common.models import (
     EXTRACTED_AND_RULE_MODEL_CLASSES_BY_NAME,
@@ -135,8 +134,13 @@ class QueryBuilder(BaseConnector):
         """
         stem_type = EXTRACTED_AND_RULE_MODEL_CLASSES_BY_NAME[entity_type].stemType
         merged_label = ensure_prefix(stem_type, "Merged")
-        text_fields = TEXT_FIELDS_BY_CLASS_NAME[entity_type]
-        link_fields = LINK_FIELDS_BY_CLASS_NAME[entity_type]
+        nested_fields = sorted(
+            field
+            for field, types in NESTED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME[
+                entity_type
+            ].items()
+            if types
+        )
         nested_types_for_class = NESTED_ENTITY_TYPES_BY_CLASS_NAME[entity_type]
         ref_fields_for_class = REFERENCE_FIELDS_BY_CLASS_NAME[entity_type]
         ref_fields = sorted(set(ref_fields_for_class) - {"stableTargetId"})
@@ -147,7 +151,7 @@ class QueryBuilder(BaseConnector):
             used_referenced_labels=ref_types_for_class,
             used_nested_labels=nested_types_for_class,
             detach_node_edges=ref_fields,
-            delete_node_edges=[*text_fields, *link_fields],
+            delete_node_edges=nested_fields,
             has_link_rels=bool(ref_types_for_class),
             has_create_rels=bool(nested_types_for_class),
         )

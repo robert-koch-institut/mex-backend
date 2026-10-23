@@ -235,7 +235,14 @@ def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
                         "nodeLabels": ["MergedPrimarySource"],
                     }
                 ],
-                "createRels": [],
+                "createRels": [
+                    {
+                        "nodeProps": {"value": "MEx", "language": None},
+                        "edgeLabel": "title",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["Text"],
+                    }
+                ],
                 "nodeProps": {
                     "identifierInPrimarySource": "mex",
                     "identifier": "00000000000001",
@@ -255,7 +262,14 @@ def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
                         "nodeLabels": ["MergedPrimarySource"],
                     }
                 ],
-                "createRels": [],
+                "createRels": [
+                    {
+                        "nodeProps": {"value": "MEx Editor", "language": None},
+                        "edgeLabel": "title",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["Text"],
+                    }
+                ],
                 "nodeProps": {
                     "identifierInPrimarySource": "mex-editor",
                     "identifier": "00000000000003",
@@ -288,9 +302,9 @@ def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
                 delete_node_edges=[
                     "alternativeTitle",
                     "description",
-                    "title",
                     "documentation",
                     "locatedAt",
+                    "title",
                 ],
                 has_link_rels=True,
                 has_create_rels=True,
@@ -313,7 +327,14 @@ def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
                     "edgeProps": {"position": 0},
                 }
             ],
-            "createRels": [],
+            "createRels": [
+                {
+                    "nodeLabels": ["Text"],
+                    "nodeProps": {"value": "MEx", "language": None},
+                    "edgeLabel": "title",
+                    "edgeProps": {"position": 0},
+                }
+            ],
         },
     )
 
@@ -553,7 +574,6 @@ def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
                 "items": [
                     {
                         "rorId": [],
-                        "country": [],
                         "gndId": [],
                         "wikidataId": [],
                         "identifierInPrimarySource": "robert-koch-institute",
@@ -591,7 +611,6 @@ def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
                 "items": [
                     {
                         "rorId": [],
-                        "country": [],
                         "gndId": [],
                         "wikidataId": [],
                         "identifierInPrimarySource": "robert-koch-institute",
@@ -620,6 +639,7 @@ def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
                         "identifierInPrimarySource": "mex",
                         "entityType": "ExtractedPrimarySource",
                         "identifier": "00000000000001",
+                        "title": [{"value": "MEx"}],
                         "stableTargetId": ["00000000000000"],
                         "hadPrimarySource": ["00000000000000"],
                     }
@@ -634,7 +654,6 @@ def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
                 "items": [
                     {
                         "rorId": [],
-                        "country": [],
                         "gndId": [],
                         "wikidataId": [],
                         "identifierInPrimarySource": "robert-koch-institute",
@@ -706,7 +725,6 @@ def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
                 "items": [
                     {
                         "rorId": [],
-                        "country": [],
                         "gndId": [],
                         "wikidataId": [],
                         "identifierInPrimarySource": "robert-koch-institute",
@@ -724,7 +742,6 @@ def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
                     },
                     {
                         "rorId": [],
-                        "country": [],
                         "identifierInPrimarySource": "rki",
                         "gndId": [],
                         "wikidataId": [],
@@ -1297,6 +1314,7 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
                                 "identifierInPrimarySource": "mex",
                                 "entityType": "ExtractedPrimarySource",
                                 "identifier": "00000000000001",
+                                "title": [{"value": "MEx"}],
                                 "stableTargetId": ["00000000000000"],
                                 "hadPrimarySource": ["00000000000000"],
                             }
@@ -1320,7 +1338,6 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
                         "_components": [
                             {
                                 "rorId": [],
-                                "country": [],
                                 "gndId": [],
                                 "wikidataId": [],
                                 "identifierInPrimarySource": "robert-koch-institute",
@@ -1379,7 +1396,6 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
                                 "geprisId": [],
                                 "gndId": [],
                                 "rorId": [],
-                                "country": [],
                                 "viafId": [],
                                 "wikidataId": [],
                             }
@@ -1599,7 +1615,6 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
                         "_components": [
                             {
                                 "rorId": [],
-                                "country": [],
                                 "gndId": [],
                                 "wikidataId": [],
                                 "identifierInPrimarySource": "robert-koch-institute",
@@ -1626,7 +1641,6 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
                         "_components": [
                             {
                                 "rorId": [],
-                                "country": [],
                                 "gndId": [],
                                 "wikidataId": [],
                                 "identifierInPrimarySource": "rki",
@@ -2035,7 +2049,14 @@ def test_mocked_graph_ingests_extracted_models(
                         "nodeLabels": ["MergedPrimarySource"],
                     }
                 ],
-                "createRels": [],
+                "createRels": [
+                    {
+                        "nodeProps": {"value": "Primary Source One", "language": "en"},
+                        "edgeLabel": "title",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["Text"],
+                    }
+                ],
                 "nodeProps": {
                     "identifierInPrimarySource": "ps-1",
                     "identifier": dummy_data["primary_source_1"].identifier,
@@ -2055,7 +2076,14 @@ def test_mocked_graph_ingests_extracted_models(
                         "nodeLabels": ["MergedPrimarySource"],
                     }
                 ],
-                "createRels": [],
+                "createRels": [
+                    {
+                        "nodeProps": {"value": "Primary Source Two", "language": "en"},
+                        "edgeLabel": "title",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["Text"],
+                    }
+                ],
                 "nodeProps": {
                     "identifierInPrimarySource": "ps-2",
                     "identifier": dummy_data["primary_source_2"].identifier,
