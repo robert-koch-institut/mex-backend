@@ -11,6 +11,8 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changes
 
+- upgrade mex-common to 3.6
+
 ### Deprecated
 
 ### Removed
