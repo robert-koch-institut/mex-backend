@@ -11,11 +11,10 @@ from mex.backend.graph.models import (
 )
 from mex.common.fields import (
     FINAL_FIELDS_BY_CLASS_NAME,
-    LINK_FIELDS_BY_CLASS_NAME,
     MUTABLE_FIELDS_BY_CLASS_NAME,
+    NESTED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME,
     REFERENCE_FIELDS_BY_CLASS_NAME,
     REFERENCED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME,
-    TEXT_FIELDS_BY_CLASS_NAME,
 )
 from mex.common.models import (
     AnyExtractedModel,
@@ -23,7 +22,6 @@ from mex.common.models import (
     AnyRuleSetResponse,
 )
 from mex.common.transform import clean_dict, to_key_and_values
-from mex.common.types import AnyPrimitiveType, Link, Text
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -32,6 +30,7 @@ if TYPE_CHECKING:
 
     from mex.backend.graph.models import RawReferenceFilter
     from mex.backend.models import ReferenceFilter
+    from mex.common.types import AnyPrimitiveType
 
 
 class _SearchResultReference(TypedDict):
@@ -118,9 +117,13 @@ def transform_model_into_ingest_data(
     Returns:
         IngestData object containing query parameters and metadata
     """
-    text_fields = TEXT_FIELDS_BY_CLASS_NAME[model.entityType]
-    link_fields = LINK_FIELDS_BY_CLASS_NAME[model.entityType]
-    mutable_fields = MUTABLE_FIELDS_BY_CLASS_NAME[model.entityType]
+    nested_types_by_field = NESTED_ENTITY_TYPES_BY_FIELD_BY_CLASS_NAME[model.entityType]
+    nested_fields = sorted(
+        field for field, types in nested_types_by_field.items() if types
+    )
+    mutable_fields = sorted(
+        set(MUTABLE_FIELDS_BY_CLASS_NAME[model.entityType]) - set(nested_fields)
+    )
     final_fields = FINAL_FIELDS_BY_CLASS_NAME[model.entityType]
     ref_fields_for_class = REFERENCE_FIELDS_BY_CLASS_NAME[model.entityType]
     ref_fields = sorted(set(ref_fields_for_class) - {"stableTargetId"})
@@ -130,26 +133,23 @@ def transform_model_into_ingest_data(
     final_values = model.model_dump(include=set(final_fields))
     all_values = {**mutable_values, **final_values}
 
-    text_values = model.model_dump(include=set(text_fields))
-    link_values = model.model_dump(include=set(link_fields))
+    # nested values keep their model instances, because fields like `hasLegalBasis`
+    # mix `Text` and `Link` and the node label depends on each value's type
+    nested_values = {field: getattr(model, field) for field in nested_fields}
 
     ref_values = model.model_dump(include=set(ref_fields))
 
     create_rels = []
-    for node_label, raws in [
-        (Text.__name__, text_values),
-        (Link.__name__, link_values),
-    ]:
-        for edge_label, raw_values in to_key_and_values(raws):
-            for position, raw_value in enumerate(raw_values):
-                create_rels.append(
-                    GraphRel(
-                        edgeLabel=edge_label,
-                        edgeProps={"position": position},
-                        nodeLabels=[node_label],
-                        nodeProps=raw_value,
-                    )
+    for edge_label, nested_models in to_key_and_values(nested_values):
+        for position, nested_model in enumerate(nested_models):
+            create_rels.append(
+                GraphRel(
+                    edgeLabel=edge_label,
+                    edgeProps={"position": position},
+                    nodeLabels=[type(nested_model).__name__],
+                    nodeProps=nested_model.model_dump(),
                 )
+            )
 
     link_rels = []
     for field, identifiers in to_key_and_values(ref_values):

@@ -12,6 +12,8 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Changes
 
 - upgrade mex-common to 3.6
+- add titles to the hardcoded mex and mex-editor primary sources
+- support nested fields that mix `Text` and `Link` values, like `hasLegalBasis`
 
 ### Deprecated
 
