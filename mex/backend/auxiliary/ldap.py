@@ -36,9 +36,8 @@ def search_persons_or_contact_points_in_ldap(
 ) -> PaginatedItemsContainer[ExtractedPerson | ExtractedContactPoint]:
     """Search for person or contact points in LDAP.
 
-    This is a free-text fuzzy search across both persons and functional accounts,
-    used exclusively by mex-admin's interactive ingest page. For structured,
-    exact-match lookups of a single entity type (used by ETL identity resolution),
+    This is a free-text fuzzy search across both persons and functional accounts. For
+    structured, exact-match lookups of a single entity type,
     see `GET /ldap/persons` and `GET /ldap/functional-accounts` instead.
 
     Args:
@@ -85,8 +84,8 @@ def search_persons_in_ldap(  # noqa: PLR0913, PLR0917
 ) -> PaginatedItemsContainer[ExtractedPerson]:
     """Look up LDAP persons by exact-match structured attributes.
 
-    This is a structured, exact-match lookup for a single attribute set, used by
-    ETL pipelines to deterministically resolve a specific LDAP person. For
+    This is a structured, exact-match lookup for a single attribute set, to
+    deterministically resolve a specific LDAP person. For
     free-text fuzzy search across persons and functional accounts combined, see
     `GET /ldap` instead.
 
@@ -146,7 +145,7 @@ def search_functional_accounts_in_ldap(
 ) -> PaginatedItemsContainer[ExtractedContactPoint]:
     """Look up LDAP functional accounts by exact-match mail address.
 
-    This is a structured, exact-match lookup used by ETL pipelines to
+    This is a structured, exact-match lookup to
     deterministically resolve a specific LDAP functional account. For free-text
     fuzzy search across persons and functional accounts combined, see `GET /ldap`
     instead.
