@@ -12,8 +12,8 @@ from mex.backend.auxiliary.helpers import (
     cached_organizational_units,
     cached_primary_source,
 )
+from mex.backend.ldap.connector import LDAPConnector
 from mex.backend.security import has_read_access
-from mex.common.ldap.connector import LDAPConnector
 from mex.common.ldap.transform import (
     transform_any_ldap_actor_to_extracted_persons_or_contact_points,
     transform_ldap_functional_account_to_extracted_contact_point,

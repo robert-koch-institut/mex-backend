@@ -4,10 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 
 from mex.backend.auxiliary.helpers import cached_primary_source
+from mex.backend.ldap.connector import LDAPConnector
 from mex.backend.merged.main import get_merged_item
 from mex.backend.security import is_ldap_authenticated
 from mex.common.identity import get_provider
-from mex.common.ldap.connector import LDAPConnector
 from mex.common.models import MergedPerson
 from mex.common.types import MergedPrimarySourceIdentifier
 

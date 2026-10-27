@@ -15,7 +15,7 @@ from ldap3 import Tls
 from pytest import MonkeyPatch
 from requests import Response
 
-from mex.common.ldap.connector import LDAPConnector
+from mex.backend.ldap.connector import LDAPConnector
 from mex.common.ldap.models import LDAPActor, LDAPFunctionalAccount, LDAPPerson
 from mex.common.models import PaginatedItemsContainer
 from mex.common.orcid.connector import OrcidConnector
@@ -34,6 +34,7 @@ test_persons_ldap = [
         department="FG99",
         displayName="Max Mueller",
         mail=["MaxM@ldapmock.local"],
+        sAMAccountName="MaxM",
     ),
     LDAPPerson(
         employeeID="def",
@@ -43,6 +44,7 @@ test_persons_ldap = [
         department="FG99",
         displayName="Moritz Example",
         mail=["MoritzE@ldapmock.local"],
+        sAMAccountName="MoritzE",
     ),
     LDAPPerson(
         employeeID="ghi",
@@ -52,6 +54,7 @@ test_persons_ldap = [
         department="FG99",
         displayName="Moritz Mueller",
         mail=["MoritzM@ldapmock.local"],
+        sAMAccountName="MoritzM",
     ),
 ]
 

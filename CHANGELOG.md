@@ -17,6 +17,15 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changes
 
+- copy `LDAPConnector` from `mex-common` (`mex.common.ldap.connector`) into this repo
+  (`mex.backend.ldap.connector`), along with the `ldap3` dependency, so the later
+  `ldap3` -> `python-ldap` swap only ever touches `mex-backend`. All routes using the
+  connector (`/ldap`, `/ldap/persons`, `/ldap/functional-accounts`,
+  `/merged-person-from-login`) now import it from its new location. `mex-common`'s
+  original is deprecated, not removed, until `mex-extractors` migrates off it.
+  `mex.common.ldap.models` and `mex.common.ldap.transform` are unaffected by this —
+  this repo continues to import both directly from `mex-common`, unchanged.
+
 ### Deprecated
 
 ### Removed
