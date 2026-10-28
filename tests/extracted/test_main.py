@@ -89,7 +89,7 @@ def test_search_extracted_items_mocked(
                         "identifierInPrimarySource": "mex",
                         "locatedAt": [],
                         "stableTargetId": "00000000000000",
-                        "title": [],
+                        "title": [{"value": "MEx", "language": None}],
                         "unitInCharge": [],
                         "version": None,
                     }
@@ -162,7 +162,7 @@ def test_search_extracted_items_mocked(
                         "identifierInPrimarySource": "ps-2",
                         "locatedAt": [],
                         "stableTargetId": "bFQoRhcVH5DHUt",
-                        "title": [],
+                        "title": [{"value": "Primary Source Two", "language": "en"}],
                         "unitInCharge": [],
                         "version": "Cool Version v2.13",
                     }
@@ -264,7 +264,7 @@ def test_search_extracted_items(
                         "identifierInPrimarySource": "mex",
                         "locatedAt": [],
                         "stableTargetId": "00000000000000",
-                        "title": [],
+                        "title": [{"value": "MEx", "language": None}],
                         "unitInCharge": [],
                         "version": None,
                     }
@@ -337,7 +337,7 @@ def test_search_extracted_items(
                         "identifierInPrimarySource": "ps-2",
                         "locatedAt": [],
                         "stableTargetId": "bFQoRhcVH5DHUt",
-                        "title": [],
+                        "title": [{"value": "Primary Source Two", "language": "en"}],
                         "unitInCharge": [],
                         "version": "Cool Version v2.13",
                     }

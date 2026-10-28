@@ -1,7 +1,10 @@
+from collections import deque
 from typing import TYPE_CHECKING, cast
 
 import pytest
 
+from mex.backend.extracted.helpers import get_extracted_item_from_graph
+from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.models import (
     MEX_EDITOR_PRIMARY_SOURCE,
     MEX_PRIMARY_SOURCE,
@@ -15,9 +18,18 @@ from mex.common.models import (
     AnyMergedModel,
     AnyRuleSetResponse,
     ExtractedPrimarySource,
+    ExtractedResource,
     PaginatedItemsContainer,
 )
-from mex.common.types import Validation
+from mex.common.types import (
+    AccessRestriction,
+    Link,
+    ResourceCreationMethod,
+    Text,
+    TextLanguage,
+    Theme,
+    Validation,
+)
 
 if TYPE_CHECKING:
     from tests.conftest import DummyData
@@ -85,3 +97,44 @@ def test_graph_ingest_and_query_roundtrip(
     )
 
     assert fetched_container.model_dump() == expected_container.model_dump()
+
+
+@pytest.mark.integration
+def test_graph_ingest_and_query_roundtrip_mixed_nested_types(
+    loaded_dummy_data: DummyData,
+) -> None:
+    connector = GraphConnector.get()
+    resource = ExtractedResource(
+        accessRestriction=AccessRestriction["OPEN"],
+        contact=[loaded_dummy_data["contact_point_1"].stableTargetId],
+        hadPrimarySource=loaded_dummy_data["primary_source_1"].stableTargetId,
+        hasLegalBasis=[
+            Text(value="Infektionsschutzgesetz", language=TextLanguage.DE),
+            Link(title="IfSG", url="https://www.gesetze-im-internet.de/ifsg"),
+        ],
+        identifierInPrimarySource="r-1",
+        resourceCreationMethod=[ResourceCreationMethod["DISEASE_SURVEILLANCE"]],
+        theme=[Theme["INFECTIOUS_DISEASES_AND_EPIDEMIOLOGY"]],
+        title=[Text(value="Resource 1", language=TextLanguage.EN)],
+        unitInCharge=[loaded_dummy_data["unit_1"].stableTargetId],
+    )
+    deque(connector.ingest_items([resource]))
+    assert get_extracted_item_from_graph(resource.identifier) == resource
+
+    # swap the types at each position: Text becomes Link and vice versa
+    swapped = resource.model_copy(
+        update={
+            "hasLegalBasis": [
+                Link(url="https://www.gesetze-im-internet.de/ifsg"),
+                Text(value="Infection Protection Act", language=TextLanguage.EN),
+            ]
+        }
+    )
+    deque(connector.ingest_items([swapped]))
+    assert get_extracted_item_from_graph(resource.identifier) == swapped
+
+    # the replaced nested nodes are gone, not just disconnected
+    result = connector.driver.execute_query(
+        "MATCH (n:Text|Link) WHERE NOT (n)--() RETURN count(n) AS orphans"
+    )
+    assert result.records[0]["orphans"] == 0
