@@ -11,6 +11,7 @@ dependencies = [
     "backoff>=2.2,<3",
     "fastapi>=0.156,<0.157",
     "jinja2>=3.1,<4",
+    "ldap3>=2,<3",
     "mex-common>=3,<4",
     "neo4j>=6.1,<7",
     "packaging>=26,<27",

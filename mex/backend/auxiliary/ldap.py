@@ -12,8 +12,8 @@ from mex.backend.auxiliary.helpers import (
     cached_organizational_units,
     cached_primary_source,
 )
+from mex.backend.ldap.connector import LDAPConnector
 from mex.backend.security import has_read_access
-from mex.common.ldap.connector import LDAPConnector
 from mex.common.ldap.transform import (
     transform_any_ldap_actor_to_extracted_persons_or_contact_points,
 )
@@ -33,6 +33,10 @@ def search_persons_or_contact_points_in_ldap(
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> PaginatedItemsContainer[ExtractedPerson | ExtractedContactPoint]:
     """Search for person or contact points in LDAP.
+
+    This is a free-text fuzzy search across both persons and functional accounts. For
+    structured, exact-match lookups of a single entity type,
+    see `GET /ldap/persons` and `GET /ldap/functional-accounts` instead.
 
     Args:
         q: The name of the person or contact point
