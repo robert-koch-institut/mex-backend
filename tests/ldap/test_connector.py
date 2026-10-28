@@ -7,7 +7,7 @@ from pytest import MonkeyPatch
 
 from mex.backend.ldap.connector import LDAPConnector
 from mex.common.exceptions import EmptySearchResultError, FoundMoreThanOneError
-from tests.auxiliary.conftest import test_accounts_ldap, test_persons_ldap
+from tests.ldap.conftest import test_accounts_ldap, test_persons_ldap
 
 MAX_MUELLER = test_persons_ldap[0].model_dump(exclude_defaults=True)
 HELP_ACCOUNT = test_accounts_ldap[0].model_dump(exclude_defaults=True)
