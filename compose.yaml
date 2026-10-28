@@ -18,7 +18,7 @@ services:
       retries: 12
       start_period: 20s
   neo4j:
-    image: neo4j:2026.10.0-community@sha256:388c0e5c6d4543e3d0e6cee3d1e751c05ad9314aa73342cc63cd0ea0946e38bb
+    image: neo4j:2026.10.1-community@sha256:86f8e01402fd0d5fd23e8968375fefdc21284a5c1751fa3fa3de8091a08b6dd6
     environment:
       - NEO4J_AUTH=neo4j/password
       - NEO4J_dbms_usage__report_enabled=false
