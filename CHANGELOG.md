@@ -9,7 +9,29 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+- `GET /ldap/persons` endpoint for structured, exact-match lookup of LDAP persons by
+  `display_name`, `employee_id`, `given_name`, `mail`, `object_guid`,
+  `sam_account_name`, `surname`, `offset` and `limit`, for ETL identity resolution
+- `GET /ldap/functional-accounts` endpoint for structured, exact-match lookup of LDAP
+  functional accounts by `mail`, `offset` and `limit`, for ETL identity resolution
+
 ### Changes
+
+- copy `LDAPConnector` from `mex-common` (`mex.common.ldap.connector`) into this repo
+  (`mex.backend.ldap.connector`), along with the `ldap3` dependency, so the later
+  `ldap3` -> `python-ldap` swap only ever touches `mex-backend`. All routes using the
+  connector (`/ldap`, `/ldap/persons`, `/ldap/functional-accounts`,
+  `/merged-person-from-login`) now import it from its new location. `mex-common`'s
+  original is deprecated, not removed, until `mex-extractors` migrates off it.
+  `mex.common.ldap.models` and `mex.common.ldap.transform` are unaffected by this —
+  this repo continues to import both directly from `mex-common`, unchanged.
+- migrate `mex.backend.ldap.connector.LDAPConnector` and the LDAP auth bind
+  (`mex.backend.security.is_ldap_authenticated`) from `ldap3` to `python-ldap` —
+  `mex-backend` is now the only `mex-*` package depending on `ldap3`'s eventual
+  successor, with no public method signature changes on either. Dockerfile gained
+  `libldap-dev`/`libsasl2-dev` (build) and `libldap2`/`libsasl2-2` (runtime) system
+  packages; `python-ldap` pulls an unofficial prebuilt wheel on Windows (see
+  `pyproject.toml`'s `[tool.uv.sources]`, pending an upstream `cp315` build)
 
 ### Deprecated
 
