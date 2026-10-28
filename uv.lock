@@ -626,11 +626,12 @@ dependencies = [
     { name = "backoff" },
     { name = "fastapi" },
     { name = "jinja2" },
-    { name = "ldap3" },
     { name = "mex-common" },
     { name = "neo4j" },
     { name = "packaging" },
     { name = "pydantic" },
+    { name = "python-ldap", version = "3.4.7", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'win32'" },
+    { name = "python-ldap", version = "3.4.7", source = { url = "https://github.com/cgohlke/python-ldap-build/releases/download/v3.4.7/python_ldap-3.4.7-cp315-cp315-win_amd64.whl" }, marker = "sys_platform == 'win32'" },
     { name = "starlette" },
     { name = "uvicorn", extra = ["standard"] },
     { name = "valkey" },
@@ -648,7 +649,6 @@ dev = [
     { name = "requests" },
     { name = "ruff" },
     { name = "sphinx" },
-    { name = "types-ldap3" },
     { name = "types-pytz" },
     { name = "types-requests" },
 ]
@@ -658,11 +658,12 @@ requires-dist = [
     { name = "backoff", specifier = ">=2.2,<3" },
     { name = "fastapi", specifier = ">=0.147,<0.148" },
     { name = "jinja2", specifier = ">=3.1,<4" },
-    { name = "ldap3", specifier = ">=2,<3" },
     { name = "mex-common", specifier = ">=3,<4" },
     { name = "neo4j", specifier = ">=6.1,<7" },
     { name = "packaging", specifier = ">=26,<27" },
     { name = "pydantic", specifier = ">=2,<3" },
+    { name = "python-ldap", marker = "python_full_version != '3.15.*' or sys_platform != 'win32'", specifier = ">=3.4,<4" },
+    { name = "python-ldap", marker = "python_full_version == '3.15.*' and sys_platform == 'win32'", url = "https://github.com/cgohlke/python-ldap-build/releases/download/v3.4.7/python_ldap-3.4.7-cp315-cp315-win_amd64.whl" },
     { name = "starlette", specifier = ">=1,<2" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.42,<1" },
     { name = "valkey", specifier = ">=6.1,<7" },
@@ -680,7 +681,6 @@ dev = [
     { name = "requests", specifier = ">=2" },
     { name = "ruff", specifier = ">=0.16" },
     { name = "sphinx", specifier = ">=9" },
-    { name = "types-ldap3" },
     { name = "types-pytz" },
     { name = "types-requests" },
 ]
@@ -941,6 +941,18 @@ wheels = [
 ]
 
 [[package]]
+name = "pyasn1-modules"
+version = "0.4.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyasn1" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e9/e6/78ebbb10a8c8e4b61a59249394a4a594c1a7af95593dc933a349c8d00964/pyasn1_modules-0.4.2.tar.gz", hash = "sha256:677091de870a80aae844b1ca6134f54652fa2c8c5a52aa396440ac3106e941e6", size = 307892, upload-time = "2025-03-28T02:41:22.17Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/47/8d/d529b5d697919ba8c11ad626e835d4039be708a35b0d22de83a269a6682c/pyasn1_modules-0.4.2-py3-none-any.whl", hash = "sha256:29253a9207ce32b64c3ac6600edc75368f98473906e8fd1043bd6b5b1de2c14a", size = 181259, upload-time = "2025-03-28T02:41:19.028Z" },
+]
+
+[[package]]
 name = "pydantic"
 version = "2.14.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1081,6 +1093,41 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/74/26/2fbeedb218a787a5eea551c7532cac4e009f83d689dd2faa0d0353473f86/python_dotenv-1.2.4.tar.gz", hash = "sha256:f0d53e69935a851c0dcc78f3ab7aaccd8cabef0b92382b576b824212902873c0", size = 60824, upload-time = "2026-10-01T05:36:10Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/60/d1/38f3a3405989a89ac18390803e70c6ad7c7760da4f9b83cbeca0c44a0c72/python_dotenv-1.2.4-py3-none-any.whl", hash = "sha256:42269a8a5b3fd54ffa6f3d84b18abed50064717576b4ecf03dc4a55d8aa04fdc", size = 23266, upload-time = "2026-10-01T05:36:08.633Z" },
+]
+
+[[package]]
+name = "python-ldap"
+version = "3.4.7"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "sys_platform == 'emscripten'",
+    "sys_platform != 'emscripten' and sys_platform != 'win32'",
+]
+dependencies = [
+    { name = "pyasn1" },
+    { name = "pyasn1-modules" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b2/f4/60edeb794bbc9ed0ff2149bbaeec605f3ed331766459d195832ecbd0ba2d/python_ldap-3.4.7.tar.gz", hash = "sha256:bacd9fb680d20263d8570ade1cf234d90d281149a8beb4f079dd8f33f7613dc8", size = 387477, upload-time = "2026-05-20T13:41:04.358Z" }
+
+[[package]]
+name = "python-ldap"
+version = "3.4.7"
+source = { url = "https://github.com/cgohlke/python-ldap-build/releases/download/v3.4.7/python_ldap-3.4.7-cp315-cp315-win_amd64.whl" }
+resolution-markers = [
+    "sys_platform == 'win32'",
+]
+dependencies = [
+    { name = "pyasn1" },
+    { name = "pyasn1-modules" },
+]
+wheels = [
+    { url = "https://github.com/cgohlke/python-ldap-build/releases/download/v3.4.7/python_ldap-3.4.7-cp315-cp315-win_amd64.whl", hash = "sha256:4689557a2967e35bad139ea08366b64f58fe0bb6c75f152afdcd62bd246ad76a" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "pyasn1", specifier = ">=0.3.7" },
+    { name = "pyasn1-modules", specifier = ">=0.1.5" },
 ]
 
 [[package]]
@@ -1326,27 +1373,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/03/51/d33db42cc72ffd8c30777547b42d01f0cbf9d95a770457698d0174b3ed71/typer-0.27.3.tar.gz", hash = "sha256:d0396f770a560ab1b0a8504e13b5f254b728cedb05c61cf0359e944e50ce8901", size = 205303, upload-time = "2026-10-06T17:24:16.61Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/07/ea/2e31b67051e91a133189e9c000c222502ddc6969856416de0d095de4c0b0/typer-0.27.3-py3-none-any.whl", hash = "sha256:e50022f28b82a86313e54501317a1db64bf8f8d036ff8cfe5ca7e47675454aff", size = 123312, upload-time = "2026-10-06T17:24:15.054Z" },
-]
-
-[[package]]
-name = "types-ldap3"
-version = "2.9.13.20260827"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "types-pyasn1" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/12/5a/71a62370bd5ece50c0ab63d764b76200a8ede95efa0e74f16d9246b3f0bb/types_ldap3-2.9.13.20260827.tar.gz", hash = "sha256:06091fb1d93f2a012c446f7476dfc72fc2ae5e818552506c1f87770b4e2264ec", size = 34632, upload-time = "2026-08-27T12:07:07.974Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/df/7c/a63bba957b18a33497fadadd285e6a2c4fd2ac25c3dcbf13f6945442c833/types_ldap3-2.9.13.20260827-py3-none-any.whl", hash = "sha256:11917e8e5f34c6c31a256cd361182b188d346f44fe70d036c4843c5cc9d03d96", size = 57457, upload-time = "2026-08-27T12:07:07.073Z" },
-]
-
-[[package]]
-name = "types-pyasn1"
-version = "0.6.0.20260724"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/24/ba/a3be5620ec108bfb21481a7796a3c352e627969fa67db6a033cdaeacd117/types_pyasn1-0.6.0.20260724.tar.gz", hash = "sha256:00b9324c1ce8167ec1dc503018cc7d4f190f5770dd3e9a365e897e290e0532db", size = 17373, upload-time = "2026-07-24T04:57:47.402Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ce/ab/9936badd94cfbfb73d2ec83409e203fee44fc83a744e09a8779b37042f45/types_pyasn1-0.6.0.20260724-py3-none-any.whl", hash = "sha256:487987e4492ce2e1ba6f0048f025165383c49d5d16a345ae5dfe7d44045b7910", size = 24054, upload-time = "2026-07-24T04:57:46.482Z" },
 ]
 
 [[package]]

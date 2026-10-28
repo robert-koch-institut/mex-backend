@@ -25,6 +25,13 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   original is deprecated, not removed, until `mex-extractors` migrates off it.
   `mex.common.ldap.models` and `mex.common.ldap.transform` are unaffected by this —
   this repo continues to import both directly from `mex-common`, unchanged.
+- migrate `mex.backend.ldap.connector.LDAPConnector` and the LDAP auth bind
+  (`mex.backend.security.is_ldap_authenticated`) from `ldap3` to `python-ldap` —
+  `mex-backend` is now the only `mex-*` package depending on `ldap3`'s eventual
+  successor, with no public method signature changes on either. Dockerfile gained
+  `libldap-dev`/`libsasl2-dev` (build) and `libldap2`/`libsasl2-2` (runtime) system
+  packages; `python-ldap` pulls an unofficial prebuilt wheel on Windows (see
+  `pyproject.toml`'s `[tool.uv.sources]`, pending an upstream `cp315` build)
 
 ### Deprecated
 

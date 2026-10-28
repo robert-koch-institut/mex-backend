@@ -17,7 +17,7 @@ def test_get_merged_person_from_login(
     client_that_is_ldap_authenticated: TestClient,
 ) -> None:
     with (
-        patch("mex.backend.security.Connection") as mock_connection,
+        patch("mex.backend.security.ldap.initialize") as mock_initialize,
         patch("mex.backend.ldap.main.LDAPConnector.get") as mock_ldap_connector_get,
         patch("mex.backend.ldap.main.get_provider") as mock_get_provider,
         patch("mex.backend.ldap.main.get_merged_item") as mock_get_merged_item,
@@ -25,8 +25,7 @@ def test_get_merged_person_from_login(
             "mex.backend.ldap.main.cached_primary_source"
         ) as mock_cached_primary_source,
     ):
-        mocked_connection = mock_connection.return_value.__enter__.return_value
-        mocked_connection.server.check_availability.return_value = True
+        mock_initialize.return_value = MagicMock()
 
         mock_ldap_connector = MagicMock()
         mock_ldap_connector.get_person.return_value = MagicMock(

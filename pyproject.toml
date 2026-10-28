@@ -11,14 +11,31 @@ dependencies = [
     "backoff>=2.2,<3",
     "fastapi>=0.147,<0.148",
     "jinja2>=3.1,<4",
-    "ldap3>=2,<3",
     "mex-common>=3,<4",
     "neo4j>=6.1,<7",
     "packaging>=26,<27",
     "pydantic>=2,<3",
+    "python-ldap>=3.4,<4",
     "starlette>=1,<2",
     "uvicorn[standard]>=0.42,<1",
     "valkey>=6.1,<7",
+]
+
+[tool.uv.sources]
+# python-ldap has no official Windows wheels, so on Windows we pull the
+# actively-maintained unofficial build from
+# https://github.com/cgohlke/python-ldap-build instead of building from
+# source. Bump this URL's version whenever the python-ldap dependency
+# version above changes.
+# TODO(mx-1810): as of ticket-05 writing, cgohlke/python-ldap-build's
+# latest release (v3.4.7) only ships cp312/cp313/cp314 win_amd64 wheels
+# - no cp315 wheel exists yet (confirmed: zero open/closed issues on
+# that repo mention 3.15, no visible build cadence to predict one).
+# This marker/URL will 404 on Windows + Python 3.15 until upstream
+# publishes one - check https://github.com/cgohlke/python-ldap-build/releases
+# before relying on it, update the version/tag once a cp315 build lands.
+python-ldap = [
+    { url = "https://github.com/cgohlke/python-ldap-build/releases/download/v3.4.7/python_ldap-3.4.7-cp315-cp315-win_amd64.whl", marker = "sys_platform == 'win32' and python_full_version >= '3.15' and python_full_version < '3.16'" },
 ]
 
 [dependency-groups]
@@ -33,7 +50,6 @@ dev = [
     "requests>=2",
     "ruff>=0.16",
     "sphinx>=9",
-    "types-ldap3",
     "types-pytz",
     "types-requests",
 ]
@@ -56,7 +72,7 @@ strict = true
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = ["valkey.*"]
+module = ["ldap", "ldap.*", "valkey.*"]
 ignore_missing_imports = true
 
 [tool.pydantic-mypy]
