@@ -11,6 +11,8 @@ ENV PIP_PROGRESS_BAR=off
 
 COPY . .
 
+# python-ldap has no prebuilt Linux wheel, so pip/uv build it from source here;
+# it needs ldap.h (libldap-dev) and sasl/sasl.h (libsasl2-dev) to compile.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libldap-dev libsasl2-dev \
     && rm -rf /var/lib/apt/lists/*
@@ -31,6 +33,8 @@ ENV PYTHONOPTIMIZE=1
 
 WORKDIR /app
 
+# the compiled _ldap extension dynamically links libldap.so.2/libsasl2.so.2 at
+# import time (confirmed via ldd) - these runtime libs aren't in the slim base
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libldap2 libsasl2-2 \
     && rm -rf /var/lib/apt/lists/*

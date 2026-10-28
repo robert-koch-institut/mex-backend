@@ -11,10 +11,10 @@ import pytest
 from pytest import MonkeyPatch
 
 from mex.backend.ldap.connector import LDAPConnector
+from mex.backend.settings import BackendSettings
 from mex.common.exceptions import MExError
 from mex.common.ldap.models import LDAPActor, LDAPFunctionalAccount, LDAPPerson
 from mex.common.models import PaginatedItemsContainer
-from mex.common.settings import BaseSettings
 from mex.common.transform import MExEncoder, normalize
 
 test_persons_ldap = [
@@ -181,7 +181,7 @@ def mocked_ldap(request: pytest.FixtureRequest, monkeypatch: MonkeyPatch) -> Non
         else:
             # the mock server uses a self-signed certificate, so disable TLS
             # verification to allow connecting to it during testing
-            monkeypatch.setattr(BaseSettings.get(), "verify_session", False)
+            monkeypatch.setattr(BackendSettings.get(), "verify_session", False)
 
 
 @pytest.fixture(autouse=True)
