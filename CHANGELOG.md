@@ -9,6 +9,8 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+- setting `MEX_BACKEND_CORS_ALLOWED_ORIGINS` for browser origins allowed via CORS
+
 ### Changes
 
 - upgrade mex-common to 3.6 to adopt mex-model 5.2 changes
@@ -19,9 +21,14 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Removed
 
+- disable unused redoc api documentation, swagger ui at `/docs` stays
+
 ### Fixed
 
 ### Security
+
+- set security headers (CSP, HSTS, `nosniff`, referrer policy, frame options, cache control) on all responses
+- restrict CORS to configured origins instead of `*`, defaults to same-origin only
 
 ## [4.7.0] - 2026-10-22
 

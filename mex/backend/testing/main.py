@@ -40,6 +40,7 @@ app = FastAPI(
     strict_content_type=False,
     lifespan=lifespan,
     version="v0",
+    redoc_url=None,
 )
 router = APIRouter(prefix="/v0")
 router.include_router(extracted_router)
