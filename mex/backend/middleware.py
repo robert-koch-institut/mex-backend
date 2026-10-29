@@ -59,7 +59,7 @@ class SettingsCORSMiddleware(CORSMiddleware):
         super().__init__(
             app,
             allow_credentials=True,
-            allow_headers=["*"],
-            allow_methods=["*"],
+            allow_headers=["Accept", "Authorization", "Content-Type", "X-API-Key"],
+            allow_methods=["GET", "POST", "PUT", "DELETE"],
             allow_origins=settings.backend_cors_allowed_origins,
         )

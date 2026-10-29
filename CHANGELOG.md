@@ -27,8 +27,10 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Security
 
-- set security headers (CSP, HSTS, `nosniff`, referrer policy, frame options, cache control) on all responses
-- restrict CORS to configured origins instead of `*`, defaults to same-origin only
+- set security headers (CSP, HSTS, nosniff, referrer policy, frame options,
+  cache control) on all responses
+- restrict CORS origins to explicit setting instead of `*`, defaults to same-origin only
+- restrict CORS headers and methods to actually needed entries
 
 ## [4.7.0] - 2026-10-22
 
