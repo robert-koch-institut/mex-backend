@@ -9,6 +9,12 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+- `GET /ldap/persons` endpoint for structured, exact-match lookup of LDAP persons by
+  `display_name`, `employee_id`, `given_name`, `mail`, `object_guid`,
+  `sam_account_name`, `surname`, `offset` and `limit`, for ETL identity resolution
+- `GET /ldap/functional-accounts` endpoint for structured, exact-match lookup of LDAP
+  functional accounts by `mail`, `offset` and `limit`, for ETL identity resolution
+
 ### Changes
 
 ### Deprecated

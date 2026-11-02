@@ -122,6 +122,62 @@ def ldap_mock_searcher(
     return mock_search
 
 
+# mapping from `get_persons`/`get_functional_accounts` search kwargs to the LDAP
+# attributes they filter on
+_SEARCH_ATTR_BY_KWARG = {
+    "display_name": "displayName",
+    "employee_id": "employeeID",
+    "given_name": "givenName",
+    "mail": "mail",
+    "object_guid": "objectGUID",
+    "sam_account_name": "sAMAccountName",
+    "surname": "sn",
+}
+
+
+def _attribute_values(actor: LDAPActor, attribute: str) -> list[str]:
+    """Return an actor's attribute values as a list of strings."""
+    value = getattr(actor, attribute, None)
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [str(item) for item in value]
+    return [str(value)]
+
+
+def _actor_matches_filters(actor: LDAPActor, **kwargs: str) -> bool:
+    """Check whether an actor matches all non-wildcard search filters."""
+    for kwarg, value in kwargs.items():
+        if value == "*":
+            continue
+        attribute = _SEARCH_ATTR_BY_KWARG[kwarg]
+        values = [v.lower() for v in _attribute_values(actor, attribute)]
+        if value.lower() not in values:
+            return False
+    return True
+
+
+def ldap_mock_attribute_searcher(
+    actors: Sequence[LDAPActor],
+) -> Callable[..., PaginatedItemsContainer[LDAPActor]]:
+    """Create a mocked search with exact attribute matching and pagination."""
+
+    def mock_search(
+        _self: LDAPConnector,
+        *,
+        offset: int = 0,
+        limit: int = 10,
+        **kwargs: str,
+    ) -> PaginatedItemsContainer[LDAPActor]:
+        matched = [actor for actor in actors if _actor_matches_filters(actor, **kwargs)]
+        return PaginatedItemsContainer[LDAPActor](
+            items=matched[offset : offset + limit],
+            total=len(matched),
+        )
+
+    return mock_search
+
+
 @pytest.fixture(params=["ldap_patched_connector", "ldap_mock_server"])
 def mocked_ldap(request: pytest.FixtureRequest, monkeypatch: MonkeyPatch) -> None:
     if request.param == "ldap_patched_connector":
@@ -133,12 +189,12 @@ def mocked_ldap(request: pytest.FixtureRequest, monkeypatch: MonkeyPatch) -> Non
         monkeypatch.setattr(
             LDAPConnector,
             "get_persons",
-            ldap_mock_searcher(test_persons_ldap),
+            ldap_mock_attribute_searcher(test_persons_ldap),
         )
         monkeypatch.setattr(
             LDAPConnector,
             "get_functional_accounts",
-            ldap_mock_searcher(test_accounts_ldap),
+            ldap_mock_attribute_searcher(test_accounts_ldap),
         )
         test_persons_and_functional_accounts_ldap = sorted(
             [*test_persons_ldap, *test_accounts_ldap], key=lambda x: x.objectGUID
