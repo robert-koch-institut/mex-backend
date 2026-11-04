@@ -73,6 +73,11 @@ jobs:
         with:
           python-version: "3.15"
 
+      - name: Install system packages
+        # python-ldap has no prebuilt Linux wheel, so `uv sync` builds it from
+        # source here; it needs ldap.h/sasl.h to compile.
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libldap-dev libsasl2-dev
+
       - name: Install requirements
         run: |
           echo ${{ matrix.python-version }} > .python-version
