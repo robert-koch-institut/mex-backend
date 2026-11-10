@@ -9,7 +9,7 @@ urls = { Repository = "https://github.com/robert-koch-institut/mex-backend" }
 requires-python = ">=3.15,<3.16"
 dependencies = [
     "backoff>=2.2,<3",
-    "fastapi>=0.159,<0.160",
+    "fastapi>=0.162,<0.163",
     "jinja2>=3.1,<4",
     "mex-common>=3,<4",
     "neo4j>=6.1,<7",
