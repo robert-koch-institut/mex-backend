@@ -30,6 +30,14 @@ class BackendSettings(BaseSettings):
         description="Root path that the backend server should run under.",
         validation_alias="MEX_BACKEND_ROOT_PATH",
     )
+    backend_cors_allowed_origins: list[str] = Field(
+        [],
+        description=(
+            "Origins that browsers may call the backend from, e.g. "
+            '`["https://editor.example.org"]`. Empty means same-origin only.'
+        ),
+        validation_alias="MEX_BACKEND_CORS_ALLOWED_ORIGINS",
+    )
     backend_graceful_shutdown_timeout: int = Field(
         30,
         gt=0,
