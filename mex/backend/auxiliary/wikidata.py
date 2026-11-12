@@ -39,7 +39,7 @@ def search_organizations_in_wikidata(
         )
 
     connector = GraphConnector.get()
-    deque(connector.ingest_items([*result.locations, result.primary_source]))
+    deque(connector.ingest_items([result.primary_source, *result.locations]))
     return PaginatedItemsContainer[ExtractedOrganization](
         items=[result.organization],
         total=1,

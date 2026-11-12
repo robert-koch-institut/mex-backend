@@ -47,7 +47,7 @@ def cached_organization(name: str) -> ExtractedOrganization:
     connector = GraphConnector.get()
     deque(
         connector.ingest_items(
-            [result.organization, *result.locations, result.primary_source]
+            [result.primary_source, *result.locations, result.organization]
         )
     )
 
