@@ -27,6 +27,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   cache control) on all responses
 - restrict CORS origins to explicit setting instead of `*`, defaults to same-origin only
 - restrict CORS headers and methods to actually needed entries
+- apply security headers and restricted CORS to the testing backend as well
 
 ## [4.8.0] - 2026-10-29
 
