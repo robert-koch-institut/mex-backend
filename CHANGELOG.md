@@ -25,9 +25,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - `GraphConnector.commit` accepts an optional `timeout`, so queries served on a request
   path can no longer hold a pooled connection for the whole session timeout
-- upgrade python version to 3.15
 - new template https://github.com/robert-koch-institut/mex-template/releases/tag/2.1.0
-
 ### Deprecated
 
 ### Removed
