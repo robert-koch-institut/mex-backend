@@ -120,7 +120,7 @@ def test_search_publishable_merged_items_mocked(
                         "identifier": "00000000000000",
                         "locatedAt": [],
                         "supersededBy": None,
-                        "title": [],
+                        "title": [{"value": "MEx", "language": None}],
                         "unitInCharge": [],
                         "version": None,
                     }
@@ -188,7 +188,7 @@ def test_search_publishable_merged_items_mocked(
                         "identifier": "bFQoRhcVH5DHUt",
                         "locatedAt": [],
                         "supersededBy": None,
-                        "title": [],
+                        "title": [{"value": "Primary Source Two", "language": "en"}],
                         "unitInCharge": [],
                         "version": "Cool Version v2.13",
                     }
@@ -502,7 +502,7 @@ def test_search_publishable_merged_items_in_graph_skip_on_forbidden_publishing_t
                         "identifier": "00000000000000",
                         "locatedAt": [],
                         "supersededBy": None,
-                        "title": [],
+                        "title": [{"value": "MEx", "language": None}],
                         "unitInCharge": [],
                         "version": None,
                     }
@@ -570,7 +570,7 @@ def test_search_publishable_merged_items_in_graph_skip_on_forbidden_publishing_t
                         "identifier": "bFQoRhcVH5DHUt",
                         "locatedAt": [],
                         "supersededBy": None,
-                        "title": [],
+                        "title": [{"value": "Primary Source Two", "language": "en"}],
                         "unitInCharge": [],
                         "version": "Cool Version v2.13",
                     }

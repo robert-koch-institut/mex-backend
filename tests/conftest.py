@@ -360,10 +360,12 @@ def dummy_data(
     primary_source_1 = ExtractedPrimarySource(
         hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
         identifierInPrimarySource="ps-1",
+        title=[Text(value="Primary Source One", language=TextLanguage.EN)],
     )
     primary_source_2 = ExtractedPrimarySource(
         hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
         identifierInPrimarySource="ps-2",
+        title=[Text(value="Primary Source Two", language=TextLanguage.EN)],
         version="Cool Version v2.13",
     )
     contact_point_1 = ExtractedContactPoint(

@@ -24,6 +24,7 @@ from mex.common.types import (
     AnyPrimitiveType,
     ExtractedPrimarySourceIdentifier,
     MergedPrimarySourceIdentifier,
+    Text,
 )
 
 if TYPE_CHECKING:
@@ -50,12 +51,14 @@ MEX_PRIMARY_SOURCE: Final = ExtractedPrimarySourceWithHardcodedIdentifiers(
     identifier=MEX_PRIMARY_SOURCE_IDENTIFIER,
     identifierInPrimarySource=MEX_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
     stableTargetId=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    title=[Text(value="MEx", language=None)],
 )
 MEX_EDITOR_PRIMARY_SOURCE: Final = ExtractedPrimarySourceWithHardcodedIdentifiers(
     hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     identifier=MEX_EDITOR_PRIMARY_SOURCE_IDENTIFIER,
     identifierInPrimarySource=MEX_EDITOR_PRIMARY_SOURCE_IDENTIFIER_IN_PRIMARY_SOURCE,
     stableTargetId=MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    title=[Text(value="MEx Editor", language=None)],
 )
 
 

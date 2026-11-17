@@ -25,17 +25,44 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - `GraphConnector.commit` accepts an optional `timeout`, so queries served on a request
   path can no longer hold a pooled connection for the whole session timeout
 - upgrade python version to 3.15
+- setting `MEX_BACKEND_CORS_ALLOWED_ORIGINS` for browser origins allowed via CORS
+- new template https://github.com/robert-koch-institut/mex-template/releases/tag/2.1.0
 
 ### Deprecated
 
 ### Removed
 
+- disable unused redoc api documentation, swagger ui at `/docs` stays
+
+### Fixed
+
+### Security
+
+- set security headers (CSP, HSTS, nosniff, referrer policy, frame options,
+  cache control) on all responses
+- restrict CORS origins to explicit setting instead of `*`, defaults to same-origin only
+- restrict CORS headers and methods to actually needed entries
+- apply security headers and restricted CORS to the testing backend as well
+
+## [4.8.0] - 2026-10-29
+
+### Changes
+
+- upgrade mex-common to 3.6 to adopt mex-model 5.2 changes
+- add titles to the hardcoded mex and mex-editor primary sources
+- support nested fields that mix `Text` and `Link` values, like `hasLegalBasis`
+
+## [4.7.0] - 2026-10-22
+
+### Changes
+
+- upgrade python version to 3.15
+- upgrade mex-model to 5.2
+
 ### Fixed
 
 - wrong environment for mex-backend in compose
 - healthcheck for mex-backend in compose
-
-### Security
 
 ## [4.6.2] - 2026-10-12
 
