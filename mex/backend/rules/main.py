@@ -14,8 +14,15 @@ from mex.backend.rules.helpers import (
     update_and_get_rule_set,
 )
 from mex.backend.security import has_read_access, has_write_access
-from mex.backend.types import RuleType
+from mex.backend.suggestion.constants import (
+    DEFAULT_CANDIDATE_LIMIT,
+    MAX_CANDIDATE_LIMIT,
+)
+from mex.backend.suggestion.helpers import suggest_vocabulary_values_from_graph
+from mex.backend.suggestion.models import SuggestionResponse
+from mex.backend.types import RuleType, VocabularyFieldName
 from mex.common.models import (
+    AnyAdditiveModel,
     AnyRuleModel,
     AnyRuleSetRequest,
     AnyRuleSetResponse,
@@ -69,6 +76,55 @@ def search_rule_items_advanced(
         reference_filters=referenceFilters,
         skip=skip,
         limit=limit,
+    )
+
+
+@router.post(
+    "/rule-item/_suggest", tags=["editor"], dependencies=[Depends(has_read_access)]
+)
+def suggest_rule_item_values(
+    additive: Annotated[AnyAdditiveModel, Body(discriminator="entityType")],
+    fields: Annotated[
+        Sequence[VocabularyFieldName], Body(max_length=len(VocabularyFieldName))
+    ] = [],
+    excludeIdentifier: Annotated[Identifier | None, Body()] = None,
+    limit: Annotated[int, Body(ge=1, le=MAX_CANDIDATE_LIMIT)] = DEFAULT_CANDIDATE_LIMIT,
+    minConfidence: Annotated[float, Body(ge=0.0, le=1.0)] = 0.0,
+) -> SuggestionResponse:
+    """Suggest likely vocabulary values for a partially filled draft item.
+
+    Intended for data entry forms: post the item as far as the user has filled
+    it in and get back, per vocabulary field, the values that comparable
+    existing items carry. What to do with them, for example prefilling a field
+    or merely reordering a dropdown, is left to the client.
+
+    Evidence is drawn from three graph derived signals, blended and shrunk
+    toward the corpus wide prior:
+
+    - the references already on the draft, e.g. items of the same `unitInCharge`
+    - the draft's free text, matched against the full text index, where the top
+      scoring items vote weighted by their relevance
+    - the unconditioned distribution over all items of the same entity type
+
+    By default only the fields the draft has left empty are ranked. Pass
+    `excludeIdentifier` when re-editing an existing item, so that it cannot vote
+    for itself.
+
+    The counts behind these suggestions honour additive and subtractive rules,
+    but ignore preventive rules and primary source precedence. They describe
+    what comparable records look like, never what is correct for this record, so
+    do not reuse them where a fact is required.
+
+    This endpoint is meant to be called while the user types. Debounce by at
+    least 300ms and cancel requests that are still in flight when the draft
+    changes again.
+    """
+    return suggest_vocabulary_values_from_graph(
+        additive=additive,
+        requested_fields=fields,
+        exclude_identifier=str(excludeIdentifier) if excludeIdentifier else None,
+        limit=limit,
+        min_confidence=minConfidence,
     )
 
 

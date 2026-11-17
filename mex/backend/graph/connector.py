@@ -57,6 +57,7 @@ from mex.common.models import (
     PREVIEW_MODEL_CLASSES_BY_NAME,
     RULE_MODEL_CLASSES_BY_NAME,
     RULE_MODEL_CLASSES_BY_TYPE_BY_NAME,
+    SUBTRACTIVE_MODEL_CLASSES_BY_NAME,
     AnyExtractedModel,
     AnyMergedModel,
     AnyRuleModel,
@@ -202,6 +203,7 @@ class GraphConnector(BaseConnector):
         query: Query,
         /,
         access_mode: str = READ_ACCESS,
+        timeout: float | None = None,
         **parameters: Any,  # noqa: ANN401
     ) -> Result:
         """Send and commit a single graph transaction with retry configuration.
@@ -209,13 +211,17 @@ class GraphConnector(BaseConnector):
         Args:
             query: The query string or Query object to execute
             access_mode: Whether to run the query with read or write access
+            timeout: Seconds after which the server aborts the transaction,
+                or None to let it run until the session timeout. Queries served
+                on a request path should always set this, so a pathological
+                query cannot hold a pooled connection for `graph_session_timeout`
             **parameters: Query parameters to substitute in the Cypher query
 
         Returns:
             Result object containing query execution results and metadata
         """
         with self.driver.session(default_access_mode=access_mode) as session:
-            return Result(session.run(query.render(), parameters))
+            return Result(session.run(query.render(), parameters, timeout=timeout))
 
     def _run(
         self,
@@ -478,6 +484,97 @@ class GraphConnector(BaseConnector):
                         expand_references_in_search_result(component.pop("_refs"))
                     )
         return result
+
+    def aggregate_vocabulary_values(  # noqa: PLR0913, PLR0917
+        self,
+        entity_type: Sequence[str],
+        vocabulary_fields: Sequence[str],
+        reference_filters: Sequence[ReferenceFilter] | None,
+        exclude_identifier: str | None,
+        top_k: int,
+        timeout: float | None,
+    ) -> Result:
+        """Aggregate the distribution of vocabulary values over merged items.
+
+        The counts fold additive and subtractive rule semantics, but ignore
+        preventive rules and primary source precedence, so they approximate the
+        merged truth. They are a prior over what comparable items look like, not
+        a statement of fact about any item.
+
+        Args:
+            entity_type: Merged entity types to aggregate over
+            vocabulary_fields: Vocabulary field names to aggregate
+            reference_filters: Optional reference filters narrowing the cohort
+            exclude_identifier: Optional merged item to leave out of the cohort
+            top_k: Keep at most this many values per field
+            timeout: Seconds after which the server aborts the transaction
+
+        Returns:
+            Graph result with a single `cohortSize` and `aggregations` record
+        """
+        raw_reference_filters = transform_reference_filters_to_raw_filters(
+            reference_filters
+        )
+        raw_reference_fields = transform_reference_filters_to_raw_fields(
+            reference_filters
+        )
+        query_builder = QueryBuilder.get()
+        query = query_builder.aggregate_vocabulary_values(
+            filter_by_references=bool(raw_reference_filters),
+            filter_by_exclusion=bool(exclude_identifier),
+            reference_fields=raw_reference_fields,
+        )
+        return self.commit(
+            query,
+            labels=entity_type,
+            reference_filters=raw_reference_filters,
+            reference_fields=raw_reference_fields,
+            exclude_identifier=exclude_identifier,
+            vocabulary_fields=vocabulary_fields,
+            subtractive_labels=list(SUBTRACTIVE_MODEL_CLASSES_BY_NAME),
+            top_k=top_k,
+            timeout=timeout,
+        )
+
+    def fetch_vocabulary_neighbourhood(  # noqa: PLR0913, PLR0917
+        self,
+        query_string: str,
+        entity_type: Sequence[str],
+        vocabulary_fields: Sequence[str],
+        exclude_identifier: str | None,
+        hit_limit: int,
+        neighbour_limit: int,
+        timeout: float | None,
+    ) -> Result:
+        """Fetch the top scoring merged items for a query string with their values.
+
+        Args:
+            query_string: Escaped lucene query string, must not be empty
+            entity_type: Merged entity types to restrict the neighbourhood to
+            vocabulary_fields: Vocabulary field names to collect
+            exclude_identifier: Optional merged item to leave out
+            hit_limit: Cap on raw hits requested from the index
+            neighbour_limit: Cap on merged items allowed to vote
+            timeout: Seconds after which the server aborts the transaction
+
+        Returns:
+            Graph result with a single `neighbours` record
+        """
+        query_builder = QueryBuilder.get()
+        query = query_builder.fetch_vocabulary_neighbourhood(
+            filter_by_exclusion=bool(exclude_identifier),
+        )
+        return self.commit(
+            query,
+            query_string=query_string,
+            labels=entity_type,
+            exclude_identifier=exclude_identifier,
+            vocabulary_fields=vocabulary_fields,
+            subtractive_labels=list(SUBTRACTIVE_MODEL_CLASSES_BY_NAME),
+            hit_limit=hit_limit,
+            neighbour_limit=neighbour_limit,
+            timeout=timeout,
+        )
 
     def fetch_identities(
         self,
