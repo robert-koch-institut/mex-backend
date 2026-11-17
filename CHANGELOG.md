@@ -13,29 +13,73 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   to the keeper, re-links all references to the goner, migrates the goner's rule values
   into the keeper's rule set and leaves the goner behind as a tombstone whose only value
   is `supersededBy`
-- added `goner_not_superseded` and `keeper_not_superseded` merging preconditions
 - the identity cache is reset for all extracted items that a merge moved, so that
   re-running an extractor links to the keeper instead of resurrecting the goner
+- a merge is rolled back when it would leave the goner with values of its own or with
+  references still pointing at it, instead of a clean tombstone
+- setting `MEX_BACKEND_CORS_ALLOWED_ORIGINS` for browser origins allowed via CORS
+
+### Changes
+
+- new template https://github.com/robert-koch-institut/mex-template/releases/tag/2.1.0
+- upgrade mex-common to 3.8: merged-away items now validate as tombstones whose only
+  value is `supersededBy`, so they are returned by merged item search and get endpoints
+### Deprecated
+
+### Removed
+
+- disable unused redoc api documentation, swagger ui at `/docs` stays
+
+### Fixed
+
+### Security
+
+- set security headers (CSP, HSTS, nosniff, referrer policy, frame options,
+  cache control) on all responses
+- restrict CORS origins to explicit setting instead of `*`, defaults to same-origin only
+- restrict CORS headers and methods to actually needed entries
+- apply security headers and restricted CORS to the testing backend as well
+
+## [4.8.0] - 2026-10-29
+
+### Changes
+
+- upgrade mex-common to 3.6 to adopt mex-model 5.2 changes
+- add titles to the hardcoded mex and mex-editor primary sources
+- support nested fields that mix `Text` and `Link` values, like `hasLegalBasis`
+
+## [4.7.0] - 2026-10-22
+
+### Changes
+
+- upgrade python version to 3.15
+- upgrade mex-model to 5.2
+
+### Fixed
+
+- wrong environment for mex-backend in compose
+- healthcheck for mex-backend in compose
+
+## [4.6.2] - 2026-10-12
+
+### Added
+
+- added `goner_not_superseded` and `keeper_not_superseded` merging preconditions
 - added `lock_merge_participants` query that write-locks both merged items before the
   merging preconditions are checked, so that concurrent merges cannot both pass them
 - added `get_identity_cache_key` helper to build identity cache keys in one place
+- hard-fail application boot upon incompatible neo4j
 
 ### Changes
 
 - update dependency to mex-common 3.4.2 and update other dependencies
 - graph reads can now join an open write transaction via the new `GraphConnector._run`
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 
 - flaky valkey cache test asserting a hardcoded URL instead of the configured setting
 - flaky artificial-data ingest test snapshotting one item at a fixed pagination offset
 - raise required test coverage from 95% to 98%
-
-### Security
 
 ## [4.6.1] - 2026-09-28
 
@@ -210,18 +254,18 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Added
 
 - new endpoints for retrieving publishable merged items
-    - GET /publishable-merged-item/
-    - POST /publishable-merged-item/_search
-    - endpoints require a publishing target and check for each item if it is publishable
-      to the respective target
+  - GET /publishable-merged-item/
+  - POST /publishable-merged-item/_search
+  - endpoints require a publishing target and check for each item if it is publishable
+    to the respective target
 - migration logic to add workflow rule to rule sets in database
 - BREAKING: rule sets endpoints return workflow rule (4 rules in total)
-    - they also accept it, but silently set the default if none is submitted
-    - this rule defines forbidden targets for publishing of merged items
-    - This change affects what kind of data is stored in database and might therefore
-      have unexpected side effects
-    - If your repo depends on mex-common AND on mex-backend, make sure to update both to
-      versions that include the workflow rule
+  - they also accept it, but silently set the default if none is submitted
+  - this rule defines forbidden targets for publishing of merged items
+  - This change affects what kind of data is stored in database and might therefore
+    have unexpected side effects
+  - If your repo depends on mex-common AND on mex-backend, make sure to update both to
+    versions that include the workflow rule
 
 ## [2.1.0] - 2026-05-26
 

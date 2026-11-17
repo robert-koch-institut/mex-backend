@@ -16,11 +16,14 @@ from neo4j.exceptions import (
     ServiceUnavailable,
     SessionExpired,
 )
+from packaging.version import Version
+from pydantic import ValidationError
 
 from mex.backend.exceptions import BackendError
 from mex.backend.graph.constants import NO_REFERENCE_SENTINEL
 from mex.backend.graph.exceptions import (
     DeletionFailedError,
+    IncompatibleVersionError,
     IngestionError,
     MergingError,
 )
@@ -42,8 +45,10 @@ from mex.backend.graph.transform import (
     validate_ingested_data,
 )
 from mex.backend.identity.helpers import reset_identity_cache
+from mex.backend.merged.transform import merge_search_result_item
 from mex.backend.models import ReferenceFilter
 from mex.backend.rules.transform import (
+    build_tombstone_rule_set,
     transform_raw_rule_set_to_rule_set_response,
     transform_raw_rules_to_rule_set_response,
 )
@@ -76,13 +81,20 @@ from mex.common.models import (
     VersionStatus,
 )
 from mex.common.transform import ensure_postfix
-from mex.common.types import MergedPrimarySourceIdentifier
+from mex.common.types import MergedPrimarySourceIdentifier, Validation
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable, Sequence
 
     from mex.backend.graph.models import RawReferenceFilter
     from mex.common.types import Identifier
+
+
+# `merge_item.cql` uses the Cypher 25 conditional subquery syntax
+# (`CALL (...) { WHEN ... THEN ... }`), which Neo4j only introduced in 2025.6.0 as
+# part of Cypher 25's initial release. See the Cypher Manual's conditional-queries
+# page and Neo4j's developer blog on Cypher conditional queries.
+MIN_NEO4J_VERSION = Version("2025.6.0")
 
 
 class GraphConnector(BaseConnector):
@@ -124,9 +136,21 @@ class GraphConnector(BaseConnector):
         )
 
     def _check_connectivity_and_authentication(self) -> Result:
-        """Check the connectivity and authentication to the graph."""
+        """Check the connectivity and authentication to the graph.
+
+        Raises:
+            IncompatibleVersionError: If the connected neo4j is older than
+                `MIN_NEO4J_VERSION`.
+        """
         query_builder = QueryBuilder.get()
         result = self.commit(query_builder.get_database_status())
+        version = Version(result["version"])
+        if version < MIN_NEO4J_VERSION:
+            msg = (
+                f"Incompatible neo4j version: requires {MIN_NEO4J_VERSION} or newer, "
+                f"but connected to {version}."
+            )
+            raise IncompatibleVersionError(msg)
         logger.info("connected to neo4j %s", result["version"])
         return result
 
@@ -901,6 +925,56 @@ class GraphConnector(BaseConnector):
                 if redirected_rule_set != rule_set:
                     self._run_ingest_in_transaction(tx, redirected_rule_set)
 
+    def _check_tombstone_tx(
+        self,
+        tx: Transaction,
+        goner: AnyMergedModel,
+    ) -> None:
+        """Raise an error when the goner was not left behind as a clean tombstone.
+
+        A tombstone must validate as a merged item, which leaves `supersededBy` as its
+        only value, and nothing but its own rules may still point at it. Anything else
+        means part of the goner was not moved to the keeper, so the merge is rolled
+        back instead of hiding leftover data or dangling references behind it.
+
+        Only the goner is checked here: the keeper's moved extracted items compute
+        their stable target id from the identity provider, which does not know about
+        the move until the merge is committed.
+
+        Args:
+            tx: Open transaction to run the queries in
+            goner: Merged item that is merged away
+        """
+        query_builder = QueryBuilder.get()
+        leftovers = self._run(
+            query_builder.count_merge_leftovers(),
+            tx=tx,
+            goner_identifier=str(goner.identifier),
+        ).one()
+        if leftover_count := int(leftovers["leftover_count"]):
+            msg = (
+                f"Merging left {leftover_count} references to "
+                f"MergedItem(identifier='{goner.identifier}', ...) behind."
+            )
+            raise MergingError(msg)
+        result = self.fetch_merged_items(
+            query_string=None,
+            identifier=str(goner.identifier),
+            entity_type=None,
+            reference_filters=None,
+            skip=0,
+            limit=1,
+            tx=tx,
+        ).one()
+        try:
+            merge_search_result_item(result["items"][0], Validation.STRICT)
+        except (MExError, ValidationError) as error:
+            msg = (
+                "Merging left an invalid tombstone for "
+                f"MergedItem(identifier='{goner.identifier}', ...): {error}"
+            )
+            raise MergingError(msg) from error
+
     def _merge_items_tx(
         self,
         tx: Transaction,
@@ -933,17 +1007,6 @@ class GraphConnector(BaseConnector):
         # point everything that still references the goner at the keeper
         self._relink_referencing_items_tx(tx, referencing_items, goner, keeper)
 
-        # a goner that was superseded before must not pass that reference on
-        goner_rule_set = type(goner_rule_set).model_validate(
-            {
-                **goner_rule_set.model_dump(),
-                "additive": {
-                    **goner_rule_set.additive.model_dump(),
-                    "supersededBy": None,
-                },
-            }
-        )
-
         # migrate the goner's rule values into the keeper's rule set
         merged_rule_set = merge_rule_set_responses(
             self._redirect_rule_set(
@@ -957,10 +1020,8 @@ class GraphConnector(BaseConnector):
         self._run_ingest_in_transaction(tx, merged_rule_set)
 
         # leave the goner behind as a tombstone pointing at the keeper
-        # imported here, because rule helpers import this connector in turn
-        from mex.backend.rules.helpers import build_tombstone_rule_set  # noqa: PLC0415
-
         self._run_ingest_in_transaction(tx, build_tombstone_rule_set(goner, keeper))
+        self._check_tombstone_tx(tx, goner)
         return moved_identities
 
     def merge_items(

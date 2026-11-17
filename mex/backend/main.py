@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING, Any
 
 import uvicorn
 from fastapi import APIRouter, FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from pydantic_core import SchemaError, ValidationError
 
 from mex.backend.auxiliary.ldap import router as ldap_router
@@ -15,11 +14,13 @@ from mex.backend.exceptions import (
     handle_uncaught_exception,
 )
 from mex.backend.extracted.main import router as extracted_router
+from mex.backend.graph.connector import GraphConnector
 from mex.backend.identity.main import router as identity_router
 from mex.backend.ingest.main import router as ingest_router
 from mex.backend.ldap.main import router as ldap_login_router
 from mex.backend.logging import UVICORN_LOGGING_CONFIG
 from mex.backend.merged.main import router as merged_router
+from mex.backend.middleware import SettingsCORSMiddleware, add_security_headers
 from mex.backend.preview.main import router as preview_router
 from mex.backend.publishable_merged.main import router as publishable_merged_router
 from mex.backend.rules.main import router as rules_router
@@ -34,6 +35,9 @@ if TYPE_CHECKING:
 
 startup_tasks: list[Callable[[], Any]] = [
     BackendSettings.get,
+    # eagerly runs the neo4j version check so an incompatible neo4j fails application
+    # startup.
+    GraphConnector.get,
 ]
 teardown_tasks: list[Callable[[], Any]] = [
     CONNECTOR_STORE.reset,
@@ -69,6 +73,7 @@ app = FastAPI(
     strict_content_type=False,
     lifespan=lifespan,
     version="v0",
+    redoc_url=None,
 )
 router = APIRouter(prefix="/v0")
 router.include_router(extracted_router)
@@ -90,13 +95,8 @@ app.add_exception_handler(BackendError, handle_detailed_error)
 app.add_exception_handler(SchemaError, handle_detailed_error)
 app.add_exception_handler(ValidationError, handle_detailed_error)
 app.add_exception_handler(Exception, handle_uncaught_exception)
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_headers=["*"],
-    allow_methods=["*"],
-    allow_origins=["*"],
-)
+add_security_headers(app)
+app.add_middleware(SettingsCORSMiddleware)
 
 
 @entrypoint(BackendSettings)

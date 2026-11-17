@@ -168,6 +168,18 @@ def test_create_rule_set(client_with_api_key_write_permission: TestClient) -> No
             "label": "website",
             "position": 0,
         },
+        {
+            "end": "Text",
+            "label": "title",
+            "position": 0,
+            "start": "00000000000001",
+        },
+        {
+            "end": "Text",
+            "label": "title",
+            "position": 0,
+            "start": "00000000000003",
+        },
         {"start": "AdditiveActivity", "end": "Text", "label": "title", "position": 0},
         {
             "start": "AdditiveActivity",
@@ -213,6 +225,14 @@ def test_create_rule_set(client_with_api_key_write_permission: TestClient) -> No
         {"label": "Link", "url": "https://activity.rule/one"},
         {"label": "PreventiveActivity"},
         {"language": "en", "label": "Text", "value": "A new beginning"},
+        {
+            "label": "Text",
+            "value": "MEx Editor",
+        },
+        {
+            "label": "Text",
+            "value": "MEx",
+        },
     ]
 
 
@@ -541,30 +561,6 @@ def test_update_rule_set(
             ],
         },
         {
-            "country": [],
-            "geprisId": [],
-            "gndId": [],
-            "identifier": "bFQoRhcVH5DHUE",
-            "identifierInPrimarySource": "robert-koch-institute",
-            "isniId": [],
-            "label": "ExtractedOrganization",
-            "rorId": [],
-            "viafId": [],
-            "wikidataId": [],
-        },
-        {
-            "country": [],
-            "geprisId": [],
-            "gndId": [],
-            "identifier": "bFQoRhcVH5DHUu",
-            "identifierInPrimarySource": "rki",
-            "isniId": [],
-            "label": "ExtractedOrganization",
-            "rorId": [],
-            "viafId": [],
-            "wikidataId": [],
-        },
-        {
             "email": [
                 "1.7@rki.de",
             ],
@@ -740,7 +736,31 @@ def test_update_rule_set(
             "end": "Text",
             "label": "title",
             "position": 0,
+            "start": "00000000000001",
+        },
+        {
+            "end": "Text",
+            "label": "title",
+            "position": 0,
+            "start": "00000000000003",
+        },
+        {
+            "end": "Text",
+            "label": "title",
+            "position": 0,
             "start": "bFQoRhcVH5DHUG",
+        },
+        {
+            "end": "Text",
+            "label": "title",
+            "position": 0,
+            "start": "bFQoRhcVH5DHUq",
+        },
+        {
+            "end": "Text",
+            "label": "title",
+            "position": 0,
+            "start": "bFQoRhcVH5DHUs",
         },
         {
             "end": "bFQoRhcVH5DHUB",
@@ -913,6 +933,28 @@ def test_update_rule_set(
             "label": "WorkflowOrganizationalUnit",
         },
         {
+            "geprisId": [],
+            "gndId": [],
+            "identifier": "bFQoRhcVH5DHUE",
+            "identifierInPrimarySource": "robert-koch-institute",
+            "isniId": [],
+            "label": "ExtractedOrganization",
+            "rorId": [],
+            "viafId": [],
+            "wikidataId": [],
+        },
+        {
+            "geprisId": [],
+            "gndId": [],
+            "identifier": "bFQoRhcVH5DHUu",
+            "identifierInPrimarySource": "rki",
+            "isniId": [],
+            "label": "ExtractedOrganization",
+            "rorId": [],
+            "viafId": [],
+            "wikidataId": [],
+        },
+        {
             "identifier": "00000000000000",
             "label": "MergedPrimarySource",
         },
@@ -1029,6 +1071,16 @@ def test_update_rule_set(
         {
             "label": "Text",
             "language": "en",
+            "value": "Primary Source One",
+        },
+        {
+            "label": "Text",
+            "language": "en",
+            "value": "Primary Source Two",
+        },
+        {
+            "label": "Text",
+            "language": "en",
             "value": "Robert Koch Institute",
         },
         {
@@ -1044,5 +1096,13 @@ def test_update_rule_set(
         {
             "label": "Text",
             "value": "Eng aktiv Aktivitéit.",
+        },
+        {
+            "label": "Text",
+            "value": "MEx Editor",
+        },
+        {
+            "label": "Text",
+            "value": "MEx",
         },
     ]

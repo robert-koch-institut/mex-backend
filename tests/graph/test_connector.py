@@ -14,7 +14,11 @@ from mex.backend.cache import get_cache_connector
 from mex.backend.graph import connector as connector_module
 from mex.backend.graph.connector import GraphConnector, get_graph_status
 from mex.backend.graph.constants import NO_REFERENCE_SENTINEL
-from mex.backend.graph.exceptions import IngestionError, MergingError
+from mex.backend.graph.exceptions import (
+    IncompatibleVersionError,
+    IngestionError,
+    MergingError,
+)
 from mex.backend.graph.models import IngestParams, RawReferenceFilter
 from mex.backend.graph.query import Query
 from mex.backend.identity.helpers import get_identity_cache_key
@@ -28,16 +32,20 @@ from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
     MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    AdditiveOrganization,
     AdditiveOrganizationalUnit,
     AnyExtractedModel,
+    AnyMergedModel,
     ExtractedOrganization,
     ExtractedOrganizationalUnit,
     OrganizationalUnitRuleSetResponse,
+    OrganizationRuleSetResponse,
     VersionStatus,
 )
 from mex.common.types import (
     Identifier,
     MergedOrganizationalUnitIdentifier,
+    MergedOrganizationIdentifier,
     Text,
     TextLanguage,
     Validation,
@@ -68,6 +76,18 @@ def test_check_connectivity_and_authentication_error(mocked_graph: MockedGraph) 
     mocked_graph.run.side_effect = ServiceUnavailable("cannot connect to neo4j")
     graph = GraphConnector.get()
     with pytest.raises(ServiceUnavailable, match="cannot connect to neo4j"):
+        graph._check_connectivity_and_authentication()
+
+
+def test_check_connectivity_and_authentication_incompatible_version(
+    mocked_graph: MockedGraph,
+) -> None:
+    mocked_graph.return_value = [{"version": "2025.5.0"}]
+    graph = GraphConnector.get()
+    with pytest.raises(
+        IncompatibleVersionError,
+        match=re.escape("requires 2025.6.0 or newer, but connected to 2025.5.0"),
+    ):
         graph._check_connectivity_and_authentication()
 
 
@@ -222,7 +242,14 @@ def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
                         "nodeLabels": ["MergedPrimarySource"],
                     }
                 ],
-                "createRels": [],
+                "createRels": [
+                    {
+                        "nodeProps": {"value": "MEx", "language": None},
+                        "edgeLabel": "title",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["Text"],
+                    }
+                ],
                 "nodeProps": {
                     "identifierInPrimarySource": "mex",
                     "identifier": "00000000000001",
@@ -242,7 +269,14 @@ def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
                         "nodeLabels": ["MergedPrimarySource"],
                     }
                 ],
-                "createRels": [],
+                "createRels": [
+                    {
+                        "nodeProps": {"value": "MEx Editor", "language": None},
+                        "edgeLabel": "title",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["Text"],
+                    }
+                ],
                 "nodeProps": {
                     "identifierInPrimarySource": "mex-editor",
                     "identifier": "00000000000003",
@@ -275,9 +309,9 @@ def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
                 delete_node_edges=[
                     "alternativeTitle",
                     "description",
-                    "title",
                     "documentation",
                     "locatedAt",
+                    "title",
                 ],
                 has_link_rels=True,
                 has_create_rels=True,
@@ -300,7 +334,14 @@ def test_mocked_graph_seed_data(mocked_graph: MockedGraph) -> None:
                     "edgeProps": {"position": 0},
                 }
             ],
-            "createRels": [],
+            "createRels": [
+                {
+                    "nodeLabels": ["Text"],
+                    "nodeProps": {"value": "MEx", "language": None},
+                    "edgeLabel": "title",
+                    "edgeProps": {"position": 0},
+                }
+            ],
         },
     )
 
@@ -540,7 +581,6 @@ def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
                 "items": [
                     {
                         "rorId": [],
-                        "country": [],
                         "gndId": [],
                         "wikidataId": [],
                         "identifierInPrimarySource": "robert-koch-institute",
@@ -578,7 +618,6 @@ def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
                 "items": [
                     {
                         "rorId": [],
-                        "country": [],
                         "gndId": [],
                         "wikidataId": [],
                         "identifierInPrimarySource": "robert-koch-institute",
@@ -607,6 +646,7 @@ def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
                         "identifierInPrimarySource": "mex",
                         "entityType": "ExtractedPrimarySource",
                         "identifier": "00000000000001",
+                        "title": [{"value": "MEx"}],
                         "stableTargetId": ["00000000000000"],
                         "hadPrimarySource": ["00000000000000"],
                     }
@@ -621,7 +661,6 @@ def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
                 "items": [
                     {
                         "rorId": [],
-                        "country": [],
                         "gndId": [],
                         "wikidataId": [],
                         "identifierInPrimarySource": "robert-koch-institute",
@@ -693,7 +732,6 @@ def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
                 "items": [
                     {
                         "rorId": [],
-                        "country": [],
                         "gndId": [],
                         "wikidataId": [],
                         "identifierInPrimarySource": "robert-koch-institute",
@@ -711,7 +749,6 @@ def test_mocked_graph_fetch_extracted_items_none_identifier_sentinel(
                     },
                     {
                         "rorId": [],
-                        "country": [],
                         "identifierInPrimarySource": "rki",
                         "gndId": [],
                         "wikidataId": [],
@@ -1284,6 +1321,7 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
                                 "identifierInPrimarySource": "mex",
                                 "entityType": "ExtractedPrimarySource",
                                 "identifier": "00000000000001",
+                                "title": [{"value": "MEx"}],
                                 "stableTargetId": ["00000000000000"],
                                 "hadPrimarySource": ["00000000000000"],
                             }
@@ -1307,7 +1345,6 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
                         "_components": [
                             {
                                 "rorId": [],
-                                "country": [],
                                 "gndId": [],
                                 "wikidataId": [],
                                 "identifierInPrimarySource": "robert-koch-institute",
@@ -1366,7 +1403,6 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
                                 "geprisId": [],
                                 "gndId": [],
                                 "rorId": [],
-                                "country": [],
                                 "viafId": [],
                                 "wikidataId": [],
                             }
@@ -1586,7 +1622,6 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
                         "_components": [
                             {
                                 "rorId": [],
-                                "country": [],
                                 "gndId": [],
                                 "wikidataId": [],
                                 "identifierInPrimarySource": "robert-koch-institute",
@@ -1613,7 +1648,6 @@ def test_mocked_graph_fetch_merged_items(mocked_graph: MockedGraph) -> None:
                         "_components": [
                             {
                                 "rorId": [],
-                                "country": [],
                                 "gndId": [],
                                 "wikidataId": [],
                                 "identifierInPrimarySource": "rki",
@@ -2022,7 +2056,14 @@ def test_mocked_graph_ingests_extracted_models(
                         "nodeLabels": ["MergedPrimarySource"],
                     }
                 ],
-                "createRels": [],
+                "createRels": [
+                    {
+                        "nodeProps": {"value": "Primary Source One", "language": "en"},
+                        "edgeLabel": "title",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["Text"],
+                    }
+                ],
                 "nodeProps": {
                     "identifierInPrimarySource": "ps-1",
                     "identifier": dummy_data["primary_source_1"].identifier,
@@ -2042,7 +2083,14 @@ def test_mocked_graph_ingests_extracted_models(
                         "nodeLabels": ["MergedPrimarySource"],
                     }
                 ],
-                "createRels": [],
+                "createRels": [
+                    {
+                        "nodeProps": {"value": "Primary Source Two", "language": "en"},
+                        "edgeLabel": "title",
+                        "edgeProps": {"position": 0},
+                        "nodeLabels": ["Text"],
+                    }
+                ],
                 "nodeProps": {
                     "identifierInPrimarySource": "ps-2",
                     "identifier": dummy_data["primary_source_2"].identifier,
@@ -2386,6 +2434,79 @@ def test_graph_merge_items_preconditions_pass(loaded_dummy_data: DummyData) -> N
     # the goner's rule set carries nothing but the reference to the keeper
     rule_set = graph.fetch_rule_set_response(goner_identifier).one()
     assert rule_set["additive"]["supersededBy"] == [keeper_identifier]
+
+
+def _create_merge_participants(
+    dummy_data: DummyData,
+) -> tuple[AnyMergedModel, AnyMergedModel]:
+    """Return organization_1 as goner and organization_2 as keeper."""
+    return tuple(  # type: ignore[return-value]
+        create_merged_item(
+            dummy_data[name].stableTargetId,
+            [dummy_data[name]],
+            None,
+            Validation.STRICT,
+        )
+        for name in ("organization_1", "organization_2")
+    )
+
+
+def _sabotage_relinking(*_: Any, **__: Any) -> None:  # noqa: ANN401
+    """Stand in for a relinking step that misses every reference to the goner."""
+
+
+def _sabotage_tombstone(
+    goner: AnyMergedModel, keeper: AnyMergedModel
+) -> OrganizationRuleSetResponse:
+    """Stand in for a tombstone that still carries a value of its own."""
+    return OrganizationRuleSetResponse(
+        additive=AdditiveOrganization(
+            officialName=[Text(value="Leftover")],
+            supersededBy=MergedOrganizationIdentifier(keeper.identifier),
+        ),
+        stableTargetId=MergedOrganizationIdentifier(goner.identifier),
+    )
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    ("target", "sabotage", "expected"),
+    [
+        (
+            "GraphConnector._relink_referencing_items_tx",
+            _sabotage_relinking,
+            "Merging left 2 references to MergedItem",
+        ),
+        (
+            "build_tombstone_rule_set",
+            _sabotage_tombstone,
+            "Merging left an invalid tombstone for MergedItem",
+        ),
+    ],
+    ids=["dangling-references", "leftover-values"],
+)
+def test_graph_merge_items_rolls_back_unclean_tombstone(
+    monkeypatch: MonkeyPatch,
+    loaded_dummy_data: DummyData,
+    target: str,
+    sabotage: Any,  # noqa: ANN401
+    expected: str,
+) -> None:
+    graph = GraphConnector.get()
+    goner, keeper = _create_merge_participants(loaded_dummy_data)
+    graph_before = get_graph()
+    owner, _, attribute = target.rpartition(".")
+    monkeypatch.setattr(
+        getattr(connector_module, owner) if owner else connector_module,
+        attribute,
+        sabotage,
+    )
+
+    with pytest.raises(MergingError, match=re.escape(expected)):
+        graph.merge_items(goner, keeper)
+
+    # the whole merge was rolled back, the goner is not superseded
+    assert get_graph() == graph_before
 
 
 @pytest.mark.integration

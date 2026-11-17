@@ -5,6 +5,7 @@ from mex.common.models import (
     RULE_MODEL_CLASSES_BY_NAME,
     RULE_MODEL_CLASSES_BY_TYPE_BY_NAME,
     RULE_SET_RESPONSE_CLASSES_BY_NAME,
+    AnyMergedModel,
     AnyRuleModel,
     AnyRuleSetResponse,
 )
@@ -82,3 +83,30 @@ def transform_raw_rule_set_to_rule_set_response(
     response_class_name = ensure_postfix(stem_types.pop(), "RuleSetResponse")
     response_class = RULE_SET_RESPONSE_CLASSES_BY_NAME[response_class_name]
     return response_class.model_validate(raw)
+
+
+def build_tombstone_rule_set(
+    goner: AnyMergedModel,
+    keeper: AnyMergedModel,
+) -> AnyRuleSetResponse:
+    """Build a rule set for a merged item that was merged away.
+
+    A merged item that has been merged into another one keeps no values of its own.
+    All that is left of it is the reference to the item that superseded it, which
+    makes the resulting rule set the "tombstone" of the goner.
+
+    Args:
+        goner: Merged item that is merged away
+        keeper: Merged item that survives the merge
+
+    Returns:
+        Rule set whose only non-default value is `supersededBy`
+    """
+    response_class_name = ensure_postfix(goner.stemType, "RuleSetResponse")
+    response_class = RULE_SET_RESPONSE_CLASSES_BY_NAME[response_class_name]
+    return response_class.model_validate(
+        {
+            "additive": {"supersededBy": keeper.identifier},
+            "stableTargetId": goner.identifier,
+        }
+    )

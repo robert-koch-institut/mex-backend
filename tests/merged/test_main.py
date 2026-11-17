@@ -120,7 +120,7 @@ def test_search_merged_items_mocked(
                         "identifier": "00000000000000",
                         "locatedAt": [],
                         "supersededBy": None,
-                        "title": [],
+                        "title": [{"value": "MEx", "language": None}],
                         "unitInCharge": [],
                         "version": None,
                     }
@@ -188,7 +188,7 @@ def test_search_merged_items_mocked(
                         "identifier": "bFQoRhcVH5DHUt",
                         "locatedAt": [],
                         "supersededBy": None,
-                        "title": [],
+                        "title": [{"value": "Primary Source Two", "language": "en"}],
                         "unitInCharge": [],
                         "version": "Cool Version v2.13",
                     }
@@ -407,7 +407,7 @@ def test_search_merged_items(
                         "identifier": "00000000000000",
                         "locatedAt": [],
                         "supersededBy": None,
-                        "title": [],
+                        "title": [{"value": "MEx", "language": None}],
                         "unitInCharge": [],
                         "version": None,
                     }
@@ -475,7 +475,7 @@ def test_search_merged_items(
                         "identifier": "bFQoRhcVH5DHUt",
                         "locatedAt": [],
                         "supersededBy": None,
-                        "title": [],
+                        "title": [{"value": "Primary Source Two", "language": "en"}],
                         "unitInCharge": [],
                         "version": "Cool Version v2.13",
                     }
@@ -1066,7 +1066,7 @@ def test_merge_items(
 
 
 @pytest.mark.integration
-def test_merge_items_leaves_unvalidatable_tombstone(
+def test_merge_items_leaves_valid_tombstone(
     client_with_api_key_write_permission: TestClient,
     loaded_dummy_data: DummyData,
 ) -> None:
@@ -1081,23 +1081,30 @@ def test_merge_items_leaves_unvalidatable_tombstone(
     )
     assert response.status_code == status.HTTP_204_NO_CONTENT, response.text
 
-    # mex-common does not implement the tombstone validation contract yet, so a
-    # merged-away item has no required fields left and fails strict validation.
-    # mex.common.exceptions.MergingError is not a backend BackendError, so it is
-    # not caught by handle_detailed_error and surfaces as an internal error.
+    # the merged-away item validates as a tombstone that only points at the keeper
     fetched = client_with_api_key_write_permission.get(
         f"/v0/merged-item/{goner_identifier}"
     )
-    assert fetched.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR, fetched.text
+    assert fetched.status_code == status.HTTP_200_OK, fetched.text
+    assert {
+        key: value for key, value in fetched.json().items() if value not in ([], None)
+    } == {
+        "$type": "MergedOrganization",
+        "identifier": str(goner_identifier),
+        "supersededBy": str(keeper_identifier),
+    }
 
-    # and search, which validates leniently, drops it from the results entirely
     searched = client_with_api_key_write_permission.get(
         "/v0/merged-item", params={"entityType": ["MergedOrganization"]}
     )
     assert searched.status_code == status.HTTP_200_OK, searched.text
-    assert [item["identifier"] for item in searched.json()["items"]] == [
-        str(keeper_identifier)
-    ]
+    # search returns the tombstone as well, consumers tell it apart by `supersededBy`
+    assert {
+        item["identifier"]: item["supersededBy"] for item in searched.json()["items"]
+    } == {
+        str(keeper_identifier): None,
+        str(goner_identifier): str(keeper_identifier),
+    }
 
 
 @pytest.mark.integration

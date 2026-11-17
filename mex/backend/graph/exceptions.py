@@ -20,6 +20,10 @@ class InconsistentGraphError(BackendError):
     """Exception raised for inconsistencies found in the graph database."""
 
 
+class IncompatibleVersionError(BackendError):
+    """Exception raised when the version of a connected service is too old."""
+
+
 class GraphError(BackendError):
     """Graph error that can be constructed with more error metadata."""
 

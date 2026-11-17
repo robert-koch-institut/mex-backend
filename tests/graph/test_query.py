@@ -701,6 +701,21 @@ RETURN
     )
 
 
+def test_count_merge_leftovers(query_builder: QueryBuilder) -> None:
+    query = query_builder.count_merge_leftovers()
+    assert (
+        query.render()
+        == """\
+MATCH (goner:MergedPerson|MergedVariable|MergedDistribution {identifier: $goner_identifier})
+RETURN COUNT {
+   MATCH (source:ExtractedPerson|ExtractedVariable|ExtractedDistribution|AdditivePerson|AdditiveVariable|AdditiveDistribution)-[]->(goner)
+   WHERE NOT (
+      source:AdditivePerson|AdditiveVariable|AdditiveDistribution AND EXISTS { (source)-[:stableTargetId]->(goner) }
+   )
+} AS leftover_count;"""
+    )
+
+
 def test_merge_item(query_builder: QueryBuilder) -> None:
     query = query_builder.get_ingest_query_for_entity_type("ExtractedVariable")
     assert (
