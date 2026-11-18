@@ -1,5 +1,6 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "dependencyDashboard": true,
     "enabledManagers": [
         "docker-compose",
         "dockerfile",
@@ -16,12 +17,12 @@
             "on monday"
         ]
     },
+    "osvVulnerabilityAlerts": true,
     "packageRules": [
         {
             "description": "Apply all updates after cooldown of 7 days, hopefully avoiding malicious updates which are yanked in the meantime",
             "matchUpdateTypes": [
                 "digest",
-                "lockFileMaintenance",
                 "major",
                 "minor",
                 "patch",
@@ -31,9 +32,17 @@
             "minimumReleaseAgeBehaviour": "timestamp-optional"
         },
         {
-            "description": "Pin GitHub Actions and compose images to SHA digests for supply chain security",
+            "description": "Renovate cannot enforce a cooldown on lock file maintenance, because uv resolves the lock file itself (renovatebot/renovate#41654); set explicitly so the rule above does not override renovate's own default and leave the stability check pending forever",
+            "matchUpdateTypes": [
+                "lockFileMaintenance"
+            ],
+            "minimumReleaseAge": null
+        },
+        {
+            "description": "Pin GitHub Actions, compose images and base images to SHA digests for supply chain security",
             "matchManagers": [
                 "docker-compose",
+                "dockerfile",
                 "github-actions"
             ],
             "pinDigests": true
@@ -61,18 +70,86 @@
             ]
         },
         {
-            "description": "Immediately apply updates of mex packages in dedicated PR",
+            "description": "Group meta-requirements and pre-commit hooks into a single PR every other week, keeping tools in sync with their hooks",
+            "groupName": "tooling",
+            "matchManagers": [
+                "pip_requirements",
+                "pre-commit"
+            ],
+            "schedule": [
+                "* 0-5 1-7,15-21 * 3"
+            ]
+        },
+        {
+            "description": "Keep both python base image stages moving together in one PR",
+            "groupName": "python base image",
+            "matchDatasources": [
+                "docker"
+            ],
+            "matchDepNames": [
+                "python"
+            ]
+        },
+        {
+            "description": "Base and compose image digests change on every upstream rebuild; batch them every other week",
+            "groupName": "docker digests",
+            "matchManagers": [
+                "docker-compose",
+                "dockerfile"
+            ],
+            "matchUpdateTypes": [
+                "digest"
+            ],
+            "schedule": [
+                "* 0-5 1-7,15-21 * 3"
+            ]
+        },
+        {
+            "description": "Python major and minor upgrades are done by hand, because the version comes from the python_version_max cookiecutter variable recorded in .cruft.json, and is rendered from there into .python-version, pyproject.toml, the CI matrices and the Dockerfile, so it cannot be bumped by editing a single file",
+            "enabled": false,
+            "matchDatasources": [
+                "docker"
+            ],
+            "matchDepNames": [
+                "python"
+            ],
+            "matchUpdateTypes": [
+                "major",
+                "minor"
+            ]
+        },
+        {
+            "description": "Renovate's own action and pre-commit hook release almost daily; batch them every other week in their own group",
+            "groupName": "renovate",
+            "matchPackageNames": [
+                "renovatebot/**"
+            ],
+            "schedule": [
+                "* 0-5 1-7,15-21 * 3"
+            ]
+        },
+        {
+            "description": "Immediately apply updates of mex packages, in dedicated PR at any time; matches both bare pip package names (mex-common) and path-qualified docker image names (ghcr.io/robert-koch-institut/mex-backend), since those use different packageName formats",
             "groupName": null,
             "matchPackageNames": [
-                "mex-*"
+                "mex-*",
+                "**/mex-*",
+                "**/mex-*/**"
             ],
-            "minimumReleaseAge": "0 days"
+            "minimumReleaseAge": "0 days",
+            "schedule": [
+                "at any time"
+            ]
         }
     ],
     "prFooter": "",
     "pre-commit": {
         "enabled": true
     },
+    "schedule": [
+        "* 0-5 * * 1"
+    ],
+    "timezone": "Europe/Berlin",
     "vulnerabilityAlerts": {
         "enabled": true
     }

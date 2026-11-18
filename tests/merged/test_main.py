@@ -14,13 +14,12 @@ from mex.common.models import (
 )
 from mex.common.types import Validation
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from fastapi.testclient import TestClient
 
     from tests.conftest import DummyData, DummyDataName, MockedGraph
 
 
-@pytest.mark.usefixtures("mocked_valkey")
 def test_search_merged_items_mocked(
     client_with_api_key_read_permission: TestClient,
     mocked_graph: MockedGraph,
@@ -121,7 +120,7 @@ def test_search_merged_items_mocked(
                         "identifier": "00000000000000",
                         "locatedAt": [],
                         "supersededBy": None,
-                        "title": [],
+                        "title": [{"value": "MEx", "language": None}],
                         "unitInCharge": [],
                         "version": None,
                     }
@@ -189,7 +188,7 @@ def test_search_merged_items_mocked(
                         "identifier": "bFQoRhcVH5DHUt",
                         "locatedAt": [],
                         "supersededBy": None,
-                        "title": [],
+                        "title": [{"value": "Primary Source Two", "language": "en"}],
                         "unitInCharge": [],
                         "version": "Cool Version v2.13",
                     }
@@ -408,7 +407,7 @@ def test_search_merged_items(
                         "identifier": "00000000000000",
                         "locatedAt": [],
                         "supersededBy": None,
-                        "title": [],
+                        "title": [{"value": "MEx", "language": None}],
                         "unitInCharge": [],
                         "version": None,
                     }
@@ -476,7 +475,7 @@ def test_search_merged_items(
                         "identifier": "bFQoRhcVH5DHUt",
                         "locatedAt": [],
                         "supersededBy": None,
-                        "title": [],
+                        "title": [{"value": "Primary Source Two", "language": "en"}],
                         "unitInCharge": [],
                         "version": "Cool Version v2.13",
                     }

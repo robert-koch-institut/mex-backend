@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Any
 
 from mex.backend.exceptions import BackendError
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from pydantic_core import ErrorDetails
@@ -18,6 +18,10 @@ class MultipleResultsFoundError(BackendError):
 
 class InconsistentGraphError(BackendError):
     """Exception raised for inconsistencies found in the graph database."""
+
+
+class IncompatibleVersionError(BackendError):
+    """Exception raised when the version of a connected service is too old."""
 
 
 class GraphError(BackendError):

@@ -1,6 +1,5 @@
 import uvicorn
 from fastapi import APIRouter, FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from pydantic_core import SchemaError, ValidationError
 
 from mex.backend.auxiliary.orcid import router as orcid_router
@@ -16,6 +15,7 @@ from mex.backend.ingest.main import router as ingest_router
 from mex.backend.logging import UVICORN_LOGGING_CONFIG
 from mex.backend.main import lifespan
 from mex.backend.merged.main import router as merged_router
+from mex.backend.middleware import SettingsCORSMiddleware, add_security_headers
 from mex.backend.oauth import router as oauth_router
 from mex.backend.preview.main import router as preview_router
 from mex.backend.publishable_merged.main import router as publishable_merged_router
@@ -49,6 +49,7 @@ app = FastAPI(
     lifespan=lifespan,
     version="v0",
     swagger_ui_init_oauth=SWAGGER_UI_INIT_OAUTH,
+    redoc_url=None,
 )
 app.dependency_overrides[has_read_access] = has_read_access_mocked
 app.dependency_overrides[has_write_access] = has_write_access_mocked
@@ -74,13 +75,8 @@ app.add_exception_handler(BackendError, handle_detailed_error)
 app.add_exception_handler(SchemaError, handle_detailed_error)
 app.add_exception_handler(ValidationError, handle_detailed_error)
 app.add_exception_handler(Exception, handle_uncaught_exception)
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_headers=["*"],
-    allow_methods=["*"],
-    allow_origins=["*"],
-)
+add_security_headers(app)
+app.add_middleware(SettingsCORSMiddleware)
 
 
 @entrypoint(BackendSettings)

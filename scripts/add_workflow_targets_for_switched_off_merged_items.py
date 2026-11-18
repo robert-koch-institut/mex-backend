@@ -23,10 +23,9 @@ from mex.common.types import Identifier, PublishingTarget
 def add_workflow_targets_for_switched_off_merged_items(*, dry_run: bool) -> None:
     """Set forbidden publishing targets for "switched off" merged items.
 
-    Finds items which exists as preview item but not as merged item (i.e. required
-    fields are empty). Checks if all or only some required fields are empty. For items
-    with all required fields switched-off, a workflow rule with forbidden publishing
-    targets is created.
+    Finds items which have rules. Checks if all or only some required fields are
+    switched off by a preventive rule. For items with all required fields switched-off,
+    a workflow rule with forbidden publishing targets is created.
     """
     logger.info("migration add_workflow_targets_for_switched_off_merged_items started")
     if dry_run:

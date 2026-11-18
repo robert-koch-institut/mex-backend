@@ -5,7 +5,7 @@ import pytest
 
 from mex.backend.graph.models import IngestParams
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from tests.conftest import DummyData
 
 

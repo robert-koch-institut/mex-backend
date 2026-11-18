@@ -15,21 +15,132 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - added dedicated get-rule-set query and connector method
 - added `search_rule_items` (GET /rule-item) and `search_rule_items_advanced`
   (POST /rule-item/_search) endpoints to search for rule items
+- setting `MEX_BACKEND_CORS_ALLOWED_ORIGINS` for browser origins allowed via CORS
 
 ### Changes
 
-- update mex-common to 3.4.0 and mex-model to 5.1.2
-- set exact version for neo4j:2026.07.1
-
+- new template https://github.com/robert-koch-institut/mex-template/releases/tag/2.1.0
 ### Deprecated
 
 ### Removed
 
 - BREAKING: removed `POST /v0/merged-person-from-login` (replaced by `GET /v0/merged-person/self`)
+- disable unused redoc api documentation, swagger ui at `/docs` stays
 
 ### Fixed
 
 ### Security
+
+- set security headers (CSP, HSTS, nosniff, referrer policy, frame options,
+  cache control) on all responses
+- restrict CORS origins to explicit setting instead of `*`, defaults to same-origin only
+- restrict CORS headers and methods to actually needed entries
+- apply security headers and restricted CORS to the testing backend as well
+
+## [4.8.0] - 2026-10-29
+
+### Changes
+
+- upgrade mex-common to 3.6 to adopt mex-model 5.2 changes
+- add titles to the hardcoded mex and mex-editor primary sources
+- support nested fields that mix `Text` and `Link` values, like `hasLegalBasis`
+
+## [4.7.0] - 2026-10-22
+
+### Changes
+
+- upgrade python version to 3.15
+- upgrade mex-model to 5.2
+
+### Fixed
+
+- wrong environment for mex-backend in compose
+- healthcheck for mex-backend in compose
+
+## [4.6.2] - 2026-10-12
+
+### Added
+
+- added `goner_not_superseded` and `keeper_not_superseded` merging preconditions
+- added `lock_merge_participants` query that write-locks both merged items before the
+  merging preconditions are checked, so that concurrent merges cannot both pass them
+- added `get_identity_cache_key` helper to build identity cache keys in one place
+- hard-fail application boot upon incompatible neo4j
+
+### Changes
+
+- update dependency to mex-common 3.4.2 and update other dependencies
+- graph reads can now join an open write transaction via the new `GraphConnector._run`
+
+### Fixed
+
+- flaky valkey cache test asserting a hardcoded URL instead of the configured setting
+- flaky artificial-data ingest test snapshotting one item at a fixed pagination offset
+- raise required test coverage from 95% to 98%
+
+## [4.6.1] - 2026-09-28
+
+### Fixed
+
+- fix migration reset preventive rule by using MergingError fom common, not backend
+
+## [4.6.0] - 2026-09-25
+
+### Added
+
+- migration logic to reset preventive rules for "switched-off" merged items with workflow rule
+
+## [4.5.0] - 2026-09-16
+
+### Added
+
+- new endpoints `_system/neo4j` and `_system/valkey` reporting status and version
+- new setting `MEX_BACKEND_CACHE_CONNECTOR` to choose between `memory` and `valkey`
+- validator asserting the backend is configured with the graph identity provider
+
+### Changes
+
+- `get_database_status` cypher query now returns the neo4j version
+- new template https://github.com/robert-koch-institut/mex-template/releases/tag/2.0.1
+- `GraphConnector` now tracks whether constraints/indices have been seeded via a
+  `_schema_seeded` class flag, seeding them only once per process instead of once per
+  connector instance
+- `isolate_graph_database` in `tests/conftest.py` now calls `flush_data()` + re-seeds
+  the two primary source nodes between tests, instead of dropping and recreating the
+  whole schema every time
+- reference-filtered searches for merged, extracted and rule items now anchor their
+  match on one of the filtered references and seek it through the identifier index,
+  instead of scanning every extracted and rule node; filters asking for the absence of a
+  reference and `hadPrimarySource` filters cannot anchor and keep the previous scan
+
+### Fixed
+
+- integration test run time locally: 352.6s -> 46.1s (~7.6x)
+- reference-filtered search no longer costs a full graph scan per request
+
+## [4.4.0] - 2026-08-28
+
+### Added
+
+- added MEX_BACKEND_GRACEFUL_SHUTDOWN_TIMEOUT setting, defaults to 30s, was indefinitely
+- added MEX_GRAPH_MAX_CONNECTION_POOL_SIZE setting, defaults to 100,
+  used to be tied to MEX_BACKEND_API_PARALLELIZATION
+
+### Changes
+
+- update mex-common to 3.4.0 and mex-model to 5.1.2
+- set exact version for neo4j:2026.07.1
+- align cache connectors with the registry architecture of identity providers
+- cache metrics are now prefixed with the connector name, e.g. `valkey_cache_connector_*`
+- the existence of `MEX_BACKEND_VALKEY_URL` no longer chooses the cache connector
+
+### Removed
+
+- removed `# pragma: no cover` from TYPE_CHECKING gates because coverage is smarter now
+
+### Fixed
+
+- fixed seed script to ingest items progressively to not restrict item count by RAM
 
 ## [4.3.0] - 2026-08-13
 
@@ -140,18 +251,18 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Added
 
 - new endpoints for retrieving publishable merged items
-    - GET /publishable-merged-item/
-    - POST /publishable-merged-item/_search
-    - endpoints require a publishing target and check for each item if it is publishable
-      to the respective target
+  - GET /publishable-merged-item/
+  - POST /publishable-merged-item/_search
+  - endpoints require a publishing target and check for each item if it is publishable
+    to the respective target
 - migration logic to add workflow rule to rule sets in database
 - BREAKING: rule sets endpoints return workflow rule (4 rules in total)
-    - they also accept it, but silently set the default if none is submitted
-    - this rule defines forbidden targets for publishing of merged items
-    - This change affects what kind of data is stored in database and might therefore
-      have unexpected side effects
-    - If your repo depends on mex-common AND on mex-backend, make sure to update both to
-      versions that include the workflow rule
+  - they also accept it, but silently set the default if none is submitted
+  - this rule defines forbidden targets for publishing of merged items
+  - This change affects what kind of data is stored in database and might therefore
+    have unexpected side effects
+  - If your repo depends on mex-common AND on mex-backend, make sure to update both to
+    versions that include the workflow rule
 
 ## [2.1.0] - 2026-05-26
 
@@ -197,7 +308,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
-- add preview item by stableTargetid endpoint
+- add preview item by stableTargetId endpoint
 - add slapd LDAP mock server to compose and CI
 - add `mocked_ldap` fixture variant running against slapd when a search base is set
 - add LDAP mock data in `assets/raw-data/ldap/` with persons and functional accounts

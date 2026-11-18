@@ -5,7 +5,7 @@ from starlette import status
 
 from mex.common.models import MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from fastapi.testclient import TestClient
 
 
@@ -26,7 +26,7 @@ if TYPE_CHECKING:  # pragma: no cover
                         "identifier": "00000000000000",
                         "locatedAt": [],
                         "supersededBy": None,
-                        "title": [],
+                        "title": [{"value": "MEx", "language": None}],
                         "unitInCharge": [],
                         "version": [],
                     }
@@ -96,7 +96,7 @@ if TYPE_CHECKING:  # pragma: no cover
                         "identifier": "bFQoRhcVH5DHUt",
                         "locatedAt": [],
                         "supersededBy": None,
-                        "title": [],
+                        "title": [{"value": "Primary Source Two", "language": "en"}],
                         "unitInCharge": [],
                         "version": ["Cool Version v2.13"],
                     }
@@ -319,7 +319,7 @@ def test_search_preview_items(
                         "identifier": "00000000000000",
                         "locatedAt": [],
                         "supersededBy": None,
-                        "title": [],
+                        "title": [{"value": "MEx", "language": None}],
                         "unitInCharge": [],
                         "version": [],
                     }
@@ -389,7 +389,7 @@ def test_search_preview_items(
                         "identifier": "bFQoRhcVH5DHUt",
                         "locatedAt": [],
                         "supersededBy": None,
-                        "title": [],
+                        "title": [{"value": "Primary Source Two", "language": "en"}],
                         "unitInCharge": [],
                         "version": ["Cool Version v2.13"],
                     }

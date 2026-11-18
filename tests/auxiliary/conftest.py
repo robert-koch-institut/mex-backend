@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import MagicMock, Mock
 from uuid import UUID
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
 import pytest
