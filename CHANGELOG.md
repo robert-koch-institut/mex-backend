@@ -9,6 +9,12 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+- add dex OIDC provider to compose and CI, federating to slapd via LDAP
+- add `GET /v0/merged-person/self` returning the `MergedPerson` for the authenticated OIDC user
+- script to set forbidden publishing targets for "toggled off" merged items
+- added dedicated get-rule-set query and connector method
+- added `search_rule_items` (GET /rule-item) and `search_rule_items_advanced`
+  (POST /rule-item/_search) endpoints to search for rule items
 - setting `MEX_BACKEND_CORS_ALLOWED_ORIGINS` for browser origins allowed via CORS
 
 ### Changes
@@ -18,6 +24,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Removed
 
+- BREAKING: removed `POST /v0/merged-person-from-login` (replaced by `GET /v0/merged-person/self`)
 - disable unused redoc api documentation, swagger ui at `/docs` stays
 
 ### Fixed

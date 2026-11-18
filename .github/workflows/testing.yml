@@ -39,7 +39,7 @@ jobs:
           fetch-depth: 1
 
       - name: Start containers
-        run: docker compose up --wait neo4j valkey slapd
+        run: docker compose up --wait neo4j valkey slapd dex
 
       - name: Cache requirements
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -72,7 +72,7 @@ jobs:
           make install
 
       - name: Wait for container readiness
-        run: docker compose up --wait --wait-timeout 500 neo4j valkey slapd
+        run: docker compose up --wait --wait-timeout 500 neo4j valkey slapd dex
 
       - name: Run test suite
         env:
@@ -80,6 +80,9 @@ jobs:
           MEX_BACKEND_VALKEY_URL: valkey://localhost:6379
           MEX_LDAP_URL: ldap://cn=admin,dc=ldapmock,dc=local:adminpass@localhost:636
           MEX_LDAP_SEARCH_BASE: dc=ldapmock,dc=local
+          MEX_OIDC_ISSUER_URL: http://localhost:5556/dex
+          MEX_OIDC_CLIENT_ID: mex-backend
+          MEX_BACKEND_OIDC_GROUPS_DATABASE: '{"read":["Abteilung_21","Fachgebiet_99"],"write":["Abteilung_21"]}'
         run: make test
 
       - name: Show container logs
