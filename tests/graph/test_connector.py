@@ -10,6 +10,7 @@ from neo4j import WRITE_ACCESS
 from neo4j.exceptions import AuthError, ServiceUnavailable
 from pytest import FixtureRequest, MonkeyPatch
 
+from mex.backend.cache import get_cache_connector
 from mex.backend.graph import connector as connector_module
 from mex.backend.graph.connector import GraphConnector, get_graph_status
 from mex.backend.graph.constants import NO_REFERENCE_SENTINEL
@@ -20,7 +21,10 @@ from mex.backend.graph.exceptions import (
 )
 from mex.backend.graph.models import IngestParams, RawReferenceFilter
 from mex.backend.graph.query import Query
+from mex.backend.identity.helpers import get_identity_cache_key
+from mex.backend.identity.provider import GraphIdentityProvider
 from mex.backend.models import ReferenceFilter
+from mex.backend.rules.transform import transform_raw_rule_set_to_rule_set_response
 from mex.backend.settings import BackendSettings
 from mex.backend.types import MergedType, ReferenceFieldName
 from mex.common.exceptions import MExError
@@ -29,16 +33,21 @@ from mex.common.models import (
     EXTRACTED_MODEL_CLASSES_BY_NAME,
     MERGED_MODEL_CLASSES_BY_NAME,
     MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    AdditiveOrganization,
     AdditiveOrganizationalUnit,
     AnyExtractedModel,
+    AnyMergedModel,
     ExtractedOrganization,
     ExtractedOrganizationalUnit,
     OrganizationalUnitRuleSetResponse,
+    OrganizationRuleSetResponse,
+    PreventiveOrganization,
     VersionStatus,
 )
 from mex.common.types import (
     Identifier,
     MergedOrganizationalUnitIdentifier,
+    MergedOrganizationIdentifier,
     Text,
     TextLanguage,
     Validation,
@@ -2395,6 +2404,11 @@ def test_mocked_graph_ingests_extracted_models(
 @pytest.mark.integration
 def test_graph_merge_items_preconditions_pass(loaded_dummy_data: DummyData) -> None:
     graph = GraphConnector.get()
+    # `stableTargetId` is computed by the identity provider on every access, so the
+    # goner's id has to be captured before the merge re-points it at the keeper
+    extracted_identifier = str(loaded_dummy_data["organization_1"].identifier)
+    goner_identifier = str(loaded_dummy_data["organization_1"].stableTargetId)
+    keeper_identifier = str(loaded_dummy_data["organization_2"].stableTargetId)
     goner = create_merged_item(
         loaded_dummy_data["organization_1"].stableTargetId,
         [loaded_dummy_data["organization_1"]],
@@ -2408,8 +2422,229 @@ def test_graph_merge_items_preconditions_pass(loaded_dummy_data: DummyData) -> N
         Validation.STRICT,
     )
 
-    with pytest.raises(NotImplementedError):
+    graph.merge_items(goner, keeper)
+
+    # the goner's extracted item now belongs to the keeper instead of the goner
+    stable_target_id_edges = {
+        (edge["start"], edge["end"])
+        for edge in get_graph()
+        if edge.get("label") == "stableTargetId"
+    }
+    assert (extracted_identifier, keeper_identifier) in stable_target_id_edges
+    assert (extracted_identifier, goner_identifier) not in stable_target_id_edges
+
+    # the goner's rule set carries nothing but the reference to the keeper
+    rule_set = graph.fetch_rule_set_response(goner_identifier).one()
+    assert rule_set["additive"]["supersededBy"] == [keeper_identifier]
+
+
+@pytest.mark.integration
+def test_graph_merge_items_relinks_references_and_migrates_rules(
+    loaded_dummy_data: DummyData,
+) -> None:
+    graph = GraphConnector.get()
+    goner_id = loaded_dummy_data["organization_1"].stableTargetId
+    keeper_id = loaded_dummy_data["organization_2"].stableTargetId
+    primary_source_id = loaded_dummy_data["primary_source_1"].stableTargetId
+    unit_1_id = loaded_dummy_data["unit_1"].stableTargetId
+    deque(
+        graph.ingest_items(
+            [
+                OrganizationRuleSetResponse(
+                    additive=AdditiveOrganization(
+                        alternativeName=[Text(value="Goner Alias")]
+                    ),
+                    preventive=PreventiveOrganization(officialName=[primary_source_id]),
+                    stableTargetId=goner_id,
+                ),
+                OrganizationRuleSetResponse(
+                    additive=AdditiveOrganization(
+                        alternativeName=[Text(value="Keeper Alias")]
+                    ),
+                    stableTargetId=keeper_id,
+                ),
+                # a third item whose rules reference both merge participants
+                OrganizationalUnitRuleSetResponse(
+                    additive=AdditiveOrganizationalUnit(unitOf=[goner_id, keeper_id]),
+                    stableTargetId=unit_1_id,
+                ),
+            ]
+        )
+    )
+    goner, keeper = _create_merge_participants(loaded_dummy_data)
+
+    graph.merge_items(goner, keeper)
+
+    # extracted items of other merged items now reference the keeper
+    extracted_units = graph.fetch_extracted_items(
+        query_string=None,
+        identifier=None,
+        entity_type=["ExtractedOrganizationalUnit"],
+        reference_filters=None,
+        skip=0,
+        limit=10,
+    ).one()["items"]
+    assert [unit["unitOf"] for unit in extracted_units] == [
+        [str(keeper_id)],
+        [str(keeper_id)],
+    ]
+
+    # rules of other merged items are redirected and de-duplicated
+    unit_rule_set = cast(
+        "OrganizationalUnitRuleSetResponse",
+        transform_raw_rule_set_to_rule_set_response(
+            graph.fetch_rule_set_response(str(unit_1_id)).one()
+        ),
+    )
+    assert unit_rule_set.additive.unitOf == [keeper_id]
+
+    # the goner's rule values were appended to the keeper's rule set, and the
+    # preventive value survives because its primary source now feeds the keeper
+    keeper_rule_set = cast(
+        "OrganizationRuleSetResponse",
+        transform_raw_rule_set_to_rule_set_response(
+            graph.fetch_rule_set_response(str(keeper_id)).one()
+        ),
+    )
+    assert [text.value for text in keeper_rule_set.additive.alternativeName] == [
+        "Keeper Alias",
+        "Goner Alias",
+    ]
+    assert keeper_rule_set.preventive.officialName == [primary_source_id]
+
+
+@pytest.mark.integration
+def test_graph_fetch_items_referencing_paginates(
+    loaded_dummy_data: DummyData,
+) -> None:
+    graph = GraphConnector.get()
+    goner, _ = _create_merge_participants(loaded_dummy_data)
+
+    with graph.driver.session() as session, session.begin_transaction() as tx:
+        items = graph._fetch_items_referencing_tx(tx, goner, page_size=1)
+
+    # both units reference organization_1, so a page size of one needs two pages
+    assert sorted(str(item["identifier"]) for item in items) == sorted(
+        [
+            str(loaded_dummy_data["unit_1"].stableTargetId),
+            str(loaded_dummy_data["unit_2"].stableTargetId),
+        ]
+    )
+
+
+def _create_merge_participants(
+    dummy_data: DummyData,
+) -> tuple[AnyMergedModel, AnyMergedModel]:
+    """Return organization_1 as goner and organization_2 as keeper."""
+    return tuple(  # type: ignore[return-value]
+        create_merged_item(
+            dummy_data[name].stableTargetId,
+            [dummy_data[name]],
+            None,
+            Validation.STRICT,
+        )
+        for name in ("organization_1", "organization_2")
+    )
+
+
+def _sabotage_relinking(*_: Any, **__: Any) -> None:  # noqa: ANN401
+    """Stand in for a relinking step that misses every reference to the goner."""
+
+
+def _sabotage_tombstone(
+    goner: AnyMergedModel, keeper: AnyMergedModel
+) -> OrganizationRuleSetResponse:
+    """Stand in for a tombstone that still carries a value of its own."""
+    return OrganizationRuleSetResponse(
+        additive=AdditiveOrganization(
+            officialName=[Text(value="Leftover")],
+            supersededBy=MergedOrganizationIdentifier(keeper.identifier),
+        ),
+        stableTargetId=MergedOrganizationIdentifier(goner.identifier),
+    )
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    ("target", "sabotage", "expected"),
+    [
+        (
+            "GraphConnector._relink_referencing_items_tx",
+            _sabotage_relinking,
+            "Merging left 2 references to MergedItem",
+        ),
+        (
+            "build_tombstone_rule_set",
+            _sabotage_tombstone,
+            "Merging left an invalid tombstone for MergedItem",
+        ),
+    ],
+    ids=["dangling-references", "leftover-values"],
+)
+def test_graph_merge_items_rolls_back_unclean_tombstone(
+    monkeypatch: MonkeyPatch,
+    loaded_dummy_data: DummyData,
+    target: str,
+    sabotage: Any,  # noqa: ANN401
+    expected: str,
+) -> None:
+    graph = GraphConnector.get()
+    goner, keeper = _create_merge_participants(loaded_dummy_data)
+    graph_before = get_graph()
+    owner, _, attribute = target.rpartition(".")
+    monkeypatch.setattr(
+        getattr(connector_module, owner) if owner else connector_module,
+        attribute,
+        sabotage,
+    )
+
+    with pytest.raises(MergingError, match=re.escape(expected)):
         graph.merge_items(goner, keeper)
+
+    # the whole merge was rolled back, the goner is not superseded
+    assert get_graph() == graph_before
+
+
+@pytest.mark.integration
+def test_graph_merge_items_resets_identity_cache(
+    loaded_dummy_data: DummyData,
+) -> None:
+    graph = GraphConnector.get()
+    cache = get_cache_connector()
+    provider = GraphIdentityProvider.get()
+
+    goner_extracted = loaded_dummy_data["organization_1"]
+    keeper_extracted = loaded_dummy_data["organization_2"]
+
+    # warm the cache with the goner's stable target id
+    identity = provider.assign(
+        goner_extracted.hadPrimarySource,
+        goner_extracted.identifierInPrimarySource,
+    )
+    assert identity.stableTargetId == goner_extracted.stableTargetId
+    cache_key = get_identity_cache_key(
+        goner_extracted.hadPrimarySource,
+        goner_extracted.identifierInPrimarySource,
+    )
+    assert cache.get_value(cache_key) is not None
+
+    goner = create_merged_item(
+        goner_extracted.stableTargetId, [goner_extracted], None, Validation.STRICT
+    )
+    keeper = create_merged_item(
+        keeper_extracted.stableTargetId, [keeper_extracted], None, Validation.STRICT
+    )
+    graph.merge_items(goner, keeper)
+
+    assert cache.get_value(cache_key) is None
+    # the next lookup resolves to the keeper, so extractors stop resurrecting the goner
+    assert (
+        provider.assign(
+            goner_extracted.hadPrimarySource,
+            goner_extracted.identifierInPrimarySource,
+        ).stableTargetId
+        == keeper_extracted.stableTargetId
+    )
 
 
 @pytest.mark.parametrize(
@@ -2458,6 +2693,12 @@ def test_graph_merge_items_preconditions_pass(loaded_dummy_data: DummyData) -> N
             "unit_1",
             "Merging precondition check failed. Violated: merging_of_type_is_allowed",
             id="entity type not allowed",
+        ),
+        pytest.param(
+            "primary_source_1",
+            "primary_source_2",
+            "Merging precondition check failed. Violated: merging_of_type_is_allowed",
+            id="primary sources are not mergeable by default",
         ),
     ],
 )
@@ -2558,7 +2799,7 @@ def test_graph_merge_items_keeper_already_superseded(
 
 
 def _write_tombstone(tx: Transaction, goner: Identifier, keeper: Identifier) -> None:
-    """Stand in for the tombstone write of the not-yet-implemented merge."""
+    """Stand in for the tombstone write of the merge."""
     tx.run(
         "MATCH (goner:MergedOrganizationalUnit {identifier: $goner})"
         "<-[:stableTargetId]-(rule:AdditiveOrganizationalUnit) "

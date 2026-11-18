@@ -3,10 +3,23 @@ from typing import Any
 import pytest
 
 from mex.backend.rules.transform import (
+    build_tombstone_rule_set,
+    redirect_rule_set,
     transform_raw_rule_set_to_rule_set_response,
     transform_raw_rules_to_rule_set_response,
 )
-from mex.common.types import TextLanguage
+from mex.common.models import (
+    AdditiveOrganizationalUnit,
+    MergedContactPoint,
+    MergedOrganizationalUnit,
+    OrganizationalUnitRuleSetResponse,
+    SubtractiveOrganizationalUnit,
+)
+from mex.common.types import (
+    MergedContactPointIdentifier,
+    MergedOrganizationalUnitIdentifier,
+    TextLanguage,
+)
 
 
 @pytest.mark.parametrize(
@@ -210,3 +223,74 @@ def test_transform_raw_rule_set_to_rule_set_response(
             raise AssertionError(expected) from error
     else:
         assert rule_set.model_dump() == expected
+
+
+GONER = MergedOrganizationalUnitIdentifier("bFQoRhcVH5DHUA")
+KEEPER = MergedOrganizationalUnitIdentifier("bFQoRhcVH5DHUB")
+
+
+def test_build_tombstone_rule_set() -> None:
+    goner = MergedOrganizationalUnit(identifier=GONER, name=[{"value": "Unit 1"}])
+    keeper = MergedOrganizationalUnit(identifier=KEEPER, name=[{"value": "Unit 2"}])
+
+    rule_set = build_tombstone_rule_set(goner, keeper)
+
+    assert rule_set.entityType == "OrganizationalUnitRuleSetResponse"
+    assert rule_set.stableTargetId == GONER
+    assert rule_set.additive.supersededBy == KEEPER
+    # nothing but supersededBy survives, that is what makes it a tombstone
+    assert rule_set.additive.model_dump(exclude_defaults=True) == {
+        "supersededBy": KEEPER
+    }
+    assert rule_set.subtractive.model_dump(exclude_defaults=True) == {}
+    assert rule_set.preventive.model_dump(exclude_defaults=True) == {}
+    assert rule_set.workflow.model_dump(exclude_defaults=True) == {}
+
+
+def test_build_tombstone_rule_set_picks_the_matching_stem_type() -> None:
+    goner = MergedContactPoint(
+        identifier=MergedContactPointIdentifier("bFQoRhcVH5DHUC"),
+        email=["one@contact-point.tld"],
+    )
+    keeper = MergedContactPoint(
+        identifier=MergedContactPointIdentifier("bFQoRhcVH5DHUD"),
+        email=["two@contact-point.tld"],
+    )
+
+    rule_set = build_tombstone_rule_set(goner, keeper)
+
+    assert rule_set.entityType == "ContactPointRuleSetResponse"
+    assert rule_set.additive.entityType == "AdditiveContactPoint"
+    assert rule_set.additive.supersededBy == keeper.identifier
+
+
+def test_redirect_rule_set() -> None:
+    owner = MergedOrganizationalUnitIdentifier("bFQoRhcVH5DHUE")
+    other = MergedOrganizationalUnitIdentifier("bFQoRhcVH5DHUF")
+    rule_set = OrganizationalUnitRuleSetResponse(
+        additive=AdditiveOrganizationalUnit(parentUnit=GONER, unitOf=[]),
+        subtractive=SubtractiveOrganizationalUnit(parentUnit=[GONER, other, KEEPER]),
+        stableTargetId=owner,
+    )
+
+    redirected = redirect_rule_set(rule_set, str(GONER), str(KEEPER), str(owner))
+
+    assert redirected.stableTargetId == owner
+    assert redirected.additive.parentUnit == KEEPER
+    # the redirected goner collapses into the keeper that was already referenced
+    assert redirected.subtractive.parentUnit == [KEEPER, other]
+    # rules without references to the goner come back unchanged
+    assert redirected.preventive == rule_set.preventive
+    assert redirected.workflow == rule_set.workflow
+
+
+def test_redirect_rule_set_drops_references_to_the_owner() -> None:
+    rule_set = OrganizationalUnitRuleSetResponse(
+        additive=AdditiveOrganizationalUnit(parentUnit=GONER),
+        stableTargetId=KEEPER,
+    )
+
+    redirected = redirect_rule_set(rule_set, str(GONER), str(KEEPER), str(KEEPER))
+
+    # the goner's references become self-references of the keeper, which are dropped
+    assert redirected.additive.parentUnit is None
