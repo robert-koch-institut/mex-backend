@@ -105,7 +105,7 @@ def _build_oauth2_scheme(issuer_url: str) -> OAuth2AuthorizationCodeBearer:
     """
     return OAuth2AuthorizationCodeBearer(
         authorizationUrl=f"{issuer_url}/auth",
-        tokenUrl="/v0/oauth/token",
+        tokenUrl=f"{issuer_url}/token",
         scopes={
             "openid": "OpenID Connect",
             "profile": "User profile",
@@ -128,13 +128,71 @@ async def oauth2_scheme(request: Request) -> str | None:
     return await _build_oauth2_scheme(issuer_url)(request)
 
 
+def check_api_key(api_key: str, *, write: bool) -> None:
+    """Verify that the API key grants read (or, if `write`, write) access.
+
+    Write keys implicitly grant read access.
+
+    Raises:
+        HTTPException 403 if the key is not allowed.
+
+    Args:
+        api_key: the API key
+        write: whether write access is required
+    """
+    db = BackendSettings.get().backend_api_key_database
+    allowed = db.write if write else [*db.read, *db.write]
+    if APIKey(api_key) not in allowed:
+        raise HTTPException(status_code=403, detail="Unauthorized API Key.")
+
+
+def check_token(token: str, *, write: bool) -> OIDCClaims:
+    """Verify the JWT and that its groups grant read (or, if `write`, write) access.
+
+    Write group members implicitly have read access.
+
+    Raises:
+        HTTPException 401/503 if the token cannot be verified,
+            403 if group membership is insufficient.
+
+    Args:
+        token: Bearer JWT string
+        write: whether write access is required
+
+    Returns:
+        Parsed and validated OIDC claims
+    """
+    claims = _verify_jwt(token)
+    db = BackendSettings.get().oidc_groups_database
+    allowed = db.write if write else [*db.read, *db.write]
+    if not set(claims.groups) & set(allowed):
+        level = "write" if write else "read"
+        raise HTTPException(
+            status_code=403, detail=f"No {level}-level group membership."
+        )
+    return claims
+
+
+def _check_credentials(api_key: str | None, token: str | None, *, write: bool) -> None:
+    """Accept exactly one of X-API-Key or Bearer JWT with sufficient access."""
+    if api_key and token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Provide either X-API-Key or Bearer token, not both.",
+        )
+    if api_key:
+        check_api_key(api_key, write=write)
+    elif token:
+        check_token(token, write=write)
+    else:
+        raise HTTPException(status_code=401, detail="Missing credentials.")
+
+
 def has_read_access(
     api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
     token: Annotated[str | None, Depends(oauth2_scheme)] = None,
 ) -> None:
-    """Accept X-API-Key OR Bearer JWT with read or write group membership.
-
-    Write group members implicitly have read access.
+    """Accept X-API-Key OR Bearer JWT with read or write access.
 
     Raises:
         HTTPException if credentials are missing or insufficient.
@@ -143,39 +201,14 @@ def has_read_access(
         api_key: the API key
         token: Bearer JWT string
     """
-    if api_key and token:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Provide either X-API-Key or Bearer token, not both.",
-        )
-    if api_key:
-        api_key_db = BackendSettings.get().backend_api_key_database
-        if (
-            APIKey(api_key) not in api_key_db.read
-            and APIKey(api_key) not in api_key_db.write
-        ):
-            raise HTTPException(status_code=403, detail="Unauthorized API Key.")
-    elif token:
-        claims = _verify_jwt(token)
-        logger.info(
-            "OIDC claims: groups=%s, preferred_username=%s",
-            claims.groups,
-            claims.preferred_username,
-        )
-        oidc_db = BackendSettings.get().oidc_groups_database
-        if not set(claims.groups) & (set(oidc_db.read) | set(oidc_db.write)):
-            raise HTTPException(
-                status_code=403, detail="No read-level group membership."
-            )
-    else:
-        raise HTTPException(status_code=401, detail="Missing credentials.")
+    _check_credentials(api_key, token, write=False)
 
 
 def has_write_access(
     api_key: Annotated[str | None, Depends(X_API_KEY)] = None,
     token: Annotated[str | None, Depends(oauth2_scheme)] = None,
 ) -> None:
-    """Accept X-API-Key OR Bearer JWT with write group membership.
+    """Accept X-API-Key OR Bearer JWT with write access.
 
     Raises:
         HTTPException if credentials are missing or insufficient.
@@ -184,23 +217,7 @@ def has_write_access(
         api_key: the API key
         token: Bearer JWT string
     """
-    if api_key and token:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Provide either X-API-Key or Bearer token, not both.",
-        )
-    if api_key:
-        if APIKey(api_key) not in BackendSettings.get().backend_api_key_database.write:
-            raise HTTPException(status_code=403, detail="Unauthorized API Key.")
-    elif token:
-        claims = _verify_jwt(token)
-        db = BackendSettings.get().oidc_groups_database
-        if not set(claims.groups) & set(db.write):
-            raise HTTPException(
-                status_code=403, detail="No write-level group membership."
-            )
-    else:
-        raise HTTPException(status_code=401, detail="Missing credentials.")
+    _check_credentials(api_key, token, write=True)
 
 
 def has_oidc_access(
@@ -212,7 +229,7 @@ def has_oidc_access(
     Used by the user endpoint to identify the authenticated user.
 
     Raises:
-        HTTPException if both credentials are provided, Bearer token is missing,
+        HTTPException if an API key is provided, Bearer token is missing,
             invalid, or lacks group membership.
 
     Args:
@@ -222,11 +239,6 @@ def has_oidc_access(
     Returns:
         The preferred_username claim from the JWT
     """
-    if api_key and token:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Provide either X-API-Key or Bearer token, not both.",
-        )
     if api_key:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -238,10 +250,7 @@ def has_oidc_access(
             detail="Missing Bearer token.",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    claims = _verify_jwt(token)
-    oidc_db = BackendSettings.get().oidc_groups_database
-    if not set(claims.groups) & (set(oidc_db.read) | set(oidc_db.write)):
-        raise HTTPException(status_code=403, detail="No read-level group membership.")
+    claims = check_token(token, write=False)
     if not claims.preferred_username:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

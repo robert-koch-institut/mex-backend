@@ -1,3 +1,4 @@
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import jwt as jwt_lib
@@ -10,6 +11,9 @@ from mex.backend.security import (
     has_read_access,
     has_write_access,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 FAKE_TOKEN = "fake.jwt.token"  # noqa: S105
 
@@ -42,12 +46,6 @@ def test_has_oidc_access_api_key_rejected() -> None:
         has_oidc_access(api_key="write_key")
     assert exc.value.status_code == 400
     assert "requires a Bearer token" in exc.value.detail
-
-
-def test_has_oidc_access_both_credentials_rejected() -> None:
-    with pytest.raises(HTTPException) as exc:
-        has_oidc_access(api_key="write_key", token=FAKE_TOKEN)
-    assert exc.value.status_code == 400
 
 
 def test_has_oidc_access_jwks_unavailable() -> None:
@@ -130,86 +128,67 @@ def test_has_oidc_access_write_group_success() -> None:
     assert result == "MaxM"
 
 
-def test_has_write_access_with_api_key() -> None:
-    has_write_access("write_key")
-    with pytest.raises(HTTPException) as error:
-        has_write_access(None, None)
-    assert "Missing credentials" in error.value.detail
-
-    with pytest.raises(HTTPException) as error:
-        has_write_access("read_key")
-    assert "Unauthorized API Key" in error.value.detail
-
-    with pytest.raises(HTTPException) as error:
-        has_write_access("moop")
-    assert "Unauthorized API Key" in error.value.detail
-
-
-def test_has_write_access_both_credentials_rejected() -> None:
+@pytest.mark.parametrize("check", [has_read_access, has_write_access, has_oidc_access])
+def test_both_credentials_rejected(check: Callable[..., object]) -> None:
     with pytest.raises(HTTPException) as exc:
-        has_write_access("write_key", FAKE_TOKEN)
+        check(api_key="write_key", token=FAKE_TOKEN)
     assert exc.value.status_code == 400
 
 
-def test_has_write_access_bearer_write_group() -> None:
-    mock_jwks, mock_decode = _mock_jwks_and_decode(
-        {"preferred_username": "MaxM", "groups": ["Abteilung_21"]}
-    )
-    with mock_jwks, mock_decode:
-        has_write_access(api_key=None, token=FAKE_TOKEN)
-
-
-def test_has_write_access_bearer_no_write_group() -> None:
-    mock_jwks, mock_decode = _mock_jwks_and_decode(
-        {"preferred_username": "MoritzE", "groups": ["Fachgebiet_99"]}
-    )
-    with mock_jwks, mock_decode, pytest.raises(HTTPException) as exc:
-        has_write_access(api_key=None, token=FAKE_TOKEN)
-    assert exc.value.status_code == 403
-
-
-def test_has_read_access_both_credentials_rejected() -> None:
+@pytest.mark.parametrize("check", [has_read_access, has_write_access])
+def test_missing_credentials(check: Callable[..., None]) -> None:
     with pytest.raises(HTTPException) as exc:
-        has_read_access("read_key", FAKE_TOKEN)
-    assert exc.value.status_code == 400
+        check(api_key=None, token=None)
+    assert exc.value.status_code == 401
+    assert "Missing credentials" in exc.value.detail
 
 
-def test_has_read_access_with_api_key() -> None:
-    has_read_access("write_key")
-    has_read_access("read_key")
+@pytest.mark.parametrize(
+    ("check", "api_key", "expected_status"),
+    [
+        (has_read_access, "read_key", None),
+        (has_read_access, "write_key", None),
+        (has_read_access, "moop", 403),
+        (has_write_access, "write_key", None),
+        (has_write_access, "read_key", 403),
+        (has_write_access, "moop", 403),
+    ],
+)
+def test_api_key_access(
+    check: Callable[..., None], api_key: str, expected_status: int | None
+) -> None:
+    if expected_status is None:
+        check(api_key=api_key, token=None)
+        return
+    with pytest.raises(HTTPException) as exc:
+        check(api_key=api_key, token=None)
+    assert exc.value.status_code == expected_status
+    assert "Unauthorized API Key" in exc.value.detail
 
-    with pytest.raises(HTTPException) as error:
-        has_read_access("moop")
-    assert "Unauthorized API Key" in error.value.detail
 
-    with pytest.raises(HTTPException) as error:
-        has_read_access(None, None)
-    assert "Missing credentials" in error.value.detail
-
-
-def test_has_read_access_bearer_read_group() -> None:
+@pytest.mark.parametrize(
+    ("check", "groups", "expected_status"),
+    [
+        (has_read_access, ["Fachgebiet_99"], None),
+        (has_read_access, ["Abteilung_21"], None),
+        (has_read_access, [], 403),
+        (has_write_access, ["Abteilung_21"], None),
+        (has_write_access, ["Fachgebiet_99"], 403),
+    ],
+)
+def test_bearer_group_access(
+    check: Callable[..., None], groups: list[str], expected_status: int | None
+) -> None:
     mock_jwks, mock_decode = _mock_jwks_and_decode(
-        {"preferred_username": "MoritzE", "groups": ["Fachgebiet_99"]}
+        {"preferred_username": "someone", "groups": groups}
     )
     with mock_jwks, mock_decode:
-        has_read_access(api_key=None, token=FAKE_TOKEN)
-
-
-def test_has_read_access_bearer_write_group_implies_read() -> None:
-    mock_jwks, mock_decode = _mock_jwks_and_decode(
-        {"preferred_username": "MaxM", "groups": ["Abteilung_21"]}
-    )
-    with mock_jwks, mock_decode:
-        has_read_access(api_key=None, token=FAKE_TOKEN)
-
-
-def test_has_read_access_bearer_no_group() -> None:
-    mock_jwks, mock_decode = _mock_jwks_and_decode(
-        {"preferred_username": "nobody", "groups": []}
-    )
-    with mock_jwks, mock_decode, pytest.raises(HTTPException) as exc:
-        has_read_access(api_key=None, token=FAKE_TOKEN)
-    assert exc.value.status_code == 403
+        if expected_status is None:
+            check(api_key=None, token=FAKE_TOKEN)
+            return
+        with pytest.raises(HTTPException) as exc:
+            check(api_key=None, token=FAKE_TOKEN)
+    assert exc.value.status_code == expected_status
 
 
 def test_get_jwks_client_caches_per_uri() -> None:

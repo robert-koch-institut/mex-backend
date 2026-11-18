@@ -33,13 +33,6 @@ class APIKey(SecretStr):
         return f"APIKey('{self}')"
 
 
-class APIKeyDatabase(BaseModel):
-    """A lookup from access level to list of allowed APIKeys."""
-
-    read: list[APIKey] = []
-    write: list[APIKey] = []
-
-
 class OIDCGroupsDatabase(BaseModel):
     """A lookup from access level to list of allowed OIDC group names."""
 
