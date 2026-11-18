@@ -34,6 +34,11 @@ def reset_identity_cache(moved_identities: list[Identity]) -> None:
     Note that this only reaches other backend instances when a shared valkey cache is
     configured, which settings require whenever more than one instance runs.
 
+    A lookup that reads the graph before the merge commits but writes the cache only
+    after this reset can still re-cache the goner. That window is accepted because it
+    is narrow, but note that cache entries do not expire, so such a stale entry stays
+    until the cache is flushed.
+
     Args:
         moved_identities: Identities of the extracted items that were moved
     """

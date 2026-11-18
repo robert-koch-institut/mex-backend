@@ -1,6 +1,7 @@
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from mex.backend.graph.exceptions import InconsistentGraphError
+from mex.backend.graph.transform import redirect_references
 from mex.common.models import (
     RULE_MODEL_CLASSES_BY_NAME,
     RULE_MODEL_CLASSES_BY_TYPE_BY_NAME,
@@ -110,3 +111,32 @@ def build_tombstone_rule_set(
             "stableTargetId": goner.identifier,
         }
     )
+
+
+def redirect_rule_set[RuleSetResponseT: AnyRuleSetResponse](
+    rule_set: RuleSetResponseT,
+    old: str,
+    new: str,
+    owner: str,
+) -> RuleSetResponseT:
+    """Point all references of a rule set from one merged item at another.
+
+    Args:
+        rule_set: Rule set response whose rules' references to rewrite
+        old: Identifier of the merged item that should no longer be referenced
+        new: Identifier of the merged item that should be referenced instead
+        owner: Identifier of the merged item the rule set belongs to
+
+    Returns:
+        A copy of the rule set with the references of all its rules rewritten
+    """
+    redirected = type(rule_set).model_validate(
+        {
+            **{
+                field: redirect_references(getattr(rule_set, field), old, new, owner)
+                for field in RULE_MODEL_CLASSES_BY_TYPE_BY_NAME
+            },
+            "stableTargetId": rule_set.stableTargetId,
+        }
+    )
+    return cast("RuleSetResponseT", redirected)

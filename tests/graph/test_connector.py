@@ -24,6 +24,7 @@ from mex.backend.graph.query import Query
 from mex.backend.identity.helpers import get_identity_cache_key
 from mex.backend.identity.provider import GraphIdentityProvider
 from mex.backend.models import ReferenceFilter
+from mex.backend.rules.transform import transform_raw_rule_set_to_rule_set_response
 from mex.backend.settings import BackendSettings
 from mex.backend.types import MergedType, ReferenceFieldName
 from mex.common.exceptions import MExError
@@ -40,6 +41,7 @@ from mex.common.models import (
     ExtractedOrganizationalUnit,
     OrganizationalUnitRuleSetResponse,
     OrganizationRuleSetResponse,
+    PreventiveOrganization,
     VersionStatus,
 )
 from mex.common.types import (
@@ -2436,6 +2438,100 @@ def test_graph_merge_items_preconditions_pass(loaded_dummy_data: DummyData) -> N
     assert rule_set["additive"]["supersededBy"] == [keeper_identifier]
 
 
+@pytest.mark.integration
+def test_graph_merge_items_relinks_references_and_migrates_rules(
+    loaded_dummy_data: DummyData,
+) -> None:
+    graph = GraphConnector.get()
+    goner_id = loaded_dummy_data["organization_1"].stableTargetId
+    keeper_id = loaded_dummy_data["organization_2"].stableTargetId
+    primary_source_id = loaded_dummy_data["primary_source_1"].stableTargetId
+    unit_1_id = loaded_dummy_data["unit_1"].stableTargetId
+    deque(
+        graph.ingest_items(
+            [
+                OrganizationRuleSetResponse(
+                    additive=AdditiveOrganization(
+                        alternativeName=[Text(value="Goner Alias")]
+                    ),
+                    preventive=PreventiveOrganization(officialName=[primary_source_id]),
+                    stableTargetId=goner_id,
+                ),
+                OrganizationRuleSetResponse(
+                    additive=AdditiveOrganization(
+                        alternativeName=[Text(value="Keeper Alias")]
+                    ),
+                    stableTargetId=keeper_id,
+                ),
+                # a third item whose rules reference both merge participants
+                OrganizationalUnitRuleSetResponse(
+                    additive=AdditiveOrganizationalUnit(unitOf=[goner_id, keeper_id]),
+                    stableTargetId=unit_1_id,
+                ),
+            ]
+        )
+    )
+    goner, keeper = _create_merge_participants(loaded_dummy_data)
+
+    graph.merge_items(goner, keeper)
+
+    # extracted items of other merged items now reference the keeper
+    extracted_units = graph.fetch_extracted_items(
+        query_string=None,
+        identifier=None,
+        entity_type=["ExtractedOrganizationalUnit"],
+        reference_filters=None,
+        skip=0,
+        limit=10,
+    ).one()["items"]
+    assert [unit["unitOf"] for unit in extracted_units] == [
+        [str(keeper_id)],
+        [str(keeper_id)],
+    ]
+
+    # rules of other merged items are redirected and de-duplicated
+    unit_rule_set = cast(
+        "OrganizationalUnitRuleSetResponse",
+        transform_raw_rule_set_to_rule_set_response(
+            graph.fetch_rule_set_response(str(unit_1_id)).one()
+        ),
+    )
+    assert unit_rule_set.additive.unitOf == [keeper_id]
+
+    # the goner's rule values were appended to the keeper's rule set, and the
+    # preventive value survives because its primary source now feeds the keeper
+    keeper_rule_set = cast(
+        "OrganizationRuleSetResponse",
+        transform_raw_rule_set_to_rule_set_response(
+            graph.fetch_rule_set_response(str(keeper_id)).one()
+        ),
+    )
+    assert [text.value for text in keeper_rule_set.additive.alternativeName] == [
+        "Keeper Alias",
+        "Goner Alias",
+    ]
+    assert keeper_rule_set.preventive.officialName == [primary_source_id]
+
+
+@pytest.mark.integration
+def test_graph_fetch_items_referencing_paginates(
+    loaded_dummy_data: DummyData,
+) -> None:
+    graph = GraphConnector.get()
+    goner, _ = _create_merge_participants(loaded_dummy_data)
+
+    with graph.driver.session() as session, session.begin_transaction() as tx:
+        items = graph._fetch_items_referencing_tx(tx, goner, page_size=1)
+
+    # both units reference organization_1, so a page size of one needs two pages
+    assert sorted(str(item["identifier"]) for item in items) == sorted(
+        [
+            str(loaded_dummy_data["unit_1"].stableTargetId),
+            str(loaded_dummy_data["unit_2"].stableTargetId),
+        ]
+    )
+
+
 def _create_merge_participants(
     dummy_data: DummyData,
 ) -> tuple[AnyMergedModel, AnyMergedModel]:
@@ -2597,6 +2693,12 @@ def test_graph_merge_items_resets_identity_cache(
             "unit_1",
             "Merging precondition check failed. Violated: merging_of_type_is_allowed",
             id="entity type not allowed",
+        ),
+        pytest.param(
+            "primary_source_1",
+            "primary_source_2",
+            "Merging precondition check failed. Violated: merging_of_type_is_allowed",
+            id="primary sources are not mergeable by default",
         ),
     ],
 )

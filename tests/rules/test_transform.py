@@ -4,12 +4,16 @@ import pytest
 
 from mex.backend.rules.transform import (
     build_tombstone_rule_set,
+    redirect_rule_set,
     transform_raw_rule_set_to_rule_set_response,
     transform_raw_rules_to_rule_set_response,
 )
 from mex.common.models import (
+    AdditiveOrganizationalUnit,
     MergedContactPoint,
     MergedOrganizationalUnit,
+    OrganizationalUnitRuleSetResponse,
+    SubtractiveOrganizationalUnit,
 )
 from mex.common.types import (
     MergedContactPointIdentifier,
@@ -258,3 +262,35 @@ def test_build_tombstone_rule_set_picks_the_matching_stem_type() -> None:
     assert rule_set.entityType == "ContactPointRuleSetResponse"
     assert rule_set.additive.entityType == "AdditiveContactPoint"
     assert rule_set.additive.supersededBy == keeper.identifier
+
+
+def test_redirect_rule_set() -> None:
+    owner = MergedOrganizationalUnitIdentifier("bFQoRhcVH5DHUE")
+    other = MergedOrganizationalUnitIdentifier("bFQoRhcVH5DHUF")
+    rule_set = OrganizationalUnitRuleSetResponse(
+        additive=AdditiveOrganizationalUnit(parentUnit=GONER, unitOf=[]),
+        subtractive=SubtractiveOrganizationalUnit(parentUnit=[GONER, other, KEEPER]),
+        stableTargetId=owner,
+    )
+
+    redirected = redirect_rule_set(rule_set, str(GONER), str(KEEPER), str(owner))
+
+    assert redirected.stableTargetId == owner
+    assert redirected.additive.parentUnit == KEEPER
+    # the redirected goner collapses into the keeper that was already referenced
+    assert redirected.subtractive.parentUnit == [KEEPER, other]
+    # rules without references to the goner come back unchanged
+    assert redirected.preventive == rule_set.preventive
+    assert redirected.workflow == rule_set.workflow
+
+
+def test_redirect_rule_set_drops_references_to_the_owner() -> None:
+    rule_set = OrganizationalUnitRuleSetResponse(
+        additive=AdditiveOrganizationalUnit(parentUnit=GONER),
+        stableTargetId=KEEPER,
+    )
+
+    redirected = redirect_rule_set(rule_set, str(GONER), str(KEEPER), str(KEEPER))
+
+    # the goner's references become self-references of the keeper, which are dropped
+    assert redirected.additive.parentUnit is None

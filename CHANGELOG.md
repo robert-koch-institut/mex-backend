@@ -24,6 +24,10 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - new template https://github.com/robert-koch-institut/mex-template/releases/tag/2.1.0
 - upgrade mex-common to 3.8: merged-away items now validate as tombstones whose only
   value is `supersededBy`, so they are returned by merged item search and get endpoints
+- `MergedPrimarySource` is added to the default `MEX_BACKEND_NON_MERGEABLE_TYPES`,
+  because merging primary sources would rewrite the provenance of all their extracted
+  items, which the merging operation does not support
+
 ### Deprecated
 
 ### Removed

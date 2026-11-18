@@ -49,6 +49,7 @@ from mex.backend.merged.transform import merge_search_result_item
 from mex.backend.models import ReferenceFilter
 from mex.backend.rules.transform import (
     build_tombstone_rule_set,
+    redirect_rule_set,
     transform_raw_rule_set_to_rule_set_response,
     transform_raw_rules_to_rule_set_response,
 )
@@ -846,26 +847,6 @@ class GraphConnector(BaseConnector):
             if identifier != str(MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID)
         ] + [MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID]
 
-    @staticmethod
-    def _redirect_rule_set(
-        rule_set: AnyRuleSetResponse,
-        old: str,
-        new: str,
-        owner: str,
-    ) -> AnyRuleSetResponse:
-        """Point all references of a rule set from one merged item at another."""
-        return type(rule_set).model_validate(
-            {
-                **{
-                    field: redirect_references(
-                        getattr(rule_set, field), old, new, owner
-                    )
-                    for field in RULE_MODEL_CLASSES_BY_TYPE_BY_NAME
-                },
-                "stableTargetId": rule_set.stableTargetId,
-            }
-        )
-
     def _relink_referencing_items_tx(
         self,
         tx: Transaction,
@@ -919,7 +900,7 @@ class GraphConnector(BaseConnector):
                 keeper_identifier,
             ):
                 rule_set = transform_raw_rules_to_rule_set_response(rule_components)
-                redirected_rule_set = self._redirect_rule_set(
+                redirected_rule_set = redirect_rule_set(
                     rule_set, goner_identifier, keeper_identifier, owner
                 )
                 if redirected_rule_set != rule_set:
@@ -1009,10 +990,10 @@ class GraphConnector(BaseConnector):
 
         # migrate the goner's rule values into the keeper's rule set
         merged_rule_set = merge_rule_set_responses(
-            self._redirect_rule_set(
+            redirect_rule_set(
                 keeper_rule_set, goner_identifier, keeper_identifier, keeper_identifier
             ),
-            self._redirect_rule_set(
+            redirect_rule_set(
                 goner_rule_set, goner_identifier, keeper_identifier, keeper_identifier
             ),
             self._fetch_valid_primary_sources_tx(tx, keeper),
