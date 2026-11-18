@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 from mex.backend.auxiliary.constants import (
     ORGANIGRAM_PRIMARY_SOURCE_NAME,
     RKI_WIKIDATA_ID,
-    WIKIDATA_SOURCE_NAME,
 )
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import NoResultFoundError
@@ -15,10 +14,7 @@ from mex.common.organigram.transform import (
     transform_organigram_units_to_organizational_units,
 )
 from mex.common.primary_source.helpers import get_extracted_primary_source_by_name
-from mex.common.wikidata.extract import get_wikidata_organization
-from mex.common.wikidata.transform import (
-    transform_wikidata_organization_to_extracted_organization,
-)
+from mex.common.wikidata.helpers import get_wikidata_organization_with_locations
 
 if TYPE_CHECKING:
     from mex.common.models import (
@@ -43,17 +39,20 @@ def cached_primary_source(name: str) -> ExtractedPrimarySource:
 @lru_cache
 def cached_organization(name: str) -> ExtractedOrganization:
     """Get the rki organization."""
-    wikidata_organization = get_wikidata_organization(name)
-    extracted_item = transform_wikidata_organization_to_extracted_organization(
-        wikidata_organization,
-        cached_primary_source(WIKIDATA_SOURCE_NAME).stableTargetId,
-    )
-    if not extracted_item:
+    result = get_wikidata_organization_with_locations(name)
+
+    if result is None:
         raise NoResultFoundError(name)
+
     connector = GraphConnector.get()
-    deque(connector.ingest_items([extracted_item]))
+    deque(
+        connector.ingest_items(
+            [result.primary_source, *result.locations, result.organization]
+        )
+    )
+
     logger.info("ingested organization %s", name)
-    return extracted_item
+    return result.organization
 
 
 def cached_organizational_units() -> list[ExtractedOrganizationalUnit]:
