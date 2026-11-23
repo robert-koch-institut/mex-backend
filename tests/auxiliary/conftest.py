@@ -203,7 +203,7 @@ def mocked_ldap(request: pytest.FixtureRequest, monkeypatch: MonkeyPatch) -> Non
         monkeypatch.setattr(
             LDAPConnector,
             "get_functional_accounts",
-            ldap_mock_searcher(test_accounts_ldap),
+            ldap_mock_attribute_searcher(test_accounts_ldap),
         )
         test_persons_and_functional_accounts_ldap = sorted(
             [*test_persons_ldap, *test_accounts_ldap], key=lambda x: x.objectGUID

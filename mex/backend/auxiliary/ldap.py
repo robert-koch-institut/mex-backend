@@ -14,11 +14,16 @@ from mex.backend.auxiliary.helpers import (
     cached_primary_source,
     fetch_ldap_page,
 )
-from mex.backend.auxiliary.models import LDAPPersonLookup
+from mex.backend.auxiliary.models import (
+    AnyLDAPLookup,
+    LDAPFunctionalAccountLookup,
+    LDAPPersonLookup,
+)
 from mex.backend.security import has_read_access
 from mex.common.ldap.connector import LDAPConnector
 from mex.common.ldap.transform import (
     transform_any_ldap_actor_to_extracted_persons_or_contact_points,
+    transform_ldap_functional_account_to_extracted_contact_point,
     transform_ldap_person_to_extracted_person,
 )
 from mex.common.models import (
@@ -73,20 +78,32 @@ def search_persons_or_contact_points_in_ldap(
     "/ldap/_search", tags=["auxiliary"], dependencies=[Depends(has_read_access)]
 )
 def search_in_ldap(
-    lookup: Annotated[LDAPPersonLookup, Body()],
+    lookup: Annotated[AnyLDAPLookup, Body()],
 ) -> PaginatedItemsContainer[ExtractedPerson | ExtractedContactPoint]:
-    """Look up LDAP persons by exact attribute values.
+    """Look up LDAP persons or functional accounts by exact attribute values.
 
-    The lookup criteria are sent in the request body, so that they don't end up in
-    access logs. Unspecified attributes default to `"*"`, and attribute values may
-    contain `*` wildcards. For a free-text search, see `GET /ldap`.
+    The body's `entityType` picks the lookup: `["ExtractedPerson"]` looks up LDAP
+    persons by any of their attributes, `["ExtractedContactPoint"]` looks up LDAP
+    functional accounts by mail. The lookup criteria are sent in the request body, so
+    that they don't end up in access logs. Unspecified attributes default to `"*"`,
+    and attribute values may contain `*` wildcards. For a free-text search, see
+    `GET /ldap`.
 
     Args:
-        lookup: Person lookup with entity type, attribute filters and pagination
+        lookup: Person or functional-account lookup with filters and pagination
 
     Returns:
-        Paginated list of ExtractedPersons
+        Paginated list of ExtractedPersons or ExtractedContactPoints
     """
+    if isinstance(lookup, LDAPFunctionalAccountLookup):
+        return _search_functional_accounts_in_ldap(lookup)
+    return _search_persons_in_ldap(lookup)
+
+
+def _search_persons_in_ldap(
+    lookup: LDAPPersonLookup,
+) -> PaginatedItemsContainer[ExtractedPerson | ExtractedContactPoint]:
+    """Look up LDAP persons and transform them into ExtractedPersons."""
     connector = LDAPConnector.get()
     ldap_persons = fetch_ldap_page(
         partial(
@@ -117,4 +134,27 @@ def search_in_ldap(
     return PaginatedItemsContainer[ExtractedPerson | ExtractedContactPoint](
         items=extracted_persons,
         total=ldap_persons.total,
+    )
+
+
+def _search_functional_accounts_in_ldap(
+    lookup: LDAPFunctionalAccountLookup,
+) -> PaginatedItemsContainer[ExtractedPerson | ExtractedContactPoint]:
+    """Look up LDAP functional accounts and transform them into contact points."""
+    connector = LDAPConnector.get()
+    ldap_functional_accounts = fetch_ldap_page(
+        partial(connector.get_functional_accounts, mail=lookup.mail),
+        limit=lookup.limit,
+        offset=lookup.skip,
+    )
+    extracted_contact_points = [
+        transform_ldap_functional_account_to_extracted_contact_point(
+            functional_account,
+            cached_primary_source(LDAP_PRIMARY_SOURCE_NAME).stableTargetId,
+        )
+        for functional_account in ldap_functional_accounts.items
+    ]
+    return PaginatedItemsContainer[ExtractedPerson | ExtractedContactPoint](
+        items=extracted_contact_points,
+        total=ldap_functional_accounts.total,
     )

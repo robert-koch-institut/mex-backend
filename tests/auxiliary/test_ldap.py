@@ -10,6 +10,7 @@ from mex.backend.auxiliary.helpers import (
     cached_primary_source,
 )
 from mex.backend.main import app
+from mex.common.testing import Joker
 
 if TYPE_CHECKING:
     from fastapi.testclient import TestClient
@@ -189,6 +190,7 @@ def test_ldap_persons_skip_past_last_result(
 @pytest.mark.parametrize(
     "body",
     [
+        pytest.param(["ExtractedPerson"], id="body-not-an-object"),
         pytest.param({}, id="missing-entity-type"),
         pytest.param({"entityType": []}, id="empty-entity-type"),
         pytest.param({"entityType": "ExtractedPerson"}, id="scalar-entity-type"),
@@ -210,7 +212,7 @@ def test_ldap_persons_skip_past_last_result(
     ],
 )
 def test_search_in_ldap_invalid_body(
-    client_with_api_key_read_permission: TestClient, body: dict[str, Any]
+    client_with_api_key_read_permission: TestClient, body: object
 ) -> None:
     response = client_with_api_key_read_permission.post("/v0/ldap/_search", json=body)
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT, response.text
@@ -236,3 +238,149 @@ def test_search_in_ldap_requires_read_access(
 def test_search_in_ldap_is_documented_as_auxiliary() -> None:
     operation = app.openapi()["paths"]["/v0/ldap/_search"]["post"]
     assert operation["tags"] == ["auxiliary"]
+
+
+@pytest.mark.usefixtures("mocked_ldap", "mocked_wikidata")
+def test_search_functional_accounts_in_ldap(
+    client_with_api_key_read_permission: TestClient,
+) -> None:
+    response = client_with_api_key_read_permission.post(
+        "/v0/ldap/_search", json={"entityType": ["ExtractedContactPoint"]}
+    )
+    ldap_primary_source = cached_primary_source(LDAP_PRIMARY_SOURCE_NAME)
+    assert response.status_code == status.HTTP_200_OK, response.text
+    response_json = response.json()
+    assert response_json["total"] == 2
+    assert {item["$type"] for item in response_json["items"]} == {
+        "ExtractedContactPoint"
+    }
+    info_item = next(
+        item
+        for item in response_json["items"]
+        if item["email"] == ["info@mail.provider"]
+    )
+    assert info_item == {
+        "hadPrimarySource": ldap_primary_source.stableTargetId,
+        "identifierInPrimarySource": "00000000-0000-4000-8000-00000000021f",
+        "email": ["info@mail.provider"],
+        "$type": "ExtractedContactPoint",
+        "identifier": Joker(),
+        "stableTargetId": Joker(),
+    }
+
+
+@pytest.mark.parametrize(
+    ("mail", "expected_emails"),
+    [
+        pytest.param("help@account.test", ["help@account.test"], id="exact"),
+        pytest.param("HELP@account.test", ["help@account.test"], id="case-insensitive"),
+        pytest.param("info@*", ["info@mail.provider"], id="wildcard-suffix"),
+        pytest.param(
+            "*@*", ["help@account.test", "info@mail.provider"], id="wildcard-both"
+        ),
+        pytest.param("nobody@account.test", [], id="no-match"),
+    ],
+)
+@pytest.mark.usefixtures("mocked_ldap", "mocked_wikidata")
+def test_search_functional_accounts_in_ldap_with_filter(
+    client_with_api_key_read_permission: TestClient,
+    mail: str,
+    expected_emails: list[str],
+) -> None:
+    response = client_with_api_key_read_permission.post(
+        "/v0/ldap/_search",
+        json={"entityType": ["ExtractedContactPoint"], "mail": mail},
+    )
+    assert response.status_code == status.HTTP_200_OK, response.text
+    response_json = response.json()
+    assert response_json["total"] == len(expected_emails)
+    assert (
+        sorted(email for item in response_json["items"] for email in item["email"])
+        == expected_emails
+    )
+
+
+@pytest.mark.usefixtures("mocked_ldap", "mocked_wikidata")
+def test_ldap_functional_accounts_pagination(
+    client_with_api_key_read_permission: TestClient,
+) -> None:
+    all_response = client_with_api_key_read_permission.post(
+        "/v0/ldap/_search", json={"entityType": ["ExtractedContactPoint"]}
+    )
+    assert all_response.status_code == status.HTTP_200_OK, all_response.text
+    all_items = all_response.json()
+
+    paginated_response = client_with_api_key_read_permission.post(
+        "/v0/ldap/_search",
+        json={"entityType": ["ExtractedContactPoint"], "skip": 1, "limit": 1},
+    )
+    assert paginated_response.status_code == status.HTTP_200_OK, paginated_response.text
+    paginated_items = paginated_response.json()
+
+    assert paginated_items["total"] == all_items["total"]
+    assert paginated_items["items"] == all_items["items"][1:2]
+
+
+@pytest.mark.parametrize("skip", [2, 3], ids=["skip-at-total", "skip-past-total"])
+@pytest.mark.usefixtures("mocked_ldap", "mocked_wikidata")
+def test_ldap_functional_accounts_skip_past_last_result(
+    client_with_api_key_read_permission: TestClient, skip: int
+) -> None:
+    response = client_with_api_key_read_permission.post(
+        "/v0/ldap/_search",
+        json={"entityType": ["ExtractedContactPoint"], "skip": skip, "limit": 1},
+    )
+    assert response.status_code == status.HTTP_200_OK, response.text
+    assert response.json() == {"items": [], "total": 2}
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        pytest.param(
+            {"entityType": ["ExtractedContactPoint"], "surname": "Mueller"},
+            id="person-field-in-functional-account-lookup",
+        ),
+        pytest.param(
+            {"entityType": ["ExtractedContactPoint"], "displayName": "*"},
+            id="person-field-with-wildcard-in-functional-account-lookup",
+        ),
+        pytest.param(
+            {"entityType": ["ExtractedContactPoint"], "email": "help@account.test"},
+            id="unknown-field",
+        ),
+        pytest.param(
+            {"entityType": ["ExtractedContactPoint", "ExtractedPerson"]},
+            id="both-entity-types",
+        ),
+        pytest.param(
+            {"entityType": ["ExtractedContactPoint"], "mail": "x" * 1001},
+            id="value-too-long",
+        ),
+        pytest.param(
+            {"entityType": ["ExtractedContactPoint"], "limit": 0}, id="limit-0"
+        ),
+        pytest.param(
+            {"entityType": ["ExtractedContactPoint"], "limit": 101}, id="limit-101"
+        ),
+        pytest.param(
+            {"entityType": ["ExtractedContactPoint"], "skip": -1}, id="skip-neg"
+        ),
+    ],
+)
+def test_search_functional_accounts_in_ldap_invalid_body(
+    client_with_api_key_read_permission: TestClient, body: dict[str, Any]
+) -> None:
+    response = client_with_api_key_read_permission.post("/v0/ldap/_search", json=body)
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT, response.text
+
+
+def test_search_in_ldap_documents_both_lookups() -> None:
+    schema = app.openapi()
+    operation = schema["paths"]["/v0/ldap/_search"]["post"]
+    body_schema = operation["requestBody"]["content"]["application/json"]["schema"]
+    shapes = body_schema.get("oneOf") or body_schema.get("anyOf")
+    assert sorted(shape["$ref"].rsplit("/", 1)[-1] for shape in shapes) == [
+        "LDAPFunctionalAccountLookup",
+        "LDAPPersonLookup",
+    ]
