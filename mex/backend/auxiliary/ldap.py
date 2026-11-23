@@ -1,3 +1,4 @@
+from functools import partial
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
@@ -11,6 +12,7 @@ from mex.backend.auxiliary.helpers import (
     cached_organization,
     cached_organizational_units,
     cached_primary_source,
+    fetch_ldap_page,
 )
 from mex.backend.security import has_read_access
 from mex.common.ldap.connector import LDAPConnector
@@ -43,8 +45,8 @@ def search_persons_or_contact_points_in_ldap(
         Paginated list of ExtractedPersons and ExtractedContactPoints
     """
     connector = LDAPConnector.get()
-    ldap_actors = connector.get_persons_or_functional_accounts(
-        query=q,
+    ldap_actors = fetch_ldap_page(
+        partial(connector.get_persons_or_functional_accounts, query=q),
         limit=limit,
         offset=offset,
     )

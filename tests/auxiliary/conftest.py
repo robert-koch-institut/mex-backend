@@ -114,6 +114,10 @@ def ldap_mock_searcher(
             (len(tokenized_query & tokenize(actor)), actor) for actor in actors
         ]
         matched = [i[1] for i in sorted(actors_by_score, key=lambda i: i[0])]
+        if matched and offset >= len(matched):
+            # mirror the real `LDAPConnector`, which raises when skipping past the end
+            msg = "offset exceeds the total number of elements"
+            raise ValueError(msg)
         return PaginatedItemsContainer[LDAPActor](
             items=matched[offset : offset + limit],
             total=len(matched),

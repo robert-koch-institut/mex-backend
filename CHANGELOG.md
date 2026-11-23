@@ -22,6 +22,9 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 
+- `GET /ldap` returned a 500 when `offset` was at or past the last result, now it
+  returns an empty page with the correct `total`
+
 ### Security
 
 - set security headers (CSP, HSTS, nosniff, referrer policy, frame options,

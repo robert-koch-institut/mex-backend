@@ -55,3 +55,15 @@ def test_ldap_pagination(
     assert paginated_items["total"] == all_items["total"]
     assert len(paginated_items["items"]) == 2
     assert paginated_items["items"] == all_items["items"][1:3]
+
+
+@pytest.mark.parametrize("offset", [5, 6], ids=["offset-at-total", "offset-past-total"])
+@pytest.mark.usefixtures("mocked_ldap", "mocked_wikidata")
+def test_ldap_pagination_skip_past_last_result(
+    client_with_api_key_read_permission: TestClient, offset: int
+) -> None:
+    response = client_with_api_key_read_permission.get(
+        "/v0/ldap", params={"q": "*", "offset": offset, "limit": 1}
+    )
+    assert response.status_code == status.HTTP_200_OK, response.text
+    assert response.json() == {"items": [], "total": 5}
