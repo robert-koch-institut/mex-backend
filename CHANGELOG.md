@@ -10,6 +10,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Added
 
 - setting `MEX_BACKEND_CORS_ALLOWED_ORIGINS` for browser origins allowed via CORS
+- `POST /ldap/_search` to look up LDAP persons by attribute values, with the lookup criteria in the request body in order to avoid logging them
 
 ### Changes
 
