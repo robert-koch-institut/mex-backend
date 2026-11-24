@@ -89,7 +89,11 @@ class BackendSettings(BaseSettings):
         validation_alias="MEX_GRAPH_SESSION_TIMEOUT",
     )
     non_mergeable_types: list[MergedType] = Field(
-        [MergedType("MergedConsent"), MergedType("MergedPerson")],
+        [
+            MergedType("MergedConsent"),
+            MergedType("MergedPerson"),
+            MergedType("MergedPrimarySource"),
+        ],
         description="Block merging of merged items with these entity types.",
         validation_alias="MEX_BACKEND_NON_MERGEABLE_TYPES",
     )

@@ -547,7 +547,12 @@ class GraphConnector(BaseConnector):
         | AnyRuleSetResponse
         | ExtractedPrimarySourceWithHardcodedIdentifiers,
     ) -> None:
-        """Ingest a single item in a database transaction."""
+        """Ingest a single item in a database transaction.
+
+        Args:
+            tx: Open transaction to run the queries in
+            model: Extracted model or rule set response to ingest
+        """
         query_builder = QueryBuilder.get()
         if isinstance(model, AnyRuleSetResponse):
             items_to_ingest: list[
