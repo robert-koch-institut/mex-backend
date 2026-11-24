@@ -149,9 +149,7 @@ _SEARCH_ATTR_BY_KWARG = {
 
 def _attribute_values(actor: LDAPActor, attribute: str) -> list[str]:
     """Return an actor's attribute values as a list of strings."""
-    value = getattr(actor, attribute, None)
-    if value is None:
-        return []
+    value = getattr(actor, attribute)
     if isinstance(value, list):
         return [str(item) for item in value]
     return [str(value)]
