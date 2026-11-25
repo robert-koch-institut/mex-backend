@@ -1,6 +1,7 @@
 import json
 import os
 import ssl
+from fnmatch import fnmatchcase
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import MagicMock, Mock
@@ -114,10 +115,72 @@ def ldap_mock_searcher(
             (len(tokenized_query & tokenize(actor)), actor) for actor in actors
         ]
         matched = [i[1] for i in sorted(actors_by_score, key=lambda i: i[0])]
-        return PaginatedItemsContainer[LDAPActor](
-            items=matched[offset : offset + limit],
-            total=len(matched),
-        )
+        return _paginate(matched, offset, limit)
+
+    return mock_search
+
+
+def _paginate(
+    matched: Sequence[LDAPActor], offset: int, limit: int
+) -> PaginatedItemsContainer[LDAPActor]:
+    """Return one page of matched actors, like the real `LDAPConnector`."""
+    if matched and offset >= len(matched):
+        # mirror the real `LDAPConnector`, which raises when skipping past the end
+        msg = "offset exceeds the total number of elements"
+        raise ValueError(msg)
+    return PaginatedItemsContainer[LDAPActor](
+        items=list(matched[offset : offset + limit]),
+        total=len(matched),
+    )
+
+
+# mapping from `get_persons`/`get_functional_accounts` search kwargs to the LDAP
+# attributes they filter on
+_SEARCH_ATTR_BY_KWARG = {
+    "display_name": "displayName",
+    "employee_id": "employeeID",
+    "given_name": "givenName",
+    "mail": "mail",
+    "object_guid": "objectGUID",
+    "sam_account_name": "sAMAccountName",
+    "surname": "sn",
+}
+
+
+def _attribute_values(actor: LDAPActor, attribute: str) -> list[str]:
+    """Return an actor's attribute values as a list of strings."""
+    value = getattr(actor, attribute)
+    if isinstance(value, list):
+        return [str(item) for item in value]
+    return [str(value)]
+
+
+def _actor_matches_filters(actor: LDAPActor, **kwargs: str) -> bool:
+    """Check whether an actor matches all filters, case-insensitive with wildcards."""
+    for kwarg, pattern in kwargs.items():
+        if pattern == "*":
+            # LDAP models don't carry every attribute (e.g. `sAMAccountName`)
+            continue
+        values = _attribute_values(actor, _SEARCH_ATTR_BY_KWARG[kwarg])
+        if not any(fnmatchcase(v.lower(), pattern.lower()) for v in values):
+            return False
+    return True
+
+
+def ldap_mock_attribute_searcher(
+    actors: Sequence[LDAPActor],
+) -> Callable[..., PaginatedItemsContainer[LDAPActor]]:
+    """Create a mocked search with attribute matching, wildcards and pagination."""
+
+    def mock_search(
+        _self: LDAPConnector,
+        *,
+        offset: int = 0,
+        limit: int = 10,
+        **kwargs: str,
+    ) -> PaginatedItemsContainer[LDAPActor]:
+        matched = [actor for actor in actors if _actor_matches_filters(actor, **kwargs)]
+        return _paginate(matched, offset, limit)
 
     return mock_search
 
@@ -133,12 +196,12 @@ def mocked_ldap(request: pytest.FixtureRequest, monkeypatch: MonkeyPatch) -> Non
         monkeypatch.setattr(
             LDAPConnector,
             "get_persons",
-            ldap_mock_searcher(test_persons_ldap),
+            ldap_mock_attribute_searcher(test_persons_ldap),
         )
         monkeypatch.setattr(
             LDAPConnector,
             "get_functional_accounts",
-            ldap_mock_searcher(test_accounts_ldap),
+            ldap_mock_attribute_searcher(test_accounts_ldap),
         )
         test_persons_and_functional_accounts_ldap = sorted(
             [*test_persons_ldap, *test_accounts_ldap], key=lambda x: x.objectGUID
