@@ -10,6 +10,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Added
 
 - setting `MEX_BACKEND_CORS_ALLOWED_ORIGINS` for browser origins allowed via CORS
+- `POST /ldap/_search` to look up LDAP persons by attribute values or LDAP functional accounts by mail, with the lookup criteria in the request body in order to avoid logging them
 
 ### Changes
 
@@ -24,6 +25,9 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - disable unused redoc api documentation, swagger ui at `/docs` stays
 
 ### Fixed
+
+- `GET /ldap` returned a 500 when `offset` was at or past the last result, now it
+  returns an empty page with the correct `total`
 
 ### Security
 

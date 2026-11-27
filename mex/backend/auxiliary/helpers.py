@@ -1,6 +1,6 @@
 from collections import deque
 from functools import lru_cache
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 from mex.backend.auxiliary.constants import (
     ORGANIGRAM_PRIMARY_SOURCE_NAME,
@@ -9,6 +9,7 @@ from mex.backend.auxiliary.constants import (
 from mex.backend.graph.connector import GraphConnector
 from mex.backend.graph.exceptions import NoResultFoundError
 from mex.common.logging import logger
+from mex.common.models import PaginatedItemsContainer
 from mex.common.organigram.extract import extract_organigram_units
 from mex.common.organigram.transform import (
     transform_organigram_units_to_organizational_units,
@@ -70,3 +71,36 @@ def cached_organizational_units() -> list[ExtractedOrganizationalUnit]:
     deque(connector.ingest_items(extracted_units))
     logger.info("ingested organizational units")
     return extracted_units
+
+
+class LDAPLookup[ItemT](Protocol):
+    """A paginated `LDAPConnector` lookup with all filter arguments already bound."""
+
+    def __call__(self, *, limit: int, offset: int) -> PaginatedItemsContainer[ItemT]:
+        """Run the lookup for one page of results."""
+
+
+def fetch_ldap_page[ItemT](
+    lookup: LDAPLookup[ItemT], *, limit: int, offset: int
+) -> PaginatedItemsContainer[ItemT]:
+    """Fetch one page of an LDAP lookup, returning an empty page past the end.
+
+    mex-common's `LDAPConnector` raises a `ValueError` when the offset is at or past
+    the total number of matches. Request validation already rejects negative offsets,
+    so here that error can only mean "past the end". In that case, repeat the lookup
+    for the first item to learn the total and return an empty page with it, just like
+    the graph-backed search endpoints do.
+
+    Args:
+        lookup: LDAP connector lookup with its filter arguments already bound
+        limit: The maximum number of results to return
+        offset: The number of results to skip before return
+
+    Returns:
+        Paginated container with the requested page and the total number of matches
+    """
+    try:
+        return lookup(limit=limit, offset=offset)
+    except ValueError:
+        first_page = lookup(limit=1, offset=0)
+        return PaginatedItemsContainer[ItemT](items=[], total=first_page.total)
