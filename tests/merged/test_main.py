@@ -1033,15 +1033,78 @@ def test_merge_items(
     client_with_api_key_write_permission: TestClient,
     loaded_dummy_data: DummyData,
 ) -> None:
+    # `stableTargetId` is computed by the identity provider on every access, so the
+    # goner's id has to be captured before the merge re-points it at the keeper
+    goner_identifier = loaded_dummy_data["organization_1"].stableTargetId
+    keeper_identifier = loaded_dummy_data["organization_2"].stableTargetId
     response = client_with_api_key_write_permission.post(
         "/v0/merge/",
         json={
-            "gonerIdentifier": loaded_dummy_data["organization_1"].stableTargetId,
-            "keeperIdentifier": loaded_dummy_data["organization_2"].stableTargetId,
+            "gonerIdentifier": goner_identifier,
+            "keeperIdentifier": keeper_identifier,
         },
     )
-    assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR, response.text
-    assert "NotImplemented" in response.text
+    assert response.status_code == status.HTTP_204_NO_CONTENT, response.text
+
+    # the keeper absorbed the goner's extracted item
+    keeper = client_with_api_key_write_permission.get(
+        f"/v0/merged-item/{keeper_identifier}"
+    )
+    assert keeper.status_code == status.HTTP_200_OK, keeper.text
+    assert sorted(text["value"] for text in keeper.json()["officialName"]) == [
+        "RKI",
+        "Robert Koch Institute",
+    ]
+
+    # the goner became a tombstone, so its rule set is nothing but supersededBy
+    rule_set = client_with_api_key_write_permission.get(
+        f"/v0/rule-set/{goner_identifier}"
+    )
+    assert rule_set.status_code == status.HTTP_200_OK, rule_set.text
+    assert rule_set.json()["additive"]["supersededBy"] == str(keeper_identifier)
+    assert rule_set.json()["additive"]["officialName"] == []
+
+
+@pytest.mark.integration
+def test_merge_items_leaves_valid_tombstone(
+    client_with_api_key_write_permission: TestClient,
+    loaded_dummy_data: DummyData,
+) -> None:
+    goner_identifier = loaded_dummy_data["organization_1"].stableTargetId
+    keeper_identifier = loaded_dummy_data["organization_2"].stableTargetId
+    response = client_with_api_key_write_permission.post(
+        "/v0/merge/",
+        json={
+            "gonerIdentifier": goner_identifier,
+            "keeperIdentifier": keeper_identifier,
+        },
+    )
+    assert response.status_code == status.HTTP_204_NO_CONTENT, response.text
+
+    # the merged-away item validates as a tombstone that only points at the keeper
+    fetched = client_with_api_key_write_permission.get(
+        f"/v0/merged-item/{goner_identifier}"
+    )
+    assert fetched.status_code == status.HTTP_200_OK, fetched.text
+    assert {
+        key: value for key, value in fetched.json().items() if value not in ([], None)
+    } == {
+        "$type": "MergedOrganization",
+        "identifier": str(goner_identifier),
+        "supersededBy": str(keeper_identifier),
+    }
+
+    searched = client_with_api_key_write_permission.get(
+        "/v0/merged-item", params={"entityType": ["MergedOrganization"]}
+    )
+    assert searched.status_code == status.HTTP_200_OK, searched.text
+    # search returns the tombstone as well, consumers tell it apart by `supersededBy`
+    assert {
+        item["identifier"]: item["supersededBy"] for item in searched.json()["items"]
+    } == {
+        str(keeper_identifier): None,
+        str(goner_identifier): str(keeper_identifier),
+    }
 
 
 @pytest.mark.integration

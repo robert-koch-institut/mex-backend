@@ -9,12 +9,26 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+- implemented the merging operation: `POST /merge` now moves the goner's extracted items
+  to the keeper, re-links all references to the goner, migrates the goner's rule values
+  into the keeper's rule set and leaves the goner behind as a tombstone whose only value
+  is `supersededBy`
+- the identity cache is reset for all extracted items that a merge moved, so that
+  re-running an extractor links to the keeper instead of resurrecting the goner
+- a merge is rolled back when it would leave the goner with values of its own or with
+  references still pointing at it, instead of a clean tombstone
 - setting `MEX_BACKEND_CORS_ALLOWED_ORIGINS` for browser origins allowed via CORS
 - `POST /ldap/_search` to look up LDAP persons by attribute values or LDAP functional accounts by mail, with the lookup criteria in the request body in order to avoid logging them
 
 ### Changes
 
 - new template https://github.com/robert-koch-institut/mex-template/releases/tag/2.1.0
+- upgrade mex-common to 3.8: merged-away items now validate as tombstones whose only
+  value is `supersededBy`, so they are returned by merged item search and get endpoints
+- `MergedPrimarySource` is added to the default `MEX_BACKEND_NON_MERGEABLE_TYPES`,
+  because merging primary sources would rewrite the provenance of all their extracted
+  items, which the merging operation does not support
+
 ### Deprecated
 
 ### Removed

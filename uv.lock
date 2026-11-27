@@ -665,7 +665,7 @@ requires-dist = [
     { name = "backoff", specifier = ">=2.2,<3" },
     { name = "fastapi", specifier = ">=0.163,<0.164" },
     { name = "jinja2", specifier = ">=3.1,<4" },
-    { name = "mex-common", specifier = ">=3,<4" },
+    { name = "mex-common", specifier = ">=3.8,<4" },
     { name = "neo4j", specifier = ">=6.1,<7" },
     { name = "packaging", specifier = ">=26,<27" },
     { name = "pydantic", specifier = ">=2,<3" },
