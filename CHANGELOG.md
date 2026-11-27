@@ -14,7 +14,10 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changes
 
+- use new get_wikidata_organization_with_locations to fetch organizations,
+  return organization and load locations and wikidata primary source
 - new template https://github.com/robert-koch-institut/mex-template/releases/tag/2.1.0
+
 ### Deprecated
 
 ### Removed

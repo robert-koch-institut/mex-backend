@@ -66,7 +66,7 @@ def test_cached_organization() -> None:
 def test_cached_organization_not_found(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(
         helpers,
-        "transform_wikidata_organization_to_extracted_organization",
+        "get_wikidata_organization_with_locations",
         lambda *_, **__: None,
     )
     with pytest.raises(NoResultFoundError):
